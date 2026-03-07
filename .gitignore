@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Anki user audio cache (can be huge, not needed in Git)
+user_files/**
+
+# Virtual environments
+env/
+.venv/
+venv/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# TTS Engines and Models (Downloaded at runtime)
+superfreetss_addon/data/kokoro_engine/
+superfreetss_addon/data/piper_engine/
+superfreetss_addon/data/piper_models/
+
+# Generation Cache
+superfreetss_addon/cache/
+
+# User Audio Cache (Hash-based)
+superfreetss_addon/user_files/
+user_files/
+

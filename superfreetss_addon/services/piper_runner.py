@@ -1,0 +1,129 @@
+
+import sys
+import json
+import os
+import time
+import soundfile as sf
+import sherpa_onnx
+import io
+import base64
+
+def log(msg):
+    sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+    sys.stderr.flush()
+
+def main():
+    log("PIER-SHERPA RUNNER STARTED")
+    
+    engines = {}
+
+    def get_engine(model_path, tokens_path, data_dir, device='cpu', threads=2):
+        engine_key = f"{model_path}_{device}_{threads}"
+        if engine_key in engines:
+            return engines[engine_key]
+        
+        if not os.path.exists(model_path):
+            log(f"Model not found: {model_path}")
+            return None
+            
+        try:
+            log(f"Loading Piper-Sherpa engine: {os.path.basename(model_path)} on {device}...")
+            
+            # Piper Configuration for Sherpa-ONNX
+            config = sherpa_onnx.OfflineTtsVitsModelConfig(
+                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                    model=model_path,
+                    lexicon="",
+                    tokens=tokens_path,
+                    data_dir=data_dir,
+                    noise_scale=0.667,
+                    noise_scale_w=0.8,
+                    length_scale=1.0
+                )
+            )
+            
+            # Overall Configuration
+            # threads = processes (8) * 2 = 16 saturation
+            s_threads = threads if threads > 0 else 2
+            
+            tts_config = sherpa_onnx.OfflineTtsConfig(
+                model=config,
+                rule_fsts="",
+                max_num_sentences=1,
+                precision="fp32"
+            )
+            
+            engine = sherpa_onnx.OfflineTts(tts_config)
+            engines[engine_key] = engine
+            log(f"Engine {os.path.basename(model_path)} initialized.")
+            return engine
+        except Exception as e:
+            log(f"Failed to load engine: {e}")
+            return None
+
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line: break
+            
+            data = json.loads(line)
+            action = data.get('action', 'generate')
+            
+            if action == 'init':
+                # Warm-up call
+                model_path = data.get('model_path')
+                tokens_path = data.get('tokens_path')
+                data_dir = data.get('data_dir', os.path.dirname(model_path))
+                if model_path and tokens_path:
+                    get_engine(model_path, tokens_path, data_dir)
+                
+                response = json.dumps({"status": "ok", "message": "initialized"}) + "\n"
+                sys.stdout.buffer.write(response.encode('utf-8'))
+                sys.stdout.buffer.flush()
+                continue
+
+            text = data.get('text', '').strip()
+            model_path = data.get('model_path')
+            tokens_path = data.get('tokens_path')
+            data_dir = data.get('data_dir', os.path.dirname(model_path))
+            sid = data.get('sid', 0)
+            speed = data.get('speed', 1.0)
+            
+            if not text or not model_path: continue
+            
+            engine = get_engine(model_path, tokens_path, data_dir)
+            if engine is None:
+                continue
+
+            log(f"Request: Model={os.path.basename(model_path)}, SID={sid}, Text='{text[:30]}...'")
+            
+            start_time = time.time()
+            # Generate
+            audio = engine.generate(text, sid=sid, speed=speed)
+            duration = time.time() - start_time
+            log(f"Generated in {duration:.2f}s")
+
+            # Encode to MEMORY (Base64 WAV)
+            buffer = io.BytesIO()
+            sf.write(buffer, audio.samples, audio.sample_rate, format='WAV')
+            audio_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            response = json.dumps({
+                "status": "ok", 
+                "audio_b64": audio_b64,
+                "duration": duration
+            }) + "\n"
+            
+            sys.stdout.buffer.write(response.encode('utf-8'))
+            sys.stdout.buffer.flush()
+
+        except Exception as e:
+            log(f"Error in piper loop: {e}")
+            try:
+                err_resp = json.dumps({"status": "error", "message": str(e)}) + "\n"
+                sys.stdout.buffer.write(err_resp.encode('utf-8'))
+                sys.stdout.buffer.flush()
+            except: pass
+
+if __name__ == "__main__":
+    main()
