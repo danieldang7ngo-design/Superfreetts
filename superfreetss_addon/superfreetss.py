@@ -7,8 +7,9 @@ import hashlib
 import random
 import copy
 import json
-import concurrent.futures
 import datetime
+import time
+import concurrent.futures
 from typing import List, Dict, Tuple, Optional, Any
 import pprint
 
@@ -28,15 +29,14 @@ from . import errors
 from . import text_utils
 from . import config_models
 from . import context
-from . import resource_manager
+from . import batch_executor
 from . import logging_utils
 from . import gui
 from . import preset_rules_status
 from . import i18n
 from . import batch_constants
-from . import performance_cache
-from . import batch_state_manager
 from . import performance_tracker
+from . import cpu_utils
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -56,6 +56,57 @@ class SuperFreeTTS():
         self.error_manager = errors.ErrorManager(self.anki_utils)
         self.config = self.anki_utils.get_config()
         self.latest_saved_batch_name: Optional[str] = None
+        self.text_processing_cache = {}  # Simple dict for processed text caching
+        
+        # Initialize multi-engine executor with settings from service configurations
+        try:
+            config = self.anki_utils.get_config()
+            service_config_map = config.get('service_config', {})
+            prefs = self.get_preferences()  # For backward compatibility fallback
+            
+            # Default concurrency workers for each service
+            defaults = {
+                'PiperTTS': 2,
+                'KokoroTTS': 1,
+                'EdgeTTS': 3,
+                'MMS': 1,
+            }
+            
+            # Fallback to preferences if available (backward compatibility)
+            pref_fallback = {
+                'PiperTTS': getattr(prefs, 'piper_workers', 2),
+                'KokoroTTS': getattr(prefs, 'kokoro_workers', 1),
+                'EdgeTTS': getattr(prefs, 'edgetts_workers', 3),
+                'MMS': getattr(prefs, 'mms_workers', 1),
+            }
+            
+            # Service name mappings for executor pool naming
+            service_pool_map = {
+                'PiperTTS': 'Piper',
+                'KokoroTTS': 'Kokoro',
+                'EdgeTTS': 'EdgeTTS',
+                'MMS': 'MMS',
+            }
+            
+            # Build engine config from service configurations
+            engine_config = {}
+            for service_name, pool_name in service_pool_map.items():
+                service_config = service_config_map.get(service_name, {})
+                # Try service config first, then prefer fallback (for backward compat), then default
+                concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
+                
+                # Validate against physical CPU cores
+                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                if concurrency > max_workers:
+                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
+                    concurrency = max_workers
+                engine_config[pool_name] = max(1, concurrency)
+            
+            self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
+            logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
+        except Exception as e:
+            logger.warning(f'[INIT] Failed to initialize multi-engine executor, falling back to unified: {e}')
+            self.executor = batch_executor.get_batch_executor(max_workers=4)
 
         # do maintenance        # migration
         self.perform_config_migration()
@@ -130,49 +181,39 @@ class SuperFreeTTS():
         tasks = []
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
 
-        # Initialize resource manager with user preferences
-        prefs = self.get_preferences()
-        res_mgr = resource_manager.get_resource_manager(
-            max_ram_mb=max(500, prefs.batch_max_ram_mb),  # Min 500MB
-            max_cores=max(2, min(prefs.batch_max_cores, 16))  # Min 2, Max 16
-        )
-        logger.info(f'[BATCH] Resource limits: {res_mgr.get_status()}')
+        # Initialize executor (already created in __init__, just get reference)
+        logger.info(f'[BATCH] Using unified batch executor')
 
-        # Get batch name for checkpoint management
+        # Simple checkpoint management
         batch_name = batch.name or f"batch_{int(time.time())}"
-        state_mgr = batch_state_manager.get_batch_state_manager()
+        original_note_id_list = note_id_list[:]  # Keep original for checkpoint save
+        checkpoint_data = self.executor.checkpoint.load(batch_name)
         checkpoint = None
         checkpoint_enabled = True
         
-        # Try to load existing checkpoint (for crash recovery)
-        try:
-            existing_checkpoint = state_mgr.load_checkpoint(batch_name)
-            if existing_checkpoint and existing_checkpoint.completed_indices:
-                original_note_count = len(note_id_list)
-                pending_notes = existing_checkpoint.get_pending_notes()
-                if pending_notes:
-                    logger.info(f'[BATCH] Resuming batch: {len(pending_notes)}/{original_note_count} notes remaining')
-                    note_id_list = pending_notes
-                    checkpoint = existing_checkpoint
-                else:
-                    logger.info(f'[BATCH] Batch {batch_name} already completed')
-                    checkpoint = batch_state_manager.BatchStateCheckpoint(
-                        batch_name=batch_name,
-                        note_id_list=note_id_list,
-                        completed_indices=[],
-                        errors={}
-                    )
+        # Check for resumable batch
+        if checkpoint_data and checkpoint_data.get('completed_indices'):
+            completed = checkpoint_data.get('completed_indices', [])
+            
+            # Filter to only pending notes
+            pending_notes = [note_id_list[i] for i in range(len(note_id_list)) if i not in completed]
+            if pending_notes:
+                logger.info(f'[BATCH] Resuming: {len(pending_notes)}/{len(note_id_list)} notes remaining')
+                note_id_list = pending_notes
+                checkpoint = checkpoint_data
             else:
-                checkpoint = batch_state_manager.BatchStateCheckpoint(
-                    batch_name=batch_name,
-                    note_id_list=note_id_list,
-                    completed_indices=[],
-                    errors={}
-                )
-        except Exception as e:
-            logger.warning(f'[BATCH] Checkpoint system failed: {e}, continuing without crash recovery')
-            checkpoint_enabled = False
-            checkpoint = None
+                logger.info(f'[BATCH] {batch_name} already completed')
+                self.executor.checkpoint.remove(batch_name)
+                checkpoint = None
+        else:
+            # First time: initialize checkpoint dict
+            checkpoint = {
+                'batch_name': batch_name,
+                'completed_indices': [],
+                'note_id_list': original_note_id_list,
+                'errors': {}
+            }
+
         
         # Use batch_running_action_context to properly signal UI start/end
         # This calls notify_start() on enter (triggers show_running_stack + progress bar)
@@ -203,22 +244,23 @@ class SuperFreeTTS():
                     try:
                         source_text = self.get_source_text(note, batch.source, None)
                         
-                        cache_key = f"{source_text}_{batch.source}_{id(batch.text_processing)}"
-                        cached_text = res_mgr.get_cached_text(cache_key)
-                        if cached_text is not None:
-                            processed_text = cached_text
-                            logger.debug(f"[BATCH] Cache hit for text processing")
-                        else:
+                        # Simple text cache for processing efficiency
+                        cache_key = f"{source_text}_{id(batch.text_processing)}"
+                        if cache_key not in self.text_processing_cache:
                             processed_text = self.process_text(source_text, batch.text_processing)
-                            res_mgr.cache_processed_text(cache_key, processed_text)
+                            self.text_processing_cache[cache_key] = processed_text
+                        else:
+                            processed_text = self.text_processing_cache[cache_key]
+                            logger.debug(f"[BATCH] Text cache hit")
                         
-                        task = res_mgr.get_or_create_task(
-                            note_id,
-                            source_text=source_text,
-                            processed_text=processed_text,
-                            batch=batch,
-                            audio_request_context=audio_request_context
-                        )
+                        # Create simple task dict (no MemoryPool)
+                        task = {
+                            'note_id': note_id,
+                            'source_text': source_text,
+                            'processed_text': processed_text,
+                            'batch': batch,
+                            'audio_request_context': audio_request_context
+                        }
                         tasks.append(task)
                     except Exception as e:
                         with batch_status.get_note_action_context(note_id, False) as note_action_context:
@@ -244,29 +286,19 @@ class SuperFreeTTS():
                 else:
                     logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
 
-                # 3. Parallel Generation
+                # 3. Parallel Generation with unified executor
                 prefs = self.get_preferences()
-                # Respect user setting, but still bound by core count for safety if desired?
-                # Actually, user explicitly set this to 1, so let's respect it.
-                max_workers = min(prefs.batch_concurrency, res_mgr.monitor.max_cores)
-                logger.info(f"[BATCH] Parallel generation: {max_workers} workers (requested: {prefs.batch_concurrency}, available cores: {res_mgr.monitor.max_cores})")
+                max_workers = min(prefs.batch_concurrency, 8)  # Max 8 workers
+                logger.info(f"[BATCH] Parallel generation: {max_workers} workers")
 
                 batch_status.total_unique_tasks = unique_count
                 batch_status.unique_tasks_completed = 0
 
                 self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_generating_audio", lang).format(unique_count))
-                logger.info(f"[BATCH] Starting audio generation with {max_workers} threads ({unique_count} unique combinations)")
+                logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
                 gen_start = time.time()
 
-                audio_cache = {}
-                executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-                try:
-                    audio_cache = self._execute_unique_tasks(tasks, dedup_map, batch_status, executor, res_mgr)
-                finally:
-                    try:
-                        executor.shutdown(wait=True, timeout=5)
-                    except TypeError:
-                        executor.shutdown(wait=True)
+                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, max_workers)
 
                 gen_time = time.time() - gen_start
                 logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {gen_time:.2f}s')
@@ -278,6 +310,7 @@ class SuperFreeTTS():
                 batch_status.unique_tasks_completed = 0
                 
                 self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_applying_notes", lang).format(len(tasks)))
+
                 logger.info(f'[BATCH] Applying audio to {len(tasks)} notes...')
                 apply_start = time.time()
                 results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
@@ -325,57 +358,42 @@ class SuperFreeTTS():
                             note_action_context.set_status(constants.BatchNoteStatus.Error)
                             note_action_context.error = e
                             if checkpoint:
-                                checkpoint.errors[str(idx)] = str(e)
+                                checkpoint['errors'][str(idx)] = str(e)
                     
                     if checkpoint and checkpoint_enabled:
                         try:
-                            checkpoint.completed_indices.append(idx)
-                            state_mgr.save_checkpoint(checkpoint)
+                            completed_list = checkpoint.get('completed_indices', [])
+                            if idx not in completed_list:
+                                completed_list.append(idx)
+                            self.executor.checkpoint.save(batch_name, completed_list, checkpoint.get('note_id_list', []), checkpoint.get('errors', {}))
                         except Exception as e:
-                            logger.warning(f'[BATCH] Failed to save checkpoint progress: {e}')
+                            logger.warning(f'[BATCH] Failed to save checkpoint: {e}')
                             checkpoint_enabled = False
 
                 update_time = time.time() - update_start
                 total_time = time.time() - start_time
-                logger.info(f'[BATCH] Completed batch in {total_time:.2f}s (extract: {extract_time:.2f}s, dedup: {dedup_time:.2f}s, gen: {gen_time:.2f}s, update: {update_time:.2f}s)')
+                logger.info(f'[BATCH] Completed in {total_time:.2f}s')
 
-                # Release results list
+                # Release large data structures
                 results.clear()
                 del results
 
                 if batch_status.must_continue:
                     if checkpoint and checkpoint_enabled:
-                        try:
-                            state_mgr.mark_batch_complete(batch_name)
-                        except Exception as e:
-                            logger.warning(f'[BATCH] Failed to clean up checkpoint: {e}')
-                    logger.info(f'[BATCH] Batch processing completed successfully')
+                        self.executor.checkpoint.remove(batch_name)
+                    logger.info(f'[BATCH] Batch completed successfully')
                 else:
                     if checkpoint and checkpoint_enabled:
-                        try:
-                            state_mgr.save_checkpoint(checkpoint)
-                            completed_count = len(checkpoint.completed_indices) if checkpoint else 0
-                            total_count = len(checkpoint.note_id_list) if checkpoint else 0
-                            logger.info(f'[BATCH] Batch cancelled by user - saved checkpoint ({completed_count}/{total_count} notes completed). Resume by running batch again.')
-                        except Exception as e:
-                            logger.warning(f'[BATCH] Failed to save checkpoint on cancellation: {e}')
+                        logger.info(f'[BATCH] Batch cancelled, checkpoint saved for resume')
                 
                 batch_status.set_status_message(None)
             
             finally:
-                # Clear batch_status references to prevent holding onto futures
+                # Simple cleanup
                 batch_status.futures_to_cancel.clear()
+                self.text_processing_cache.clear()
+                logger.info(f'[BATCH] Cleanup complete')
 
-                # Reset resource manager to free caches and GC tracking
-                if res_mgr:
-                    logger.info(f'[RESOURCE] Final status: {res_mgr.get_status()}')
-                    resource_manager.reset_resource_manager()
-                
-                # Force double GC: first pass collects objects, second pass catches circular refs
-                import gc
-                gc.collect()
-                gc.collect()
-                logger.info(f'[MEMORY] Post-batch cleanup complete')
 
     def _collect_batch_duplicates(self, tasks: List[Dict[str, Any]]) -> Dict[Tuple, List[int]]:
         """
@@ -415,8 +433,8 @@ class SuperFreeTTS():
             if voice_id is None:
                 dedup_key = (f'no_voice_{task_idx}',)
             else:
-                # Optimized: Direct tuple key without redundant hashing
-                dedup_key = performance_cache.DedupKeyGenerator.create_key(processed_text, voice_id)
+                # Direct tuple key - simple and efficient
+                dedup_key = (processed_text, voice_id)
 
             if dedup_key not in dedup_map:
                 dedup_map[dedup_key] = []
@@ -424,80 +442,78 @@ class SuperFreeTTS():
 
         return dedup_map
 
-    def _execute_unique_tasks(self, tasks, dedup_map, batch_status, executor, res_mgr=None):
+    def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status, max_workers=4):
         """
-        Execute only unique (processed_text, voice_id) combinations.
-        Update UI in real-time as tasks complete.
-        Returns audio_cache: {dedup_key: (source_text, processed_text, sound_file, full_filename)}
+        Execute unique tasks using MultiEngineExecutor per-engine worker pools.
+        IGNORES max_workers parameter - uses per-engine config instead.
+        Returns: {dedup_key: (source_text, processed_text, sound_file, full_filename)}
         """
-        import time
         lang = self.get_ui_language()
         audio_cache = {}
-        future_to_dedup_key = {}
         completed_count = 0
         unique_count = len(dedup_map)
-
-        # Submit only unique tasks
+        
+        # Map unique tasks to dedup keys for later lookup
+        unique_tasks_list = []  # [(dedup_key, task_data, task_indices), ...]
         for dedup_key, task_indices in dedup_map.items():
-            # Use the first occurrence of this combination
             task_idx = task_indices[0]
             task_data = tasks[task_idx]
-            future = executor.submit(self._generate_audio_task, task_data)
-            future_to_dedup_key[future] = (dedup_key, task_data, task_indices)
-            # Store future for potential cancellation on stop
-            batch_status.futures_to_cancel.append(future)
-
-        # Collect results as they complete and update progress in real-time
-        for future in concurrent.futures.as_completed(future_to_dedup_key):
-            dedup_key, task_data, task_indices = future_to_dedup_key[future]
+            unique_tasks_list.append((dedup_key, task_data, task_indices))
+        
+        # Use MultiEngineExecutor per-engine pools instead of single pool
+        # Submit tasks to appropriate pools based on voice service
+        future_to_info = {}  # future -> (dedup_key, task_data, task_indices)
+        
+        logger.info(f"[BATCH] Submitting {len(unique_tasks_list)} unique tasks to per-engine pools:")
+        for dedup_key, task_data, task_indices in unique_tasks_list:
+            # Detect which TTS engine/service for this task
+            service = self.executor.detect_service({'batch': task_data['batch']})
+            executor_pool = self.executor.get_executor(service)
+            worker_count = executor_pool._max_workers if hasattr(executor_pool, '_max_workers') else 4
+            
+            # Log task routing
+            logger.info(f"[BATCH]   Task {dedup_key} → {service} pool ({worker_count} workers)")
+            
+            # Submit to service-specific pool
+            future = executor_pool.submit(self._generate_audio_task_unified, task_data)
+            future_to_info[future] = (dedup_key, task_data, task_indices, service)
+        
+        # Collect results as they complete (from any pool)
+        for future in concurrent.futures.as_completed(future_to_info):
             if not batch_status.must_continue:
                 break
-
+            
+            dedup_key, task_data, task_indices, service = future_to_info[future]
+            
             try:
                 result = future.result()
                 audio_cache[dedup_key] = result
+                logger.debug(f"[BATCH] Task from {service} pool completed: {dedup_key}")
             except Exception as e:
-                logger.error(f"Error generating audio for unique task: {e}")
-                # Store error in cache so we can apply it to all duplicates
+                logger.error(f"[BATCH] Audio generation failed ({service}): {e}")
                 audio_cache[dedup_key] = None
 
-            # Update progress for all notes using this unique combination
-            # This triggers real-time UI updates as each unique task completes
+            # Update progress for all notes using this combination
             is_successful = audio_cache[dedup_key] is not None
             for task_idx in task_indices:
                 note_id = tasks[task_idx]['note_id']
-                # Find the row index for this note_id
-                if note_id in batch_status.note_id_map:
-                    row = batch_status.note_id_map[note_id]
-                    
-                    # Update status immediately when audio generation completes
-                    if is_successful:
-                        source_text, processed_text, audio_filename, full_filename = audio_cache[dedup_key]
-                        with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                            note_action_context.set_source_text(source_text)
-                            note_action_context.set_processed_text(processed_text)
-                            note_action_context.set_sound(audio_filename)
-                            note_action_context.set_status(constants.BatchNoteStatus.Done)
-                    else:
-                        # Mark as error if audio generation failed
-                        with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                            note_action_context.set_status(constants.BatchNoteStatus.Error)
-                            note_action_context.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
-                    
-                    completed_count += 1
-                    # Update unique tasks completed counter for accurate ETA calculation
-                    batch_status.unique_tasks_completed = completed_count
-                    # Update status message with real-time progress (without delay between updates)
-                    progress_message = i18n.get_text("status_generating_audio", lang).format(unique_count) # Should be refined if needed, but using existing pattern
-                    batch_status.set_status_message(f"{progress_message} ({completed_count}/{unique_count})")
-                    
-                    # Update progress: AFTER updating counters, so batch_change() sees latest values
-                    batch_status.notify_change(note_id)
-
-            # **AGGRESSIVE OPTIMIZATION**: Smart garbage collection
-            # Intelligently trigger GC based on memory usage and completion count
-            if res_mgr:
-                res_mgr.maybe_gc(completed_count)
+                
+                if is_successful:
+                    source_text, processed_text, audio_filename, full_filename = audio_cache[dedup_key]
+                    with batch_status.get_note_action_context(note_id, False) as ctx:
+                        ctx.set_source_text(source_text)
+                        ctx.set_processed_text(processed_text)
+                        ctx.set_sound(audio_filename)
+                        ctx.set_status(constants.BatchNoteStatus.Done)
+                else:
+                    with batch_status.get_note_action_context(note_id, False) as ctx:
+                        ctx.set_status(constants.BatchNoteStatus.Error)
+                        ctx.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+                
+                completed_count += 1
+                batch_status.unique_tasks_completed = completed_count
+                batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
+                batch_status.notify_change(note_id)
 
         return audio_cache
 
@@ -530,66 +546,28 @@ class SuperFreeTTS():
 
         return results
 
-    def _generate_audio_task(self, task_data):
-        # This runs in a worker thread
-        import time as time_module
-        task_start_time = time_module.time()
-        
-        # Get resource manager for monitoring
-        res_mgr = resource_manager._resource_manager
-        
-        # **OPTIMIZATION**: Adaptive worker throttling
-        # When RAM usage is high, slow down this worker to prevent memory spikes
-        if res_mgr:
-            current_workers = res_mgr.calculate_optimal_workers()
-            # If optimal workers dropped due to RAM pressure, throttle this thread
-            max_workers_allowed = max(2, current_workers)
-            if hasattr(res_mgr.monitor, 'process') and res_mgr.monitor.process:
-                try:
-                    ram_percent = (res_mgr.monitor._get_ram_usage() / res_mgr.monitor.max_ram_mb) * 100
-                    if ram_percent > 70:
-                        # RAM pressure detected - add small delay to throttle
-                        import time
-                        delay = (ram_percent - 60) / 10  # Scale: 70% → 1s, 80% → 2s, etc
-                        time.sleep(min(delay, 2.0))  # Cap at 2 seconds max
-                        logger.debug(f"[RESOURCE] Worker throttled {delay:.2f}s due to {ram_percent:.0f}% RAM usage")
-                except Exception as e:
-                    logger.debug(f"[RESOURCE] Throttle check failed: {e}")
-        
-        # Extract data
+    def _generate_audio_task_unified(self, task_data):
+        """
+        Simplified audio generation - worker thread task.
+        Returns: (source_text, processed_text, audio_filename, full_filename)
+        """
         processed_text = task_data['processed_text']
         batch = task_data['batch']
         audio_request_context = task_data['audio_request_context']
+        source_text = task_data['source_text']
 
-        # **OPTIMIZATION**: Check voice cache before generating
-        # Create cache key: (processed_text, voice_id)
+        # Generate audio
+        full_filename, audio_filename = self.get_audio_file(
+            processed_text, batch.voice_selection, audio_request_context
+        )
+
+        # Cache in unified cache
         voice_id = batch.voice_selection.get_voice_id() if hasattr(batch.voice_selection, 'get_voice_id') else str(batch.voice_selection)
-        cache_key = f"{processed_text}_{voice_id}_{id(batch.target.target_field)}"
-        
-        if res_mgr:
-            cached_audio = res_mgr.get_cached_voice(cache_key)
-            if cached_audio is not None:
-                # Hit! Return cached audio data
-                logger.debug(f"[CACHE] Voice cache hit for: {processed_text[:30]}... with {voice_id}")
-                return task_data['source_text'], processed_text, cached_audio, cached_audio
-        
-        # Cache miss - generate new audio
-        full_filename, audio_filename = self.get_audio_file(processed_text, batch.voice_selection, audio_request_context)
+        cache_key = f"{processed_text}_{voice_id}"
+        if audio_filename:
+            self.executor.cache_result(processed_text, voice_id, source_text, audio_filename, full_filename)
 
-        # **OPTIMIZATION**: Cache the generated audio for future use
-        if res_mgr and audio_filename:
-            try:
-                # Store audio filename (not raw bytes to save memory)
-                res_mgr.cache_voice_data(cache_key, audio_filename.encode() if isinstance(audio_filename, str) else audio_filename)
-            except Exception as e:
-                logger.debug(f"[CACHE] Failed to cache voice data: {e}")
-
-        # **PERFORMANCE TRACKING**: Record task completion time (for debug mode)
-        if res_mgr:
-            task_duration_ms = (time_module.time() - task_start_time) * 1000
-            res_mgr.record_task_time(task_duration_ms)
-
-        return task_data['source_text'], processed_text, audio_filename, full_filename
+        return source_text, processed_text, audio_filename, full_filename
 
     def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection):
         # Helper to update the note object
@@ -1368,6 +1346,41 @@ class SuperFreeTTS():
         services_enabled = self.service_manager.configure(configuration, disable_ssl_verification)
         self.service_manager.clear_voice_list_cache()
         logger.debug(f'reconfigure_service_manager, services_enabled: {services_enabled}')
+        
+        # Recreate batch executor with updated worker configuration
+        try:
+            service_config_map = configuration.get_service_config()
+            
+            defaults = {
+                'PiperTTS': 2,
+                'KokoroTTS': 1,
+                'EdgeTTS': 3,
+                'MmsTTS': 1,
+            }
+            pref_fallback = {}
+            service_pool_map = {
+                'PiperTTS': 'Piper',
+                'KokoroTTS': 'Kokoro',
+                'EdgeTTS': 'EdgeTTS',
+                'MMS': 'MMS',
+            }
+            
+            engine_config = {}
+            for service_name, pool_name in service_pool_map.items():
+                service_config = service_config_map.get(service_name, {})
+                concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
+                
+                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                if concurrency > max_workers:
+                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
+                    concurrency = max_workers
+                engine_config[pool_name] = max(1, concurrency)
+            
+            self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
+            logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
+        except Exception as e:
+            logger.warning(f'[RECONFIG] Failed to update batch executor: {e}')
+        
         if services_enabled:
             # at least one service was enabled
             self.anki_utils.broadcast_services_configured()

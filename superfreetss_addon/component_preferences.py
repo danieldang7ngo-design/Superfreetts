@@ -46,6 +46,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.batch_concurrency_spinbox.setMinimum(1)
         self.batch_concurrency_spinbox.setMaximum(16)
         self.batch_concurrency_spinbox.setToolTip("Number of concurrent threads for batch processing. Keep at 4 for auto-detect CPU cores, or set custom value (1-20)")
+        
+        # Note: Per-service concurrency workers are now configured in each service's Advanced settings
 
         # UI layout for preferences
         
@@ -191,6 +193,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_spinbox.valueChanged.connect(self.cache_retention_changed)
         self.batch_concurrency_spinbox.valueChanged.connect(self.batch_concurrency_changed)
         self.sherpa_max_processes_spinbox.valueChanged.connect(self.sherpa_max_processes_changed)
+        
         self.save_button.pressed.connect(self.save_button_pressed)
         self.cancel_button.pressed.connect(self.cancel_button_pressed)
 

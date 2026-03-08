@@ -12,7 +12,7 @@ from . import constants
 SILENT_LOGGING_MODE = True
 
 # Easy debug mode: Set this to True to enable logging for diagnostics
-FORCE_DEBUG_MODE = False
+FORCE_DEBUG_MODE = True
 
 class NullLogger():
     def __init__(self):

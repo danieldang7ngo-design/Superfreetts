@@ -603,6 +603,13 @@ class Preferences:
     batch_max_cores: int = 8      # Cap at 8 cores (prevent over-utilization)
     # Maximum number of concurrent Sherpa/Kokoro processes to keep in pool
     sherpa_max_processes: int = 4
+    
+    # Multi-engine executor settings (workers per TTS engine)
+    piper_workers: int = 2         # Parallel Piper processes
+    kokoro_workers: int = 1        # Sequential Kokoro (heavy)
+    edgetts_workers: int = 2       # Parallel EdgeTTS (network I/O)
+    mms_workers: int = 1           # MMS (multilingual, heavy)
+    default_workers: int = 4       # Fallback for other engines
 
 def serialize_preferences(preferences):
     return databind.json.dump(preferences, Preferences)

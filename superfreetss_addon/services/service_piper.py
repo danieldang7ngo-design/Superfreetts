@@ -92,8 +92,10 @@ class PiperTTS(service.ServiceBase):
     def advanced_configuration_options(self):
         """Advanced settings for power users (hidden in dropdown)"""
         from .. import system_utils
+        from .. import cpu_utils
         return {
             'num_threads': ('number', 'CPU Threads (0=Auto/Serial)', 0, 0, system_utils.get_total_cpu_count()),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 2, 1, cpu_utils.CPUInfo.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging', False)
         }
 
