@@ -17,6 +17,10 @@ Add-on Superfreetts giúp người dùng Anki tạo audio từ text **miễn ph�
 - Thiết kế lại cửa sổ cấu hình:
   - Gom nhóm các tùy chọn quan trọng (ngôn ngữ, giọng, tốc độ đọc) ở trên cùng.
   - Giải thích ngắn gọn từng option bằng tiếng Việt.
+- Thêm điều khiển tốc độ và cao độ giọng đọc:
+  - Thanh trượt (slider) cho `speed` (chậm ↔ nhanh) với giá trị mặc định an toàn.
+  - Thanh trượt (hoặc input số đơn giản) cho `pitch` (trầm ↔ cao).
+  - Nút xem trước (preview) để nghe nhanh 1 câu mẫu với speed/pitch đã chọn.
 - Thêm trạng thái tiến trình khi generate audio:
   - Thanh tiến trình đơn giản hoặc label đếm số file đã xử lý.
   - Thông báo khi hoàn tất hoặc khi có lỗi.
