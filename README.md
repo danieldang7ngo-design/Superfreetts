@@ -1,6 +1,8 @@
 Superfreetts Anki Add-on
 ========================
 
+👉 Xem lộ trình phát triển chi tiết: [ROADMAP](./ROADMAP.md)
+
 ## Giới thiệu
 
 Đây là mã nguồn add-on Superfreetts cho Anki. Thư mục này đã được làm sạch, không chứa
