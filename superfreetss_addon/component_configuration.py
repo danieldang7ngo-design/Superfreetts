@@ -680,17 +680,17 @@ class Configuration(component_common.ConfigComponentBase):
         """
         if enabled:
             service_card.setStyleSheet(
-                f"""QFrame {{ 
+                f"""QFrame#serviceCard {{ 
                     background-color: #F2E88D;
-                    border: 2px solid #1E3A5F;
+                    border: none;
                     border-radius: 18px;
                 }}"""
             )
         else:
             service_card.setStyleSheet(
-                f"""QFrame {{ 
+                f"""QFrame#serviceCard {{ 
                     background-color: #E8BCC1;
-                    border: 2px solid #1E3A5F;
+                    border: none;
                     border-radius: 18px;
                 }}"""
             )
@@ -838,6 +838,7 @@ class Configuration(component_common.ConfigComponentBase):
 
         # bọc tất cả vào một "card" tối giản để phân tách từng service rõ ràng
         service_card = aqt.qt.QFrame()
+        service_card.setObjectName("serviceCard")
         service_card.setLayout(combined_service_vlayout)
         service_card.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
 
@@ -1293,7 +1294,7 @@ class Configuration(component_common.ConfigComponentBase):
         toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
         toc_widget.setStyleSheet("""
             QWidget {
-                border-right: 2px solid #1E3A5F;
+                border-right: none;
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #20B6C7,
                     stop:1 #22B784);
