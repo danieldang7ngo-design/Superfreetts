@@ -42,6 +42,10 @@ class Configuration(component_common.ConfigComponentBase):
         self.model = config_models.Configuration()
         # map service.name -> service enabled checkbox (dùng cho Enable All)
         self.service_checkbox_map = {}
+        # map service.name -> dynamic status badge label
+        self.service_status_badge_map = {}
+        # map service.name -> searchable normalized text
+        self.service_search_index = {}
         # map service.name -> service card widget (dùng cho TOC bên trái)
         self.service_card_map = {}
         # tham chiếu scroll area + container, được set trong draw()
@@ -62,6 +66,88 @@ class Configuration(component_common.ConfigComponentBase):
         if self.enable_model_change:
             self.save_button.setEnabled(True)
             self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+            self._refresh_service_status_badges()
+
+    def _build_service_search_text(self, service, service_description):
+        """Build normalized search text including service/options/advanced labels."""
+        chunks = [service.name, service_description]
+
+        try:
+            for key, option_type in service.configuration_options().items():
+                chunks.append(str(key))
+                if isinstance(option_type, tuple) and len(option_type) > 1 and option_type[0] in ['file', 'directory', 'number', 'bool']:
+                    chunks.append(str(option_type[1]))
+        except Exception:
+            pass
+
+        try:
+            if hasattr(service, 'advanced_configuration_options'):
+                for key, option_type in service.advanced_configuration_options().items():
+                    chunks.append(str(key))
+                    if isinstance(option_type, tuple) and len(option_type) > 1 and option_type[0] in ['file', 'directory', 'number', 'bool']:
+                        chunks.append(str(option_type[1]))
+        except Exception:
+            pass
+
+        return ' '.join(chunks).lower()
+
+    def _get_service_status_info(self, service):
+        """Return (text, bg_color, text_color) for current service readiness."""
+        lang = self.hypertts.get_ui_language()
+        enabled = bool(self.model.get_service_enabled(service.name))
+        if not enabled:
+            return (
+                i18n.get_text("service_status_disabled", lang),
+                constants.COLOR_BORDER,
+                constants.COLOR_SECONDARY,
+            )
+
+        missing = 0
+        configuration_options = service.configuration_options()
+        for key, option_type in configuration_options.items():
+            value = self.model.get_service_configuration_key(service.name, key)
+            key_lower = key.lower()
+
+            if isinstance(option_type, tuple) and option_type[0] in ['file', 'directory']:
+                if not value or (isinstance(value, str) and not os.path.exists(value)):
+                    missing += 1
+                continue
+
+            if option_type == str and any(token in key_lower for token in ['api', 'token', 'secret', 'key']):
+                if value is None or (isinstance(value, str) and len(value.strip()) == 0):
+                    missing += 1
+
+        if missing > 0:
+            return (
+                i18n.get_text("service_status_setup_needed", lang),
+                '#FEF3C7',
+                '#92400E',
+            )
+
+        return (
+            i18n.get_text("service_status_ready", lang),
+            constants.COLOR_ACCENT_LIGHT,
+            constants.COLOR_ACCENT_DARK,
+        )
+
+    def _refresh_service_status_badges(self):
+        for service in self.get_service_list():
+            badge = self.service_status_badge_map.get(service.name)
+            if badge is None:
+                continue
+            text, bg, fg = self._get_service_status_info(service)
+            badge.setText(text)
+            badge.setStyleSheet(f"""
+                QLabel {{
+                    background-color: {bg};
+                    color: {fg};
+                    border-radius: 10px;
+                    padding: 2px 10px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    border: 1px solid {bg};
+                }}
+            """)
 
     def get_service_enable_change_fn(self, service):
         def enable_change(value):
@@ -515,7 +601,7 @@ class Configuration(component_common.ConfigComponentBase):
             header_label = gui_utils.get_service_header_label(service.name)
             return header_label        
 
-        def get_service_description_label(service, lang=lang):
+        def get_service_description_text(service, lang=lang):
             # Dùng i18n để mô tả rõ ràng hơn theo ngôn ngữ giao diện
             fee_key = f"service_fee_{service.service_fee.name}"
             # type_key = f"service_type_{service.service_type.name}_description"
@@ -533,6 +619,11 @@ class Configuration(component_common.ConfigComponentBase):
                 type_key = f"service_type_{service.service_type.name}_description"
                 type_text = i18n.get_text(type_key, lang)
                 service_description = f'{fee_text}, {type_text}'
+
+            return service_description
+
+        def get_service_description_label(service, lang=lang):
+            service_description = get_service_description_text(service, lang)
 
             service_description_label = aqt.qt.QLabel(service_description)
             service_description_label.setMargin(0)
@@ -563,10 +654,26 @@ class Configuration(component_common.ConfigComponentBase):
                 bg_color="#FEF3C7", # Amber 100
                 text_color="#92400E" # Amber 800
             ))
+
+        header_row.addSpacing(8)
+        status_text, status_bg, status_fg = self._get_service_status_info(service)
+        status_badge = gui_utils.get_status_badge(
+            status_text,
+            bg_color=status_bg,
+            text_color=status_fg,
+        )
+        self.service_status_badge_map[service.name] = status_badge
+        header_row.addWidget(status_badge)
             
         header_row.addStretch()
         combined_service_vlayout.addLayout(header_row)
         combined_service_vlayout.addWidget(get_service_description_label(service))
+
+        # Build smarter search index (service name + description + option labels).
+        self.service_search_index[service.name] = self._build_service_search_text(
+            service,
+            get_service_description_text(service, lang),
+        )
 
         # add service config options
         # ==========================
@@ -590,6 +697,7 @@ class Configuration(component_common.ConfigComponentBase):
         # khi user bật/tắt checkbox, update luôn style của card
         def on_enabled_changed(state):
             self._apply_service_card_style(service_card, state == 2)
+            self._refresh_service_status_badges()
 
         service_enabled_checkbox.stateChanged.connect(on_enabled_changed)
 
@@ -801,7 +909,8 @@ class Configuration(component_common.ConfigComponentBase):
                 card_widget = self.service_card_map.get(service.name)
                 if card_widget is None:
                     continue
-                if query in service.name.lower():
+                search_blob = self.service_search_index.get(service.name, service.name.lower())
+                if query in search_blob:
                     card_widget.setVisible(True)
                     if first_match_widget is None:
                         first_match_widget = card_widget

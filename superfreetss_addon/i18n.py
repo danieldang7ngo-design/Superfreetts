@@ -228,6 +228,9 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "service_badge_recommended": "Recommended",
         "service_badge_free": "Free",
         "service_badge_enabled": "Enabled",
+        "service_status_disabled": "Disabled",
+        "service_status_setup_needed": "Needs setup",
+        "service_status_ready": "Ready",
 
         # Category labels (no emoji)
         "config_category_tts": "TTS Services",
@@ -658,6 +661,9 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "service_badge_recommended": "Gợi ý",
         "service_badge_free": "Miễn phí",
         "service_badge_enabled": "Đã bật",
+        "service_status_disabled": "Đã tắt",
+        "service_status_setup_needed": "Cần thiết lập",
+        "service_status_ready": "Sẵn sàng",
 
         # Category labels (no emoji)
         "config_category_tts": "Dịch vụ TTS",
