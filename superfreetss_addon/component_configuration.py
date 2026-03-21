@@ -674,28 +674,24 @@ class Configuration(component_common.ConfigComponentBase):
 
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
-        Apply a minimal modern style for service cards.
-        - enabled = True: soft accent rail with clean neutral surface
-        - enabled = False: muted rail with subtle neutral surface
+        Apply a vibrant blocks style for service cards.
+        - enabled = True: energetic yellow block with strong navy outline
+        - enabled = False: playful rose block with strong navy outline
         """
         if enabled:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
-                    background-color: palette(base);
-                    border: 1px solid transparent;
-                    border-left: 3px solid {constants.COLOR_ACCENT};
-                    border-top-right-radius: 10px;
-                    border-bottom-right-radius: 10px;
+                    background-color: #F2E88D;
+                    border: 2px solid #1E3A5F;
+                    border-radius: 18px;
                 }}"""
             )
         else:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
-                    background-color: palette(window);
-                    border: 1px solid transparent;
-                    border-left: 3px solid #CBD5E1;
-                    border-top-right-radius: 10px;
-                    border-bottom-right-radius: 10px;
+                    background-color: #E8BCC1;
+                    border: 2px solid #1E3A5F;
+                    border-radius: 18px;
                 }}"""
             )
 
@@ -808,13 +804,13 @@ class Configuration(component_common.ConfigComponentBase):
             label = i18n.get_text("generic_enable", lang) if is_enabled else i18n.get_text("generic_disable", lang)
             if is_enabled:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #ECFDF3; color: #166534; border: 1px solid #86EFAC; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
-                    "QPushButton:hover { background-color: #DCFCE7; border-color: #4ADE80; }"
+                    "QPushButton { background-color: #F7F3E7; color: #0B3D48; border: 2px solid #0B3D48; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
+                    "QPushButton:hover { background-color: #FFF7E8; }"
                 )
             else:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
-                    "QPushButton:hover { background-color: #FEE2E2; border-color: #F87171; }"
+                    "QPushButton { background-color: #A9C3E6; color: #1E3A5F; border: 2px solid #1E3A5F; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
+                    "QPushButton:hover { background-color: #BED2EC; }"
                 )
             enable_state_button.setText(label)
 
@@ -1297,8 +1293,10 @@ class Configuration(component_common.ConfigComponentBase):
         toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
         toc_widget.setStyleSheet("""
             QWidget {
-                border-right: 1px solid palette(mid);
-                background-color: palette(window);
+                border-right: 2px solid #1E3A5F;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #20B6C7,
+                    stop:1 #22B784);
             }
         """)
 
