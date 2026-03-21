@@ -775,6 +775,8 @@ class Configuration(component_common.ConfigComponentBase):
         enable_state_button = aqt.qt.QPushButton()
         enable_state_button.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
         enable_state_button.setMinimumHeight(22)
+        enable_state_button.setMinimumWidth(86)
+        enable_state_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Fixed, aqt.qt.QSizePolicy.Policy.Fixed)
         header_row.addSpacing(6)
         header_row.addWidget(enable_state_button)
             
@@ -802,13 +804,13 @@ class Configuration(component_common.ConfigComponentBase):
             label = i18n.get_text("generic_enable", lang) if is_enabled else i18n.get_text("generic_disable", lang)
             if is_enabled:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #16A34A; color: #FFFFFF; border: none; border-radius: 10px; padding: 2px 10px; font-weight: 600; }"
-                    "QPushButton:hover { background-color: #15803D; }"
+                    "QPushButton { background-color: #16A34A; color: #FFFFFF; border: 1px solid #15803D; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
+                    "QPushButton:hover { background-color: #15803D; border-color: #166534; }"
                 )
             else:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #DC2626; color: #FFFFFF; border: none; border-radius: 10px; padding: 2px 10px; font-weight: 600; }"
-                    "QPushButton:hover { background-color: #B91C1C; }"
+                    "QPushButton { background-color: #DC2626; color: #FFFFFF; border: 1px solid #B91C1C; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
+                    "QPushButton:hover { background-color: #B91C1C; border-color: #991B1B; }"
                 )
             enable_state_button.setText(label)
 
