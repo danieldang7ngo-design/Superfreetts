@@ -981,9 +981,6 @@ class Configuration(component_common.ConfigComponentBase):
         # ==============
 
         buttons_layout = aqt.qt.QHBoxLayout()
-        logo_footer = aqt.qt.QWidget()
-        logo_footer.setLayout(gui_utils.get_superfreetss_label_header(False))
-        buttons_layout.addWidget(logo_footer)
         self.save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         self.save_button.setEnabled(False)
         gui_utils.configure_primary_button(self.save_button, min_height=40, min_width=100, font_size=11)
@@ -1150,6 +1147,9 @@ class Configuration(component_common.ConfigComponentBase):
         btn_all.pressed.connect(show_services)
         
         toc_layout.addWidget(btn_about)
+        logo_in_sidebar = aqt.qt.QWidget()
+        logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_header(False))
+        toc_layout.addWidget(logo_in_sidebar)
         toc_layout.addStretch()
 
         toc_widget.setMinimumWidth(176)
