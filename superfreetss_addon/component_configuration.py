@@ -708,13 +708,13 @@ class Configuration(component_common.ConfigComponentBase):
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
         Apply a vibrant blocks style for service cards.
-        - enabled = True: energetic yellow block with strong navy outline
+        - enabled = True: vibrant green block
         - enabled = False: playful rose block with strong navy outline
         """
         if enabled:
             service_card.setStyleSheet(
                 f"""QFrame#serviceCard {{ 
-                    background-color: #F2E88D;
+                    background-color: #84E3A0;
                     border: none;
                     border-radius: 18px;
                 }}"""
