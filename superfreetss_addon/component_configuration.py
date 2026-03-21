@@ -217,6 +217,42 @@ class Configuration(component_common.ConfigComponentBase):
         lineedit.textChanged.connect(update_message)
         update_message(lineedit.text())
 
+    def _supports_setup_shortcut(self, service) -> bool:
+        return service.name in {"KokoroTTS", "MmsTTS", "PiperTTS"}
+
+    def _set_service_config_value_with_ui_sync(self, service_name: str, key: str, value: str):
+        self.model.set_service_configuration_key(service_name, key, value)
+        widget_name = f'{service_name}_{key}'
+        lineedit = self.dialog.findChild(aqt.qt.QLineEdit, widget_name)
+        if lineedit is not None and lineedit.text() != value:
+            lineedit.setText(value)
+        self.model_change()
+
+    def _open_setup_dialog_for_service(self, service):
+        if service.name == "KokoroTTS":
+            dlg = component_kokoro_manager.KokoroInstallManager(self.dialog)
+            if dlg.exec():
+                engine_path = component_kokoro_manager.PYTHON_EXE
+                if os.path.exists(engine_path):
+                    self._set_service_config_value_with_ui_sync(service.name, "engine_path", engine_path)
+            return
+
+        if service.name == "MmsTTS":
+            dlg = component_mms_manager.MmsInstallManager(self.dialog)
+            dlg.exec()
+            from .component_kokoro_manager import PYTHON_EXE
+            if os.path.exists(PYTHON_EXE):
+                self._set_service_config_value_with_ui_sync(service.name, "python_path", PYTHON_EXE)
+            return
+
+        if service.name == "PiperTTS":
+            from . import component_piper_setup
+            dlg = component_piper_setup.PiperSetupDialog(self.dialog)
+            dlg.exec()
+            if os.path.exists(component_piper_setup.PIPER_EXE_PATH):
+                self._set_service_config_value_with_ui_sync(service.name, "engine_path", component_piper_setup.PIPER_EXE_PATH)
+            return
+
     def get_service_enable_change_fn(self, service):
         def enable_change(value):
             enabled = value == 2
@@ -772,6 +808,18 @@ class Configuration(component_common.ConfigComponentBase):
         self.service_status_badge_map[service.name] = status_badge
         header_row.addWidget(status_badge)
 
+        setup_action_button = aqt.qt.QPushButton(i18n.get_text("generic_setup", lang))
+        setup_action_button.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
+        setup_action_button.setMinimumHeight(22)
+        setup_action_button.setMinimumWidth(80)
+        setup_action_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Fixed, aqt.qt.QSizePolicy.Policy.Fixed)
+        setup_action_button.setStyleSheet(
+            "QPushButton { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; border-radius: 12px; padding: 2px 10px; font-weight: 700; }"
+            "QPushButton:hover { background-color: #FDE68A; }"
+        )
+        header_row.addSpacing(6)
+        header_row.addWidget(setup_action_button)
+
         enable_state_button = aqt.qt.QPushButton()
         enable_state_button.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
         enable_state_button.setMinimumHeight(22)
@@ -815,9 +863,19 @@ class Configuration(component_common.ConfigComponentBase):
                 )
             enable_state_button.setText(label)
 
+        def refresh_setup_action_button():
+            need_setup_text = i18n.get_text("service_status_setup_needed", lang)
+            current_status_text, _, _ = self._get_service_status_info(service)
+            should_show = self._supports_setup_shortcut(service) and current_status_text == need_setup_text
+            setup_action_button.setVisible(should_show)
+
         enable_state_button.clicked.connect(lambda: service_enabled_checkbox.setChecked(not service_enabled_checkbox.isChecked()))
         service_enabled_checkbox.stateChanged.connect(lambda _state: refresh_enable_state_button())
+        setup_action_button.clicked.connect(lambda: self._open_setup_dialog_for_service(service))
+        setup_action_button.clicked.connect(lambda: self._refresh_service_status_badges())
+        setup_action_button.clicked.connect(lambda: refresh_setup_action_button())
         refresh_enable_state_button()
+        refresh_setup_action_button()
 
         default_expanded = service_enabled_checkbox.isChecked()
         collapse_button.setChecked(default_expanded)
@@ -850,6 +908,7 @@ class Configuration(component_common.ConfigComponentBase):
         def on_enabled_changed(state):
             self._apply_service_card_style(service_card, state == 2)
             self._refresh_service_status_badges()
+            refresh_setup_action_button()
 
         service_enabled_checkbox.stateChanged.connect(on_enabled_changed)
 
