@@ -105,8 +105,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         vlayout.setSpacing(10)
 
         groupbox_style = (
-            "QGroupBox { margin-top: 8px; font-weight: 700; border: none; border-radius: 14px; background-color: #EEF4FB; color: #123A63; }"
-            "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 6px; color: #123A63; }"
+            "QGroupBox { margin-top: 10px; padding-top: 14px; padding-left: 8px; padding-right: 8px; padding-bottom: 8px; font-weight: 700; border: none; border-radius: 14px; background-color: #EEF4FB; color: #123A63; }"
+            "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; color: #123A63; }"
         )
 
         # nhóm chọn ngôn ngữ giao diện
@@ -135,8 +135,10 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         cache_layout.setContentsMargins(10, 10, 10, 8)
         cache_layout.setSpacing(8)
         self.cache_label = aqt.qt.QLabel(i18n.get_text("preferences_cache_label", lang))
+        self.cache_label.setMinimumHeight(24)
         
         h_cache_layout = aqt.qt.QHBoxLayout()
+        self.cache_retention_checkbox.setMinimumHeight(24)
         h_cache_layout.addWidget(self.cache_retention_checkbox)
         h_cache_layout.addWidget(self.cache_label)
         self.cache_retention_spinbox.setMinimumHeight(30)
@@ -156,6 +158,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         perf_layout.setContentsMargins(10, 10, 10, 8)
         perf_layout.setSpacing(8)
         self.perf_label = aqt.qt.QLabel(i18n.get_text("preferences_batch_concurrency_label", lang))
+        self.perf_label.setMinimumHeight(24)
         
         h_perf_layout = aqt.qt.QHBoxLayout()
         h_perf_layout.addWidget(self.perf_label)
@@ -168,6 +171,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # Pool limit
         h_sherpa_pool_layout = aqt.qt.QHBoxLayout()
         self.sherpa_pool_label = aqt.qt.QLabel(i18n.get_text("pref_label_sherpa_max_processes", lang))
+        self.sherpa_pool_label.setMinimumHeight(24)
         h_sherpa_pool_layout.addWidget(self.sherpa_pool_label)
         self.sherpa_max_processes_spinbox.setMinimumHeight(30)
         h_sherpa_pool_layout.addWidget(self.sherpa_max_processes_spinbox)
