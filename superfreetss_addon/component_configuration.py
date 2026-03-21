@@ -1145,12 +1145,14 @@ class Configuration(component_common.ConfigComponentBase):
 
         btn_about.pressed.connect(show_about)
         btn_all.pressed.connect(show_services)
-        
+
+        # Keep About + logo pinned near the bottom for stable visibility.
+        toc_layout.addStretch()
         toc_layout.addWidget(btn_about)
         logo_in_sidebar = aqt.qt.QWidget()
         logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_header(False))
+        logo_in_sidebar.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Fixed)
         toc_layout.addWidget(logo_in_sidebar)
-        toc_layout.addStretch()
 
         toc_widget.setMinimumWidth(176)
         toc_widget.setMaximumWidth(240)
