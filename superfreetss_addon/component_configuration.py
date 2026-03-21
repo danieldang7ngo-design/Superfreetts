@@ -801,7 +801,8 @@ class Configuration(component_common.ConfigComponentBase):
 
         def refresh_enable_state_button():
             is_enabled = service_enabled_checkbox.isChecked()
-            label = i18n.get_text("generic_enable", lang) if is_enabled else i18n.get_text("generic_disable", lang)
+            # Label should represent the action user can do next, not current state.
+            label = i18n.get_text("generic_disable", lang) if is_enabled else i18n.get_text("generic_enable", lang)
             if is_enabled:
                 enable_state_button.setStyleSheet(
                     "QPushButton { background-color: #F7F3E7; color: #0B3D48; border: 2px solid #0B3D48; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
