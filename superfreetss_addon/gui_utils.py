@@ -235,7 +235,7 @@ def get_superfreetss_label_header(superfreetss_pro_enabled, variant='adaptive'):
     text_color = "#F8FAFC" if is_dark else "#0F172A"
     version_label.setStyleSheet(f'color: {text_color}; background: transparent; border: none;')
 
-    hlayout.addStretch()
     hlayout.addWidget(logo_widget)
     hlayout.addWidget(version_label)
+    hlayout.addStretch()
     return hlayout

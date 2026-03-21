@@ -833,13 +833,6 @@ class Configuration(component_common.ConfigComponentBase):
                     self._services_scroll_area.ensureWidgetVisible(target_widget)
             return _scroll
 
-        # logo header
-        # ===============================
-        header_widget = aqt.qt.QWidget()
-        header_widget.setLayout(gui_utils.get_superfreetss_label_header(False))
-        self.global_vlayout.addWidget(header_widget)
-
-
         # services
         # ========
 
@@ -988,6 +981,9 @@ class Configuration(component_common.ConfigComponentBase):
         # ==============
 
         buttons_layout = aqt.qt.QHBoxLayout()
+        logo_footer = aqt.qt.QWidget()
+        logo_footer.setLayout(gui_utils.get_superfreetss_label_header(False))
+        buttons_layout.addWidget(logo_footer)
         self.save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         self.save_button.setEnabled(False)
         gui_utils.configure_primary_button(self.save_button, min_height=40, min_width=100, font_size=11)

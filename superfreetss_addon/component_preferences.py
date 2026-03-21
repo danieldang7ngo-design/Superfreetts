@@ -109,15 +109,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
             "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
         )
 
-        # dialog header 
-        # =============
-
-        hlayout = aqt.qt.QHBoxLayout()
-        hlayout.addStretch()
-        # logo header
-        hlayout.addLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
-        vlayout.addLayout(hlayout)                
-
         # nhóm chọn ngôn ngữ giao diện
         self.language_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_language_title", lang))
         self.language_groupbox.setStyleSheet(groupbox_style)
@@ -211,6 +202,9 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # ====================
 
         hlayout = aqt.qt.QHBoxLayout()
+        logo_footer = aqt.qt.QWidget()
+        logo_footer.setLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
+        hlayout.addWidget(logo_footer)
         hlayout.addStretch()
 
         # apply button — primary style, consistent with Configuration dialog
