@@ -998,20 +998,6 @@ class Configuration(component_common.ConfigComponentBase):
         search_hlayout.addWidget(self.search_input)
         self.global_vlayout.addLayout(search_hlayout)
 
-        collapse_controls_layout = aqt.qt.QHBoxLayout()
-        collapse_controls_layout.setContentsMargins(0, 0, 0, 0)
-        collapse_controls_layout.setSpacing(8)
-        expand_all_btn = aqt.qt.QPushButton(i18n.get_text("button_expand_all", lang))
-        collapse_all_btn = aqt.qt.QPushButton(i18n.get_text("button_collapse_all", lang))
-        gui_utils.configure_secondary_button(expand_all_btn, min_height=28, min_width=110, font_size=10)
-        gui_utils.configure_secondary_button(collapse_all_btn, min_height=28, min_width=110, font_size=10)
-        expand_all_btn.clicked.connect(lambda: set_all_expanded(True))
-        collapse_all_btn.clicked.connect(lambda: set_all_expanded(False))
-        collapse_controls_layout.addWidget(expand_all_btn)
-        collapse_controls_layout.addWidget(collapse_all_btn)
-        collapse_controls_layout.addStretch()
-        self.global_vlayout.addLayout(collapse_controls_layout)
-
         # scroll area cho danh sách services
         services_scroll_area = ScrollAreaCustom()
         services_scroll_area.setWidgetResizable(True)
