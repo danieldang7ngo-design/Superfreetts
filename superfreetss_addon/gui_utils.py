@@ -239,3 +239,19 @@ def get_superfreetss_label_header(superfreetss_pro_enabled, variant='adaptive'):
     hlayout.addWidget(version_label)
     hlayout.addStretch()
     return hlayout
+
+
+def get_superfreetss_label_sidebar_compact(max_logo_width=120):
+    """Return a compact logo row sized for narrow sidebars."""
+    hlayout = aqt.qt.QHBoxLayout()
+    hlayout.setContentsMargins(0, 0, 0, 0)
+    hlayout.setSpacing(4)
+
+    pixmap = aqt.qt.QPixmap(get_graphics_path(constants.GRAPHICS_LITE_BANNER))
+    if max_logo_width and pixmap.width() > max_logo_width:
+        pixmap = pixmap.scaledToWidth(max_logo_width, aqt.qt.Qt.TransformationMode.SmoothTransformation)
+
+    logo_widget = NonAliasedImage(pixmap)
+    hlayout.addWidget(logo_widget)
+    hlayout.addStretch()
+    return hlayout

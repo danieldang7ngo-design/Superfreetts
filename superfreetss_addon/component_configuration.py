@@ -1217,7 +1217,7 @@ class Configuration(component_common.ConfigComponentBase):
         toc_layout.addStretch()
         toc_layout.addWidget(btn_about)
         logo_in_sidebar = aqt.qt.QWidget()
-        logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_header(False))
+        logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_sidebar_compact(max_logo_width=108))
         logo_in_sidebar.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Fixed)
         logo_in_sidebar.setStyleSheet("margin-top: 2px;")
         toc_layout.addWidget(logo_in_sidebar)
