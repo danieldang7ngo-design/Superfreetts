@@ -816,14 +816,6 @@ class Configuration(component_common.ConfigComponentBase):
         )
         header_row.addSpacing(6)
         header_row.addWidget(setup_action_button)
-
-        enable_state_button = aqt.qt.QPushButton()
-        enable_state_button.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        enable_state_button.setMinimumHeight(22)
-        enable_state_button.setMinimumWidth(86)
-        enable_state_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Fixed, aqt.qt.QSizePolicy.Policy.Fixed)
-        header_row.addSpacing(6)
-        header_row.addWidget(enable_state_button)
             
         header_row.addStretch()
         combined_service_vlayout.addLayout(header_row)
@@ -844,34 +836,15 @@ class Configuration(component_common.ConfigComponentBase):
         service_enabled_checkbox = self.draw_service_options(service, service_vlayout)
         service_stack.setLayout(service_vlayout)
 
-        def refresh_enable_state_button():
-            is_enabled = service_enabled_checkbox.isChecked()
-            # Label should represent the action user can do next, not current state.
-            label = i18n.get_text("generic_disable", lang) if is_enabled else i18n.get_text("generic_enable", lang)
-            if is_enabled:
-                enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #F7F3E7; color: #0B3D48; border: none; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
-                    "QPushButton:hover { background-color: #FFF7E8; }"
-                )
-            else:
-                enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #A9C3E6; color: #1E3A5F; border: none; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
-                    "QPushButton:hover { background-color: #BED2EC; }"
-                )
-            enable_state_button.setText(label)
-
         def refresh_setup_action_button():
             need_setup_text = i18n.get_text("service_status_setup_needed", lang)
             current_status_text, _, _ = self._get_service_status_info(service)
             should_show = self._supports_setup_shortcut(service) and current_status_text == need_setup_text
             setup_action_button.setVisible(should_show)
 
-        enable_state_button.clicked.connect(lambda: service_enabled_checkbox.setChecked(not service_enabled_checkbox.isChecked()))
-        service_enabled_checkbox.stateChanged.connect(lambda _state: refresh_enable_state_button())
         setup_action_button.clicked.connect(lambda: self._open_setup_dialog_for_service(service))
         setup_action_button.clicked.connect(lambda: self._refresh_service_status_badges())
         setup_action_button.clicked.connect(lambda: refresh_setup_action_button())
-        refresh_enable_state_button()
         refresh_setup_action_button()
 
         default_expanded = service_enabled_checkbox.isChecked()
