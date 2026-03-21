@@ -1051,14 +1051,24 @@ class Configuration(component_common.ConfigComponentBase):
         # TOC panel (sidebar tr\u00e1i) - \u0111\u00f3ng vai tr\u00f2 m\u1ee5c l\u1ee5c / filter
         toc_widget = aqt.qt.QWidget()
         toc_layout = aqt.qt.QVBoxLayout(toc_widget)
-        toc_layout.setContentsMargins(8, 8, 8, 8)
-        toc_layout.setSpacing(12)
+        toc_layout.setContentsMargins(6, 6, 6, 6)
+        toc_layout.setSpacing(6)
+
+        toc_primary_style = """
+            QPushButton { text-align: left; padding: 4px 8px; border: none; font-weight: 600; border-radius: 4px; }
+            QPushButton:hover { background-color: palette(alternate-base); }
+        """
+        toc_item_style = """
+            QPushButton { text-align: left; padding: 2px 10px; border: none; font-size: 11px; border-radius: 4px; }
+            QPushButton:hover { background-color: palette(alternate-base); }
+        """
 
         toc_title_label = aqt.qt.QLabel(i18n.get_text("config_toc_title", lang))
         toc_title_font = toc_title_label.font()
         toc_title_font.setBold(True)
-        toc_title_font.setPointSize(max(toc_title_font.pointSize(), 11))
+        toc_title_font.setPointSize(max(toc_title_font.pointSize(), 10))
         toc_title_label.setFont(toc_title_font)
+        toc_title_label.setStyleSheet("color: palette(mid);")
         toc_layout.addWidget(toc_title_label)
 
         # TOC theo nh\u00f3m + t\u1eebng service (Dictionary / TTS)
@@ -1067,10 +1077,7 @@ class Configuration(component_common.ConfigComponentBase):
         btn_all = aqt.qt.QPushButton(i18n.get_text("config_toc_services", lang))
         btn_all.setFlat(True)
         btn_all.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_all.setStyleSheet("""
-            QPushButton { text-align: left; padding: 6px 10px; border: none; font-weight: bold; }
-            QPushButton:hover { background-color: palette(alternate-base); border-radius: 4px; }
-        """)
+        btn_all.setStyleSheet(toc_primary_style)
         btn_all.pressed.connect(make_scroll_fn(self._services_container_widget))
         toc_layout.addWidget(btn_all)
 
@@ -1082,18 +1089,16 @@ class Configuration(component_common.ConfigComponentBase):
             dict_header = aqt.qt.QLabel(i18n.get_text("config_category_dictionary", lang))
             dict_font = dict_header.font()
             dict_font.setBold(True)
-            dict_font.setPointSize(max(dict_font.pointSize(), 10))
+            dict_font.setPointSize(max(dict_font.pointSize(), 9))
             dict_header.setFont(dict_font)
+            dict_header.setStyleSheet("color: palette(mid);")
             toc_layout.addWidget(dict_header)
             for s in dictionary_services:
                 card_widget = self.service_card_map.get(s.name)
                 btn = aqt.qt.QPushButton(s.name)
                 btn.setFlat(True)
                 btn.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet("""
-                    QPushButton { text-align: left; padding: 4px 16px; border: none; font-size: 11px; }
-                    QPushButton:hover { background-color: palette(alternate-base); border-radius: 6px; }
-                """)
+                btn.setStyleSheet(toc_item_style)
                 btn.pressed.connect(make_scroll_fn(card_widget))
                 toc_layout.addWidget(btn)
 
@@ -1101,31 +1106,26 @@ class Configuration(component_common.ConfigComponentBase):
             tts_header = aqt.qt.QLabel(i18n.get_text("config_category_tts", lang))
             tts_font = tts_header.font()
             tts_font.setBold(True)
-            tts_font.setPointSize(max(tts_font.pointSize(), 10))
+            tts_font.setPointSize(max(tts_font.pointSize(), 9))
             tts_header.setFont(tts_font)
+            tts_header.setStyleSheet("color: palette(mid);")
             toc_layout.addWidget(tts_header)
             for s in tts_services:
                 card_widget = self.service_card_map.get(s.name)
                 btn = aqt.qt.QPushButton(s.name)
                 btn.setFlat(True)
                 btn.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet("""
-                    QPushButton { text-align: left; padding: 4px 16px; border: none; font-size: 11px; }
-                    QPushButton:hover { background-color: palette(alternate-base); border-radius: 6px; }
-                """)
+                btn.setStyleSheet(toc_item_style)
                 btn.pressed.connect(make_scroll_fn(card_widget))
                 toc_layout.addWidget(btn)
 
-        toc_layout.addSpacing(20)
+        toc_layout.addSpacing(8)
         
         # Tab "About" in TOC
         btn_about = aqt.qt.QPushButton(i18n.get_text("config_toc_about", lang))
         btn_about.setFlat(True)
         btn_about.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_about.setStyleSheet("""
-            QPushButton { text-align: left; padding: 6px 10px; border: none; font-weight: bold; }
-            QPushButton:hover { background-color: palette(alternate-base); border-radius: 4px; }
-        """)
+        btn_about.setStyleSheet(toc_primary_style)
         
         def show_about():
             self._services_scroll_area.setVisible(False)
@@ -1154,10 +1154,11 @@ class Configuration(component_common.ConfigComponentBase):
         logo_in_sidebar = aqt.qt.QWidget()
         logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_header(False))
         logo_in_sidebar.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Fixed)
+        logo_in_sidebar.setStyleSheet("margin-top: 2px;")
         toc_layout.addWidget(logo_in_sidebar)
 
-        toc_widget.setMinimumWidth(176)
-        toc_widget.setMaximumWidth(240)
+        toc_widget.setMinimumWidth(168)
+        toc_widget.setMaximumWidth(220)
         toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
         toc_widget.setStyleSheet("""
             QWidget {
