@@ -575,21 +575,21 @@ class Configuration(component_common.ConfigComponentBase):
         advanced_btn.setCheckable(True)
         advanced_btn.setChecked(False)
         advanced_btn.setStyleSheet(f"""
-            QPushButton {
+            QPushButton {{
                 background-color: palette(alternate-base);
                 border: 1px solid {constants.COLOR_BORDER};
                 border-radius: 6px;
                 padding: 6px 12px;
                 color: palette(text);
                 font-weight: bold;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background-color: palette(base);
                 border: 1px solid {constants.COLOR_ACCENT};
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background-color: palette(button);
-            }
+            }}
             QPushButton:checked {{
                 background-color: {constants.COLOR_ACCENT_LIGHT};
                 color: {constants.COLOR_ACCENT_DARK};
