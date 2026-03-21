@@ -539,10 +539,10 @@ class Configuration(component_common.ConfigComponentBase):
         advanced_btn = aqt.qt.QPushButton(f"⚙️ {advanced_text}")
         advanced_btn.setCheckable(True)
         advanced_btn.setChecked(False)
-        advanced_btn.setStyleSheet("""
+        advanced_btn.setStyleSheet(f"""
             QPushButton {
                 background-color: palette(alternate-base);
-                border: 1px solid #D0D0D0;
+                border: 1px solid {constants.COLOR_BORDER};
                 border-radius: 6px;
                 padding: 6px 12px;
                 color: palette(text);
@@ -550,10 +550,16 @@ class Configuration(component_common.ConfigComponentBase):
             }
             QPushButton:hover {
                 background-color: palette(base);
+                border: 1px solid {constants.COLOR_ACCENT};
             }
             QPushButton:pressed {
                 background-color: palette(button);
             }
+            QPushButton:checked {{
+                background-color: {constants.COLOR_ACCENT_LIGHT};
+                color: {constants.COLOR_ACCENT_DARK};
+                border: 1px solid {constants.COLOR_ACCENT};
+            }}
         """)
         
         # Create collapsible widget for advanced options
@@ -614,7 +620,7 @@ class Configuration(component_common.ConfigComponentBase):
         separator = aqt.qt.QFrame()
         separator.setFrameShape(aqt.qt.QFrame.Shape.HLine)
         separator.setFrameShadow(aqt.qt.QFrame.Shadow.Sunken)
-        separator.setStyleSheet("color: #E0E0E0;")
+        separator.setStyleSheet(f"color: {constants.COLOR_BORDER};")
         layout.addWidget(separator)
         
         # Connect button toggle to show/hide advanced options
