@@ -1140,6 +1140,7 @@ class Configuration(component_common.ConfigComponentBase):
         # nh\u00f3m \"T\u1eeb \u0111i\u1ec3n\" v\u1edbi t\u1eebng service con
         dictionary_services = [s for s in service_list if s.service_type == constants.ServiceType.dictionary]
         tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
+        toc_service_detail_widgets = []
 
         toc_section_style = (
             "QToolButton { text-align: left; border: none; padding: 2px 4px; color: palette(mid); font-weight: 600; }"
@@ -1160,6 +1161,7 @@ class Configuration(component_common.ConfigComponentBase):
             )
             section_toggle.setStyleSheet(toc_section_style)
             toc_layout.addWidget(section_toggle)
+            toc_service_detail_widgets.append(section_toggle)
 
             section_container = aqt.qt.QWidget()
             section_layout = aqt.qt.QVBoxLayout(section_container)
@@ -1183,9 +1185,14 @@ class Configuration(component_common.ConfigComponentBase):
 
             section_toggle.toggled.connect(on_toc_section_toggled)
             toc_layout.addWidget(section_container)
+            toc_service_detail_widgets.append(section_container)
 
         draw_toc_category(i18n.get_text("config_category_tts", lang), tts_services, default_expanded=True)
         draw_toc_category(i18n.get_text("config_category_dictionary", lang), dictionary_services, default_expanded=False)
+
+        def set_toc_service_details_visible(visible):
+            for widget in toc_service_detail_widgets:
+                widget.setVisible(visible)
 
         toc_layout.addSpacing(8)
         
@@ -1203,6 +1210,7 @@ class Configuration(component_common.ConfigComponentBase):
             header_label.setVisible(False)
             services_description_label.setVisible(False)
             self.services_summary_label.setVisible(False)
+            set_toc_service_details_visible(False)
 
         def show_services():
             self._services_scroll_area.setVisible(True)
@@ -1212,6 +1220,7 @@ class Configuration(component_common.ConfigComponentBase):
             header_label.setVisible(True)
             services_description_label.setVisible(True)
             self.services_summary_label.setVisible(True)
+            set_toc_service_details_visible(True)
 
         btn_about.pressed.connect(show_about)
         btn_all.pressed.connect(show_services)
