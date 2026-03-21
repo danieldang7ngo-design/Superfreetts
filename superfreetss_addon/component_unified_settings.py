@@ -12,6 +12,7 @@ Structure:
 import aqt.qt
 from . import component_configuration
 from . import component_preferences
+from . import config_models
 from . import i18n
 from . import logging_utils
 
@@ -28,6 +29,7 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         super().__init__(parent)
         self.hypertts = hypertts
         self.initial_tab = 0 if initial_tab not in (0, 1) else initial_tab
+        self._saved_once = False
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(self._get_stylesheet())
         
@@ -42,6 +44,7 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self._preferences_built = False
         self.setupUi()
         self.connectSignals()
+        self._initial_snapshot = self._capture_snapshot()
     
     def _get_stylesheet(self):
         """Return stylesheet for unified dialog (reuse from constants if available)."""
@@ -122,12 +125,34 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
             self._build_services_tab()
         elif index == 1:
             self._build_preferences_tab()
+
+    def _capture_snapshot(self):
+        """Capture current config/preferences snapshot for dirty-checking."""
+        config = self.config_component.get_model() if hasattr(self.config_component, 'get_model') else self.config_component.model
+        prefs = self.prefs_component.get_model() if hasattr(self.prefs_component, 'get_model') else self.prefs_component.model
+        return (
+            config_models.serialize_configuration(config),
+            config_models.serialize_preferences(prefs),
+        )
+
+    def _has_unsaved_changes(self):
+        return self._capture_snapshot() != self._initial_snapshot
+
+    def _confirm_discard_if_needed(self):
+        lang = self.hypertts.get_ui_language()
+        if not self._has_unsaved_changes():
+            return True
+        return self.hypertts.anki_utils.ask_user(
+            i18n.get_text("unified_settings_discard_changes", lang),
+            self,
+        )
     
     def save_and_close(self):
         """
         Save both Configuration and Preferences to disk and reconfigure services.
         """
         try:
+            lang = self.hypertts.get_ui_language()
             logger.info("Unified settings: saving configuration and preferences...")
             
             # Get updated models from components
@@ -141,11 +166,13 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
             # Save preferences
             self.hypertts.save_preferences(prefs)
             logger.info("Preferences saved.")
-            
-            # Reconfigure service manager once after both saves
-            self.hypertts.service_manager.configure(config)
-            logger.info("Service manager reconfigured.")
-            
+
+            # save_preferences() already triggers service manager reconfigure.
+            self._saved_once = True
+            self._initial_snapshot = self._capture_snapshot()
+            self.hypertts.anki_utils.tooltip_message(
+                i18n.get_text("unified_settings_saved_toast", lang)
+            )
             self.accept()
         except Exception as e:
             logger.error(f"Error saving settings: {e}", exc_info=True)
@@ -156,8 +183,12 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
     
     def cancel(self):
         """Close without saving."""
-        self.reject()
+        if self._confirm_discard_if_needed():
+            self.reject()
     
-    def close(self):
-        """Override close to ensure rejection if user closes via window button."""
-        self.reject()
+    def closeEvent(self, event):
+        """Intercept window-close to protect unsaved changes."""
+        if self._confirm_discard_if_needed():
+            event.accept()
+        else:
+            event.ignore()

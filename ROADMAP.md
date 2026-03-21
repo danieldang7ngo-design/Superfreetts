@@ -41,7 +41,7 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 |------|------------------------------|-------------|-----------------------------------|
 | **P0** | **Unified Settings + AnkiVN Menu** | **✅ Done** | **PRIORITY: Gộp Config+Pref, menu top-level** |
 | 1    | Ổn định & dọn dẹp            | ✅ Done     | Đa luồng, crash, cấu trúc, log    |
-| 2    | UX & cấu hình                | Planned     | UI config, speed/pitch, preview   |
+| 2    | UX & cấu hình                | In Progress | UI config, speed/pitch, preview   |
 | 3    | Hiệu suất & cache            | Planned     | Queue lớn, IO, cache text        |
 | 4    | Tính năng nâng cao           | Planned     | Preset, naming, folder            |
 | 5    | Test, tài liệu & cộng đồng   | Planned     | Test, docs, guideline, issue flow |
@@ -112,7 +112,7 @@ Superfreetts hướng tới việc trở thành add-on TTS:
   - ✅ Cấu hình worker mới có hiệu lực ngay sau reconfigure.
   - ✅ Logging giảm overhead, không spam warning trong loop lớn.
 
-## Phase 2 – UX & Configuration Experience
+## Phase 2 – UX & Configuration Experience 🚧 IN PROGRESS
 
 - **Mục tiêu chính**
   - Giúp người dùng cấu hình và sử dụng add-on một cách trực quan, ít phải đoán.

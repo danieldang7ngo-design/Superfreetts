@@ -19,6 +19,8 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "unified_settings_title": "Super Free TTS Settings",
         "tab_services": "Services",
         "tab_preferences": "Preferences",
+        "unified_settings_discard_changes": "You have unsaved changes in Settings. Discard changes?",
+        "unified_settings_saved_toast": "Settings saved.",
 
         # Generic buttons
         "button_save": "Save",
@@ -429,6 +431,8 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "unified_settings_title": "Cài đặt Super Free TTS",
         "tab_services": "Dịch vụ",
         "tab_preferences": "Tùy chọn",
+        "unified_settings_discard_changes": "Bạn có thay đổi chưa lưu trong Cài đặt. Bạn có muốn bỏ các thay đổi này không?",
+        "unified_settings_saved_toast": "Đã lưu cài đặt.",
 
         # Generic buttons
         "button_save": "Lưu",
