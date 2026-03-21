@@ -98,7 +98,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.save_button.setEnabled(True)
         self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())        
 
-    def draw(self, layout):
+    def draw(self, layout, show_action_buttons=True):
         lang = self.hypertts.get_ui_language()
         vlayout = aqt.qt.QVBoxLayout()
         vlayout.setContentsMargins(16, 12, 16, 8)
@@ -198,22 +198,10 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # Finally, set initial label text
         self.update_ui_labels(lang)
 
-        # setup bottom buttons
-        # ====================
-
-        hlayout = aqt.qt.QHBoxLayout()
-        logo_footer = aqt.qt.QWidget()
-        logo_footer.setLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
-        hlayout.addWidget(logo_footer)
-        hlayout.addStretch()
-
-        # apply button — primary style, consistent with Configuration dialog
+        # configure bottom action buttons (standalone dialogs only)
         self.save_button.setEnabled(False)
         gui_utils.configure_primary_button(self.save_button, min_height=40, min_width=100, font_size=11)
-        hlayout.addWidget(self.save_button)
-        # cancel button — secondary outlined style
         gui_utils.configure_secondary_button(self.cancel_button, min_height=40, min_width=100, font_size=11)
-        hlayout.addWidget(self.cancel_button)
 
         # sự kiện thay đổi ngôn ngữ
         self.language_combobox.currentIndexChanged.connect(self.language_changed)
@@ -222,10 +210,17 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.batch_concurrency_spinbox.valueChanged.connect(self.batch_concurrency_changed)
         self.sherpa_max_processes_spinbox.valueChanged.connect(self.sherpa_max_processes_changed)
         
-        self.save_button.pressed.connect(self.save_button_pressed)
-        self.cancel_button.pressed.connect(self.cancel_button_pressed)
-
-        layout.addLayout(hlayout)        
+        if show_action_buttons:
+            hlayout = aqt.qt.QHBoxLayout()
+            logo_footer = aqt.qt.QWidget()
+            logo_footer.setLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
+            hlayout.addWidget(logo_footer)
+            hlayout.addStretch()
+            hlayout.addWidget(self.save_button)
+            hlayout.addWidget(self.cancel_button)
+            self.save_button.pressed.connect(self.save_button_pressed)
+            self.cancel_button.pressed.connect(self.cancel_button_pressed)
+            layout.addLayout(hlayout)
 
     def language_changed(self, index: int) -> None:
         """

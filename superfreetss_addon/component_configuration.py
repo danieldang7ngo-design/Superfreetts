@@ -820,7 +820,7 @@ class Configuration(component_common.ConfigComponentBase):
         return service_list
 
 
-    def draw(self, layout):
+    def draw(self, layout, show_action_buttons=True):
         lang = self.hypertts.get_ui_language()
         # layout gốc cho phần nội dung bên phải (Content Panel)
         self.global_vlayout = aqt.qt.QVBoxLayout()
@@ -980,23 +980,25 @@ class Configuration(component_common.ConfigComponentBase):
         # bottom buttons
         # ==============
 
-        buttons_layout = aqt.qt.QHBoxLayout()
         self.save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         self.save_button.setEnabled(False)
         gui_utils.configure_primary_button(self.save_button, min_height=40, min_width=100, font_size=11)
         self.cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
         gui_utils.configure_secondary_button(self.cancel_button, min_height=40, min_width=100, font_size=11)
-        buttons_layout.addStretch()
-        buttons_layout.addWidget(self.save_button)
-        buttons_layout.addWidget(self.cancel_button)
-        self.global_vlayout.addLayout(buttons_layout)
+        if show_action_buttons:
+            buttons_layout = aqt.qt.QHBoxLayout()
+            buttons_layout.addStretch()
+            buttons_layout.addWidget(self.save_button)
+            buttons_layout.addWidget(self.cancel_button)
+            self.global_vlayout.addLayout(buttons_layout)
 
         # wire events
         # ===========
 
 
-        self.save_button.pressed.connect(self.save_button_pressed)
-        self.cancel_button.pressed.connect(self.cancel_button_pressed)
+        if show_action_buttons:
+            self.save_button.pressed.connect(self.save_button_pressed)
+            self.cancel_button.pressed.connect(self.cancel_button_pressed)
 
         # run event once
         self.enable_model_change = True

@@ -119,23 +119,14 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
     def _build_services_tab(self):
         if self._services_built:
             return
-        self.config_component.draw(self.services_layout)
-        self._hide_component_action_buttons(self.config_component)
+        self.config_component.draw(self.services_layout, show_action_buttons=False)
         self._services_built = True
 
     def _build_preferences_tab(self):
         if self._preferences_built:
             return
-        self.prefs_component.draw(self.prefs_layout)
-        self._hide_component_action_buttons(self.prefs_component)
+        self.prefs_component.draw(self.prefs_layout, show_action_buttons=False)
         self._preferences_built = True
-
-    def _hide_component_action_buttons(self, component):
-        """Hide nested Save/Cancel buttons when components are embedded in unified dialog."""
-        for attr_name in ("save_button", "cancel_button"):
-            button = getattr(component, attr_name, None)
-            if button is not None:
-                button.setVisible(False)
     
     def connectSignals(self):
         """Hook language change to update tab/dialog labels."""
