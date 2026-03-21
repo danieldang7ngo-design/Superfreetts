@@ -26,6 +26,7 @@ from . import component_realtime
 from . import component_presetmappingrules
 from . import component_configuration
 from . import component_preferences
+from . import component_unified_settings
 # from . import component_easy removed
 # from . import component_choose_easy_advanced removed
 from . import text_utils
@@ -128,6 +129,21 @@ def launch_preferences_dialog(hypertts):
         dialog.setupUi()
         dialog.exec()        
 
+def launch_unified_dialog(hypertts, initial_tab=0):
+    """
+    Launch unified Super Free TTS settings dialog (Services + Preferences in one dialog).
+    P0 Phase implementation: new entry point for all settings.
+    
+    Args:
+        hypertts: SuperFreeTTS instance
+        initial_tab: Which tab to open initially (0=Services, 1=Preferences)
+    """
+    with hypertts.error_manager.get_single_action_context('Launching Unified Settings Dialog'):
+        logger.info(f'launch_unified_dialog, initial_tab={initial_tab}')
+        dialog = component_unified_settings.UnifiedSettingsDialog(hypertts, aqt.mw)
+        dialog.tabs.setCurrentIndex(initial_tab)
+        dialog.exec()
+
 def launch_realtime_dialog_browser(hypertts, note_id_list):
     with hypertts.error_manager.get_single_action_context('Launching Super Free TTS Realtime Dialog from Browser'):
         if len(note_id_list) != 1:
@@ -177,12 +193,16 @@ action_preferences = None
 
 def update_menu_language(hypertts):
     """Update the text of the menu items based on current UI language."""
-    global action_services, action_preferences
+    global action_services, action_preferences, ankivn_menu, action_unified_settings
     lang = hypertts.get_ui_language()
     if action_services:
         action_services.setText(i18n.get_text("menu_services_configuration", lang))
     if action_preferences:
         action_preferences.setText(i18n.get_text("menu_preferences", lang))
+    if ankivn_menu:
+        ankivn_menu.setTitle("AnkiVN")
+    if action_unified_settings:
+        action_unified_settings.setText(i18n.get_text("unified_settings_title", lang))
 
 def init(hypertts):
 
@@ -300,7 +320,7 @@ def init(hypertts):
             return buttons
 
     # anki tools menu
-    global action_services, action_preferences
+    global action_services, action_preferences, ankivn_menu, action_unified_settings
     
     # Robust Check for existing actions using objectName
     # This survives addon reloads where globals are reset but menu items stay
@@ -325,6 +345,51 @@ def init(hypertts):
         action_preferences.setObjectName("sf_action_preferences")
         action_preferences.triggered.connect(lambda: launch_preferences_dialog(hypertts))
         aqt.mw.form.menuTools.addAction(action_preferences)
+
+    # Create AnkiVN top-level menu
+    global ankivn_menu, action_unified_settings
+    
+    ankivn_menu = None
+    action_unified_settings = None
+    
+    # Check if menu already exists (from previous addon load)
+    menubar_actions = aqt.mw.form.menubar.actions()
+    for action in menubar_actions:
+        if action.objectName() == "sf_ankivn_menu":
+            ankivn_menu = action.menu()
+            break
+    
+    # Create AnkiVN menu if not found
+    if ankivn_menu is None:
+        ankivn_menu = aqt.qt.QMenu("AnkiVN", aqt.mw)
+        ankivn_menu.setObjectName("sf_ankivn_menu")
+        ankivn_menu_action = ankivn_menu.menuAction()
+        ankivn_menu_action.setObjectName("sf_ankivn_menu")
+        
+        # Try to insert before Help menu
+        help_action = None
+        for action in menubar_actions:
+            if action.text().lower() == "help":
+                help_action = action
+                break
+        
+        if help_action:
+            aqt.mw.form.menubar.insertMenu(help_action, ankivn_menu)
+        else:
+            aqt.mw.form.menubar.addMenu(ankivn_menu)
+    
+    # Check if unified settings action exists in AnkiVN menu
+    for action in ankivn_menu.actions():
+        if action.objectName() == "sf_action_unified_settings":
+            action_unified_settings = action
+            break
+    
+    # Create unified settings action if not found
+    if action_unified_settings is None:
+        action_unified_settings = aqt.qt.QAction("", aqt.mw)
+        action_unified_settings.setObjectName("sf_action_unified_settings")
+        action_unified_settings.triggered.connect(lambda: launch_unified_dialog(hypertts, initial_tab=0))
+        ankivn_menu.addAction(action_unified_settings)
 
     # Initial update
     update_menu_language(hypertts)
