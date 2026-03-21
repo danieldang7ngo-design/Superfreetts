@@ -941,7 +941,7 @@ class Configuration(component_common.ConfigComponentBase):
             group_layout = aqt.qt.QVBoxLayout()
             group_layout.setContentsMargins(10, 10, 10, 8)
             group_layout.setSpacing(8)
-            
+
             # Toggle All Checkbox
             toggle_all_cb = aqt.qt.QCheckBox(i18n.get_text("generic_enable_all", lang))
             toggle_all_cb.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
@@ -950,34 +950,32 @@ class Configuration(component_common.ConfigComponentBase):
             toggle_all_font.setPointSize(10)
             toggle_all_cb.setFont(toggle_all_font)
 
-            # Guard flag to prevent infinite signal loops between toggle_all \u2194 individual
+            # Guard flag to prevent infinite signal loops between toggle_all ↔ individual
             updating = {"value": False}
 
             # Initialize state: default all enabled
             all_enabled = all(s.enabled for s in services)
             toggle_all_cb.setChecked(all_enabled)
 
-            # Master \u2192 individual: check/uncheck all services in this category
+            # Master -> individual: check/uncheck all services in this category
             def toggle_all_services(checked):
                 if updating["value"]:
                     return
                 updating["value"] = True
                 for service in services:
                     cb = self.service_checkbox_map.get(service.name)
-                    if cb:
-                        if cb.isChecked() != checked:
-                            cb.setChecked(checked)
+                    if cb and cb.isChecked() != checked:
+                        cb.setChecked(checked)
                 updating["value"] = False
-            
+
             toggle_all_cb.clicked.connect(toggle_all_services)
             group_layout.addWidget(toggle_all_cb)
 
             # Draw services
             for service in services:
                 self.draw_service(service, group_layout)
-                # Specialized logic per service type/name can go here (EdgeTTS badge integrated into header)
 
-                # Individual \u2192 master: sync toggle_all when any single checkbox changes
+                # Individual -> master: sync toggle_all when any single checkbox changes
                 cb = self.service_checkbox_map.get(service.name)
                 if cb:
                     def on_individual_changed(_state, _services=services, _toggle=toggle_all_cb, _guard=updating):
@@ -989,6 +987,7 @@ class Configuration(component_common.ConfigComponentBase):
                             if self.service_checkbox_map.get(s.name) is not None
                         )
                         _toggle.setChecked(all_checked)
+
                     cb.stateChanged.connect(on_individual_changed)
 
             group_box.setLayout(group_layout)
@@ -1003,8 +1002,8 @@ class Configuration(component_common.ConfigComponentBase):
             category_sections.append((services, section_button))
             return toggle_all_cb
 
-        # Draw Categories \u2014 clean text, no emoji
-        
+        # Draw Categories — clean text, no emoji
+
         self.tts_group_toggle = draw_category(
             i18n.get_text("config_category_tts", lang), tts_services, self.services_vlayout, default_expanded=True)
 
@@ -1041,7 +1040,6 @@ class Configuration(component_common.ConfigComponentBase):
         # wire events
         # ===========
 
-
         if show_action_buttons:
             self.save_button.pressed.connect(self.save_button_pressed)
             self.cancel_button.pressed.connect(self.cancel_button_pressed)
@@ -1049,13 +1047,13 @@ class Configuration(component_common.ConfigComponentBase):
         # run event once
         self.enable_model_change = True
 
-        # h\u00e0nh vi search: l\u1ecdc theo t\u00ean service (\u1ea9n c\u00e1c service kh\u00f4ng kh\u1edbp) v\u00e0 cu\u1ed9n t\u1edbi k\u1ebf t qu\u1ea3 \u0111\u1ea7u ti\u00ean
+        # hành vi search: lọc theo tên service (ẩn các service không khớp) và cuộn tới kết quả đầu tiên
         def run_search():
             query = self.search_input.text().strip().lower()
             first_match_widget = None
             matched_services = set()
 
-            # n\u1ebfu \u00f4 t\u00ecm ki\u1ebfm r\u1edng -> hi\u1ec3n th\u1ecb l\u1ea1i t\u1ea5t c\u1ea3 services
+            # nếu ô tìm kiếm rỗng -> hiển thị lại tất cả services
             if not query:
                 for service in service_list:
                     card_widget = self.service_card_map.get(service.name)
@@ -1063,7 +1061,7 @@ class Configuration(component_common.ConfigComponentBase):
                         card_widget.setVisible(True)
                 return
 
-            # l\u1ecdc: ch\u1ec9 hi\u1ec3n th\u1ecb c\u00e1c service c\u00f3 t\u00ean ch\u1ee9a query
+            # lọc: chỉ hiển thị các service có tên chứa query
             for service in service_list:
                 card_widget = self.service_card_map.get(service.name)
                 if card_widget is None:
@@ -1084,7 +1082,7 @@ class Configuration(component_common.ConfigComponentBase):
                 if any(s.name in matched_services for s in category_services) and not category_button.isChecked():
                     category_button.setChecked(True)
 
-            # cu\u1ed9n \u0111\u1ebfn k\u1ebft qu\u1ea3 \u0111\u1ea7u ti\u00ean n\u1ebfu c\u00f3
+            # cuộn đến kết quả đầu tiên nếu có
             if first_match_widget is not None and self._services_scroll_area is not None:
                 self._services_scroll_area.ensureWidgetVisible(first_match_widget)
 
@@ -1140,39 +1138,51 @@ class Configuration(component_common.ConfigComponentBase):
         dictionary_services = [s for s in service_list if s.service_type == constants.ServiceType.dictionary]
         tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
 
-        if dictionary_services:
-            dict_header = aqt.qt.QLabel(i18n.get_text("config_category_dictionary", lang))
-            dict_font = dict_header.font()
-            dict_font.setBold(True)
-            dict_font.setPointSize(max(dict_font.pointSize(), 9))
-            dict_header.setFont(dict_font)
-            dict_header.setStyleSheet("color: palette(mid);")
-            toc_layout.addWidget(dict_header)
-            for s in dictionary_services:
-                card_widget = self.service_card_map.get(s.name)
-                btn = aqt.qt.QPushButton(s.name)
-                btn.setFlat(True)
-                btn.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet(toc_item_style)
-                btn.pressed.connect(make_scroll_fn(card_widget))
-                toc_layout.addWidget(btn)
+        toc_section_style = (
+            "QToolButton { text-align: left; border: none; padding: 2px 4px; color: palette(mid); font-weight: 600; }"
+            "QToolButton:hover { color: palette(text); }"
+        )
 
-        if tts_services:
-            tts_header = aqt.qt.QLabel(i18n.get_text("config_category_tts", lang))
-            tts_font = tts_header.font()
-            tts_font.setBold(True)
-            tts_font.setPointSize(max(tts_font.pointSize(), 9))
-            tts_header.setFont(tts_font)
-            tts_header.setStyleSheet("color: palette(mid);")
-            toc_layout.addWidget(tts_header)
-            for s in tts_services:
+        def draw_toc_category(title, services, default_expanded=True):
+            if not services:
+                return
+
+            section_toggle = aqt.qt.QToolButton()
+            section_toggle.setText(title)
+            section_toggle.setCheckable(True)
+            section_toggle.setChecked(default_expanded)
+            section_toggle.setToolButtonStyle(aqt.qt.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            section_toggle.setArrowType(
+                aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
+            )
+            section_toggle.setStyleSheet(toc_section_style)
+            toc_layout.addWidget(section_toggle)
+
+            section_container = aqt.qt.QWidget()
+            section_layout = aqt.qt.QVBoxLayout(section_container)
+            section_layout.setContentsMargins(0, 0, 0, 0)
+            section_layout.setSpacing(2)
+
+            for s in services:
                 card_widget = self.service_card_map.get(s.name)
                 btn = aqt.qt.QPushButton(s.name)
                 btn.setFlat(True)
                 btn.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
                 btn.setStyleSheet(toc_item_style)
                 btn.pressed.connect(make_scroll_fn(card_widget))
-                toc_layout.addWidget(btn)
+                section_layout.addWidget(btn)
+
+            section_container.setVisible(default_expanded)
+
+            def on_toc_section_toggled(checked, btn=section_toggle, container=section_container):
+                container.setVisible(checked)
+                btn.setArrowType(aqt.qt.Qt.ArrowType.DownArrow if checked else aqt.qt.Qt.ArrowType.RightArrow)
+
+            section_toggle.toggled.connect(on_toc_section_toggled)
+            toc_layout.addWidget(section_container)
+
+        draw_toc_category(i18n.get_text("config_category_tts", lang), tts_services, default_expanded=True)
+        draw_toc_category(i18n.get_text("config_category_dictionary", lang), dictionary_services, default_expanded=False)
 
         toc_layout.addSpacing(8)
         
