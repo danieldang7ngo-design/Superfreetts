@@ -902,6 +902,10 @@ class Configuration(component_common.ConfigComponentBase):
 
             group_box = aqt.qt.QGroupBox(title)
             group_box.setCheckable(False)
+            group_box.setStyleSheet(
+                "QGroupBox { margin-top: 8px; font-weight: 600; }"
+                "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
+            )
 
             group_layout = aqt.qt.QVBoxLayout()
             group_layout.setContentsMargins(10, 10, 10, 8)
@@ -1046,6 +1050,8 @@ class Configuration(component_common.ConfigComponentBase):
 
         # === Swiss Style main layout: TOC b\u00ean tr\u00e1i, content b\u00ean ph\u1ea3i ===
         main_hlayout = aqt.qt.QHBoxLayout()
+        main_hlayout.setContentsMargins(0, 0, 0, 0)
+        main_hlayout.setSpacing(0)
 
         # TOC panel (sidebar tr\u00e1i) - \u0111\u00f3ng vai tr\u00f2 m\u1ee5c l\u1ee5c / filter
         toc_widget = aqt.qt.QWidget()
@@ -1056,6 +1062,7 @@ class Configuration(component_common.ConfigComponentBase):
         toc_title_label = aqt.qt.QLabel(i18n.get_text("config_toc_title", lang))
         toc_title_font = toc_title_label.font()
         toc_title_font.setBold(True)
+        toc_title_font.setPointSize(max(toc_title_font.pointSize(), 11))
         toc_title_label.setFont(toc_title_font)
         toc_layout.addWidget(toc_title_label)
 
@@ -1080,6 +1087,7 @@ class Configuration(component_common.ConfigComponentBase):
             dict_header = aqt.qt.QLabel(i18n.get_text("config_category_dictionary", lang))
             dict_font = dict_header.font()
             dict_font.setBold(True)
+            dict_font.setPointSize(max(dict_font.pointSize(), 10))
             dict_header.setFont(dict_font)
             toc_layout.addWidget(dict_header)
             for s in dictionary_services:
@@ -1098,6 +1106,7 @@ class Configuration(component_common.ConfigComponentBase):
             tts_header = aqt.qt.QLabel(i18n.get_text("config_category_tts", lang))
             tts_font = tts_header.font()
             tts_font.setBold(True)
+            tts_font.setPointSize(max(tts_font.pointSize(), 10))
             tts_header.setFont(tts_font)
             toc_layout.addWidget(tts_header)
             for s in tts_services:
@@ -1147,7 +1156,9 @@ class Configuration(component_common.ConfigComponentBase):
         toc_layout.addWidget(btn_about)
         toc_layout.addStretch()
 
-        toc_widget.setFixedWidth(220)
+        toc_widget.setMinimumWidth(176)
+        toc_widget.setMaximumWidth(240)
+        toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
         toc_widget.setStyleSheet("""
             QWidget {
                 border-right: 1px solid palette(mid);

@@ -104,6 +104,11 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         vlayout.setContentsMargins(16, 12, 16, 8)
         vlayout.setSpacing(10)
 
+        groupbox_style = (
+            "QGroupBox { margin-top: 8px; font-weight: 600; }"
+            "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
+        )
+
         # dialog header 
         # =============
 
@@ -115,6 +120,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
         # nhóm chọn ngôn ngữ giao diện
         self.language_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_language_title", lang))
+        self.language_groupbox.setStyleSheet(groupbox_style)
         language_layout = aqt.qt.QVBoxLayout()
         language_layout.setContentsMargins(10, 10, 10, 8)
         language_layout.setSpacing(8)
@@ -126,12 +132,14 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_en", lang), "en")
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_vi", lang), "vi")
         self.language_combobox.setToolTip(i18n.get_text("preferences_language_tooltip", lang))
+        self.language_combobox.setMinimumHeight(32)
         language_layout.addWidget(self.language_combobox)
         self.language_groupbox.setLayout(language_layout)
         vlayout.addWidget(self.language_groupbox)
 
         # Cache Management Group
         self.cache_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_cache_title", lang))
+        self.cache_groupbox.setStyleSheet(groupbox_style)
         cache_layout = aqt.qt.QVBoxLayout()
         cache_layout.setContentsMargins(10, 10, 10, 8)
         cache_layout.setSpacing(8)
@@ -140,6 +148,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_cache_layout = aqt.qt.QHBoxLayout()
         h_cache_layout.addWidget(self.cache_retention_checkbox)
         h_cache_layout.addWidget(self.cache_label)
+        self.cache_retention_spinbox.setMinimumHeight(30)
         h_cache_layout.addWidget(self.cache_retention_spinbox)
         h_cache_layout.addStretch()
         
@@ -151,6 +160,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
         # Performance Group
         self.perf_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_performance_title", lang))
+        self.perf_groupbox.setStyleSheet(groupbox_style)
         perf_layout = aqt.qt.QVBoxLayout()
         perf_layout.setContentsMargins(10, 10, 10, 8)
         perf_layout.setSpacing(8)
@@ -158,6 +168,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         
         h_perf_layout = aqt.qt.QHBoxLayout()
         h_perf_layout.addWidget(self.perf_label)
+        self.batch_concurrency_spinbox.setMinimumHeight(30)
         h_perf_layout.addWidget(self.batch_concurrency_spinbox)
         h_perf_layout.addStretch()
 
@@ -167,6 +178,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_sherpa_pool_layout = aqt.qt.QHBoxLayout()
         self.sherpa_pool_label = aqt.qt.QLabel(i18n.get_text("pref_label_sherpa_max_processes", lang))
         h_sherpa_pool_layout.addWidget(self.sherpa_pool_label)
+        self.sherpa_max_processes_spinbox.setMinimumHeight(30)
         h_sherpa_pool_layout.addWidget(self.sherpa_max_processes_spinbox)
         h_sherpa_pool_layout.addStretch()
         perf_layout.addLayout(h_sherpa_pool_layout)
