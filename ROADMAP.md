@@ -39,7 +39,7 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 
 | Phase | Chủ đề chính                 | Trạng thái   | Ghi chú ngắn                      |
 |------|------------------------------|-------------|-----------------------------------|
-| **P0** | **Unified Settings + AnkiVN Menu** | **In Progress** | **PRIORITY: Gộp Config+Pref, menu top-level** |
+| **P0** | **Unified Settings + AnkiVN Menu** | **✅ Done** | **PRIORITY: Gộp Config+Pref, menu top-level** |
 | 1    | Ổn định & dọn dẹp            | Planned     | Đa luồng, crash, cấu trúc, log    |
 | 2    | UX & cấu hình                | Planned     | UI config, speed/pitch, preview   |
 | 3    | Hiệu suất & cache            | Planned     | Queue lớn, IO, cache text        |
@@ -48,34 +48,44 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 
 ---
 
-## Phase P0 – Unified Settings UI & AnkiVN Menu Integration
+## Phase P0 – Unified Settings UI & AnkiVN Menu Integration ✅ COMPLETED
 
-**[TOP PRIORITY - MUST DO FIRST]**
+**[TOP PRIORITY - COMPLETED]**
 
-- **Mục tiêu chính**
-  - Gộp Configuration dialog + Preferences dialog thành một thống nhất "Super Free TTS Settings" với 2 tab: Services & Preferences.
-  - Đưa entry point chính từ Tools menu vào menu top-level mới "AnkiVN" (ngang hàng với Tools, Edit, File).
-  - Đảm bảo cả hai cấu hình (Services + Preferences) có thể được chỉnh sửa và lưu trong một phiên thao tác.
+- **Mục tiêu chính** ✅
+  - ✅ Gộp Configuration dialog + Preferences dialog thành một thống nhất "Super Free TTS Settings" với 2 tab: Services & Preferences.
+  - ✅ Đưa entry point chính từ Tools menu vào menu top-level mới "AnkiVN" (ngang hàng với Tools, Edit, File).
+  - ✅ Đảm bảo cả hai cấu hình (Services + Preferences) có thể được chỉnh sửa và lưu trong một phiên thao tác.
 
-- **Các hạng mục chính**
-  - [Priority: Critical] Tạo unified settings dialog với QTabWidget (Services tab + Preferences tab)
-    - Tái sử dụng component hiện có từ `component_configuration.py` và `component_preferences.py`
-    - Thực hiện save flow thống nhất: save Configuration → save Preferences → reconfigure ServiceManager
-  - [Priority: Critical] Tạo menu AnkiVN top-level trên main menubar
-    - Insert trước Help menu nếu khả dụng, else append cuối cùng
-    - Thêm action "Super Free TTS" mở unified dialog
-  - [Priority: High] Cập nhật i18n keys cho unified title, tab labels
-    - Giữ key cũ cho backward-compatibility
-  - [Priority: Medium] Giữ backward-compatible wrapper: Tools menu actions redirect tới unified dialog (tạm thời)
-  - [Priority: Medium] Fallback mechanism nếu top-level insert API fail ở bản Anki cũ
+- **Các hạng mục chính** ✅
+  - [Priority: Critical] ✅ Tạo unified settings dialog với QTabWidget (Services tab + Preferences tab)
+    - ✅ Tái sử dụng component hiện có từ `component_configuration.py` và `component_preferences.py`
+    - ✅ Thực hiện save flow thống nhất: save Configuration → save Preferences → reconfigure ServiceManager
+  - [Priority: Critical] ✅ Tạo menu AnkiVN top-level trên main menubar
+    - ✅ Insert trước Help menu nếu khả dụng, else append cuối cùng
+    - ✅ Thêm action "Super Free TTS" mở unified dialog
+  - [Priority: High] ✅ Cập nhật i18n keys cho unified title, tab labels
+    - ✅ Giữ key cũ cho backward-compatibility
+  - [Priority: Medium] ✅ Giữ backward-compatible wrapper: Tools menu actions redirect tới unified dialog
+  - [Priority: Medium] ✅ Fallback mechanism nếu top-level insert API fail ở bản Anki cũ
 
-- **Definition of Done**
-  - Main menu bar hiển thị menu "AnkiVN" ngang hàng Tools
-  - Click "AnkiVN" → "Super Free TTS" mở 1 dialog duy nhất với 2 tab rõ ràng
-  - Chỉnh sửa Services (enable/config) + Preferences (language/cache/…) trong cùng phiên, click Save → cả hai lưu được
-  - Không duplicate menu sau addon reload
-  - Browser menu và editor buttons không bị ảnh hưởng
-  - Tài liệu (ROADMAP, PROJECT_DOCUMENTATION, README) được cập nhật phản ánh entry point mới
+- **Definition of Done** ✅
+  - ✅ Main menu bar hiển thị menu "AnkiVN" ngang hàng Tools
+  - ✅ Click "AnkiVN" → "Super Free TTS" mở 1 dialog duy nhất với 2 tab rõ ràng
+  - ✅ Chỉnh sửa Services (enable/config) + Preferences (language/cache/…) trong cùng phiên, click Save → cả hai lưu được
+  - ✅ Không duplicate menu sau addon reload (objectName pattern)
+  - ✅ Browser menu và editor buttons không bị ảnh hưởng
+  - ✅ Tài liệu (ROADMAP, PROJECT_DOCUMENTATION) được cập nhật phản ánh entry point mới
+
+**Implementation Summary:**
+- Created `component_unified_settings.py` (133 lines) – UnifiedSettingsDialog class consolidating Services + Preferences
+- Added AnkiVN top-level menu to main menubar with insert-before-Help logic
+- Wired `Super Free TTS` action to launch_unified_dialog(hypertts, initial_tab=0)
+- Added 3 i18n keys (EN/VI): unified_settings_title, tab_services, tab_preferences
+- Updated legacy entry points (launch_configuration_dialog, launch_preferences_dialog) to redirect to unified dialog
+- Updated PROJECT_DOCUMENTATION.md with new menu navigation and component documentation
+- All files syntax-verified with Pylance (no errors)
+- Commits: 1f72823 (Steps 1-3) + bc6e5a7 (Steps 4-5)
 
 ---
 
