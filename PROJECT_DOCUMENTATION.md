@@ -117,7 +117,7 @@ Superfreetts/                       # Thư mục gốc addon (hoặc ID số tro
 │   ├── superfreetss.py             # ⭐ CORE – get_audio_file, process_batch_audio, presets, realtime
 │   ├── servicemanager.py           # ⭐ Quản lý TTS: lazy init (ensure_initialized), configure, get_tts_audio, full_voice_list, clear_voice_list_cache
 │   ├── anki_utils.py               # Tương tác Anki, media, config read/write
-│   ├── gui.py                      # Menu, actions, dialog entry points
+│   ├── gui.py                      # Menu (AnkiVN top-level + Tools aliases), actions, dialog entry points
 │   ├── service.py                  # ServiceBase abstract: voice_list(), get_tts_audio(), service_fee, configuration_options()
 │   ├── voice.py                    # TtsVoice_v3, TtsVoiceId_v3, build_voice_v3, voice_str()
 │   ├── languages.py                # Language, AudioLanguage enums (map ngôn ngữ TTS)
@@ -164,6 +164,7 @@ Superfreetts/                       # Thư mục gốc addon (hoặc ID số tro
 │   │   ├── component_batch.py      # Add Audio (Collection), batch preview
 │   │   ├── component_batch_preview.py
 │   │   ├── component_easy.py       # Easy mode
+│   │   ├── component_unified_settings.py  # ⭐ NEW (P0) – Unified Settings dialog (Services + Preferences in QTabWidget)
 │   │   ├── component_configuration.py  # Services Configuration (enable/disable, path Piper/Kokoro/MMS)
 │   │   ├── component_services_configuration.py
 │   │   ├── component_piper_setup.py    # Setup Piper engine + Manage Voices
@@ -384,7 +385,7 @@ Custom exceptions: `SourceFieldNotFoundError`, `TargetFieldNotFoundError`, `Sour
 2. **Restart Anki**
 
 3. **Cấu hình dịch vụ TTS** (lần đầu):
-   - Menu: `Tools` → `Super Free TTS: Services Configuration`
+   - Menu: `AnkiVN` → `Super Free TTS Settings` → Click tab "Services"
    - Bật engine cần dùng: EdgeTTS (online, ⭐ khuyên dùng), Piper/Kokoro/MMS (offline cần setup đường dẫn hoặc Setup/Manage), Google Translate, Windows/macOS/eSpeak-ng.
    - **Piper:** Có thể để trống "Piper Models Directory" (dùng mặc định `data/piper_models`) hoặc chọn thư mục chứa file `.onnx` + `.onnx.json`. Dùng "Setup Piper" để cài engine, "Manage Voices" để tải giọng từ HuggingFace.
    - **Kokoro / MMS:** Chỉ định đường dẫn Python/engine nếu cần (xem component_kokoro_manager, component_mms_manager).

@@ -112,22 +112,30 @@ class RealtimeDialog(DialogBase):
         self.accept()        
 
 def launch_configuration_dialog(hypertts):
-    with hypertts.error_manager.get_single_action_context('Launching Configuration Dialog'):
-        logger.info('launch_configuration_dialog')
-        dialog = ConfigurationDialog(hypertts)
-        dialog.setupUi()
-        dialog.exec()
+    """
+    DEPRECATED: Redirects to unified settings dialog (Services tab).
+    Kept for backward compatibility with legacy entry points.
+    Use launch_unified_dialog() for new code.
+    """
+    logger.info('launch_configuration_dialog (deprecated alias, redirecting to unified dialog)')
+    launch_unified_dialog(hypertts, initial_tab=0)
 
 def launch_services_configuration(hypertts):
-    # Super Free TTS Lite: Skip trial signup, go straight to configuration
-    launch_configuration_dialog(hypertts)
+    """
+    DEPRECATED: Redirects to unified settings dialog (Services tab).
+    Super Free TTS Lite compatibility wrapper.
+    """
+    logger.info('launch_services_configuration (deprecated alias, redirecting to unified dialog)')
+    launch_unified_dialog(hypertts, initial_tab=0)
 
 def launch_preferences_dialog(hypertts):
-    with hypertts.error_manager.get_single_action_context('Launching Preferences Dialog'):
-        logger.info('launch_preferences_dialog')
-        dialog = PreferencesDialog(hypertts)
-        dialog.setupUi()
-        dialog.exec()        
+    """
+    DEPRECATED: Redirects to unified settings dialog (Preferences tab).
+    Kept for backward compatibility with legacy entry points.
+    Use launch_unified_dialog() for new code.
+    """
+    logger.info('launch_preferences_dialog (deprecated alias, redirecting to unified dialog)')
+    launch_unified_dialog(hypertts, initial_tab=1)        
 
 def launch_unified_dialog(hypertts, initial_tab=0):
     """
