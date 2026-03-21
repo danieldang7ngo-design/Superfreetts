@@ -46,6 +46,7 @@ class Configuration(component_common.ConfigComponentBase):
         self.service_status_badge_map = {}
         # map service.name -> searchable normalized text
         self.service_search_index = {}
+        self.services_summary_label = None
         # map service.name -> service card widget (dùng cho TOC bên trái)
         self.service_card_map = {}
         # tham chiếu scroll area + container, được set trong draw()
@@ -150,6 +151,36 @@ class Configuration(component_common.ConfigComponentBase):
                     border: 1px solid {bg};
                 }}
             """)
+
+        self._refresh_services_summary_label()
+
+    def _get_services_status_counts(self):
+        lang = self.hypertts.get_ui_language()
+        counts = {
+            i18n.get_text("service_status_ready", lang): 0,
+            i18n.get_text("service_status_setup_needed", lang): 0,
+            i18n.get_text("service_status_disabled", lang): 0,
+        }
+        for service in self.get_service_list():
+            status_text, _, _ = self._get_service_status_info(service)
+            counts[status_text] = counts.get(status_text, 0) + 1
+        return counts
+
+    def _refresh_services_summary_label(self):
+        if self.services_summary_label is None:
+            return
+        lang = self.hypertts.get_ui_language()
+        counts = self._get_services_status_counts()
+        self.services_summary_label.setText(
+            i18n.get_text("services_summary_status", lang).format(
+                counts.get(i18n.get_text("service_status_ready", lang), 0),
+                counts.get(i18n.get_text("service_status_setup_needed", lang), 0),
+                counts.get(i18n.get_text("service_status_disabled", lang), 0),
+            )
+        )
+        self.services_summary_label.setStyleSheet(
+            f"color: {constants.COLOR_SECONDARY}; font-size: 11px;"
+        )
 
     def _set_validation_label(self, label: aqt.qt.QLabel, ok: bool, message: str):
         color = constants.COLOR_ACCENT_DARK if ok else constants.COLOR_ERROR
@@ -314,6 +345,7 @@ class Configuration(component_common.ConfigComponentBase):
             elif isinstance(type, tuple) and type[0] == 'file': # ('file', 'Filter (*.exe)')
                 filter_str = type[1]
                 h_layout = aqt.qt.QHBoxLayout()
+                actions_layout = aqt.qt.QHBoxLayout()
                 lineedit = aqt.qt.QLineEdit()
                 lineedit.setText(self.model.get_service_configuration_key(service.name, key))
                 lineedit.setObjectName(widget_name)
@@ -343,7 +375,7 @@ class Configuration(component_common.ConfigComponentBase):
                                  le.setText(default_path)
                      install_btn.clicked.connect(lambda checked=False, le=lineedit: open_kokoro_manager(le))
                      gui_utils.configure_primary_button(install_btn)
-                     h_layout.addWidget(install_btn)
+                     actions_layout.addWidget(install_btn)
 
                 # Special logic for MmsTTS: Add "Install MMS..." button
                 if service.name == "MmsTTS" and key == "python_path":
@@ -358,7 +390,7 @@ class Configuration(component_common.ConfigComponentBase):
                              le.setText(PYTHON_EXE)
                      install_btn.clicked.connect(lambda checked=False, le=lineedit: open_mms_manager(le))
                      gui_utils.configure_primary_button(install_btn)
-                     h_layout.addWidget(install_btn)
+                     actions_layout.addWidget(install_btn)
 
                 # Special logic for PiperTTS: Add "Setup Piper" button
                 if service.name == "PiperTTS" and key == "engine_path":
@@ -372,13 +404,16 @@ class Configuration(component_common.ConfigComponentBase):
                               le.setText(component_piper_setup.PIPER_EXE_PATH)
                      setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_piper_setup(le))
                      gui_utils.configure_primary_button(setup_btn)
-                     h_layout.addWidget(setup_btn)
+                     actions_layout.addWidget(setup_btn)
 
                 validation_label = aqt.qt.QLabel()
                 validation_label.setWordWrap(True)
                 self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
                 v_layout = aqt.qt.QVBoxLayout()
                 v_layout.addLayout(h_layout)
+                if actions_layout.count() > 0:
+                    actions_layout.addStretch()
+                    v_layout.addLayout(actions_layout)
                 v_layout.addWidget(validation_label)
                 self._wire_path_validation(lineedit, validation_label)
                 options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
@@ -828,6 +863,10 @@ class Configuration(component_common.ConfigComponentBase):
         services_description_label.setWordWrap(True)
         self.global_vlayout.addWidget(services_description_label)
 
+        self.services_summary_label = aqt.qt.QLabel()
+        self.services_summary_label.setWordWrap(True)
+        self.global_vlayout.addWidget(self.services_summary_label)
+
         # thanh tìm kiếm dịch vụ (bên khu vực Dịch vụ TTS, không nằm ở TOC)
         search_hlayout = aqt.qt.QHBoxLayout()
         self.search_input = aqt.qt.QLineEdit()
@@ -995,6 +1034,8 @@ class Configuration(component_common.ConfigComponentBase):
             self.search_debounce_timer.start(180)
 
         self.search_input.textChanged.connect(schedule_search)
+
+        self._refresh_services_summary_label()
 
         # === Swiss Style main layout: TOC b\u00ean tr\u00e1i, content b\u00ean ph\u1ea3i ===
         main_hlayout = aqt.qt.QHBoxLayout()
