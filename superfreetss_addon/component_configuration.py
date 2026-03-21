@@ -288,7 +288,7 @@ class Configuration(component_common.ConfigComponentBase):
         # store reference for Enable All toggle
         self.service_checkbox_map[service.name] = service_enabled_checkbox
         service_enabled_checkbox.stateChanged.connect(self.get_service_enable_change_fn(service))
-        layout.addWidget(service_enabled_checkbox)
+        service_enabled_checkbox.setVisible(False)
 
         configuration_options = service.configuration_options()
         options_gridlayout = aqt.qt.QGridLayout()
@@ -771,6 +771,12 @@ class Configuration(component_common.ConfigComponentBase):
         )
         self.service_status_badge_map[service.name] = status_badge
         header_row.addWidget(status_badge)
+
+        enable_state_button = aqt.qt.QPushButton()
+        enable_state_button.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
+        enable_state_button.setMinimumHeight(22)
+        header_row.addSpacing(6)
+        header_row.addWidget(enable_state_button)
             
         header_row.addStretch()
         combined_service_vlayout.addLayout(header_row)
@@ -790,6 +796,25 @@ class Configuration(component_common.ConfigComponentBase):
         service_vlayout.setContentsMargins(0, 0, 0, 0)
         service_enabled_checkbox = self.draw_service_options(service, service_vlayout)
         service_stack.setLayout(service_vlayout)
+
+        def refresh_enable_state_button():
+            is_enabled = service_enabled_checkbox.isChecked()
+            label = i18n.get_text("generic_enable", lang) if is_enabled else i18n.get_text("generic_disable", lang)
+            if is_enabled:
+                enable_state_button.setStyleSheet(
+                    "QPushButton { background-color: #16A34A; color: #FFFFFF; border: none; border-radius: 10px; padding: 2px 10px; font-weight: 600; }"
+                    "QPushButton:hover { background-color: #15803D; }"
+                )
+            else:
+                enable_state_button.setStyleSheet(
+                    "QPushButton { background-color: #DC2626; color: #FFFFFF; border: none; border-radius: 10px; padding: 2px 10px; font-weight: 600; }"
+                    "QPushButton:hover { background-color: #B91C1C; }"
+                )
+            enable_state_button.setText(label)
+
+        enable_state_button.clicked.connect(lambda: service_enabled_checkbox.setChecked(not service_enabled_checkbox.isChecked()))
+        service_enabled_checkbox.stateChanged.connect(lambda _state: refresh_enable_state_button())
+        refresh_enable_state_button()
 
         default_expanded = service_enabled_checkbox.isChecked()
         collapse_button.setChecked(default_expanded)
