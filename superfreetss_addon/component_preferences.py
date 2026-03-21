@@ -41,11 +41,15 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_spinbox = aqt.qt.QSpinBox()
         self.cache_retention_spinbox.setMinimum(1)
         self.cache_retention_spinbox.setMaximum(365)
+        self.cache_helper_label = aqt.qt.QLabel()
+        self.cache_helper_label.setWordWrap(True)
 
         self.batch_concurrency_spinbox = aqt.qt.QSpinBox()
         self.batch_concurrency_spinbox.setMinimum(1)
         self.batch_concurrency_spinbox.setMaximum(16)
         self.batch_concurrency_spinbox.setToolTip("Number of concurrent threads for batch processing. Keep at 4 for auto-detect CPU cores, or set custom value (1-20)")
+        self.perf_helper_label = aqt.qt.QLabel()
+        self.perf_helper_label.setWordWrap(True)
         
         # Note: Per-service concurrency workers are now configured in each service's Advanced settings
 
@@ -134,6 +138,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_cache_layout.addStretch()
         
         cache_layout.addLayout(h_cache_layout)
+        cache_layout.addWidget(self.cache_helper_label)
         self.cache_groupbox.setLayout(cache_layout)
         vlayout.addWidget(self.cache_groupbox)
 
@@ -156,6 +161,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_sherpa_pool_layout.addWidget(self.sherpa_max_processes_spinbox)
         h_sherpa_pool_layout.addStretch()
         perf_layout.addLayout(h_sherpa_pool_layout)
+        perf_layout.addWidget(self.perf_helper_label)
 
         self.perf_groupbox.setLayout(perf_layout)
         vlayout.addWidget(self.perf_groupbox)
@@ -232,10 +238,12 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_label.setText(i18n.get_text("preferences_cache_label", lang))
         self.cache_retention_checkbox.setText(i18n.get_text("preferences_cache_enable", lang))
         self.cache_retention_checkbox.setToolTip(i18n.get_text("preferences_cache_tooltip", lang))
+        self.cache_helper_label.setText(i18n.get_text("preferences_cache_helper", lang))
         
         self.perf_groupbox.setTitle(i18n.get_text("preferences_group_performance_title", lang))
         self.perf_label.setText(i18n.get_text("preferences_batch_concurrency_label", lang))
         self.batch_concurrency_spinbox.setToolTip(i18n.get_text("preferences_batch_concurrency_tooltip", lang))
+        self.perf_helper_label.setText(i18n.get_text("preferences_performance_helper", lang))
         
         self.sherpa_pool_label.setText(i18n.get_text("pref_label_sherpa_max_processes", lang))
         self.sherpa_max_processes_spinbox.setToolTip(i18n.get_text("pref_tooltip_sherpa_max_processes", lang))

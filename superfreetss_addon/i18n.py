@@ -251,8 +251,10 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "preferences_batch_concurrency_tooltip": "Number of concurrent threads for batch processing. Keep at 4 for auto-detect CPU cores, or set custom value (1-20)",
         "preferences_group_cache_title": "Cache Management",
         "preferences_cache_label": "Files in user_files folder will be deleted after (days):",
+        "preferences_cache_helper": "Cache reduces repeated audio generation. Keep auto-cleanup enabled to control disk usage.",
         "preferences_group_performance_title": "Performance",
         "preferences_batch_concurrency_label": "Batch Processing Concurrency (Threads):",
+        "preferences_performance_helper": "Use moderate values for smoother UI. If Anki lags, reduce concurrency or Sherpa processes.",
         "preferences_tab_shortcuts": "Keyboard Shortcuts",
         "preferences_tab_error_handling": "Error Handling",
 
@@ -608,8 +610,10 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "preferences_batch_concurrency_tooltip": "Số lượng luồng xử lý đồng thời. Để ở mức 4 để tự động phát hiện, hoặc đặt giá trị tùy chỉnh (1-20)",
         "preferences_group_cache_title": "Quản lý Cache",
         "preferences_cache_label": "Xóa file trong user_files sau (ngày):",
+        "preferences_cache_helper": "Cache giúp giảm việc tạo lại audio trùng lặp. Nên bật tự động dọn dẹp để kiểm soát dung lượng.",
         "preferences_group_performance_title": "Hiệu suất",
         "preferences_batch_concurrency_label": "Số luồng xử lý hàng loạt:",
+        "preferences_performance_helper": "Nên dùng giá trị vừa phải để giao diện mượt hơn. Nếu Anki lag, hãy giảm concurrency hoặc số tiến trình Sherpa.",
         "preferences_tab_shortcuts": "Phím tắt",
         "preferences_tab_error_handling": "Xử lý lỗi",
 
