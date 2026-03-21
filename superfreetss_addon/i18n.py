@@ -231,6 +231,10 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "service_status_disabled": "Disabled",
         "service_status_setup_needed": "Needs setup",
         "service_status_ready": "Ready",
+        "config_validation_required": "Required",
+        "config_validation_path_found": "Path found",
+        "config_validation_path_missing": "Path not found",
+        "config_validation_value_set": "Looks good",
 
         # Category labels (no emoji)
         "config_category_tts": "TTS Services",
@@ -668,6 +672,10 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "service_status_disabled": "Đã tắt",
         "service_status_setup_needed": "Cần thiết lập",
         "service_status_ready": "Sẵn sàng",
+        "config_validation_required": "Bắt buộc",
+        "config_validation_path_found": "Đã tìm thấy đường dẫn",
+        "config_validation_path_missing": "Không tìm thấy đường dẫn",
+        "config_validation_value_set": "Hợp lệ",
 
         # Category labels (no emoji)
         "config_category_tts": "Dịch vụ TTS",

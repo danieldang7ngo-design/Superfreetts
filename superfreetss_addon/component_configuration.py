@@ -53,6 +53,8 @@ class Configuration(component_common.ConfigComponentBase):
         self._services_container_widget = None
         self.enable_model_change = False
         self.api_key_valid = False
+        self.search_debounce_timer = None
+        self.option_validation_label_map = {}
         self.about_component = component_about.AboutComponent(hypertts)
 
     def get_model(self):
@@ -149,6 +151,39 @@ class Configuration(component_common.ConfigComponentBase):
                 }}
             """)
 
+    def _set_validation_label(self, label: aqt.qt.QLabel, ok: bool, message: str):
+        color = constants.COLOR_ACCENT_DARK if ok else constants.COLOR_ERROR
+        label.setText(message)
+        label.setStyleSheet(f"color: {color}; font-size: 10px; margin-top: 2px;")
+
+    def _wire_required_text_validation(self, key, lineedit: aqt.qt.QLineEdit, label: aqt.qt.QLabel):
+        lang = self.hypertts.get_ui_language()
+
+        def update_message(text):
+            if text and text.strip():
+                self._set_validation_label(label, True, i18n.get_text("config_validation_value_set", lang))
+            else:
+                self._set_validation_label(label, False, i18n.get_text("config_validation_required", lang))
+
+        lineedit.textChanged.connect(update_message)
+        update_message(lineedit.text())
+
+    def _wire_path_validation(self, lineedit: aqt.qt.QLineEdit, label: aqt.qt.QLabel):
+        lang = self.hypertts.get_ui_language()
+
+        def update_message(path_text):
+            path = (path_text or "").strip()
+            if not path:
+                self._set_validation_label(label, False, i18n.get_text("config_validation_required", lang))
+                return
+            if os.path.exists(path):
+                self._set_validation_label(label, True, i18n.get_text("config_validation_path_found", lang))
+            else:
+                self._set_validation_label(label, False, i18n.get_text("config_validation_path_missing", lang))
+
+        lineedit.textChanged.connect(update_message)
+        update_message(lineedit.text())
+
     def get_service_enable_change_fn(self, service):
         def enable_change(value):
             enabled = value == 2
@@ -241,7 +276,17 @@ class Configuration(component_common.ConfigComponentBase):
                 lineedit.setText(self.model.get_service_configuration_key(service.name, key))
                 lineedit.setObjectName(widget_name)
                 lineedit.textChanged.connect(self.get_service_config_str_change_fn(service, key))
-                options_gridlayout.addWidget(lineedit, row, 1, 1, 1)
+                if any(token in key.lower() for token in ['api', 'token', 'secret', 'key']):
+                    validation_label = aqt.qt.QLabel()
+                    validation_label.setWordWrap(True)
+                    self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
+                    v_layout = aqt.qt.QVBoxLayout()
+                    v_layout.addWidget(lineedit)
+                    v_layout.addWidget(validation_label)
+                    self._wire_required_text_validation(key, lineedit, validation_label)
+                    options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
+                else:
+                    options_gridlayout.addWidget(lineedit, row, 1, 1, 1)
             elif type == int:
                 spinbox = aqt.qt.QSpinBox()
                 saved_value = self.model.get_service_configuration_key(service.name, key)
@@ -329,7 +374,14 @@ class Configuration(component_common.ConfigComponentBase):
                      gui_utils.configure_primary_button(setup_btn)
                      h_layout.addWidget(setup_btn)
 
-                options_gridlayout.addLayout(h_layout, row, 1, 1, 1)
+                validation_label = aqt.qt.QLabel()
+                validation_label.setWordWrap(True)
+                self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
+                v_layout = aqt.qt.QVBoxLayout()
+                v_layout.addLayout(h_layout)
+                v_layout.addWidget(validation_label)
+                self._wire_path_validation(lineedit, validation_label)
+                options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
 
             elif isinstance(type, tuple) and type[0] == 'directory': # ('directory', 'Title')
                 title_str = type[1]
@@ -407,7 +459,14 @@ class Configuration(component_common.ConfigComponentBase):
 
                 # MeloTTS removed
 
-                options_gridlayout.addLayout(h_layout, row, 1, 1, 1)
+                validation_label = aqt.qt.QLabel()
+                validation_label.setWordWrap(True)
+                self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
+                v_layout = aqt.qt.QVBoxLayout()
+                v_layout.addLayout(h_layout)
+                v_layout.addWidget(validation_label)
+                self._wire_path_validation(lineedit, validation_label)
+                options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
 
             elif isinstance(type, tuple) and type[0] == 'number': # ('number', 'Label', default, min, max)
                  spinbox = aqt.qt.QSpinBox()
@@ -767,6 +826,8 @@ class Configuration(component_common.ConfigComponentBase):
         search_hlayout = aqt.qt.QHBoxLayout()
         self.search_input = aqt.qt.QLineEdit()
         self.search_input.setPlaceholderText(i18n.get_text("config_search_placeholder", lang))
+        self.search_debounce_timer = aqt.qt.QTimer(self.dialog)
+        self.search_debounce_timer.setSingleShot(True)
         search_hlayout.addWidget(self.search_input)
         self.global_vlayout.addLayout(search_hlayout)
 
@@ -921,8 +982,13 @@ class Configuration(component_common.ConfigComponentBase):
             if first_match_widget is not None and self._services_scroll_area is not None:
                 self._services_scroll_area.ensureWidgetVisible(first_match_widget)
 
-        # filter ngay khi ng\u01b0\u1eddi d\u00f9ng g\u00f5 (debounce nh\u1eb9 do Qt t\u1ef1 x\u1eed l\u00fd s\u1ef1 ki\u1ec7n tu\u1ea7n t\u1ef1)
-        self.search_input.textChanged.connect(lambda _text: run_search())
+        # filter với debounce để tránh relayout dồn khi gõ nhanh
+        self.search_debounce_timer.timeout.connect(run_search)
+
+        def schedule_search(_text):
+            self.search_debounce_timer.start(180)
+
+        self.search_input.textChanged.connect(schedule_search)
 
         # === Swiss Style main layout: TOC b\u00ean tr\u00e1i, content b\u00ean ph\u1ea3i ===
         main_hlayout = aqt.qt.QHBoxLayout()
