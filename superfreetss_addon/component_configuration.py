@@ -674,26 +674,28 @@ class Configuration(component_common.ConfigComponentBase):
 
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
-        Apply a cleaner modern card style for Services list.
-        - enabled = True: subtle background with accent rail on the left
-        - enabled = False: neutral background with muted rail
+        Apply a minimal modern style for service cards.
+        - enabled = True: soft accent rail with clean neutral surface
+        - enabled = False: muted rail with subtle neutral surface
         """
         if enabled:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
                     background-color: palette(base);
-                    border: 1px solid #E5EAF0;
-                    border-left: 4px solid {constants.COLOR_ACCENT};
-                    border-radius: 10px;
+                    border: 1px solid transparent;
+                    border-left: 3px solid {constants.COLOR_ACCENT};
+                    border-top-right-radius: 10px;
+                    border-bottom-right-radius: 10px;
                 }}"""
             )
         else:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
                     background-color: palette(window);
-                    border: 1px solid #EDF1F5;
-                    border-left: 4px solid #CBD5E1;
-                    border-radius: 10px;
+                    border: 1px solid transparent;
+                    border-left: 3px solid #CBD5E1;
+                    border-top-right-radius: 10px;
+                    border-bottom-right-radius: 10px;
                 }}"""
             )
 
@@ -806,13 +808,13 @@ class Configuration(component_common.ConfigComponentBase):
             label = i18n.get_text("generic_enable", lang) if is_enabled else i18n.get_text("generic_disable", lang)
             if is_enabled:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #16A34A; color: #FFFFFF; border: 1px solid #15803D; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
-                    "QPushButton:hover { background-color: #15803D; border-color: #166534; }"
+                    "QPushButton { background-color: #ECFDF3; color: #166534; border: 1px solid #86EFAC; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
+                    "QPushButton:hover { background-color: #DCFCE7; border-color: #4ADE80; }"
                 )
             else:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #DC2626; color: #FFFFFF; border: 1px solid #B91C1C; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
-                    "QPushButton:hover { background-color: #B91C1C; border-color: #991B1B; }"
+                    "QPushButton { background-color: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; border-radius: 11px; padding: 2px 10px; font-weight: 700; }"
+                    "QPushButton:hover { background-color: #FEE2E2; border-color: #F87171; }"
                 )
             enable_state_button.setText(label)
 
@@ -898,6 +900,18 @@ class Configuration(component_common.ConfigComponentBase):
 
         # lấy danh sách services một lần để dùng cho cả content và TOC
         service_list = self.get_service_list()
+        toc_section_toggles = []
+
+        def set_all_expanded(expanded: bool):
+            for _services, section_button in category_sections:
+                if section_button.isChecked() != expanded:
+                    section_button.setChecked(expanded)
+            for _service_name, service_toggle in self.service_expand_toggle_map.items():
+                if service_toggle.isChecked() != expanded:
+                    service_toggle.setChecked(expanded)
+            for toc_toggle in toc_section_toggles:
+                if toc_toggle.isChecked() != expanded:
+                    toc_toggle.setChecked(expanded)
 
         # tiêu đề khu vực cấu hình dịch vụ
         header_label = aqt.qt.QLabel(i18n.get_text("services_header_title", lang))
@@ -926,6 +940,20 @@ class Configuration(component_common.ConfigComponentBase):
         self.search_debounce_timer.setSingleShot(True)
         search_hlayout.addWidget(self.search_input)
         self.global_vlayout.addLayout(search_hlayout)
+
+        collapse_controls_layout = aqt.qt.QHBoxLayout()
+        collapse_controls_layout.setContentsMargins(0, 0, 0, 0)
+        collapse_controls_layout.setSpacing(8)
+        expand_all_btn = aqt.qt.QPushButton(i18n.get_text("button_expand_all", lang))
+        collapse_all_btn = aqt.qt.QPushButton(i18n.get_text("button_collapse_all", lang))
+        gui_utils.configure_secondary_button(expand_all_btn, min_height=28, min_width=110, font_size=10)
+        gui_utils.configure_secondary_button(collapse_all_btn, min_height=28, min_width=110, font_size=10)
+        expand_all_btn.clicked.connect(lambda: set_all_expanded(True))
+        collapse_all_btn.clicked.connect(lambda: set_all_expanded(False))
+        collapse_controls_layout.addWidget(expand_all_btn)
+        collapse_controls_layout.addWidget(collapse_all_btn)
+        collapse_controls_layout.addStretch()
+        self.global_vlayout.addLayout(collapse_controls_layout)
 
         # scroll area cho danh sách services
         services_scroll_area = ScrollAreaCustom()
@@ -1190,6 +1218,7 @@ class Configuration(component_common.ConfigComponentBase):
             )
             section_toggle.setStyleSheet(toc_section_style)
             toc_layout.addWidget(section_toggle)
+            toc_section_toggles.append(section_toggle)
             toc_service_detail_widgets.append(section_toggle)
 
             section_container = aqt.qt.QWidget()
