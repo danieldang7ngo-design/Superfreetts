@@ -887,11 +887,26 @@ class Configuration(component_common.ConfigComponentBase):
         # Split services
         tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
         dict_services = [s for s in service_list if s.service_type == constants.ServiceType.dictionary]
+        category_sections = []
 
         # Helper to draw category
         def draw_category(title, services, parent_layout, default_expanded=True):
             if not services:
                 return
+
+            section_button = aqt.qt.QToolButton()
+            section_button.setText(title)
+            section_button.setCheckable(True)
+            section_button.setChecked(default_expanded)
+            section_button.setToolButtonStyle(aqt.qt.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            section_button.setArrowType(
+                aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
+            )
+            section_button.setStyleSheet(
+                "QToolButton { text-align: left; font-weight: 600; border: none; padding: 4px 0; }"
+                "QToolButton:hover { color: palette(highlight); }"
+            )
+            parent_layout.addWidget(section_button)
 
             group_box = aqt.qt.QGroupBox(title)
             group_box.setCheckable(False)
@@ -955,15 +970,23 @@ class Configuration(component_common.ConfigComponentBase):
 
             group_box.setLayout(group_layout)
             parent_layout.addWidget(group_box)
+
+            def on_section_toggled(checked, btn=section_button, content=group_box):
+                content.setVisible(checked)
+                btn.setArrowType(aqt.qt.Qt.ArrowType.DownArrow if checked else aqt.qt.Qt.ArrowType.RightArrow)
+
+            section_button.toggled.connect(on_section_toggled)
+            group_box.setVisible(default_expanded)
+            category_sections.append((services, section_button))
             return toggle_all_cb
 
         # Draw Categories \u2014 clean text, no emoji
         
         self.tts_group_toggle = draw_category(
-            i18n.get_text("config_category_tts", lang), tts_services, self.services_vlayout)
+            i18n.get_text("config_category_tts", lang), tts_services, self.services_vlayout, default_expanded=True)
 
         self.dict_group_toggle = draw_category(
-            i18n.get_text("config_category_dictionary", lang), dict_services, self.services_vlayout)
+            i18n.get_text("config_category_dictionary", lang), dict_services, self.services_vlayout, default_expanded=False)
 
         self.services_vlayout.addStretch()
 
@@ -1007,6 +1030,7 @@ class Configuration(component_common.ConfigComponentBase):
         def run_search():
             query = self.search_input.text().strip().lower()
             first_match_widget = None
+            matched_services = set()
 
             # n\u1ebfu \u00f4 t\u00ecm ki\u1ebfm r\u1edng -> hi\u1ec3n th\u1ecb l\u1ea1i t\u1ea5t c\u1ea3 services
             if not query:
@@ -1024,10 +1048,15 @@ class Configuration(component_common.ConfigComponentBase):
                 search_blob = self.service_search_index.get(service.name, service.name.lower())
                 if query in search_blob:
                     card_widget.setVisible(True)
+                    matched_services.add(service.name)
                     if first_match_widget is None:
                         first_match_widget = card_widget
                 else:
                     card_widget.setVisible(False)
+
+            for category_services, category_button in category_sections:
+                if any(s.name in matched_services for s in category_services) and not category_button.isChecked():
+                    category_button.setChecked(True)
 
             # cu\u1ed9n \u0111\u1ebfn k\u1ebft qu\u1ea3 \u0111\u1ea7u ti\u00ean n\u1ebfu c\u00f3
             if first_match_widget is not None and self._services_scroll_area is not None:
