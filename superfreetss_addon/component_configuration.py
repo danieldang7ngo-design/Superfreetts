@@ -1018,6 +1018,9 @@ class Configuration(component_common.ConfigComponentBase):
         # 4. About Section (invisible by default, but reachable via TOC)
         self.about_container = aqt.qt.QWidget()
         self.about_layout = aqt.qt.QVBoxLayout(self.about_container)
+        about_logo_widget = aqt.qt.QWidget()
+        about_logo_widget.setLayout(gui_utils.get_superfreetss_label_header(False))
+        self.about_layout.addWidget(about_logo_widget)
         self.about_component.draw(self.about_layout)
         self.about_container.setVisible(False) # We'll swap visibility
         self.global_vlayout.addWidget(self.about_container, 1)
