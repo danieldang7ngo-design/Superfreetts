@@ -1345,8 +1345,17 @@ class Configuration(component_common.ConfigComponentBase):
             }
         """)
 
+        toc_scroll_area = aqt.qt.QScrollArea()
+        toc_scroll_area.setWidgetResizable(True)
+        toc_scroll_area.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
+        toc_scroll_area.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        toc_scroll_area.setWidget(toc_widget)
+        toc_scroll_area.setMinimumWidth(168)
+        toc_scroll_area.setMaximumWidth(220)
+        toc_scroll_area.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
+
         # g\u1eafn TOC v\u00e0 content v\u00e0o layout ch\u00ednh
-        main_hlayout.addWidget(toc_widget)
+        main_hlayout.addWidget(toc_scroll_area)
 
         content_widget = aqt.qt.QWidget()
         content_widget.setLayout(self.global_vlayout)
