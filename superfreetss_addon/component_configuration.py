@@ -46,6 +46,8 @@ class Configuration(component_common.ConfigComponentBase):
         self.service_status_badge_map = {}
         # map service.name -> searchable normalized text
         self.service_search_index = {}
+        # map service.name -> per-service expand/collapse toggle
+        self.service_expand_toggle_map = {}
         self.services_summary_label = None
         # map service.name -> service card widget (dùng cho TOC bên trái)
         self.service_card_map = {}
@@ -737,6 +739,11 @@ class Configuration(component_common.ConfigComponentBase):
 
         # header row with badge
         header_row = aqt.qt.QHBoxLayout()
+        collapse_button = aqt.qt.QToolButton()
+        collapse_button.setCheckable(True)
+        collapse_button.setToolButtonStyle(aqt.qt.Qt.ToolButtonStyle.ToolButtonIconOnly)
+        collapse_button.setStyleSheet("QToolButton { border: none; padding: 0 2px; }")
+        header_row.addWidget(collapse_button)
         header_row.addWidget(get_service_header_label(service))
         
         # Add "Free" badge for free services
@@ -783,6 +790,22 @@ class Configuration(component_common.ConfigComponentBase):
         service_vlayout.setContentsMargins(0, 0, 0, 0)
         service_enabled_checkbox = self.draw_service_options(service, service_vlayout)
         service_stack.setLayout(service_vlayout)
+
+        default_expanded = service_enabled_checkbox.isChecked()
+        collapse_button.setChecked(default_expanded)
+        collapse_button.setArrowType(
+            aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
+        )
+        service_stack.setVisible(default_expanded)
+
+        def on_collapse_toggled(checked):
+            service_stack.setVisible(checked)
+            collapse_button.setArrowType(
+                aqt.qt.Qt.ArrowType.DownArrow if checked else aqt.qt.Qt.ArrowType.RightArrow
+            )
+
+        collapse_button.toggled.connect(on_collapse_toggled)
+        self.service_expand_toggle_map[service.name] = collapse_button
 
         combined_service_vlayout.addWidget(service_stack)
 
@@ -1049,6 +1072,9 @@ class Configuration(component_common.ConfigComponentBase):
                 if query in search_blob:
                     card_widget.setVisible(True)
                     matched_services.add(service.name)
+                    expand_btn = self.service_expand_toggle_map.get(service.name)
+                    if expand_btn is not None and not expand_btn.isChecked():
+                        expand_btn.setChecked(True)
                     if first_match_widget is None:
                         first_match_widget = card_widget
                 else:
