@@ -69,8 +69,9 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self.tabs = aqt.qt.QTabWidget()
         self.tabs.setDocumentMode(True)
         self.tabs.setStyleSheet(
-            "QTabBar::tab { padding: 8px 14px; }"
-            "QTabBar::tab:selected { font-weight: 600; }"
+            "QTabWidget::pane { border: none; background: #F8FBFF; border-radius: 12px; }"
+            "QTabBar::tab { padding: 8px 14px; border: none; border-radius: 10px; background: #DCEBFA; color: #244166; }"
+            "QTabBar::tab:selected { font-weight: 700; background: #FFF4C8; color: #133B5C; }"
         )
 
         # Tab containers are created immediately, but content is lazy-built on demand.

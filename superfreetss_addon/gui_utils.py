@@ -120,14 +120,13 @@ def configure_primary_button(button, min_height=32, min_width=100, font_size=9):
     elegant_style = f"""
         QPushButton {{
             background-color: {constants.COLOR_PRIMARY};
-            border: 1px solid {constants.COLOR_PRIMARY_LIGHT};
-            border-radius: 6px;
+            border: none;
+            border-radius: 12px;
             color: white;
             padding: 4px 16px;
         }}
         QPushButton:hover {{
             background-color: {constants.COLOR_PRIMARY_HOVER};
-            border-color: {constants.COLOR_PRIMARY_HOVER};
         }}
         QPushButton:pressed {{
             background-color: {constants.COLOR_PRIMARY_PRESSED};
@@ -151,20 +150,19 @@ configure_purple_button = configure_primary_button
 
 def configure_secondary_button(button, min_height=30, min_width=80, font_size=9):
     """Configure a secondary outlined button for less prominent actions - Compact version"""
-    secondary_style = """
+    secondary_style = f"""
         QPushButton {
-            background-color: transparent;
-            border: 1px solid {constants.COLOR_BORDER};
-            border-radius: 6px;
-            color: palette(text);
+            background-color: #DCEBFA;
+            border: none;
+            border-radius: 12px;
+            color: #1E3A5F;
             padding: 4px 12px;
         }
         QPushButton:hover {
-            background-color: palette(alternate-base);
-            border-color: {constants.COLOR_SECONDARY};
+            background-color: #C9E1F8;
         }
         QPushButton:pressed {
-            background-color: palette(midlight);
+            background-color: #B7D7F5;
         }
     """
     button.setStyleSheet(secondary_style)
@@ -200,8 +198,6 @@ def get_status_badge(text, bg_color=None, text_color=None):
     # Use Emerald theme for success/positive badges by default
     bg = bg_color or constants.COLOR_ACCENT_LIGHT
     fg = text_color or constants.COLOR_ACCENT_DARK
-    border = constants.COLOR_ACCENT_HOVER if not bg_color else bg
-    
     label.setStyleSheet(f"""
         QLabel {{
             background-color: {bg};
@@ -210,7 +206,6 @@ def get_status_badge(text, bg_color=None, text_color=None):
             padding: 2px 10px;
             font-size: 10px;
             font-weight: 600;
-            border: 1px solid {border};
         }}
     """)
     label.setFixedHeight(20)

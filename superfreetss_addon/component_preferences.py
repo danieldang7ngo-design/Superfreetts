@@ -105,8 +105,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         vlayout.setSpacing(10)
 
         groupbox_style = (
-            "QGroupBox { margin-top: 8px; font-weight: 600; }"
-            "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
+            "QGroupBox { margin-top: 8px; font-weight: 700; border: none; border-radius: 14px; background-color: #EEF4FB; color: #123A63; }"
+            "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 6px; color: #123A63; }"
         )
 
         # nhóm chọn ngôn ngữ giao diện
@@ -187,8 +187,9 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.tabs = aqt.qt.QTabWidget()
         self.tabs.setDocumentMode(True)
         self.tabs.setStyleSheet(
-            "QTabBar::tab { padding: 7px 12px; }"
-            "QTabBar::tab:selected { font-weight: 600; }"
+            "QTabWidget::pane { border: none; background: #F8FBFF; border-radius: 12px; }"
+            "QTabBar::tab { padding: 8px 14px; border: none; border-radius: 10px; background: #DCEBFA; color: #244166; }"
+            "QTabBar::tab:selected { font-weight: 700; background: #FFF4C8; color: #133B5C; }"
         )
         self.tabs.addTab(self.shortcuts.draw(), i18n.get_text("preferences_tab_shortcuts", lang))
         self.tabs.addTab(self.error_handling.draw(), i18n.get_text("preferences_tab_error_handling", lang))

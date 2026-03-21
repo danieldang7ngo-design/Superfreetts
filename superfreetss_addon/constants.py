@@ -187,60 +187,62 @@ RED_STYLESHEET_NIGHTMODE = f'background-color: transparent; color: #CBD5E1; bord
 # Global QSS Stylesheet for dialogs
 STYLESHEET_DIALOG = """
     QDialog {
-        background-color: palette(window);
+        background-color: #F5F9FC;
     }
 
     /* ── Group boxes ── */
     QGroupBox {
         font-weight: bold;
-        border: 1px solid """ + COLOR_BORDER + """;
-        border-radius: 10px;
+        border: none;
+        border-radius: 14px;
         margin-top: 16px;
         padding: 24px 16px 16px 16px;
-        background-color: palette(alternate-base);
+        background-color: #EEF4FB;
     }
     QGroupBox::title {
         subcontrol-origin: margin;
         left: 16px;
         padding: 0 10px;
-        color: """ + COLOR_SECONDARY + """;
+        color: #1E3A5F;
     }
 
     /* ── Tabs ── */
     QTabWidget::pane {
-        border: 1px solid """ + COLOR_BORDER + """;
-        border-radius: 10px;
+        border: none;
+        border-radius: 14px;
+        background-color: #F8FBFF;
     }
     QTabBar::tab {
         padding: 10px 24px;
         margin-right: 4px;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        background-color: palette(button);
-        color: palette(button-text);
-        border: 1px solid """ + COLOR_BORDER + """;
+        border-radius: 10px;
+        background-color: #DCEBFA;
+        color: #244166;
+        border: none;
     }
     QTabBar::tab:selected {
         font-weight: bold;
-        background-color: palette(window);
-        border-bottom-color: transparent;
+        background-color: #FFF4C8;
+        color: #133B5C;
     }
 
     /* ── Input controls ── */
     QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
         padding: 8px 12px;
-        border: 1px solid """ + COLOR_BORDER + """;
-        border-radius: 8px;
-        background-color: palette(base);
+        border: none;
+        border-radius: 10px;
+        background-color: #FFFFFF;
+        color: #0F172A;
     }
-    QLineEdit:focus, QComboBox:focus {
-        border: 2px solid """ + COLOR_ACCENT + """;
+    QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+        background-color: #EAF6FF;
     }
 
     /* ── Buttons ── */
     QPushButton {
         padding: 10px 20px;
-        border-radius: 8px;
+        border-radius: 12px;
+        border: none;
         font-weight: bold;
     }
 
@@ -248,13 +250,12 @@ STYLESHEET_DIALOG = """
     QCheckBox::indicator {
         width: 18px;
         height: 18px;
-        border: 1px solid """ + COLOR_BORDER + """;
-        border-radius: 5px;
-        background-color: palette(base);
+        border: none;
+        border-radius: 6px;
+        background-color: #DDEAF7;
     }
     QCheckBox::indicator:checked {
-        background-color: """ + COLOR_ACCENT + """;
-        border: 1px solid """ + COLOR_ACCENT + """;
+        background-color: #21B5A8;
     }
 """
 

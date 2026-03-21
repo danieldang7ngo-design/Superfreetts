@@ -1208,12 +1208,12 @@ class Configuration(component_common.ConfigComponentBase):
         toc_layout.setSpacing(6)
 
         toc_primary_style = """
-            QPushButton { text-align: left; padding: 4px 8px; border: none; font-weight: 600; border-radius: 4px; }
-            QPushButton:hover { background-color: palette(alternate-base); }
+            QPushButton { text-align: left; padding: 6px 10px; border: none; font-weight: 700; border-radius: 10px; color: #0E3559; background-color: rgba(255, 255, 255, 0.18); }
+            QPushButton:hover { background-color: rgba(255, 244, 200, 0.9); }
         """
         toc_item_style = """
-            QPushButton { text-align: left; padding: 2px 10px; border: none; font-size: 11px; border-radius: 4px; }
-            QPushButton:hover { background-color: palette(alternate-base); }
+            QPushButton { text-align: left; padding: 4px 10px; border: none; font-size: 11px; border-radius: 8px; color: #0E3559; background-color: rgba(255, 255, 255, 0.10); }
+            QPushButton:hover { background-color: rgba(220, 235, 250, 0.85); }
         """
 
         toc_title_label = aqt.qt.QLabel(i18n.get_text("config_toc_title", lang))
@@ -1221,7 +1221,7 @@ class Configuration(component_common.ConfigComponentBase):
         toc_title_font.setBold(True)
         toc_title_font.setPointSize(max(toc_title_font.pointSize(), 10))
         toc_title_label.setFont(toc_title_font)
-        toc_title_label.setStyleSheet("color: palette(mid);")
+        toc_title_label.setStyleSheet("color: #123A63;")
         toc_layout.addWidget(toc_title_label)
 
         # TOC theo nh\u00f3m + t\u1eebng service (Dictionary / TTS)
@@ -1240,8 +1240,8 @@ class Configuration(component_common.ConfigComponentBase):
         toc_service_detail_widgets = []
 
         toc_section_style = (
-            "QToolButton { text-align: left; border: none; padding: 2px 4px; color: palette(mid); font-weight: 600; }"
-            "QToolButton:hover { color: palette(text); }"
+            "QToolButton { text-align: left; border: none; padding: 4px 6px; color: #0E3559; font-weight: 700; border-radius: 8px; background-color: rgba(255, 255, 255, 0.12); }"
+            "QToolButton:hover { background-color: rgba(255, 244, 200, 0.9); }"
         )
 
         def draw_toc_category(title, services, default_expanded=True):
@@ -1341,6 +1341,7 @@ class Configuration(component_common.ConfigComponentBase):
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #20B6C7,
                     stop:1 #22B784);
+                border-radius: 14px;
             }
         """)
 

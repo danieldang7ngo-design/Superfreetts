@@ -32,9 +32,9 @@ class AboutComponent(component_common.ConfigComponentBase):
         info_card = aqt.qt.QFrame()
         info_card.setStyleSheet("""
             QFrame {
-                background-color: palette(window);
-                border: 1px solid palette(mid);
-                border-radius: 12px;
+                background-color: #FFF4C8;
+                border: none;
+                border-radius: 18px;
             }
             QLabel { border: none; }
         """)
@@ -48,12 +48,13 @@ class AboutComponent(component_common.ConfigComponentBase):
         title_font.setPointSize(16)
         title_font.setBold(True)
         title_label.setFont(title_font)
+        title_label.setStyleSheet("color: #123A63;")
         info_layout.addWidget(title_label)
 
         # Description
         desc_label = aqt.qt.QLabel(i18n.get_text("about_description", lang))
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("color: palette(text); line-height: 1.5;")
+        desc_label.setStyleSheet("color: #1E3A5F; line-height: 1.5;")
         info_layout.addWidget(desc_label)
 
         # Grid for details
@@ -62,7 +63,7 @@ class AboutComponent(component_common.ConfigComponentBase):
         
         def add_row(row, label, value, is_link=False, link_text=None):
             lbl = aqt.qt.QLabel(label)
-            lbl.setStyleSheet("color: palette(text); font-weight: bold;")
+            lbl.setStyleSheet("color: #123A63; font-weight: bold;")
             
             if is_link:
                 display_text = link_text if link_text else value
@@ -70,7 +71,7 @@ class AboutComponent(component_common.ConfigComponentBase):
                 val.setOpenExternalLinks(True)
             else:
                 val = aqt.qt.QLabel(value)
-                val.setStyleSheet("color: palette(text);")
+                val.setStyleSheet("color: #1E3A5F;")
             
             details_grid.addWidget(lbl, row, 0)
             details_grid.addWidget(val, row, 1)
@@ -86,9 +87,9 @@ class AboutComponent(component_common.ConfigComponentBase):
         vlayout.addWidget(info_card)
 
         # 3. Footer / Support
-        footer_label = aqt.qt.QLabel("SuperFreeTTS is documentation-driven and build for the community.")
+        footer_label = aqt.qt.QLabel("SuperFreeTTS is documentation-driven and built for the community.")
         footer_label.setAlignment(aqt.qt.Qt.AlignmentFlag.AlignCenter)
-        footer_label.setStyleSheet("color: palette(disabled); font-size: 10px; font-style: italic;")
+        footer_label.setStyleSheet("color: #2C5B87; font-size: 10px; font-style: italic;")
         vlayout.addWidget(footer_label)
 
         vlayout.addStretch()
