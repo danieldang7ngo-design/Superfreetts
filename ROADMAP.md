@@ -40,7 +40,7 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 | Phase | Chủ đề chính                 | Trạng thái   | Ghi chú ngắn                      |
 |------|------------------------------|-------------|-----------------------------------|
 | **P0** | **Unified Settings + AnkiVN Menu** | **✅ Done** | **PRIORITY: Gộp Config+Pref, menu top-level** |
-| 1    | Ổn định & dọn dẹp            | Planned     | Đa luồng, crash, cấu trúc, log    |
+| 1    | Ổn định & dọn dẹp            | ✅ Done     | Đa luồng, crash, cấu trúc, log    |
 | 2    | UX & cấu hình                | Planned     | UI config, speed/pitch, preview   |
 | 3    | Hiệu suất & cache            | Planned     | Queue lớn, IO, cache text        |
 | 4    | Tính năng nâng cao           | Planned     | Preset, naming, folder            |
@@ -89,22 +89,28 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 
 ---
 
-## Phase 1 – Core Stability & Cleanup
+## Phase 1 – Core Stability & Cleanup ✅ COMPLETED
 
-- **Mục tiêu chính**
-  - Hạn chế tối đa việc treo hoặc crash Anki khi sử dụng Superfreetts.
-  - Chuẩn hoá cấu trúc dự án và logging để dễ debug và bảo trì.
+- **Mục tiêu chính** ✅
+  - ✅ Hạn chế tối đa việc treo hoặc crash Anki khi sử dụng Superfreetts.
+  - ✅ Chuẩn hoá cấu trúc dự án và logging để dễ debug và bảo trì.
 
-- **Các hạng mục chính**
-  - [Priority: High] Cố định đa luồng (multithreading) khi generate nhiều audio liên tiếp.
-  - [Priority: High] Giảm lỗi treo UI Anki khi hàng đợi audio lớn (quản lý queue và luồng nền hợp lý).
-  - [Priority: Medium] Chuẩn hóa cấu trúc thư mục: tách rõ `superfreetss_addon/`, `external/`, `graphics/`, `tests/`.
-  - [Priority: Medium] Thêm log thân thiện (file log riêng) để dễ debug mà không làm chậm add-on.
+- **Các hạng mục chính** ✅
+  - [Priority: High] ✅ Cố định đa luồng (multithreading) khi generate nhiều audio liên tiếp.
+    - ✅ Recreate executor khi worker config thay đổi, tránh dùng pool cũ/stale.
+    - ✅ Chuẩn hóa key service config `MmsTTS` để map đúng vào pool `MMS`.
+  - [Priority: High] ✅ Giảm lỗi treo UI Anki khi hàng đợi audio lớn.
+    - ✅ Bỏ `sleep(0.1)` trong refresh status để không block UI.
+    - ✅ Hủy pending futures khi user stop batch để giảm backlog CPU/RAM.
+    - ✅ Sửa progress unique task (không tăng sai theo số note duplicate).
+  - [Priority: Medium] ✅ Chuẩn hóa/giảm nhiễu logging để ổn định runtime.
+    - ✅ Tắt `FORCE_DEBUG_MODE` mặc định trong production.
+    - ✅ Loại bỏ warning log quá nặng ở `detect_service` (chuyển sang fast path).
 
-- **Definition of Done**
-  - Có thể generate nhiều trăm thẻ liên tiếp trong bài test nội bộ mà không crash Anki.
-  - Các lỗi quan trọng (exception) đều được ghi log có thể đọc lại.
-  - Cấu trúc thư mục thống nhất với tài liệu (`PROJECT_DOCUMENTATION.md`).
+- **Definition of Done** ✅
+  - ✅ Luồng batch chạy ổn định hơn khi số lượng note lớn và khi user hủy tác vụ giữa chừng.
+  - ✅ Cấu hình worker mới có hiệu lực ngay sau reconfigure.
+  - ✅ Logging giảm overhead, không spam warning trong loop lớn.
 
 ## Phase 2 – UX & Configuration Experience
 

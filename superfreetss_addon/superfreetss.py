@@ -69,7 +69,7 @@ class SuperFreeTTS():
                 'PiperTTS': 2,
                 'KokoroTTS': 1,
                 'EdgeTTS': 3,
-                'MMS': 1,
+                'MmsTTS': 1,
             }
             
             # Fallback to preferences if available (backward compatibility)
@@ -77,7 +77,7 @@ class SuperFreeTTS():
                 'PiperTTS': getattr(prefs, 'piper_workers', 2),
                 'KokoroTTS': getattr(prefs, 'kokoro_workers', 1),
                 'EdgeTTS': getattr(prefs, 'edgetts_workers', 3),
-                'MMS': getattr(prefs, 'mms_workers', 1),
+                'MmsTTS': getattr(prefs, 'mms_workers', 1),
             }
             
             # Service name mappings for executor pool naming
@@ -85,7 +85,7 @@ class SuperFreeTTS():
                 'PiperTTS': 'Piper',
                 'KokoroTTS': 'Kokoro',
                 'EdgeTTS': 'EdgeTTS',
-                'MMS': 'MMS',
+                'MmsTTS': 'MMS',
             }
             
             # Build engine config from service configurations
@@ -164,15 +164,12 @@ class SuperFreeTTS():
 
     def _set_batch_status_with_ui_refresh(self, batch_status, message):
         """Set batch status message and allow UI to refresh by processing Qt events."""
-        import time
         batch_status.set_status_message(message)
         # Process Qt events to allow UI to update with the status message
         try:
             aqt.qt.QApplication.instance().processEvents()
         except Exception as e:
             logger.debug(f'Error processing Qt events: {e}')
-        # Add a small delay so user can see the message before next phase
-        time.sleep(0.1)
 
     def process_batch_audio(self, note_id_list, batch: config_models.BatchConfig, batch_status, anki_collection):
         import time
@@ -182,7 +179,7 @@ class SuperFreeTTS():
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
 
         # Initialize executor (already created in __init__, just get reference)
-        logger.info(f'[BATCH] Using unified batch executor')
+        logger.info(f'[BATCH] Using multi-engine batch executor')
 
         # Simple checkpoint management
         batch_name = batch.name or f"batch_{int(time.time())}"
@@ -288,8 +285,8 @@ class SuperFreeTTS():
 
                 # 3. Parallel Generation with unified executor
                 prefs = self.get_preferences()
-                max_workers = min(prefs.batch_concurrency, 8)  # Max 8 workers
-                logger.info(f"[BATCH] Parallel generation: {max_workers} workers")
+                max_workers = max(1, min(prefs.batch_concurrency, cpu_utils.CPUInfo.get_max_workers()))
+                logger.info(f"[BATCH] Parallel generation requested: {max_workers} workers (engine pools may override)")
 
                 batch_status.total_unique_tasks = unique_count
                 batch_status.unique_tasks_completed = 0
@@ -481,6 +478,10 @@ class SuperFreeTTS():
         # Collect results as they complete (from any pool)
         for future in concurrent.futures.as_completed(future_to_info):
             if not batch_status.must_continue:
+                # Cancel pending work to reduce CPU/memory pressure when user stops batch.
+                for pending_future in future_to_info:
+                    if not pending_future.done():
+                        pending_future.cancel()
                 break
             
             dedup_key, task_data, task_indices, service = future_to_info[future]
@@ -492,6 +493,11 @@ class SuperFreeTTS():
             except Exception as e:
                 logger.error(f"[BATCH] Audio generation failed ({service}): {e}")
                 audio_cache[dedup_key] = None
+
+            # Mark one unique task completed.
+            completed_count += 1
+            batch_status.unique_tasks_completed = completed_count
+            batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
 
             # Update progress for all notes using this combination
             is_successful = audio_cache[dedup_key] is not None
@@ -510,9 +516,6 @@ class SuperFreeTTS():
                         ctx.set_status(constants.BatchNoteStatus.Error)
                         ctx.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
                 
-                completed_count += 1
-                batch_status.unique_tasks_completed = completed_count
-                batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
                 batch_status.notify_change(note_id)
 
         return audio_cache
@@ -1362,7 +1365,7 @@ class SuperFreeTTS():
                 'PiperTTS': 'Piper',
                 'KokoroTTS': 'Kokoro',
                 'EdgeTTS': 'EdgeTTS',
-                'MMS': 'MMS',
+                'MmsTTS': 'MMS',
             }
             
             engine_config = {}

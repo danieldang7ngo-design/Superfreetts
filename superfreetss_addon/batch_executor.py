@@ -428,81 +428,37 @@ class MultiEngineExecutor:
         Returns service name or 'default'
         """
         try:
-            # Try to get voice info from batch
             batch = task.get('batch')
-            logger.warning(f"[BATCH] detect_service: batch={batch}, type={type(batch)}")
-            
-            if batch and hasattr(batch, 'voice_selection'):
-                voice_sel = batch.voice_selection
-                logger.warning(f"[BATCH] detect_service: voice_sel={voice_sel}, type={type(voice_sel)}")
-                
-                # Get voice (handles different selection modes)
-                voice = None
-                
-                # Try direct attributes first (for single voice selections)
-                if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
-                    voice = voice_sel._voice_with_options
-                    logger.warning(f"[BATCH] detect_service: Found voice via _voice_with_options: {voice}")
-                elif hasattr(voice_sel, 'voice') and voice_sel.voice:
-                    voice = voice_sel.voice
-                    logger.warning(f"[BATCH] detect_service: Found voice via voice: {voice}")
-                
-                # Try to get voice from voice list (for random/sequential selection modes)
-                if not voice and hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
-                    voice = voice_sel._voice_list[0]
-                    logger.warning(f"[BATCH] detect_service: Found first voice from _voice_list: {voice}")
-                elif not voice and hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
-                    voice = voice_sel.voice_list[0]
-                    logger.warning(f"[BATCH] detect_service: Found first voice from voice_list: {voice}")
-                
-                logger.warning(f"[BATCH] detect_service: voice={voice}, type={type(voice)}")
-                
-                # Try multiple ways to get service name from the voice object
-                if voice:
-                    # Method 1: Check voice.voice_id.service (VoiceWithOptionsRandom/Sequential case)
-                    if hasattr(voice, 'voice_id') and hasattr(voice.voice_id, 'service'):
-                        service = voice.voice_id.service
-                        logger.info(f"[BATCH] Detected service via voice.voice_id.service: {service}")
-                        return service
-                    
-                    # Method 2: Direct service attribute
-                    if hasattr(voice, 'service'):
-                        service = voice.service
-                        logger.info(f"[BATCH] Detected service via voice.service: {service}")
-                        return service
-                    
-                    # Method 3: Check voice.voice.service (nested)
-                    if hasattr(voice, 'voice') and hasattr(voice.voice, 'service'):
-                        service = voice.voice.service
-                        logger.info(f"[BATCH] Detected service via voice.voice.service: {service}")
-                        return service
-                    
-                    # Method 3: Try engine or provider field
-                    for attr in ['engine', 'provider', 'tts_engine', 'service_name']:
-                        if hasattr(voice, attr):
-                            service = getattr(voice, attr)
-                            logger.info(f"[BATCH] Detected service via voice.{attr}: {service}")
-                            return service
-                    
-                    # Method 4: Check all attributes
-                    all_attrs = dir(voice)
-                    logger.warning(f"[BATCH] Voice object type={type(voice)}, str={voice}")
-                    logger.warning(f"[BATCH] Voice object ALL attributes: {all_attrs}")
-                    
-                    # Method 5: Check __dict__ directly
-                    if hasattr(voice, '__dict__'):
-                        logger.warning(f"[BATCH] Voice object __dict__: {voice.__dict__}")
-                    else:
-                        logger.warning(f"[BATCH] Voice has no __dict__")
-                else:
-                    logger.warning(f"[BATCH] detect_service: voice is None/empty")
-            else:
-                logger.warning(f"[BATCH] detect_service: batch={batch}, has voice_selection={hasattr(batch, 'voice_selection') if batch else 'N/A'}")
-                    
+            if not batch or not hasattr(batch, 'voice_selection'):
+                return 'default'
+
+            voice_sel = batch.voice_selection
+            voice = None
+
+            if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
+                voice = voice_sel._voice_with_options
+            elif hasattr(voice_sel, 'voice') and voice_sel.voice:
+                voice = voice_sel.voice
+            elif hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
+                voice = voice_sel._voice_list[0]
+            elif hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
+                voice = voice_sel.voice_list[0]
+
+            if not voice:
+                return 'default'
+
+            if hasattr(voice, 'voice_id') and hasattr(voice.voice_id, 'service'):
+                return voice.voice_id.service
+            if hasattr(voice, 'service'):
+                return voice.service
+            if hasattr(voice, 'voice') and hasattr(voice.voice, 'service'):
+                return voice.voice.service
+            for attr in ['engine', 'provider', 'tts_engine', 'service_name']:
+                if hasattr(voice, attr):
+                    return getattr(voice, attr)
         except Exception as e:
-            logger.error(f"[BATCH] Failed to detect service: {e}")
-        
-        logger.warning(f"[BATCH] Could not detect service, using 'default'")
+            logger.debug(f"[BATCH] Failed to detect service: {e}")
+
         return 'default'
     
     def execute(
@@ -685,6 +641,10 @@ def get_multi_engine_executor(engine_config: Dict[str, int] = None) -> MultiEngi
     """
     global _multi_executor
     if _multi_executor is None:
+        _multi_executor = MultiEngineExecutor(engine_config=engine_config)
+    elif engine_config is not None and _multi_executor.engine_config != engine_config:
+        # Recreate executor when worker configuration changes.
+        _multi_executor.shutdown(wait=False)
         _multi_executor = MultiEngineExecutor(engine_config=engine_config)
     return _multi_executor
 
