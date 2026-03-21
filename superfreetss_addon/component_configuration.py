@@ -675,13 +675,13 @@ class Configuration(component_common.ConfigComponentBase):
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
         Apply subtle card styling for Services list.
-        - enabled = True: light accent tint with soft 1px border
+        - enabled = True: neutral background and soft border
         - enabled = False: neutral border and transparent background
         """
         if enabled:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
-                    background-color: {constants.COLOR_ACCENT_LIGHT}; 
+                    background-color: palette(window); 
                     border: 1px solid {constants.COLOR_BORDER}; 
                     border-radius: 12px;
                 }}"""
