@@ -150,7 +150,6 @@ class Configuration(component_common.ConfigComponentBase):
                     padding: 2px 10px;
                     font-size: 10px;
                     font-weight: 600;
-                    border: 1px solid {bg};
                 }}
             """)
 
@@ -615,7 +614,7 @@ class Configuration(component_common.ConfigComponentBase):
         advanced_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: palette(alternate-base);
-                border: 1px solid {constants.COLOR_BORDER};
+                border: none;
                 border-radius: 6px;
                 padding: 6px 12px;
                 color: palette(text);
@@ -623,7 +622,6 @@ class Configuration(component_common.ConfigComponentBase):
             }}
             QPushButton:hover {{
                 background-color: palette(base);
-                border: 1px solid {constants.COLOR_ACCENT};
             }}
             QPushButton:pressed {{
                 background-color: palette(button);
@@ -631,7 +629,6 @@ class Configuration(component_common.ConfigComponentBase):
             QPushButton:checked {{
                 background-color: {constants.COLOR_ACCENT_LIGHT};
                 color: {constants.COLOR_ACCENT_DARK};
-                border: 1px solid {constants.COLOR_ACCENT};
             }}
         """)
         
@@ -814,7 +811,7 @@ class Configuration(component_common.ConfigComponentBase):
         setup_action_button.setMinimumWidth(80)
         setup_action_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Fixed, aqt.qt.QSizePolicy.Policy.Fixed)
         setup_action_button.setStyleSheet(
-            "QPushButton { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; border-radius: 12px; padding: 2px 10px; font-weight: 700; }"
+            "QPushButton { background-color: #FEF3C7; color: #92400E; border: none; border-radius: 12px; padding: 2px 10px; font-weight: 700; }"
             "QPushButton:hover { background-color: #FDE68A; }"
         )
         header_row.addSpacing(6)
@@ -853,12 +850,12 @@ class Configuration(component_common.ConfigComponentBase):
             label = i18n.get_text("generic_disable", lang) if is_enabled else i18n.get_text("generic_enable", lang)
             if is_enabled:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #F7F3E7; color: #0B3D48; border: 2px solid #0B3D48; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
+                    "QPushButton { background-color: #F7F3E7; color: #0B3D48; border: none; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
                     "QPushButton:hover { background-color: #FFF7E8; }"
                 )
             else:
                 enable_state_button.setStyleSheet(
-                    "QPushButton { background-color: #A9C3E6; color: #1E3A5F; border: 2px solid #1E3A5F; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
+                    "QPushButton { background-color: #A9C3E6; color: #1E3A5F; border: none; border-radius: 14px; padding: 2px 12px; font-weight: 800; }"
                     "QPushButton:hover { background-color: #BED2EC; }"
                 )
             enable_state_button.setText(label)
@@ -1034,7 +1031,7 @@ class Configuration(component_common.ConfigComponentBase):
             group_box = aqt.qt.QGroupBox(title)
             group_box.setCheckable(False)
             group_box.setStyleSheet(
-                "QGroupBox { margin-top: 8px; font-weight: 600; }"
+                "QGroupBox { margin-top: 8px; font-weight: 600; border: none; }"
                 "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
             )
 
