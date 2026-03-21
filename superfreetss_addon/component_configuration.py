@@ -674,24 +674,26 @@ class Configuration(component_common.ConfigComponentBase):
 
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
-        Apply subtle card styling for Services list.
-        - enabled = True: neutral background and soft border
-        - enabled = False: neutral border and transparent background
+        Apply a cleaner modern card style for Services list.
+        - enabled = True: subtle background with accent rail on the left
+        - enabled = False: neutral background with muted rail
         """
         if enabled:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
-                    background-color: palette(window); 
-                    border: 1px solid {constants.COLOR_BORDER}; 
-                    border-radius: 12px;
+                    background-color: palette(base);
+                    border: 1px solid #E5EAF0;
+                    border-left: 4px solid {constants.COLOR_ACCENT};
+                    border-radius: 10px;
                 }}"""
             )
         else:
             service_card.setStyleSheet(
                 f"""QFrame {{ 
-                    background-color: transparent; 
-                    border: 1px solid {constants.COLOR_BORDER}; 
-                    border-radius: 12px;
+                    background-color: palette(window);
+                    border: 1px solid #EDF1F5;
+                    border-left: 4px solid #CBD5E1;
+                    border-radius: 10px;
                 }}"""
             )
 
