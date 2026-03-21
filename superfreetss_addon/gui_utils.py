@@ -150,7 +150,7 @@ configure_purple_button = configure_primary_button
 
 def configure_secondary_button(button, min_height=30, min_width=80, font_size=9):
     """Configure a secondary outlined button for less prominent actions - Compact version"""
-    secondary_style = f"""
+    secondary_style = """
         QPushButton {
             background-color: #DCEBFA;
             border: none;
