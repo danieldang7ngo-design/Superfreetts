@@ -114,6 +114,14 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 
 ## Phase 2 – UX & Configuration Experience 🚧 IN PROGRESS
 
+**Progress updates (completed in current implementation):**
+- ✅ Reduced settings open jitter by lazy-rendering non-active tabs in unified settings.
+- ✅ Added unsaved-change confirmation + save success toast in unified settings dialog.
+- ✅ Added per-service readiness badges, smarter services search index, and debounced search filtering.
+- ✅ Added inline validation hints for required key/token fields and file/folder paths.
+- ✅ Added top-level services summary line (Ready / Needs setup / Disabled).
+- ✅ Improved settings visual rhythm: consistent margins/spacing and clearer tab hierarchy across Services + Preferences.
+
 - **Mục tiêu chính**
   - Giúp người dùng cấu hình và sử dụng add-on một cách trực quan, ít phải đoán.
   - Cung cấp feedback rõ ràng về trạng thái xử lý (đang chạy, xong, lỗi).

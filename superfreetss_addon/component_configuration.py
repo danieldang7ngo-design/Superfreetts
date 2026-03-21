@@ -824,6 +824,8 @@ class Configuration(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
         # layout gốc cho phần nội dung bên phải (Content Panel)
         self.global_vlayout = aqt.qt.QVBoxLayout()
+        self.global_vlayout.setContentsMargins(16, 12, 16, 10)
+        self.global_vlayout.setSpacing(10)
 
         def make_scroll_fn(target_widget):
             def _scroll():
@@ -856,21 +858,25 @@ class Configuration(component_common.ConfigComponentBase):
         header_label = aqt.qt.QLabel(i18n.get_text("services_header_title", lang))
         header_font = header_label.font()
         header_font.setBold(True)
+        header_font.setPointSize(max(header_font.pointSize(), 12))
         header_label.setFont(header_font)
         self.global_vlayout.addWidget(header_label)
         # mô tả ngắn cho người dùng mới
         services_description_label = aqt.qt.QLabel(i18n.get_text("services_header_description", lang))
         services_description_label.setWordWrap(True)
+        services_description_label.setStyleSheet("color: palette(mid);")
         self.global_vlayout.addWidget(services_description_label)
 
         self.services_summary_label = aqt.qt.QLabel()
         self.services_summary_label.setWordWrap(True)
+        self.services_summary_label.setStyleSheet("color: palette(dark);")
         self.global_vlayout.addWidget(self.services_summary_label)
 
         # thanh tìm kiếm dịch vụ (bên khu vực Dịch vụ TTS, không nằm ở TOC)
         search_hlayout = aqt.qt.QHBoxLayout()
         self.search_input = aqt.qt.QLineEdit()
         self.search_input.setPlaceholderText(i18n.get_text("config_search_placeholder", lang))
+        self.search_input.setMinimumHeight(34)
         self.search_debounce_timer = aqt.qt.QTimer(self.dialog)
         self.search_debounce_timer.setSingleShot(True)
         search_hlayout.addWidget(self.search_input)
@@ -883,7 +889,7 @@ class Configuration(component_common.ConfigComponentBase):
         services_scroll_area.setAlignment(aqt.qt.Qt.AlignmentFlag.AlignTop) # Align top
         services_widget = aqt.qt.QWidget()
         self.services_vlayout = aqt.qt.QVBoxLayout(services_widget)
-        self.services_vlayout.setSpacing(20) # Spacing between categories
+        self.services_vlayout.setSpacing(14)
 
         # Split services
         tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
@@ -898,6 +904,7 @@ class Configuration(component_common.ConfigComponentBase):
             group_box.setCheckable(False)
 
             group_layout = aqt.qt.QVBoxLayout()
+            group_layout.setContentsMargins(10, 10, 10, 8)
             group_layout.setSpacing(8)
             
             # Toggle All Checkbox
@@ -1123,6 +1130,7 @@ class Configuration(component_common.ConfigComponentBase):
             self.search_input.setVisible(False)
             header_label.setVisible(False)
             services_description_label.setVisible(False)
+            self.services_summary_label.setVisible(False)
 
         def show_services():
             self._services_scroll_area.setVisible(True)
@@ -1131,6 +1139,7 @@ class Configuration(component_common.ConfigComponentBase):
             self.search_input.setVisible(True)
             header_label.setVisible(True)
             services_description_label.setVisible(True)
+            self.services_summary_label.setVisible(True)
 
         btn_about.pressed.connect(show_about)
         btn_all.pressed.connect(show_services)

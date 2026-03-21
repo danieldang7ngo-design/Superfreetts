@@ -101,6 +101,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
     def draw(self, layout):
         lang = self.hypertts.get_ui_language()
         vlayout = aqt.qt.QVBoxLayout()
+        vlayout.setContentsMargins(16, 12, 16, 8)
+        vlayout.setSpacing(10)
 
         # dialog header 
         # =============
@@ -114,6 +116,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # nhóm chọn ngôn ngữ giao diện
         self.language_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_language_title", lang))
         language_layout = aqt.qt.QVBoxLayout()
+        language_layout.setContentsMargins(10, 10, 10, 8)
+        language_layout.setSpacing(8)
         self.language_label = aqt.qt.QLabel(i18n.get_text("preferences_label_interface_language", lang))
         language_layout.addWidget(self.language_label)
 
@@ -129,6 +133,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # Cache Management Group
         self.cache_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_cache_title", lang))
         cache_layout = aqt.qt.QVBoxLayout()
+        cache_layout.setContentsMargins(10, 10, 10, 8)
+        cache_layout.setSpacing(8)
         self.cache_label = aqt.qt.QLabel(i18n.get_text("preferences_cache_label", lang))
         
         h_cache_layout = aqt.qt.QHBoxLayout()
@@ -138,6 +144,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_cache_layout.addStretch()
         
         cache_layout.addLayout(h_cache_layout)
+        self.cache_helper_label.setStyleSheet("color: palette(mid);")
         cache_layout.addWidget(self.cache_helper_label)
         self.cache_groupbox.setLayout(cache_layout)
         vlayout.addWidget(self.cache_groupbox)
@@ -145,6 +152,8 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # Performance Group
         self.perf_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_performance_title", lang))
         perf_layout = aqt.qt.QVBoxLayout()
+        perf_layout.setContentsMargins(10, 10, 10, 8)
+        perf_layout.setSpacing(8)
         self.perf_label = aqt.qt.QLabel(i18n.get_text("preferences_batch_concurrency_label", lang))
         
         h_perf_layout = aqt.qt.QHBoxLayout()
@@ -161,6 +170,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_sherpa_pool_layout.addWidget(self.sherpa_max_processes_spinbox)
         h_sherpa_pool_layout.addStretch()
         perf_layout.addLayout(h_sherpa_pool_layout)
+        self.perf_helper_label.setStyleSheet("color: palette(mid);")
         perf_layout.addWidget(self.perf_helper_label)
 
         self.perf_groupbox.setLayout(perf_layout)
@@ -172,8 +182,14 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         # ====================
 
         self.tabs = aqt.qt.QTabWidget()
+        self.tabs.setDocumentMode(True)
+        self.tabs.setStyleSheet(
+            "QTabBar::tab { padding: 7px 12px; }"
+            "QTabBar::tab:selected { font-weight: 600; }"
+        )
         self.tabs.addTab(self.shortcuts.draw(), i18n.get_text("preferences_tab_shortcuts", lang))
         self.tabs.addTab(self.error_handling.draw(), i18n.get_text("preferences_tab_error_handling", lang))
+        vlayout.addSpacing(4)
         layout.addWidget(self.tabs)
  
         # Finally, set initial label text

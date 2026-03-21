@@ -62,17 +62,28 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
 
         # Main layout
         main_layout = aqt.qt.QVBoxLayout(self)
+        main_layout.setContentsMargins(16, 14, 16, 14)
+        main_layout.setSpacing(12)
         
         # Tab widget
         self.tabs = aqt.qt.QTabWidget()
+        self.tabs.setDocumentMode(True)
+        self.tabs.setStyleSheet(
+            "QTabBar::tab { padding: 8px 14px; }"
+            "QTabBar::tab:selected { font-weight: 600; }"
+        )
 
         # Tab containers are created immediately, but content is lazy-built on demand.
         self.services_container = aqt.qt.QWidget()
         self.services_layout = aqt.qt.QVBoxLayout(self.services_container)
+        self.services_layout.setContentsMargins(0, 2, 0, 0)
+        self.services_layout.setSpacing(0)
         self.tabs.addTab(self.services_container, i18n.get_text("tab_services", lang))
 
         self.prefs_container = aqt.qt.QWidget()
         self.prefs_layout = aqt.qt.QVBoxLayout(self.prefs_container)
+        self.prefs_layout.setContentsMargins(0, 2, 0, 0)
+        self.prefs_layout.setSpacing(0)
         self.tabs.addTab(self.prefs_container, i18n.get_text("tab_preferences", lang))
 
         # Build only the initial tab to keep open-time responsive.
@@ -87,6 +98,8 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         
         # Button layout
         button_layout = aqt.qt.QHBoxLayout()
+        button_layout.setContentsMargins(0, 6, 0, 0)
+        button_layout.setSpacing(8)
         
         save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
