@@ -24,9 +24,10 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
     Uses QTabWidget to separate the two sections.
     """
     
-    def __init__(self, hypertts, parent=None):
+    def __init__(self, hypertts, initial_tab=0, parent=None):
         super().__init__(parent)
         self.hypertts = hypertts
+        self.initial_tab = 0 if initial_tab not in (0, 1) else initial_tab
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(self._get_stylesheet())
         
@@ -37,6 +38,8 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self.prefs_component = component_preferences.ComponentPreferences(hypertts, self)
         self.prefs_component.load_model(hypertts.get_preferences())
         
+        self._services_built = False
+        self._preferences_built = False
         self.setupUi()
         self.connectSignals()
     
@@ -50,24 +53,32 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         lang = self.hypertts.get_ui_language()
         self.setWindowTitle(i18n.get_text("unified_settings_title", lang))
         self.setMinimumSize(500, 400)
-        
+
+        # Reduce visible relayout/flicker while composing heavy UI.
+        self.setUpdatesEnabled(False)
+
         # Main layout
         main_layout = aqt.qt.QVBoxLayout(self)
         
         # Tab widget
         self.tabs = aqt.qt.QTabWidget()
-        
-        # Tab 1: Services (Configuration)
-        services_container = aqt.qt.QWidget()
-        services_layout = aqt.qt.QVBoxLayout(services_container)
-        self.config_component.draw(services_layout)
-        self.tabs.addTab(services_container, i18n.get_text("tab_services", lang))
-        
-        # Tab 2: Preferences
-        prefs_container = aqt.qt.QWidget()
-        prefs_layout = aqt.qt.QVBoxLayout(prefs_container)
-        self.prefs_component.draw(prefs_layout)
-        self.tabs.addTab(prefs_container, i18n.get_text("tab_preferences", lang))
+
+        # Tab containers are created immediately, but content is lazy-built on demand.
+        self.services_container = aqt.qt.QWidget()
+        self.services_layout = aqt.qt.QVBoxLayout(self.services_container)
+        self.tabs.addTab(self.services_container, i18n.get_text("tab_services", lang))
+
+        self.prefs_container = aqt.qt.QWidget()
+        self.prefs_layout = aqt.qt.QVBoxLayout(self.prefs_container)
+        self.tabs.addTab(self.prefs_container, i18n.get_text("tab_preferences", lang))
+
+        # Build only the initial tab to keep open-time responsive.
+        if self.initial_tab == 0:
+            self._build_services_tab()
+        else:
+            self._build_preferences_tab()
+
+        self.tabs.setCurrentIndex(self.initial_tab)
         
         main_layout.addWidget(self.tabs)
         
@@ -85,13 +96,32 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         button_layout.addWidget(cancel_button)
         
         main_layout.addLayout(button_layout)
-        
-        self.setLayout(main_layout)
+
+        self.setUpdatesEnabled(True)
         self.resize(550, 600)
+
+    def _build_services_tab(self):
+        if self._services_built:
+            return
+        self.config_component.draw(self.services_layout)
+        self._services_built = True
+
+    def _build_preferences_tab(self):
+        if self._preferences_built:
+            return
+        self.prefs_component.draw(self.prefs_layout)
+        self._preferences_built = True
     
     def connectSignals(self):
         """Hook language change to update tab/dialog labels."""
-        pass  # Will be wired via profile_did_open hook in gui.py if needed
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _on_tab_changed(self, index):
+        # Lazy-build the non-initial tab only when user actually visits it.
+        if index == 0:
+            self._build_services_tab()
+        elif index == 1:
+            self._build_preferences_tab()
     
     def save_and_close(self):
         """

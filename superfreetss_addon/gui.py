@@ -148,8 +148,7 @@ def launch_unified_dialog(hypertts, initial_tab=0):
     """
     with hypertts.error_manager.get_single_action_context('Launching Unified Settings Dialog'):
         logger.info(f'launch_unified_dialog, initial_tab={initial_tab}')
-        dialog = component_unified_settings.UnifiedSettingsDialog(hypertts, aqt.mw)
-        dialog.tabs.setCurrentIndex(initial_tab)
+        dialog = component_unified_settings.UnifiedSettingsDialog(hypertts, initial_tab=initial_tab, parent=aqt.mw)
         dialog.exec()
 
 def launch_realtime_dialog_browser(hypertts, note_id_list):
