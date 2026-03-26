@@ -113,9 +113,21 @@ class ComponentRealtime(component_common.ConfigComponentBase):
         # apply button
         self.apply_button.setText(i18n.get_text("realtime_button_apply_to_note", lang))
         hlayout.addWidget(self.apply_button)
+        
         # cancel button
         self.cancel_button.setText(i18n.get_text("button_cancel", lang))
-        self.cancel_button.setStyleSheet(self.hypertts.anki_utils.get_red_stylesheet())
+        self.cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #5F6368;
+                border: 1px solid #DADCE0;
+            }
+            QPushButton:hover {
+                background-color: #FCE8E6;
+                color: #C5221F;
+                border: 1px solid #F8D8D8;
+            }
+        """)
         hlayout.addWidget(self.cancel_button)
         self.vlayout.addLayout(hlayout)
 
@@ -131,12 +143,28 @@ class ComponentRealtime(component_common.ConfigComponentBase):
 
     def disable_apply_button(self):
         self.apply_button.setEnabled(False)
-        self.apply_button.setStyleSheet(None)
+        self.apply_button.setStyleSheet("""
+            QPushButton {
+                background-color: #E0E0E0;
+                color: #9E9E9E;
+                border: none;
+            }
+        """)
 
     def enable_apply_button(self):
         logger.info('enable_apply_button')
         self.apply_button.setEnabled(True)
-        self.apply_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+        self.apply_button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1565C0, stop:1 #0D47A1);
+                color: white;
+                border: none;
+                font-size: 10pt;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1976D2, stop:1 #1565C0);
+            }
+        """)
 
     def apply_button_pressed(self):
         with self.hypertts.error_manager.get_single_action_context('Applying Realtime Audio to Card'):

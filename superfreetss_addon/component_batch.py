@@ -231,17 +231,39 @@ class ComponentBatch(component_common.ConfigComponentBase):
     def enable_save_profile_button(self):
         logger.info('enable_save_profile_button')
         self.profile_save_button.setEnabled(True)
-        if self.editor_mode == False:
-            # Re-apply secondary style but ensure it looks enabled/highlighted if needed, 
-            # though for now we just stick to standard secondary. 
-            # Ideally we'd have a 'dirty' state style, but let's keep it simple.
-            gui_utils.configure_secondary_button(self.profile_save_button, min_height=30, min_width=60, font_size=10)
-            self.profile_save_button.setStyleSheet(self.profile_save_button.styleSheet() + "QPushButton { border: 1px solid " + constants.COLOR_ACCENT + "; }")
+        self.profile_save_button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #E53935, stop:1 #C62828);
+                color: white;
+                border: none;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 14px;
+                min-height: 30px;
+                min-width: 60px;
+                font-size: 10pt;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #EF5350, stop:1 #D32F2F);
+            }
+        """)
 
     def disable_save_profile_button(self):
         logger.info('disable_save_profile_button')
         self.profile_save_button.setEnabled(False)
-        self.profile_save_button.setStyleSheet(None)
+        self.profile_save_button.setStyleSheet("""
+            QPushButton {
+                background-color: #E0E0E0;
+                color: #9E9E9E;
+                border: none;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 14px;
+                min-height: 30px;
+                min-width: 60px;
+                font-size: 10pt;
+            }
+        """)
 
     def enable_delete_profile_button(self):
         self.profile_delete_button.setEnabled(True)
@@ -273,8 +295,9 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         # Draw the full source component (creates all widgets + wires events)
         self.source.draw()
-        # Re-use the source_field_combobox and use_selection_checkbox from the source component
+        # Re-use the source_field_combobox, error label, and use_selection_checkbox from the source component
         source_vlayout.addWidget(self.source.source_field_combobox)
+        source_vlayout.addWidget(self.source.source_field_error_label)
         source_vlayout.addWidget(self.source.use_selection_checkbox)
         source_group.setLayout(source_vlayout)
         main_layout.addWidget(source_group)
@@ -287,6 +310,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         # Draw the full target component (creates all widgets + wires events)
         self.target.draw()
         target_vlayout.addWidget(self.target.target_field_combobox)
+        target_vlayout.addWidget(self.target.target_field_error_label)
         target_group.setLayout(target_vlayout)
         main_layout.addWidget(target_group)
 

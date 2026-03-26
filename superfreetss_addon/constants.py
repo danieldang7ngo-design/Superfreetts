@@ -264,7 +264,54 @@ STYLESHEET_DIALOG = """
     QPushButton {
         padding: 10px 20px;
         border-radius: 12px;
+        border: 1px solid #B0BEC5;
+        font-weight: bold;
+        background-color: #ECEFF1;
+        color: #263238;
+    }
+    QPushButton:hover {
+        background-color: #CFD8DC;
+        border: 1px solid #90A4AE;
+    }
+
+    /* ── MessageBox dialogs (Yes/No popups) ── */
+    QMessageBox QPushButton {
+        min-width: 80px;
+        min-height: 32px;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 10pt;
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1565C0, stop:1 #0D47A1);
+        color: white;
         border: none;
+    }
+    QMessageBox QPushButton:hover {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1976D2, stop:1 #1565C0);
+    }
+
+    /* ── Table View (Preview) ── */
+    QTableView {
+        background-color: #FFFFFF;
+        alternate-background-color: #F8FBFF;
+        border: 1px solid #D2E3FC;
+        border-radius: 12px;
+        gridline-color: transparent;
+        selection-background-color: #E3F2FD;
+        selection-color: #0F172A;
+    }
+    QTableView::item {
+        padding: 4px;
+        border-bottom: 1px solid #EAF2F8;
+    }
+    
+    QHeaderView::section {
+        background-color: #F1F5F9;
+        color: #475569;
+        padding: 8px 12px;
+        border: none;
+        border-bottom: 2px solid #E2E8F0;
+        border-right: 1px solid #E2E8F0;
         font-weight: bold;
     }
 

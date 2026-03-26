@@ -126,8 +126,54 @@ class VoiceSelection(component_common.ConfigComponentBase):
             # here we need to select the correct voice, based on what the user has saved in their preset (single voice)
             # we have access to the voice_id, but we need to locate the proper voice
             voice_id = model.voice.voice_id
-            voice = self.hypertts.service_manager.locate_voice(voice_id)
-            voice_index = self.voice_list.index(voice)
+            try:
+                voice = self.hypertts.service_manager.locate_voice(voice_id)
+            except Exception as e:
+                logger.warning(f'Voice not found for preset, falling back to first voice: {e}')
+                self.reset_filters()
+                if len(self.voice_list) > 0:
+                    self.voices_combobox.setCurrentIndex(0)
+                self.enable_model_change_callback = True
+                return
+
+            # Auto-set filters to match the loaded voice so UI reflects preset context
+            try:
+                # Set service filter
+                service_idx = self.services_combobox.findText(voice.service)
+                if service_idx >= 0:
+                    self.services_combobox.setCurrentIndex(service_idx)
+                # Set gender filter
+                gender_idx = self.genders_combobox.findText(voice.gender.name)
+                if gender_idx >= 0:
+                    self.genders_combobox.setCurrentIndex(gender_idx)
+                # Set language filter (use first language of the voice)
+                if hasattr(voice, 'languages') and len(voice.languages) > 0:
+                    lang_name = voice.languages[0].lang_name
+                    lang_idx = self.languages_combobox.findText(lang_name)
+                    if lang_idx >= 0:
+                        self.languages_combobox.setCurrentIndex(lang_idx)
+                # Set locale filter (use first audio_language)
+                if hasattr(voice, 'audio_languages') and len(voice.audio_languages) > 0:
+                    audio_lang_name = voice.audio_languages[0].audio_lang_name
+                    locale_idx = self.audio_languages_combobox.findText(audio_lang_name)
+                    if locale_idx >= 0:
+                        self.audio_languages_combobox.setCurrentIndex(locale_idx)
+            except Exception as e:
+                logger.warning(f'Could not auto-set filters from voice: {e}')
+
+            # Now select the voice from the (now filtered) list
+            voice_index = -1
+            for i, v in enumerate(self.filtered_voice_list):
+                if v.voice_id == voice_id:
+                    voice_index = i
+                    break
+            if voice_index < 0:
+                # Fallback: reset filters and find in full list
+                self.reset_filters()
+                try:
+                    voice_index = self.voice_list.index(voice)
+                except ValueError:
+                    voice_index = 0
             self.voices_combobox.setCurrentIndex(voice_index)
             # self.voice_options_layout
             #self.voice_options_widgets[widget_name]

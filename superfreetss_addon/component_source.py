@@ -134,13 +134,36 @@ class BatchSource(component_common.ConfigComponentBase):
                 completer.setFilterMode(aqt.qt.Qt.MatchContains)
                 completer.setCaseSensitivity(aqt.qt.Qt.CaseInsensitive)
 
-        def enforce_valid_source_selection():
-            if self.source_field_combobox.currentIndex() == -1 and len(self.field_list) > 0:
-                self.source_field_combobox.setCurrentIndex(0)
-        self.source_field_combobox.lineEdit().editingFinished.connect(enforce_valid_source_selection)
+        # Error label — shown when user types an invalid field name
+        self.source_field_error_label = aqt.qt.QLabel()
+        self.source_field_error_label.setStyleSheet(
+            "color: #C62828; background-color: #FFEBEE; border-radius: 6px; "
+            "padding: 4px 8px; font-size: 9pt;"
+        )
+        self.source_field_error_label.setWordWrap(True)
+        self.source_field_error_label.setVisible(False)
+
+        def validate_source_field():
+            typed = self.source_field_combobox.currentText().strip()
+            if typed and typed not in self.field_list:
+                self.source_field_combobox.lineEdit().setStyleSheet(
+                    "border: 2px solid #E53935; background-color: #FFF5F5;"
+                )
+                self.source_field_error_label.setText(
+                    f'⚠️ Field "{typed}" not found. Available: ' + ', '.join(self.field_list[:5]) +
+                    ('...' if len(self.field_list) > 5 else '')
+                )
+                self.source_field_error_label.setVisible(True)
+            else:
+                self.source_field_combobox.lineEdit().setStyleSheet('')
+                self.source_field_error_label.setVisible(False)
+
+        self.source_field_combobox.lineEdit().editingFinished.connect(validate_source_field)
+        self.source_field_combobox.currentIndexChanged.connect(lambda _: validate_source_field())
 
         stack_vlayout.addWidget(self.source_field_label)
         stack_vlayout.addWidget(self.source_field_combobox)
+        stack_vlayout.addWidget(self.source_field_error_label)
         self.use_selection_checkbox = aqt.qt.QCheckBox(constants.GUI_TEXT_SOURCE_USE_SELECTION)
         stack_vlayout.addWidget(aqt.qt.QLabel('Additional Settings:'))
         stack_vlayout.addWidget(self.use_selection_checkbox)

@@ -147,6 +147,54 @@ class ComponentRealtimeSide(component_common.ConfigComponentBase):
         self.preview_sound_button.setText('Preview Sound')
 
 
+    def _build_configuration_tab(self):
+        """Build a merged Configuration tab with a collapsible advanced section."""
+        scroll_area = aqt.qt.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        container = aqt.qt.QWidget()
+        main_layout = aqt.qt.QVBoxLayout(container)
+
+        # Source widget (already very simple: 2 dropdowns)
+        source_widget = self.source.draw()
+        main_layout.addWidget(source_widget)
+
+        # Collapsible Text Processing
+        self.text_processing_toggle = aqt.qt.QPushButton('▶ Advanced Text Processing')
+        self.text_processing_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #F1F3F4;
+                color: #5F6368;
+                border: none;
+                text-align: left;
+                padding: 10px;
+                font-weight: bold;
+                border-radius: 6px;
+                margin-top: 10px;
+            }
+            QPushButton:hover { background-color: #E8EAED; }
+        """)
+        self.text_processing_toggle.setCheckable(True)
+        self.text_processing_toggle.setChecked(False)
+
+        self.text_processing_container = aqt.qt.QWidget()
+        tp_layout = aqt.qt.QVBoxLayout(self.text_processing_container)
+        tp_layout.setContentsMargins(0, 0, 0, 0)
+        tp_layout.addWidget(self.text_processing.draw())
+        self.text_processing_container.setVisible(False)
+
+        def toggle_text_processing(checked):
+            self.text_processing_container.setVisible(checked)
+            self.text_processing_toggle.setText('▼ Advanced Text Processing' if checked else '▶ Advanced Text Processing')
+
+        self.text_processing_toggle.toggled.connect(toggle_text_processing)
+
+        main_layout.addWidget(self.text_processing_toggle)
+        main_layout.addWidget(self.text_processing_container)
+        main_layout.addStretch()
+
+        scroll_area.setWidget(container)
+        return scroll_area
+
     def draw(self):
         self.vlayout = aqt.qt.QVBoxLayout()
 
@@ -161,9 +209,9 @@ class ComponentRealtimeSide(component_common.ConfigComponentBase):
 
         self.tabs = aqt.qt.QTabWidget()
 
-        self.tabs.addTab(self.source.draw(), 'Source')
+        # Voice Selection first, Configuration second (merges Source and Text Processing)
         self.tabs.addTab(self.voice_selection.draw(), 'Voice Selection')
-        self.tabs.addTab(self.text_processing.draw(), 'Text Processing')
+        self.tabs.addTab(self._build_configuration_tab(), 'Configuration')
 
         # self.tabs.setEnabled(False)
 

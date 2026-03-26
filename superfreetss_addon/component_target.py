@@ -81,12 +81,35 @@ class BatchTarget(component_common.ConfigComponentBase):
                 completer.setFilterMode(aqt.qt.Qt.MatchContains)
                 completer.setCaseSensitivity(aqt.qt.Qt.CaseInsensitive)
 
-        def enforce_valid_target_selection():
-            if self.target_field_combobox.currentIndex() == -1 and len(self.field_list) > 0:
-                self.target_field_combobox.setCurrentIndex(0)
-        self.target_field_combobox.lineEdit().editingFinished.connect(enforce_valid_target_selection)
+        # Error label — shown when user types an invalid field name
+        self.target_field_error_label = aqt.qt.QLabel()
+        self.target_field_error_label.setStyleSheet(
+            "color: #C62828; background-color: #FFEBEE; border-radius: 6px; "
+            "padding: 4px 8px; font-size: 9pt;"
+        )
+        self.target_field_error_label.setWordWrap(True)
+        self.target_field_error_label.setVisible(False)
+
+        def validate_target_field():
+            typed = self.target_field_combobox.currentText().strip()
+            if typed and typed not in self.field_list:
+                self.target_field_combobox.lineEdit().setStyleSheet(
+                    "border: 2px solid #E53935; background-color: #FFF5F5;"
+                )
+                self.target_field_error_label.setText(
+                    f'⚠️ Field "{typed}" not found. Available: ' + ', '.join(self.field_list[:5]) +
+                    ('...' if len(self.field_list) > 5 else '')
+                )
+                self.target_field_error_label.setVisible(True)
+            else:
+                self.target_field_combobox.lineEdit().setStyleSheet('')
+                self.target_field_error_label.setVisible(False)
+
+        self.target_field_combobox.lineEdit().editingFinished.connect(validate_target_field)
+        self.target_field_combobox.currentIndexChanged.connect(lambda _: validate_target_field())
         
         vlayout.addWidget(self.target_field_combobox)
+        vlayout.addWidget(self.target_field_error_label)
         groupbox.setLayout(vlayout)
         self.batch_target_layout.addWidget(groupbox)
 

@@ -138,6 +138,21 @@ class BatchPreview(component_common.ComponentBase):
         self.table_view.setModel(self.batch_preview_table_model)
         self.table_view.setSelectionMode(aqt.qt.QTableView.SelectionMode.SingleSelection)
         self.table_view.setSelectionBehavior(aqt.qt.QTableView.SelectionBehavior.SelectRows)
+        
+        # Modern UI tweaks
+        self.table_view.setAlternatingRowColors(True)
+        self.table_view.setShowGrid(False)
+        self.table_view.verticalHeader().setVisible(False)
+        try:
+            self.table_view.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
+            self.table_view.horizontalHeader().setStretchLastSection(True)
+            # Use Interactive mode so users can resize, but initialize with reasonable sizes
+            self.table_view.horizontalHeader().setSectionResizeMode(aqt.qt.QHeaderView.ResizeMode.Interactive)
+        except AttributeError:
+            self.table_view.setFrameShape(aqt.qt.QFrame.NoFrame)
+            self.table_view.horizontalHeader().setStretchLastSection(True)
+            self.table_view.horizontalHeader().setSectionResizeMode(aqt.qt.QHeaderView.Interactive)
+
         self.table_view.selectionModel().selectionChanged.connect(self.selection_changed)
         self.batch_preview_layout.addWidget(self.table_view, stretch=1)
         
