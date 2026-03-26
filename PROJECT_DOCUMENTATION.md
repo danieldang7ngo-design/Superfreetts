@@ -1,6 +1,6 @@
 # Super Free TTS by Daniel from AnkiVN - Tài Liệu Dự Án
 
-> Tài liệu này giúp bất kỳ ai (bao gồm cả AI Agents) có thể nhanh chóng hiểu và tham gia phát triển dự án Super Free TTS.
+> Tài liệu này mô tả chi tiết dự án Super Free TTS. Để xem nhanh tóm tắt kiến trúc và định hướng dành riêng cho AI Agents, vui lòng đọc [AI_SUMMARY.md](./AI_SUMMARY.md).
 
 ## 📋 Mục Lục
 

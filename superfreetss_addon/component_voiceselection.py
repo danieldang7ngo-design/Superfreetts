@@ -39,11 +39,37 @@ class VoiceSelection(component_common.ConfigComponentBase):
             self.services_combobox,
             self.genders_combobox,
             self.voices_combobox]:
-            combobox.view().setVerticalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+            try:
+                combobox.view().setVerticalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+            except AttributeError:
+                combobox.view().setVerticalScrollBarPolicy(aqt.qt.Qt.ScrollBarAlwaysOn)
+            
             # Allow comboboxes to shrink and expand reasonably
-            combobox.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
+            try:
+                combobox.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
+            except AttributeError:
+                combobox.setSizePolicy(aqt.qt.QSizePolicy.Expanding, aqt.qt.QSizePolicy.Fixed)
+                
             combobox.setMinimumWidth(100)
-            combobox.setMaximumWidth(450)
+            
+            # Make the combobox searchable
+            combobox.setEditable(True)
+            try:
+                combobox.setInsertPolicy(aqt.qt.QComboBox.InsertPolicy.NoInsert)
+            except AttributeError:
+                combobox.setInsertPolicy(aqt.qt.QComboBox.NoInsert)
+            
+            completer = combobox.completer()
+            if completer:
+                try:
+                    completer.setFilterMode(aqt.qt.Qt.MatchFlag.MatchContains)
+                    completer.setCaseSensitivity(aqt.qt.Qt.CaseSensitivity.CaseInsensitive)
+                except AttributeError:
+                    completer.setFilterMode(aqt.qt.Qt.MatchContains)
+                    completer.setCaseSensitivity(aqt.qt.Qt.CaseInsensitive)
+
+        # Voice combobox: no max width — let it stretch fully
+        self.voices_combobox.setMaximumWidth(16777215)  # QWIDGETSIZE_MAX
         self.voices_combobox.setFont(gui_utils.get_large_combobox_font())
         self.voices_combobox.setFixedHeight(45)
 

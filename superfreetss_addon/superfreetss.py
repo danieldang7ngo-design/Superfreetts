@@ -1183,7 +1183,7 @@ class SuperFreeTTS():
             note = self.anki_utils.get_note_by_id(note_id)
             for field in self.get_fields_from_note(note):
                 field_name_set[field] = True
-        return sorted(field_name_set.keys())
+        return list(field_name_set.keys())
 
     def get_fields_from_note(self, note):
         return list(note.keys())

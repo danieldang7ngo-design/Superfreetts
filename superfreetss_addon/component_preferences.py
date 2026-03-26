@@ -193,6 +193,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.perf_groupbox.setLayout(perf_layout)
         vlayout.addWidget(self.perf_groupbox)
 
+        vlayout.addStretch()
         layout.addLayout(vlayout)
 
         # preferences tabs

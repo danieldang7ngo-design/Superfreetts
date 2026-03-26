@@ -40,7 +40,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
 
         # create certain widgets upfront
-        self.profile_name_label = aqt.qt.QLabel()
+        self.profile_name_combobox = aqt.qt.QComboBox()
+        self.profile_name_combobox.setMinimumWidth(150)
+        self.profile_name_combobox.setMaximumWidth(250)
+        self.combobox_suspend_events = False
+        self.profile_name_combobox.currentIndexChanged.connect(self.profile_combobox_changed)
         self.show_settings_button = aqt.qt.QPushButton(i18n.get_text("batch_button_hide_settings", lang))
         self.preview_sound_button = aqt.qt.QPushButton(i18n.get_text("batch_button_preview_sound", lang))
         self.apply_button = aqt.qt.QPushButton(i18n.get_text("batch_button_apply_to_notes", lang))
@@ -48,6 +52,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.profile_open_button = aqt.qt.QPushButton(i18n.get_text("button_open", lang))
         self.profile_open_button.setToolTip(i18n.get_text("batch_tooltip_open_preset", lang))
         gui_utils.configure_secondary_button(self.profile_open_button, min_height=30, min_width=60, font_size=10)
+        self.profile_open_button.setVisible(False)
 
         self.profile_duplicate_button = aqt.qt.QPushButton(i18n.get_text("button_duplicate", lang))
         self.profile_duplicate_button.setToolTip(i18n.get_text("batch_tooltip_duplicate_preset", lang))
@@ -98,6 +103,38 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.preview = component_label_preview.LabelPreview(self.hypertts, self.note)
         self.editor_mode = True
 
+    def update_profile_dropdown(self, name, preset_id=None):
+        self.combobox_suspend_events = True
+        self.profile_name_combobox.clear()
+        presets = self.hypertts.get_preset_list()
+        for p in presets:
+            self.profile_name_combobox.addItem(p.name, p.id)
+            
+        if preset_id:
+            idx = self.profile_name_combobox.findData(preset_id)
+            if idx >= 0:
+                self.profile_name_combobox.setCurrentIndex(idx)
+                self.profile_name_combobox.setItemText(idx, name)
+            else:
+                self.profile_name_combobox.addItem(name, preset_id)
+                self.profile_name_combobox.setCurrentIndex(self.profile_name_combobox.count() - 1)
+        else:
+            self.profile_name_combobox.addItem(name, "UNSAVED_NEW_PRESET")
+            self.profile_name_combobox.setCurrentIndex(self.profile_name_combobox.count() - 1)
+            
+        self.combobox_suspend_events = False
+
+    def profile_combobox_changed(self, index):
+        if getattr(self, 'combobox_suspend_events', False) or index < 0:
+            return
+        preset_id = self.profile_name_combobox.itemData(index)
+        if preset_id == "UNSAVED_NEW_PRESET":
+            return
+            
+        if hasattr(self, 'batch_model') and preset_id != getattr(self.batch_model, 'uuid', None):
+            self.save_profile_if_changed()
+            self.load_preset(preset_id)
+
     def new_preset(self, preset_name = None):
         """start with a new preset"""
         if preset_name == None:
@@ -106,7 +143,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
             new_preset_name = preset_name
         self.batch_model = config_models.BatchConfig(self.hypertts.anki_utils)
         self.batch_model.name = new_preset_name
-        self.profile_name_label.setText(new_preset_name)
+        self.update_profile_dropdown(new_preset_name, getattr(self.batch_model, 'uuid', None))
         # set default for skip backup
         self.model_changed = True
         self.update_save_profile_button_state()
@@ -118,7 +155,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         new_preset_name = self.hypertts.get_next_preset_name()
         self.batch_model.reset_uuid(self.hypertts.anki_utils)
         self.batch_model.name = new_preset_name
-        self.profile_name_label.setText(new_preset_name)
+        self.update_profile_dropdown(new_preset_name, getattr(self.batch_model, 'uuid', None))
         self.model_changed = True
         self.update_save_profile_button_state()
         self.disable_delete_profile_button()
@@ -133,7 +170,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         logger.info('load_model')
         self.batch_model = model
         # disseminate to all components
-        self.profile_name_label.setText(model.name)
+        self.update_profile_dropdown(model.name, getattr(model, 'uuid', None))
         self.source.load_model(model.source)
         self.target.load_model(model.target)
         self.voice_selection.load_model(model.voice_selection)
@@ -222,6 +259,143 @@ class ComponentBatch(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
         self.preview_sound_button.setText(i18n.get_text("batch_button_preview_sound", lang))
 
+    def _build_field_mapping_tab(self):
+        """Build a merged Source + Target tab with collapsible advanced sections."""
+        scroll_area = aqt.qt.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        container = aqt.qt.QWidget()
+        main_layout = aqt.qt.QVBoxLayout(container)
+
+        # === Source Field (simple dropdown — always visible) ===
+        source_group = aqt.qt.QGroupBox('Source Field')
+        source_vlayout = aqt.qt.QVBoxLayout()
+        source_vlayout.addWidget(aqt.qt.QLabel('Select the field to read text from:'))
+
+        # Draw the full source component (creates all widgets + wires events)
+        self.source.draw()
+        # Re-use the source_field_combobox and use_selection_checkbox from the source component
+        source_vlayout.addWidget(self.source.source_field_combobox)
+        source_vlayout.addWidget(self.source.use_selection_checkbox)
+        source_group.setLayout(source_vlayout)
+        main_layout.addWidget(source_group)
+
+        # === Target Field (simple dropdown — always visible) ===
+        target_group = aqt.qt.QGroupBox('Target Field')
+        target_vlayout = aqt.qt.QVBoxLayout()
+        target_vlayout.addWidget(aqt.qt.QLabel('Select the field to write audio to:'))
+
+        # Draw the full target component (creates all widgets + wires events)
+        self.target.draw()
+        target_vlayout.addWidget(self.target.target_field_combobox)
+        target_group.setLayout(target_vlayout)
+        main_layout.addWidget(target_group)
+
+        # === Sound Tag Options (collapsible) ===
+        self.sound_tag_toggle = aqt.qt.QPushButton('▶ Sound Tag Options')
+        self.sound_tag_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #F1F3F4;
+                color: #5F6368;
+                border: 1px solid #DADCE0;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 12px;
+                text-align: left;
+            }
+            QPushButton:hover {
+                background-color: #E8EAED;
+            }
+        """)
+        main_layout.addWidget(self.sound_tag_toggle)
+
+        self.sound_tag_section = aqt.qt.QWidget()
+        sound_tag_layout = aqt.qt.QVBoxLayout(self.sound_tag_section)
+        sound_tag_layout.setContentsMargins(10, 5, 10, 5)
+
+        # Text and Sound Tag group
+        ts_group = aqt.qt.QGroupBox('Text and Sound Tag Handling')
+        ts_vlayout = aqt.qt.QVBoxLayout()
+        ts_label = aqt.qt.QLabel(constants.GUI_TEXT_TARGET_TEXT_AND_SOUND)
+        ts_label.setWordWrap(True)
+        ts_vlayout.addWidget(ts_label)
+        ts_vlayout.addWidget(self.target.radio_button_sound_only)
+        ts_vlayout.addWidget(self.target.radio_button_text_sound)
+        ts_group.setLayout(ts_vlayout)
+        sound_tag_layout.addWidget(ts_group)
+
+        # Existing Sound Tag group
+        es_group = aqt.qt.QGroupBox('Existing Sound Tag Handling')
+        es_vlayout = aqt.qt.QVBoxLayout()
+        es_label = aqt.qt.QLabel(constants.GUI_TEXT_TARGET_REMOVE_SOUND_TAG)
+        es_label.setWordWrap(True)
+        es_vlayout.addWidget(es_label)
+        es_vlayout.addWidget(self.target.radio_button_remove_sound)
+        es_vlayout.addWidget(self.target.radio_button_keep_sound)
+        es_group.setLayout(es_vlayout)
+        sound_tag_layout.addWidget(es_group)
+
+        self.sound_tag_section.setVisible(False)
+        main_layout.addWidget(self.sound_tag_section)
+
+        def toggle_sound_tag():
+            visible = not self.sound_tag_section.isVisible()
+            self.sound_tag_section.setVisible(visible)
+            self.sound_tag_toggle.setText('▼ Sound Tag Options' if visible else '▶ Sound Tag Options')
+        self.sound_tag_toggle.pressed.connect(toggle_sound_tag)
+
+        # === Advanced Source Mode (collapsible) ===
+        self.source_mode_toggle = aqt.qt.QPushButton('▶ Advanced Source Mode')
+        self.source_mode_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #F1F3F4;
+                color: #5F6368;
+                border: 1px solid #DADCE0;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 12px;
+                text-align: left;
+            }
+            QPushButton:hover {
+                background-color: #E8EAED;
+            }
+        """)
+        main_layout.addWidget(self.source_mode_toggle)
+
+        self.source_mode_section = aqt.qt.QWidget()
+        source_mode_layout = aqt.qt.QVBoxLayout(self.source_mode_section)
+        source_mode_layout.setContentsMargins(10, 5, 10, 5)
+
+        # Source Mode selector
+        mode_group = aqt.qt.QGroupBox('Source Mode')
+        mode_vlayout = aqt.qt.QVBoxLayout()
+        mode_label = aqt.qt.QLabel(gui_utils.process_label_text(constants.GUI_TEXT_SOURCE_MODE))
+        mode_label.setWordWrap(True)
+        mode_vlayout.addWidget(mode_label)
+        mode_vlayout.addWidget(self.source.batch_mode_combobox)
+        mode_group.setLayout(mode_vlayout)
+        source_mode_layout.addWidget(mode_group)
+
+        # Source Config Stack (Template/Advanced Template)
+        config_group = aqt.qt.QGroupBox('Source Configuration')
+        config_vlayout = aqt.qt.QVBoxLayout()
+        config_vlayout.addWidget(self.source.source_config_stack)
+        config_group.setLayout(config_vlayout)
+        source_mode_layout.addWidget(config_group)
+
+        self.source_mode_section.setVisible(False)
+        main_layout.addWidget(self.source_mode_section)
+
+        def toggle_source_mode():
+            visible = not self.source_mode_section.isVisible()
+            self.source_mode_section.setVisible(visible)
+            self.source_mode_toggle.setText('▼ Advanced Source Mode' if visible else '▶ Advanced Source Mode')
+        self.source_mode_toggle.pressed.connect(toggle_source_mode)
+
+        main_layout.addStretch()
+
+        scroll_area.setWidget(container)
+        return scroll_area
+
     def draw(self, layout):
         lang = self.hypertts.get_ui_language()
         self.vlayout = aqt.qt.QVBoxLayout()
@@ -234,9 +408,9 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         font = aqt.qt.QFont()
         font.setBold(True)
-        self.profile_name_label.setFont(font)
+        self.profile_name_combobox.setFont(font)
 
-        hlayout.addWidget(self.profile_name_label)
+        hlayout.addWidget(self.profile_name_combobox)
         hlayout.addWidget(self.profile_save_button)
         hlayout.addWidget(self.profile_rename_button)
         hlayout.addWidget(self.profile_delete_button)
@@ -260,10 +434,13 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         self.tabs = aqt.qt.QTabWidget()
 
-        # tên tab theo ngôn ngữ UI
-        self.tabs.addTab(self.source.draw(), i18n.get_text("tab_source", lang))
-        self.tabs.addTab(self.target.draw(), i18n.get_text("tab_target", lang))
+        # Tab 1: Voice Selection (the "wow" moment — first thing users see)
         self.tabs.addTab(self.voice_selection.draw(), i18n.get_text("tab_voice_selection", lang))
+
+        # Tab 2: Field Mapping (merged Source + Target)
+        self.field_mapping_widget = self._build_field_mapping_tab()
+        self.tabs.addTab(self.field_mapping_widget, i18n.get_text("tab_field_mapping", lang))
+
         # Text Processing tab - hidden by default for simplicity
         self.text_processing_widget = self.text_processing.draw()
         self.text_processing_tab_index = self.tabs.addTab(self.text_processing_widget, i18n.get_text("tab_text_processing", lang))
@@ -300,10 +477,27 @@ class ComponentBatch(component_common.ConfigComponentBase):
             hlayout.addWidget(self.show_settings_button)
             
         # advanced toggle button (show/hide Text Processing tab)
-        advanced_text = i18n.get_text("button_advanced", lang)
-        self.advanced_toggle_button = aqt.qt.QPushButton(f'{advanced_text} ▶')
+        lang = self.hypertts.get_ui_language()
+        if lang == 'vi':
+            self.advanced_toggle_button = aqt.qt.QPushButton(f'Nâng cao: TẮT')
+        else:
+            self.advanced_toggle_button = aqt.qt.QPushButton(f'Advanced: OFF')
+            
         self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
         gui_utils.configure_secondary_button(self.advanced_toggle_button, min_width=80)
+        self.advanced_toggle_button.setStyleSheet("""
+            QPushButton {
+                background-color: #F1F3F4;
+                color: #5F6368;
+                border: 1px solid #DADCE0;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #E8EAED;
+            }
+        """)
         self.advanced_toggle_button.pressed.connect(self.toggle_advanced)
         hlayout.addWidget(self.advanced_toggle_button)
         
@@ -397,7 +591,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
                 new_profile_name = self.batch_model.name + ' (copy)'
                 self.batch_model.name = new_profile_name
                 # reflect new name
-                self.profile_name_label.setText(new_profile_name)
+                self.update_profile_dropdown(new_profile_name, getattr(self.batch_model, 'uuid', None))
                 # indicate the model has changed
                 self.model_changed = True
                 self.update_save_profile_button_state()
@@ -431,7 +625,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
             # user pressed ok, rename profile
             self.batch_model.name = new_profile_name
             # reflect new name
-            self.profile_name_label.setText(new_profile_name)
+            self.update_profile_dropdown(new_profile_name, getattr(self.batch_model, 'uuid', None))
             # enable save button
             self.model_changed = True
             self.update_save_profile_button_state()
@@ -456,13 +650,45 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.advanced_visible = not self.advanced_visible
         self.tabs.setTabVisible(self.text_processing_tab_index, self.advanced_visible)
         lang = self.hypertts.get_ui_language()
-        advanced_text = i18n.get_text("button_advanced", lang)
+        
         if self.advanced_visible:
-            self.advanced_toggle_button.setText(f'{advanced_text} ▼')
+            if lang == 'vi':
+                self.advanced_toggle_button.setText('Nâng cao: BẬT')
+            else:
+                self.advanced_toggle_button.setText('Advanced: ON')
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_hide_advanced", lang))
+            self.advanced_toggle_button.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4CAF50, stop:1 #2E7D32);
+                    color: white;
+                    border: none;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #66BB6A, stop:1 #388E3C);
+                }
+            """)
         else:
-            self.advanced_toggle_button.setText(f'{advanced_text} ▶')
+            if lang == 'vi':
+                self.advanced_toggle_button.setText('Nâng cao: TẮT')
+            else:
+                self.advanced_toggle_button.setText('Advanced: OFF')
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
+            self.advanced_toggle_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #F1F3F4;
+                    color: #5F6368;
+                    border: 1px solid #DADCE0;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #E8EAED;
+                }
+            """)
 
     @sc.event(Event.click_preview)
     def sound_preview_button_pressed(self):

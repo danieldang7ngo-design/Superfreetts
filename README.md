@@ -2,6 +2,7 @@ Superfreetts Anki Add-on
 ========================
 
 👉 Xem lộ trình phát triển chi tiết: [ROADMAP](./ROADMAP.md)
+🤖 Để nắm bắt nhanh cấu trúc dự án (đặc biệt cho AI), xem: [AI SUMMARY](./AI_SUMMARY.md)
 
 ## Giới thiệu
 

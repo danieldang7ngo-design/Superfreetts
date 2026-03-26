@@ -258,10 +258,13 @@ def init(hypertts):
         menu.addAction(action)
 
         # add a menu entry for each preset
-        for preset_info in hypertts.get_preset_list():
-            action = aqt.qt.QAction(i18n.get_text("menu_add_audio_collection_preset", lang).format(preset_info.name), browser)
-            action.triggered.connect(get_launch_dialog_browser_existing_fn(hypertts, browser, preset_info.id))
-            menu.addAction(action)
+        preset_list = hypertts.get_preset_list()
+        if preset_list:
+            quick_apply_menu = menu.addMenu(i18n.get_text("menu_quick_apply_preset", lang))
+            for preset_info in preset_list:
+                action = aqt.qt.QAction(preset_info.name, browser)
+                action.triggered.connect(get_launch_dialog_browser_existing_fn(hypertts, browser, preset_info.id))
+                quick_apply_menu.addAction(action)
 
         menu.addSeparator()
 

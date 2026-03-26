@@ -118,6 +118,27 @@ class BatchSource(component_common.ConfigComponentBase):
         self.source_field_label = aqt.qt.QLabel(constants.GUI_TEXT_SOURCE_FIELD_NAME)
         self.source_field_combobox = aqt.qt.QComboBox()
         self.source_field_combobox.addItems(self.field_list)
+        
+        self.source_field_combobox.setEditable(True)
+        try:
+            self.source_field_combobox.setInsertPolicy(aqt.qt.QComboBox.InsertPolicy.NoInsert)
+        except AttributeError:
+            self.source_field_combobox.setInsertPolicy(aqt.qt.QComboBox.NoInsert)
+        
+        completer = self.source_field_combobox.completer()
+        if completer:
+            try:
+                completer.setFilterMode(aqt.qt.Qt.MatchFlag.MatchContains)
+                completer.setCaseSensitivity(aqt.qt.Qt.CaseSensitivity.CaseInsensitive)
+            except AttributeError:
+                completer.setFilterMode(aqt.qt.Qt.MatchContains)
+                completer.setCaseSensitivity(aqt.qt.Qt.CaseInsensitive)
+
+        def enforce_valid_source_selection():
+            if self.source_field_combobox.currentIndex() == -1 and len(self.field_list) > 0:
+                self.source_field_combobox.setCurrentIndex(0)
+        self.source_field_combobox.lineEdit().editingFinished.connect(enforce_valid_source_selection)
+
         stack_vlayout.addWidget(self.source_field_label)
         stack_vlayout.addWidget(self.source_field_combobox)
         self.use_selection_checkbox = aqt.qt.QCheckBox(constants.GUI_TEXT_SOURCE_USE_SELECTION)
@@ -177,8 +198,7 @@ class BatchSource(component_common.ConfigComponentBase):
     def source_field_change(self, current_index):
         current_index = self.source_field_combobox.currentIndex()
         if current_index == -1 or current_index >= len(self.field_list) or len(self.field_list) == 0:
-            error_message = f'current_index for source_field_combobox is {current_index}, field_list: {self.field_list}'
-            raise Exception(error_message)
+            return
         field_name = self.field_list[current_index]
         self.batch_source_model = config_models.BatchSource(mode=constants.BatchMode.simple, source_field=field_name)
         self.notify_model_update()

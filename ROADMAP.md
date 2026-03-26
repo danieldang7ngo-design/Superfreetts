@@ -109,6 +109,7 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 
 - **Definition of Done** ✅
   - ✅ Luồng batch chạy ổn định hơn khi số lượng note lớn và khi user hủy tác vụ giữa chừng.
+  
   - ✅ Cấu hình worker mới có hiệu lực ngay sau reconfigure.
   - ✅ Logging giảm overhead, không spam warning trong loop lớn.
 

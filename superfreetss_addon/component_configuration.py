@@ -995,17 +995,18 @@ class Configuration(component_common.ConfigComponentBase):
             section_button.setArrowType(
                 aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
             )
+            section_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
             section_button.setStyleSheet(
-                "QToolButton { text-align: left; font-weight: 600; border: none; padding: 4px 0; }"
-                "QToolButton:hover { color: palette(highlight); }"
+                "QToolButton { text-align: left; font-weight: bold; font-size: 14px; border: none; border-radius: 10px; padding: 10px 14px; "
+                "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4776E6, stop:1 #8E54E9); color: white; }"
+                "QToolButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #5B86E5, stop:1 #A17FE0); }"
             )
             parent_layout.addWidget(section_button)
 
-            group_box = aqt.qt.QGroupBox(title)
+            group_box = aqt.qt.QGroupBox("")
             group_box.setCheckable(False)
             group_box.setStyleSheet(
-                "QGroupBox { margin-top: 8px; font-weight: 600; border: none; }"
-                "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
+                "QGroupBox { margin-top: 2px; border: none; }"
             )
 
             group_layout = aqt.qt.QVBoxLayout()

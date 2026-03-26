@@ -193,11 +193,11 @@ STYLESHEET_DIALOG = """
     /* ── Group boxes ── */
     QGroupBox {
         font-weight: bold;
-        border: none;
+        border: 1px solid #D2E3FC;
         border-radius: 14px;
         margin-top: 16px;
         padding: 24px 16px 16px 16px;
-        background-color: #EEF4FB;
+        background-color: #FFFFFF;
     }
     QGroupBox::title {
         subcontrol-origin: margin;
@@ -229,13 +229,35 @@ STYLESHEET_DIALOG = """
     /* ── Input controls ── */
     QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
         padding: 8px 12px;
-        border: none;
+        border: 1px solid #D2E3FC;
         border-radius: 10px;
-        background-color: #FFFFFF;
+        background-color: #F4F8FD;
         color: #0F172A;
     }
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
-        background-color: #EAF6FF;
+        background-color: #FFFFFF;
+        border: 1px solid #4776E6;
+    }
+    
+    QComboBox QAbstractItemView {
+        background-color: #FFFFFF;
+        border: 1px solid #D2E3FC;
+        padding: 4px;
+        outline: 0px;
+    }
+    QComboBox QAbstractItemView::item {
+        border-radius: 6px;
+        min-height: 30px;
+        margin: 2px 4px;
+        padding: 4px 8px;
+    }
+    QComboBox QAbstractItemView::item:selected {
+        background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4776E6, stop:1 #8E54E9);
+        color: white;
+    }
+    QComboBox QAbstractItemView::item:hover {
+        background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4776E6, stop:1 #8E54E9);
+        color: white;
     }
 
     /* ── Buttons ── */

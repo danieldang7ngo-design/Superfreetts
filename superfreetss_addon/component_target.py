@@ -66,6 +66,26 @@ class BatchTarget(component_common.ConfigComponentBase):
         vlayout = aqt.qt.QVBoxLayout()
         vlayout.addWidget(aqt.qt.QLabel(constants.GUI_TEXT_TARGET_FIELD))
         self.target_field_combobox.addItems(self.field_list)
+        self.target_field_combobox.setEditable(True)
+        try:
+            self.target_field_combobox.setInsertPolicy(aqt.qt.QComboBox.InsertPolicy.NoInsert)
+        except AttributeError:
+            self.target_field_combobox.setInsertPolicy(aqt.qt.QComboBox.NoInsert)
+        
+        completer = self.target_field_combobox.completer()
+        if completer:
+            try:
+                completer.setFilterMode(aqt.qt.Qt.MatchFlag.MatchContains)
+                completer.setCaseSensitivity(aqt.qt.Qt.CaseSensitivity.CaseInsensitive)
+            except AttributeError:
+                completer.setFilterMode(aqt.qt.Qt.MatchContains)
+                completer.setCaseSensitivity(aqt.qt.Qt.CaseInsensitive)
+
+        def enforce_valid_target_selection():
+            if self.target_field_combobox.currentIndex() == -1 and len(self.field_list) > 0:
+                self.target_field_combobox.setCurrentIndex(0)
+        self.target_field_combobox.lineEdit().editingFinished.connect(enforce_valid_target_selection)
+        
         vlayout.addWidget(self.target_field_combobox)
         groupbox.setLayout(vlayout)
         self.batch_target_layout.addWidget(groupbox)
@@ -126,7 +146,10 @@ class BatchTarget(component_common.ConfigComponentBase):
 
     def update_field(self):
         logger.info('update_field')
-        self.batch_target_model.target_field = self.field_list[self.target_field_combobox.currentIndex()]
+        current_index = self.target_field_combobox.currentIndex()
+        if current_index == -1 or current_index >= len(self.field_list) or len(self.field_list) == 0:
+            return
+        self.batch_target_model.target_field = self.field_list[current_index]
         self.notify_model_update()
 
     def notify_model_update(self):
