@@ -267,6 +267,8 @@ class VoiceSelection(component_common.ConfigComponentBase):
         gridlayout = aqt.qt.QGridLayout()
         gridlayout.setSpacing(10)
         gridlayout.setContentsMargins(16, 20, 16, 16)
+        gridlayout.setColumnStretch(1, 1)
+        gridlayout.setColumnStretch(3, 1)
 
         # Row 0
         gridlayout.addWidget(aqt.qt.QLabel(i18n.get_text("voice_label_language", lang)), 0, 0)

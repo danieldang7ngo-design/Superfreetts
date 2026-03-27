@@ -283,15 +283,16 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     def _build_field_mapping_tab(self):
         """Build a merged Source + Target tab with collapsible advanced sections."""
+        lang = self.hypertts.get_ui_language()
         scroll_area = aqt.qt.QScrollArea()
         scroll_area.setWidgetResizable(True)
         container = aqt.qt.QWidget()
         main_layout = aqt.qt.QVBoxLayout(container)
 
         # === Source Field (simple dropdown — always visible) ===
-        source_group = aqt.qt.QGroupBox('Source Field')
+        source_group = aqt.qt.QGroupBox(i18n.get_text("batch_group_source_field", lang))
         source_vlayout = aqt.qt.QVBoxLayout()
-        source_vlayout.addWidget(aqt.qt.QLabel('Select the field to read text from:'))
+        source_vlayout.addWidget(aqt.qt.QLabel(i18n.get_text("batch_label_select_source", lang)))
 
         # Draw the full source component (creates all widgets + wires events)
         self.source.draw()
@@ -303,9 +304,9 @@ class ComponentBatch(component_common.ConfigComponentBase):
         main_layout.addWidget(source_group)
 
         # === Target Field (simple dropdown — always visible) ===
-        target_group = aqt.qt.QGroupBox('Target Field')
+        target_group = aqt.qt.QGroupBox(i18n.get_text("batch_group_target_field", lang))
         target_vlayout = aqt.qt.QVBoxLayout()
-        target_vlayout.addWidget(aqt.qt.QLabel('Select the field to write audio to:'))
+        target_vlayout.addWidget(aqt.qt.QLabel(i18n.get_text("batch_label_select_target", lang)))
 
         # Draw the full target component (creates all widgets + wires events)
         self.target.draw()
@@ -315,7 +316,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         main_layout.addWidget(target_group)
 
         # === Sound Tag Options (collapsible) ===
-        self.sound_tag_toggle = aqt.qt.QPushButton('▶ Sound Tag Options')
+        self.sound_tag_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_sound_tag", lang)}')
         self.sound_tag_toggle.setStyleSheet("""
             QPushButton {
                 background-color: #F1F3F4;
@@ -337,7 +338,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         sound_tag_layout.setContentsMargins(10, 5, 10, 5)
 
         # Text and Sound Tag group
-        ts_group = aqt.qt.QGroupBox('Text and Sound Tag Handling')
+        ts_group = aqt.qt.QGroupBox(i18n.get_text("batch_group_sound_tag_handling", lang))
         ts_vlayout = aqt.qt.QVBoxLayout()
         ts_label = aqt.qt.QLabel(constants.GUI_TEXT_TARGET_TEXT_AND_SOUND)
         ts_label.setWordWrap(True)
@@ -348,7 +349,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         sound_tag_layout.addWidget(ts_group)
 
         # Existing Sound Tag group
-        es_group = aqt.qt.QGroupBox('Existing Sound Tag Handling')
+        es_group = aqt.qt.QGroupBox(i18n.get_text("batch_group_existing_sound_tag", lang))
         es_vlayout = aqt.qt.QVBoxLayout()
         es_label = aqt.qt.QLabel(constants.GUI_TEXT_TARGET_REMOVE_SOUND_TAG)
         es_label.setWordWrap(True)
@@ -364,11 +365,12 @@ class ComponentBatch(component_common.ConfigComponentBase):
         def toggle_sound_tag():
             visible = not self.sound_tag_section.isVisible()
             self.sound_tag_section.setVisible(visible)
-            self.sound_tag_toggle.setText('▼ Sound Tag Options' if visible else '▶ Sound Tag Options')
+            prefix = '▼' if visible else '▶'
+            self.sound_tag_toggle.setText(f'{prefix} {i18n.get_text("batch_toggle_sound_tag", lang)}')
         self.sound_tag_toggle.pressed.connect(toggle_sound_tag)
 
         # === Advanced Source Mode (collapsible) ===
-        self.source_mode_toggle = aqt.qt.QPushButton('▶ Advanced Source Mode')
+        self.source_mode_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_advanced_source", lang)}')
         self.source_mode_toggle.setStyleSheet("""
             QPushButton {
                 background-color: #F1F3F4;
@@ -390,7 +392,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         source_mode_layout.setContentsMargins(10, 5, 10, 5)
 
         # Source Mode selector
-        mode_group = aqt.qt.QGroupBox('Source Mode')
+        mode_group = aqt.qt.QGroupBox(i18n.get_text("batch_group_source_mode", lang))
         mode_vlayout = aqt.qt.QVBoxLayout()
         mode_label = aqt.qt.QLabel(gui_utils.process_label_text(constants.GUI_TEXT_SOURCE_MODE))
         mode_label.setWordWrap(True)

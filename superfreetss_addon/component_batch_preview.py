@@ -11,6 +11,7 @@ from . import component_common
 from . import batch_status
 from . import batch_progress_ui
 from . import logging_utils
+from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 
 class TableRepaintTimer():
@@ -20,13 +21,19 @@ class TableRepaintTimer():
 
 
 class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
-    def __init__(self, batch_status):
+    def __init__(self, batch_status, hypertts):
         aqt.qt.QAbstractTableModel.__init__(self, None)
         self.batch_status = batch_status
-        self.note_id_header = 'Note Id'
-        self.source_text_header = 'Source Text'
-        self.processed_text_header = 'Processed Text'
-        self.status_header = 'Status'
+        self.hypertts = hypertts
+
+    def _get_headers(self):
+        lang = self.hypertts.get_ui_language()
+        return [
+            i18n.get_text('preview_header_note_id', lang),
+            i18n.get_text('preview_header_source_text', lang),
+            i18n.get_text('preview_header_processed_text', lang),
+            i18n.get_text('preview_header_status', lang)
+        ]
 
     def flags(self, index):
         return aqt.qt.Qt.ItemFlag.ItemIsSelectable | aqt.qt.Qt.ItemFlag.ItemIsEnabled
@@ -69,14 +76,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
     def headerData(self, col, orientation, role):
         # logger.debug('SourceTextPreviewTableModel.headerData')
         if orientation == aqt.qt.Qt.Orientation.Horizontal and role == aqt.qt.Qt.ItemDataRole.DisplayRole:
-            if col == 0:
-                return aqt.qt.QVariant(self.note_id_header)
-            elif col == 1:
-                return aqt.qt.QVariant(self.source_text_header)
-            elif col == 2:
-                return aqt.qt.QVariant(self.processed_text_header)
-            elif col == 3:
-                return aqt.qt.QVariant(self.status_header)
+            return aqt.qt.QVariant(self._get_headers()[col])
         return aqt.qt.QVariant()
 
 class BatchPreview(component_common.ComponentBase):
@@ -100,7 +100,7 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_end_fn = batch_end_fn
 
         self.batch_status = batch_status.BatchStatus(hypertts.anki_utils, note_id_list, self)
-        self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status)
+        self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, hypertts)
         self.table_view = None
 
         # create certain widgets right away
