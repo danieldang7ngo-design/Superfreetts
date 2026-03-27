@@ -56,6 +56,7 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         lang = self.hypertts.get_ui_language()
         self.setWindowTitle(i18n.get_text("unified_settings_title", lang))
         self.setMinimumSize(500, 400)
+        self.resize(550, 600)
 
         # Reduce visible relayout/flicker while composing heavy UI.
         self.setUpdatesEnabled(False)
@@ -115,7 +116,6 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         main_layout.addLayout(button_layout)
 
         self.setUpdatesEnabled(True)
-        self.resize(550, 600)
 
     def _build_services_tab(self):
         if self._services_built:

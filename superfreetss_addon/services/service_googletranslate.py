@@ -70,13 +70,20 @@ class GoogleTranslate(service.ServiceBase):
                 logger.error(f'{self.name}: could not process language {language_key}')
             else:
                 gender = GENDER_MAP.get(language_key, constants.Gender.Female)
+                voice_options = {
+                    'speed': {
+                        'type': 'list', 'default': 'normal', 'values': ['normal', 'slow'],
+                        'label': 'Speed',
+                        'tooltip': 'Speaking speed. "slow" reads text more slowly and clearly'
+                    },
+                }
                 voices.append(voice.build_voice_v3(
                     name=language_name,
                     gender=gender,
                     language=language,
                     service=self,
                     voice_key=language_key,
-                    options={}
+                    options=voice_options
                 ))
         return voices
 
@@ -88,7 +95,8 @@ class GoogleTranslate(service.ServiceBase):
             time.sleep(throttle_seconds)
 
         try:
-            tts = gtts.gTTS(text=source_text, lang=voice.voice_key)
+            slow = options.get('speed', 'normal') == 'slow'
+            tts = gtts.gTTS(text=source_text, lang=voice.voice_key, slow=slow)
             buffer = io.BytesIO()
             tts.write_to_fp(buffer)
 

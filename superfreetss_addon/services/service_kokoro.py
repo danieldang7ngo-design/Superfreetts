@@ -180,13 +180,20 @@ class KokoroTTS(service.ServiceBase):
 
         installed_voices = []
         for v in KOKORO_V10_VOICES:
+            voice_options = {
+                'speed': {
+                    'type': 'number', 'default': 1.0, 'min': 0.5, 'max': 2.0,
+                    'label': 'Speed',
+                    'tooltip': 'Speed multiplier. 1.0 = normal, 2.0 = 2x faster, 0.5 = 2x slower'
+                },
+            }
             installed_voices.append(voice.build_voice_v3(
                 name=f"Kokoro - {v['name']}",
                 gender=v['gender'],
                 language=v['lang'],
                 service=self,
                 voice_key=v['key'],
-                options={}
+                options=voice_options
             ))
             
         return installed_voices
@@ -215,7 +222,7 @@ class KokoroTTS(service.ServiceBase):
                 "output_file": "MEMORY", # Extreme Optimization: No Disk I/O
                 "device": "cpu",
                 "threads": int(threads_opt),
-                "speed": 1.0
+                "speed": options.get('speed', 1.0)
             }
             payload = json.dumps(request) + "\n"
             

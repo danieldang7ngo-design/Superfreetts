@@ -87,13 +87,25 @@ class ESpeakNg(service.ServiceBase):
                 # Since we don't have gender info from the new API, default to Male
                 audio_language = self.get_audio_language(voice_code)
                 if audio_language is not None:
+                    voice_options = {
+                        'speed': {
+                            'type': 'number_int', 'default': 175, 'min': 80, 'max': 450,
+                            'label': 'Speed (WPM)',
+                            'tooltip': 'Speaking rate in words per minute. 175 = normal, 300+ = fast'
+                        },
+                        'pitch': {
+                            'type': 'number_int', 'default': 50, 'min': 0, 'max': 99,
+                            'label': 'Pitch',
+                            'tooltip': 'Voice pitch level. 50 = normal, 0 = lowest, 99 = highest'
+                        },
+                    }
                     result.append(voice.TtsVoice_v3(
                         name=voice_code,
                         gender=constants.Gender.Male,  # Default gender
                         audio_languages=[audio_language],
                         service=self.name,
                         voice_key=voice_code,
-                        options={},
+                        options=voice_options,
                         service_fee=self.service_fee
                     ))
                 else:
@@ -112,9 +124,13 @@ class ESpeakNg(service.ServiceBase):
         os.close(fh)  # Close the file handle
 
         # Use espeak-ng directly with subprocess
+        speed = options.get('speed', 175)
+        pitch = options.get('pitch', 50)
         cmd = [
             'espeak-ng',
             '-v', voice.voice_key,
+            '-s', str(speed),
+            '-p', str(pitch),
             '-w', wav_temp_file_name,
             source_text
         ]

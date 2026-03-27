@@ -51,6 +51,11 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.perf_helper_label = aqt.qt.QLabel()
         self.perf_helper_label.setWordWrap(True)
         
+        self.batch_concurrency_help_label = aqt.qt.QLabel()
+        self.batch_concurrency_help_label.setWordWrap(True)
+        self.sherpa_pool_help_label = aqt.qt.QLabel()
+        self.sherpa_pool_help_label.setWordWrap(True)
+        
         # Note: Per-service concurrency workers are now configured in each service's Advanced settings
 
         # UI layout for preferences
@@ -59,6 +64,9 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.sherpa_max_processes_spinbox = aqt.qt.QSpinBox()
         self.sherpa_max_processes_spinbox.setMinimum(1)
         self.sherpa_max_processes_spinbox.setMaximum(16)
+
+        # Audio output format
+        self.audio_format_combobox = aqt.qt.QComboBox()
 
     def load_model(self, model):
         logger.info('load_model')
@@ -83,6 +91,14 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         
         self.sherpa_max_processes_spinbox.setValue(self.model.sherpa_max_processes)
 
+        # load audio format
+        format_values = ["mp3", "wav", "ogg"]
+        current_format = getattr(self.model, 'audio_format', 'mp3') or 'mp3'
+        if current_format in format_values:
+            self.audio_format_combobox.setCurrentIndex(format_values.index(current_format))
+        else:
+            self.audio_format_combobox.setCurrentIndex(0)
+
     def get_model(self):
         return self.model
 
@@ -96,107 +112,151 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
     def model_part_updated_common(self):
         self.save_button.setEnabled(True)
-        self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())        
+        self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+
+    def _create_vibrant_card(self, title_text):
+        """Helper to create a high-contrast card with a bold header."""
+        card = aqt.qt.QFrame()
+        card.setObjectName("vibrantCard")
+        card.setStyleSheet(
+            f"QFrame#vibrantCard {{ "
+            f"  background-color: #FFFFFF; "
+            f"  border: 2px solid {constants.COLOR_BORDER}; "
+            f"  border-radius: 12px; "
+            f"  margin-top: 6px; "
+            f"}}"
+        )
+        
+        card_layout = aqt.qt.QVBoxLayout(card)
+        card_layout.setContentsMargins(16, 14, 16, 16)
+        card_layout.setSpacing(10)
+        
+        header = aqt.qt.QLabel(title_text)
+        header_font = header.font()
+        header_font.setBold(True)
+        header_font.setPointSize(max(header_font.pointSize(), 11))
+        header.setFont(header_font)
+        header.setStyleSheet("color: #123A63; border: none; background: none; margin-bottom: 2px;")
+        
+        card_layout.addWidget(header)
+        return card, card_layout
 
     def draw(self, layout, show_action_buttons=True):
         lang = self.hypertts.get_ui_language()
-        vlayout = aqt.qt.QVBoxLayout()
-        vlayout.setContentsMargins(16, 12, 16, 8)
-        vlayout.setSpacing(10)
 
-        groupbox_style = (
-            "QGroupBox { margin-top: 10px; padding-top: 14px; padding-left: 8px; padding-right: 8px; padding-bottom: 8px; font-weight: 700; border: none; border-radius: 14px; background-color: #EEF4FB; color: #123A63; }"
-            "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; color: #123A63; }"
-        )
+        scroll_area = aqt.qt.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
+        try:
+            scroll_area.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        except AttributeError:
+            scroll_area.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarAlwaysOff)
 
-        # nhóm chọn ngôn ngữ giao diện
-        self.language_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_language_title", lang))
-        self.language_groupbox.setStyleSheet(groupbox_style)
-        language_layout = aqt.qt.QVBoxLayout()
-        language_layout.setContentsMargins(10, 10, 10, 8)
-        language_layout.setSpacing(8)
+        content_widget = aqt.qt.QWidget()
+        main_vlayout = aqt.qt.QVBoxLayout(content_widget)
+        main_vlayout.setContentsMargins(12, 12, 12, 8)
+        main_vlayout.setSpacing(14)
+
+        # 1. Language Card
+        self.language_card, lang_card_layout = self._create_vibrant_card(i18n.get_text("preferences_group_language_title", lang))
+        
         self.language_label = aqt.qt.QLabel(i18n.get_text("preferences_label_interface_language", lang))
-        language_layout.addWidget(self.language_label)
+        self.language_label.setStyleSheet("border: none; background: none;")
+        lang_card_layout.addWidget(self.language_label)
 
-        # đổ dữ liệu cho combobox ngôn ngữ
         self.language_combobox.clear()
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_en", lang), "en")
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_vi", lang), "vi")
-        self.language_combobox.setToolTip(i18n.get_text("preferences_language_tooltip", lang))
-        self.language_combobox.setMinimumHeight(32)
-        language_layout.addWidget(self.language_combobox)
-        self.language_groupbox.setLayout(language_layout)
-        vlayout.addWidget(self.language_groupbox)
-
-        # Cache Management Group
-        self.cache_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_cache_title", lang))
-        self.cache_groupbox.setStyleSheet(groupbox_style)
-        cache_layout = aqt.qt.QVBoxLayout()
-        cache_layout.setContentsMargins(10, 10, 10, 8)
-        cache_layout.setSpacing(8)
-        self.cache_label = aqt.qt.QLabel(i18n.get_text("preferences_cache_label", lang))
-        self.cache_label.setMinimumHeight(24)
+        self.language_combobox.setMinimumHeight(34)
+        lang_card_layout.addWidget(self.language_combobox)
         
-        h_cache_layout = aqt.qt.QHBoxLayout()
+        main_vlayout.addWidget(self.language_card)
+
+        # 2. Cache Card
+        self.cache_card, cache_card_layout = self._create_vibrant_card(i18n.get_text("preferences_group_cache_title", lang))
+        
+        h_cache_row = aqt.qt.QHBoxLayout()
+        h_cache_row.setSpacing(10)
         self.cache_retention_checkbox.setMinimumHeight(24)
-        h_cache_layout.addWidget(self.cache_retention_checkbox)
-        h_cache_layout.addWidget(self.cache_label)
+        self.cache_retention_checkbox.setStyleSheet("border: none; background: none;")
+        h_cache_row.addWidget(self.cache_retention_checkbox)
+        
+        self.cache_label = aqt.qt.QLabel(i18n.get_text("preferences_cache_label", lang))
+        self.cache_label.setStyleSheet("border: none; background: none;")
+        h_cache_row.addWidget(self.cache_label)
+        
         self.cache_retention_spinbox.setMinimumHeight(30)
-        h_cache_layout.addWidget(self.cache_retention_spinbox)
-        h_cache_layout.addStretch()
+        h_cache_row.addWidget(self.cache_retention_spinbox)
+        h_cache_row.addStretch()
         
-        cache_layout.addLayout(h_cache_layout)
-        self.cache_helper_label.setStyleSheet("color: palette(mid);")
-        cache_layout.addWidget(self.cache_helper_label)
-        self.cache_groupbox.setLayout(cache_layout)
-        vlayout.addWidget(self.cache_groupbox)
+        cache_card_layout.addLayout(h_cache_row)
+        self.cache_helper_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        cache_card_layout.addWidget(self.cache_helper_label)
+        
+        main_vlayout.addWidget(self.cache_card)
 
-        # Performance Group
-        self.perf_groupbox = aqt.qt.QGroupBox(i18n.get_text("preferences_group_performance_title", lang))
-        self.perf_groupbox.setStyleSheet(groupbox_style)
-        perf_layout = aqt.qt.QVBoxLayout()
-        perf_layout.setContentsMargins(10, 10, 10, 8)
-        perf_layout.setSpacing(12)
+        # 2b. Audio Format Card
+        self.format_card, format_card_layout = self._create_vibrant_card(i18n.get_text("pref_audio_format", lang))
+        
+        h_format_row = aqt.qt.QHBoxLayout()
+        h_format_row.setSpacing(10)
+        self.format_label = aqt.qt.QLabel(i18n.get_text("pref_audio_format_desc", lang))
+        self.format_label.setStyleSheet("border: none; background: none;")
+        h_format_row.addWidget(self.format_label)
+
+        self.audio_format_combobox.clear()
+        self.audio_format_combobox.addItems(["mp3", "wav", "ogg"])
+        self.audio_format_combobox.setMinimumHeight(30)
+        self.audio_format_combobox.setFixedWidth(120)
+        h_format_row.addWidget(self.audio_format_combobox)
+        h_format_row.addStretch()
+        format_card_layout.addLayout(h_format_row)
+
+        main_vlayout.addWidget(self.format_card)
+
+        # 3. Performance Card
+        self.perf_card, perf_card_layout = self._create_vibrant_card(i18n.get_text("preferences_group_performance_title", lang))
+        
+        # Batch Concurrency Sub-section
+        batch_vlayout = aqt.qt.QVBoxLayout()
+        batch_vlayout.setSpacing(4)
+        
+        h_batch = aqt.qt.QHBoxLayout()
         self.perf_label = aqt.qt.QLabel(i18n.get_text("preferences_batch_concurrency_label", lang))
-        self.perf_label.setMinimumHeight(24)
-        self.perf_label.setMinimumWidth(220)
-        self.perf_label.setWordWrap(False)
-        
-        h_perf_layout = aqt.qt.QHBoxLayout()
-        h_perf_layout.setContentsMargins(0, 0, 0, 0)
-        h_perf_layout.setSpacing(12)
-        h_perf_layout.addWidget(self.perf_label)
-        self.batch_concurrency_spinbox.setMinimumHeight(30)
+        self.perf_label.setStyleSheet("border: none; background: none;")
+        h_batch.addWidget(self.perf_label)
         self.batch_concurrency_spinbox.setFixedWidth(72)
-        h_perf_layout.addWidget(self.batch_concurrency_spinbox)
-        h_perf_layout.addStretch()
+        h_batch.addWidget(self.batch_concurrency_spinbox)
+        h_batch.addStretch()
+        
+        self.batch_concurrency_help_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        batch_vlayout.addLayout(h_batch)
+        batch_vlayout.addWidget(self.batch_concurrency_help_label)
+        
+        perf_card_layout.addLayout(batch_vlayout)
+        perf_card_layout.addSpacing(6)
 
-        perf_layout.addLayout(h_perf_layout)
-
-        # Pool limit
-        h_sherpa_pool_layout = aqt.qt.QHBoxLayout()
-        h_sherpa_pool_layout.setContentsMargins(0, 0, 0, 0)
-        h_sherpa_pool_layout.setSpacing(12)
+        # Sherpa Pool Sub-section
+        sherpa_vlayout = aqt.qt.QVBoxLayout()
+        sherpa_vlayout.setSpacing(4)
+        
+        h_sherpa = aqt.qt.QHBoxLayout()
         self.sherpa_pool_label = aqt.qt.QLabel(i18n.get_text("pref_label_sherpa_max_processes", lang))
-        self.sherpa_pool_label.setMinimumHeight(24)
-        self.sherpa_pool_label.setMinimumWidth(220)
-        self.sherpa_pool_label.setWordWrap(False)
-        h_sherpa_pool_layout.addWidget(self.sherpa_pool_label)
-        self.sherpa_max_processes_spinbox.setMinimumHeight(30)
+        self.sherpa_pool_label.setStyleSheet("border: none; background: none;")
+        h_sherpa.addWidget(self.sherpa_pool_label)
         self.sherpa_max_processes_spinbox.setFixedWidth(72)
-        h_sherpa_pool_layout.addWidget(self.sherpa_max_processes_spinbox)
-        h_sherpa_pool_layout.addStretch()
-        perf_layout.addLayout(h_sherpa_pool_layout)
-        self.perf_helper_label.setStyleSheet("color: palette(mid);")
-        perf_layout.addWidget(self.perf_helper_label)
+        h_sherpa.addWidget(self.sherpa_max_processes_spinbox)
+        h_sherpa.addStretch()
+        
+        self.sherpa_pool_help_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        sherpa_vlayout.addLayout(h_sherpa)
+        sherpa_vlayout.addWidget(self.sherpa_pool_help_label)
+        
+        perf_card_layout.addLayout(sherpa_vlayout)
+        
+        main_vlayout.addWidget(self.perf_card)
 
-        self.perf_groupbox.setLayout(perf_layout)
-        vlayout.addWidget(self.perf_groupbox)
-
-        vlayout.addStretch()
-        layout.addLayout(vlayout)
-
-        # preferences tabs
+        # tabs
         # ====================
 
         self.tabs = aqt.qt.QTabWidget()
@@ -208,8 +268,11 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         )
         self.tabs.addTab(self.shortcuts.draw(), i18n.get_text("preferences_tab_shortcuts", lang))
         self.tabs.addTab(self.error_handling.draw(), i18n.get_text("preferences_tab_error_handling", lang))
-        vlayout.addSpacing(4)
-        layout.addWidget(self.tabs)
+        main_vlayout.addSpacing(4)
+        main_vlayout.addWidget(self.tabs)
+        
+        scroll_area.setWidget(content_widget)
+        layout.addWidget(scroll_area)
  
         # Finally, set initial label text
         self.update_ui_labels(lang)
@@ -225,6 +288,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_spinbox.valueChanged.connect(self.cache_retention_changed)
         self.batch_concurrency_spinbox.valueChanged.connect(self.batch_concurrency_changed)
         self.sherpa_max_processes_spinbox.valueChanged.connect(self.sherpa_max_processes_changed)
+        self.audio_format_combobox.currentIndexChanged.connect(self.audio_format_changed)
         
         if show_action_buttons:
             hlayout = aqt.qt.QHBoxLayout()
@@ -257,7 +321,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.model_part_updated_common()
 
     def update_ui_labels(self, lang: str):
-        self.language_groupbox.setTitle(i18n.get_text("preferences_group_language_title", lang))
+        self.language_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("preferences_group_language_title", lang))
         self.language_label.setText(i18n.get_text("preferences_label_interface_language", lang))
         self.language_combobox.setToolTip(i18n.get_text("preferences_language_tooltip", lang))
         
@@ -267,19 +331,23 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.language_combobox.setItemText(1, i18n.get_text("preferences_option_language_vi", lang))
         self.language_combobox.blockSignals(False)
 
-        self.cache_groupbox.setTitle(i18n.get_text("preferences_group_cache_title", lang))
+        self.cache_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("preferences_group_cache_title", lang))
         self.cache_label.setText(i18n.get_text("preferences_cache_label", lang))
         self.cache_retention_checkbox.setText(i18n.get_text("preferences_cache_enable", lang))
         self.cache_retention_checkbox.setToolTip(i18n.get_text("preferences_cache_tooltip", lang))
         self.cache_helper_label.setText(i18n.get_text("preferences_cache_helper", lang))
         
-        self.perf_groupbox.setTitle(i18n.get_text("preferences_group_performance_title", lang))
+        self.perf_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("preferences_group_performance_title", lang))
         self.perf_label.setText(i18n.get_text("preferences_batch_concurrency_label", lang))
         self.batch_concurrency_spinbox.setToolTip(i18n.get_text("preferences_batch_concurrency_tooltip", lang))
-        self.perf_helper_label.setText(i18n.get_text("preferences_performance_helper", lang))
+        self.batch_concurrency_help_label.setText(i18n.get_text("preferences_batch_concurrency_help", lang))
         
         self.sherpa_pool_label.setText(i18n.get_text("pref_label_sherpa_max_processes", lang))
+        self.sherpa_pool_help_label.setText(i18n.get_text("preferences_sherpa_pool_help", lang))
         self.sherpa_max_processes_spinbox.setToolTip(i18n.get_text("pref_tooltip_sherpa_max_processes", lang))
+        
+        self.format_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("pref_audio_format", lang))
+        self.format_label.setText(i18n.get_text("pref_audio_format_desc", lang))
         
         self.tabs.setTabText(0, i18n.get_text("preferences_tab_shortcuts", lang))
         self.tabs.setTabText(1, i18n.get_text("preferences_tab_error_handling", lang))
@@ -334,6 +402,13 @@ class ComponentPreferences(component_common.ConfigComponentBase):
     def sherpa_max_processes_changed(self, value: int) -> None:
         """Handle Sherpa max processes spinbox change."""
         self.model.sherpa_max_processes = value
+        self.model_part_updated_common()
+
+    def audio_format_changed(self, index: int) -> None:
+        """Handle audio format combobox change."""
+        format_values = ["mp3", "wav", "ogg"]
+        if 0 <= index < len(format_values):
+            self.model.audio_format = format_values[index]
         self.model_part_updated_common()
 
     def save_button_pressed(self) -> None:

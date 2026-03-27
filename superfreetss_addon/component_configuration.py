@@ -26,9 +26,7 @@ class ScrollAreaCustom(aqt.qt.QScrollArea):
         # Cho phép nội dung bên trong tự giãn theo kích thước mới của dialog
         # Khi người dùng kéo to/nhỏ cửa sổ, widget con sẽ resize theo
         self.setWidgetResizable(True)
-
-    def sizeHint(self):
-        return aqt.qt.QSize(100, 100)
+        self.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
 
 
 sc = stats.StatsContext(stats.EventContext.services)
@@ -927,8 +925,6 @@ class Configuration(component_common.ConfigComponentBase):
 
         # lấy danh sách services một lần để dùng cho cả content và TOC
         service_list = self.get_service_list()
-        toc_section_toggles = []
-
         def set_all_expanded(expanded: bool):
             for _services, section_button in category_sections:
                 if section_button.isChecked() != expanded:
@@ -936,37 +932,37 @@ class Configuration(component_common.ConfigComponentBase):
             for _service_name, service_toggle in self.service_expand_toggle_map.items():
                 if service_toggle.isChecked() != expanded:
                     service_toggle.setChecked(expanded)
-            for toc_toggle in toc_section_toggles:
-                if toc_toggle.isChecked() != expanded:
-                    toc_toggle.setChecked(expanded)
 
-        # tiêu đề khu vực cấu hình dịch vụ
-        header_label = aqt.qt.QLabel(i18n.get_text("services_header_title", lang))
-        header_font = header_label.font()
-        header_font.setBold(True)
-        header_font.setPointSize(max(header_font.pointSize(), 12))
-        header_label.setFont(header_font)
-        self.global_vlayout.addWidget(header_label)
-        # mô tả ngắn cho người dùng mới
-        services_description_label = aqt.qt.QLabel(i18n.get_text("services_header_description", lang))
-        services_description_label.setWordWrap(True)
-        services_description_label.setStyleSheet("color: palette(mid);")
-        self.global_vlayout.addWidget(services_description_label)
+        # ====================
+        # Services Header Area (Summary & Search in one row)
+        # ====================
+        header_hlayout = aqt.qt.QHBoxLayout()
+        header_hlayout.setContentsMargins(4, 0, 4, 8)
 
         self.services_summary_label = aqt.qt.QLabel()
         self.services_summary_label.setWordWrap(True)
-        self.services_summary_label.setStyleSheet("color: palette(dark);")
-        self.global_vlayout.addWidget(self.services_summary_label)
+        # Make the summary label punchy and act as the true header title
+        summary_font = self.services_summary_label.font()
+        summary_font.setBold(True)
+        summary_font.setPointSize(max(summary_font.pointSize(), 11))
+        self.services_summary_label.setFont(summary_font)
+        self.services_summary_label.setStyleSheet("color: #123A63; padding-top: 4px;")
+        header_hlayout.addWidget(self.services_summary_label)
+        
+        header_hlayout.addStretch()
 
-        # thanh tìm kiếm dịch vụ (bên khu vực Dịch vụ TTS, không nằm ở TOC)
-        search_hlayout = aqt.qt.QHBoxLayout()
         self.search_input = aqt.qt.QLineEdit()
         self.search_input.setPlaceholderText(i18n.get_text("config_search_placeholder", lang))
-        self.search_input.setMinimumHeight(34)
+        self.search_input.setMinimumHeight(32)
+        self.search_input.setFixedWidth(240)
+        # Style search bar for a cleaner, modern look
+        self.search_input.setStyleSheet("QLineEdit { border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #334155; background-color: #FFFFFF; }")
+        
         self.search_debounce_timer = aqt.qt.QTimer(self.dialog)
         self.search_debounce_timer.setSingleShot(True)
-        search_hlayout.addWidget(self.search_input)
-        self.global_vlayout.addLayout(search_hlayout)
+        header_hlayout.addWidget(self.search_input)
+        
+        self.global_vlayout.addLayout(header_hlayout)
 
         # scroll area cho danh sách services
         services_scroll_area = ScrollAreaCustom()
@@ -1127,38 +1123,43 @@ class Configuration(component_common.ConfigComponentBase):
             first_match_widget = None
             matched_services = set()
 
+            if self._services_scroll_area is not None:
+                self._services_scroll_area.setUpdatesEnabled(False)
+
             # nếu ô tìm kiếm rỗng -> hiển thị lại tất cả services
             if not query:
                 for service in service_list:
                     card_widget = self.service_card_map.get(service.name)
                     if card_widget is not None:
                         card_widget.setVisible(True)
-                return
+            else:
+                # lọc: chỉ hiển thị các service có tên chứa query
+                for service in service_list:
+                    card_widget = self.service_card_map.get(service.name)
+                    if card_widget is None:
+                        continue
+                    search_blob = self.service_search_index.get(service.name, service.name.lower())
+                    if query in search_blob:
+                        card_widget.setVisible(True)
+                        matched_services.add(service.name)
+                        expand_btn = self.service_expand_toggle_map.get(service.name)
+                        if expand_btn is not None and not expand_btn.isChecked():
+                            expand_btn.setChecked(True)
+                        if first_match_widget is None:
+                            first_match_widget = card_widget
+                    else:
+                        card_widget.setVisible(False)
 
-            # lọc: chỉ hiển thị các service có tên chứa query
-            for service in service_list:
-                card_widget = self.service_card_map.get(service.name)
-                if card_widget is None:
-                    continue
-                search_blob = self.service_search_index.get(service.name, service.name.lower())
-                if query in search_blob:
-                    card_widget.setVisible(True)
-                    matched_services.add(service.name)
-                    expand_btn = self.service_expand_toggle_map.get(service.name)
-                    if expand_btn is not None and not expand_btn.isChecked():
-                        expand_btn.setChecked(True)
-                    if first_match_widget is None:
-                        first_match_widget = card_widget
-                else:
-                    card_widget.setVisible(False)
-
-            for category_services, category_button in category_sections:
-                if any(s.name in matched_services for s in category_services) and not category_button.isChecked():
-                    category_button.setChecked(True)
+                for category_services, category_button in category_sections:
+                    if any(s.name in matched_services for s in category_services) and not category_button.isChecked():
+                        category_button.setChecked(True)
 
             # cuộn đến kết quả đầu tiên nếu có
             if first_match_widget is not None and self._services_scroll_area is not None:
                 self._services_scroll_area.ensureWidgetVisible(first_match_widget)
+
+            if self._services_scroll_area is not None:
+                self._services_scroll_area.setUpdatesEnabled(True)
 
         # filter với debounce để tránh relayout dồn khi gõ nhanh
         self.search_debounce_timer.timeout.connect(run_search)
@@ -1170,152 +1171,95 @@ class Configuration(component_common.ConfigComponentBase):
 
         self._refresh_services_summary_label()
 
-        # === Swiss Style main layout: TOC b\u00ean tr\u00e1i, content b\u00ean ph\u1ea3i ===
+        # === Swiss Style main layout: TOC bên trái, content bên phải ===
         main_hlayout = aqt.qt.QHBoxLayout()
         main_hlayout.setContentsMargins(0, 0, 0, 0)
         main_hlayout.setSpacing(0)
 
-        # TOC panel (sidebar tr\u00e1i) - \u0111\u00f3ng vai tr\u00f2 m\u1ee5c l\u1ee5c / filter
+        # TOC panel (sidebar trái)
         toc_widget = aqt.qt.QWidget()
         toc_layout = aqt.qt.QVBoxLayout(toc_widget)
-        toc_layout.setContentsMargins(6, 6, 6, 6)
-        toc_layout.setSpacing(6)
+        toc_layout.setContentsMargins(8, 24, 8, 8)
+        toc_layout.setSpacing(8)
 
-        toc_primary_style = """
-            QPushButton { text-align: left; padding: 7px 10px; border: none; font-weight: 700; border-radius: 11px; color: #123A63; background-color: rgba(255, 248, 226, 0.95); }
-            QPushButton:hover { background-color: rgba(255, 240, 187, 0.96); }
+        # Modern Vibrant Tab Styles
+        toc_inactive_style = """
+            QPushButton { 
+                text-align: left; 
+                padding: 12px 14px; 
+                border: none; 
+                font-weight: 600; 
+                font-size: 13px;
+                border-radius: 12px; 
+                color: #94A3B8; 
+                background-color: transparent; 
+            }
+            QPushButton:hover { 
+                background-color: #1E293B; 
+                color: #E2E8F0;
+            }
         """
-        toc_item_style = """
-            QPushButton { text-align: left; padding: 4px 10px; border: none; font-size: 11px; border-radius: 9px; color: #123A63; background-color: rgba(235, 245, 255, 0.94); }
-            QPushButton:hover { background-color: rgba(214, 233, 252, 0.96); }
+        toc_active_style = """
+            QPushButton { 
+                text-align: left; 
+                padding: 12px 14px; 
+                border: none; 
+                font-weight: 700; 
+                font-size: 13px;
+                border-radius: 12px; 
+                color: #FFFFFF; 
+                background-color: #10B981; 
+            }
         """
 
-        toc_title_label = aqt.qt.QLabel(i18n.get_text("config_toc_title", lang))
-        toc_title_font = toc_title_label.font()
-        toc_title_font.setBold(True)
-        toc_title_font.setPointSize(max(toc_title_font.pointSize(), 10))
-        toc_title_label.setFont(toc_title_font)
-        toc_title_label.setStyleSheet("color: #F3FBFF;")
-        toc_layout.addWidget(toc_title_label)
+        # Tab: Voice Engines
+        btn_engines = aqt.qt.QPushButton(i18n.get_text("config_toc_services", lang))
+        btn_engines.setFlat(True)
+        btn_engines.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
+        btn_engines.setStyleSheet(toc_active_style)
+        toc_layout.addWidget(btn_engines)
 
-        # TOC theo nh\u00f3m + t\u1eebng service (Dictionary / TTS)
-
-        # n\u00fat: T\u1ea5t c\u1ea3 d\u1ecbch v\u1ee5 (scroll v\u1ec1 \u0111\u1ea7u danh s\u00e1ch)
-        btn_all = aqt.qt.QPushButton(i18n.get_text("config_toc_services", lang))
-        btn_all.setFlat(True)
-        btn_all.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_all.setStyleSheet(toc_primary_style)
-        btn_all.pressed.connect(make_scroll_fn(self._services_container_widget))
-        toc_layout.addWidget(btn_all)
-
-        # nh\u00f3m \"T\u1eeb \u0111i\u1ec3n\" v\u1edbi t\u1eebng service con
-        dictionary_services = [s for s in service_list if s.service_type == constants.ServiceType.dictionary]
-        tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
-        toc_service_detail_widgets = []
-
-        toc_section_style = (
-            "QToolButton { text-align: left; border: none; padding: 5px 7px; color: #123A63; font-weight: 700; border-radius: 9px; background-color: rgba(255, 251, 238, 0.94); }"
-            "QToolButton:hover { background-color: rgba(255, 240, 187, 0.96); }"
-        )
-
-        def draw_toc_category(title, services, default_expanded=True):
-            if not services:
-                return
-
-            section_toggle = aqt.qt.QToolButton()
-            section_toggle.setText(title)
-            section_toggle.setCheckable(True)
-            section_toggle.setChecked(default_expanded)
-            section_toggle.setToolButtonStyle(aqt.qt.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-            section_toggle.setArrowType(
-                aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
-            )
-            section_toggle.setStyleSheet(toc_section_style)
-            toc_layout.addWidget(section_toggle)
-            toc_section_toggles.append(section_toggle)
-            toc_service_detail_widgets.append(section_toggle)
-
-            section_container = aqt.qt.QWidget()
-            section_layout = aqt.qt.QVBoxLayout(section_container)
-            section_layout.setContentsMargins(0, 0, 0, 0)
-            section_layout.setSpacing(2)
-
-            for s in services:
-                card_widget = self.service_card_map.get(s.name)
-                btn = aqt.qt.QPushButton(s.name)
-                btn.setFlat(True)
-                btn.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-                btn.setStyleSheet(toc_item_style)
-                btn.pressed.connect(make_scroll_fn(card_widget))
-                section_layout.addWidget(btn)
-
-            section_container.setVisible(default_expanded)
-
-            def on_toc_section_toggled(checked, btn=section_toggle, container=section_container):
-                container.setVisible(checked)
-                btn.setArrowType(aqt.qt.Qt.ArrowType.DownArrow if checked else aqt.qt.Qt.ArrowType.RightArrow)
-
-            section_toggle.toggled.connect(on_toc_section_toggled)
-            toc_layout.addWidget(section_container)
-            toc_service_detail_widgets.append(section_container)
-
-        draw_toc_category(i18n.get_text("config_category_tts", lang), tts_services, default_expanded=True)
-        draw_toc_category(i18n.get_text("config_category_dictionary", lang), dictionary_services, default_expanded=False)
-
-        def set_toc_service_details_visible(visible):
-            for widget in toc_service_detail_widgets:
-                widget.setVisible(visible)
-
-        toc_layout.addSpacing(8)
-        
-        # Tab "About" in TOC
+        # Tab: About & Help
         btn_about = aqt.qt.QPushButton(i18n.get_text("config_toc_about", lang))
         btn_about.setFlat(True)
         btn_about.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_about.setStyleSheet(toc_primary_style)
-        
-        def show_about():
-            self._services_scroll_area.setVisible(False)
-            self.about_container.setVisible(True)
-            # Hide search bar when in About tab
-            self.search_input.setVisible(False)
-            header_label.setVisible(False)
-            services_description_label.setVisible(False)
-            self.services_summary_label.setVisible(False)
-            set_toc_service_details_visible(False)
-
-        def show_services():
-            self._services_scroll_area.setVisible(True)
-            self.about_container.setVisible(False)
-            # Show search bar
-            self.search_input.setVisible(True)
-            header_label.setVisible(True)
-            services_description_label.setVisible(True)
-            self.services_summary_label.setVisible(True)
-            set_toc_service_details_visible(True)
-
-        btn_about.pressed.connect(show_about)
-        btn_all.pressed.connect(show_services)
-
-        # Keep About + logo pinned near the bottom for stable visibility.
-        toc_layout.addStretch()
+        btn_about.setStyleSheet(toc_inactive_style)
         toc_layout.addWidget(btn_about)
-        logo_in_sidebar = aqt.qt.QWidget()
-        logo_in_sidebar.setLayout(gui_utils.get_superfreetss_label_sidebar_compact(max_logo_width=108))
-        logo_in_sidebar.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Fixed)
-        logo_in_sidebar.setStyleSheet("margin-top: 4px; background-color: rgba(236, 245, 255, 0.9); border-radius: 10px; padding: 4px 4px;")
-        toc_layout.addWidget(logo_in_sidebar)
 
-        toc_widget.setMinimumWidth(168)
-        toc_widget.setMaximumWidth(220)
+        # Function to handle tab switching visual and functional states
+        def switch_tab(is_about: bool):
+            # Update Button Styles
+            btn_engines.setStyleSheet(toc_inactive_style if is_about else toc_active_style)
+            btn_about.setStyleSheet(toc_active_style if is_about else toc_inactive_style)
+            
+            # Switch Content Visibility
+            self._services_scroll_area.setVisible(not is_about)
+            self.about_container.setVisible(is_about)
+            
+            # Toggle Extra UI Elements specific to Services list
+            self.search_input.setVisible(not is_about)
+            self.services_summary_label.setVisible(not is_about)
+
+            # Scroll to top when switching back to engines
+            if not is_about and self._services_scroll_area is not None:
+                self._services_scroll_area.verticalScrollBar().setValue(0)
+
+        # Connect tabs
+        btn_engines.pressed.connect(lambda: switch_tab(False))
+        btn_about.pressed.connect(lambda: switch_tab(True))
+
+        # Keep tabs pushed to the top.
+        toc_layout.addStretch()
+
+        toc_widget.setMinimumWidth(180)
+        toc_widget.setMaximumWidth(240)
         toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
+        # Deep Slate (Slate 900) for high contrast vibrant layout
         toc_widget.setStyleSheet("""
             QWidget {
                 border-right: none;
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #0D4A67,
-                    stop:1 #116E7A);
-                border-radius: 14px;
+                background-color: #0F172A;
+                border-radius: 16px;
             }
         """)
 
@@ -1324,18 +1268,18 @@ class Configuration(component_common.ConfigComponentBase):
         toc_scroll_area.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
         toc_scroll_area.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         toc_scroll_area.setWidget(toc_widget)
-        toc_scroll_area.setMinimumWidth(168)
-        toc_scroll_area.setMaximumWidth(220)
+        toc_scroll_area.setMinimumWidth(180)
+        toc_scroll_area.setMaximumWidth(240)
         toc_scroll_area.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
 
-        # g\u1eafn TOC v\u00e0 content v\u00e0o layout ch\u00ednh
+        # gắn TOC và content vào layout chính
         main_hlayout.addWidget(toc_scroll_area)
 
         content_widget = aqt.qt.QWidget()
         content_widget.setLayout(self.global_vlayout)
         main_hlayout.addWidget(content_widget, 1)
 
-        # l\u01b0u reference \u0111\u1ec3 TOC c\u00f3 th\u1ec3 scroll t\u1edbi ph\u1ea7n services
+        # lưu reference để TOC có thể scroll tới phần services
         self._services_scroll_area = services_scroll_area
         self._services_container_widget = services_widget
 

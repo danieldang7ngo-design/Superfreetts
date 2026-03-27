@@ -611,6 +611,9 @@ class Preferences:
     mms_workers: int = 1           # MMS (multilingual, heavy)
     default_workers: int = 4       # Fallback for other engines
 
+    # Audio output format
+    audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
+
 def serialize_preferences(preferences):
     return databind.json.dump(preferences, Preferences)
         

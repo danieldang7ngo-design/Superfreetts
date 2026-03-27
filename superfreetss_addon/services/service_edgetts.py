@@ -84,13 +84,30 @@ class EdgeTTS(service.ServiceBase):
                 
                 if audio_lang:
                     gender = constants.Gender.Male if v['Gender'] == 'Male' else constants.Gender.Female
+                    voice_options = {
+                        'speed': {
+                            'type': 'number_int', 'default': 0, 'min': -50, 'max': 50,
+                            'label': 'Speed %',
+                            'tooltip': 'Speaking rate adjustment. 0 = normal, +50 = 50% faster, -50 = 50% slower'
+                        },
+                        'pitch': {
+                            'type': 'number_int', 'default': 0, 'min': -50, 'max': 50,
+                            'label': 'Pitch (Hz)',
+                            'tooltip': 'Voice pitch adjustment in Hz. 0 = normal, +50 = higher pitch, -50 = lower pitch'
+                        },
+                        'volume': {
+                            'type': 'number_int', 'default': 0, 'min': -50, 'max': 50,
+                            'label': 'Volume %',
+                            'tooltip': 'Volume adjustment. 0 = normal, +50 = 50% louder, -50 = 50% quieter'
+                        },
+                    }
                     voices.append(voice.build_voice_v3(
                         name=v['FriendlyName'],
                         gender=gender,
                         language=audio_lang,
                         service=self,
                         voice_key=v['ShortName'],
-                        options={}
+                        options=voice_options
                     ))
             return voices
         except Exception as e:
@@ -117,7 +134,16 @@ class EdgeTTS(service.ServiceBase):
             audio_data = io.BytesIO()
             
             async def _stream():
-                communicate = edge_tts.Communicate(source_text, voice.voice_key)
+                speed_val = options.get('speed', 0)
+                pitch_val = options.get('pitch', 0)
+                volume_val = options.get('volume', 0)
+                rate_str = f"{'+' if speed_val >= 0 else ''}{speed_val}%"
+                pitch_str = f"{'+' if pitch_val >= 0 else ''}{pitch_val}Hz"
+                volume_str = f"{'+' if volume_val >= 0 else ''}{volume_val}%"
+                communicate = edge_tts.Communicate(
+                    source_text, voice.voice_key,
+                    rate=rate_str, pitch=pitch_str, volume=volume_str
+                )
                 async for chunk in communicate.stream():
                     if chunk["type"] == "audio":
                         audio_data.write(chunk["data"])

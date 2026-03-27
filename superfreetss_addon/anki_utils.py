@@ -219,13 +219,33 @@ class AnkiUtils():
             message = message[0:constants.MESSAGE_TEXT_MAX_LENGTH] + '...'
         return message
 
+    def _create_copyable_messagebox(self, title, message, icon, parent=None, rich_text=False):
+        box = aqt.qt.QMessageBox(parent)
+        box.setWindowTitle(title)
+        box.setIcon(icon)
+        
+        # Make the dialog text selectable and copyable
+        box.setTextInteractionFlags(aqt.qt.Qt.TextInteractionFlag.TextSelectableByMouse)
+        
+        if rich_text:
+            box.setTextFormat(aqt.qt.Qt.TextFormat.RichText)
+
+        # Truncate primary text but place the full stack inside the detailed view
+        if len(message) > constants.MESSAGE_TEXT_MAX_LENGTH:
+            box.setText(message[:constants.MESSAGE_TEXT_MAX_LENGTH] + "\n...")
+            box.setDetailedText(message) 
+        else:
+            box.setText(message)
+            
+        return box
+
     def info_message(self, message, parent):
-        message = self.restrict_message_length(message)
-        aqt.utils.showInfo(message, title=constants.ADDON_NAME, textFormat='rich', parent=parent)
+        box = self._create_copyable_messagebox(constants.ADDON_NAME, message, aqt.qt.QMessageBox.Icon.Information, parent, rich_text=True)
+        box.exec()
 
     def critical_message(self, message, parent):
-        message = self.restrict_message_length(message)
-        aqt.utils.showCritical(message, title=constants.ADDON_NAME, parent=parent)
+        box = self._create_copyable_messagebox(constants.ADDON_NAME, message, aqt.qt.QMessageBox.Icon.Critical, parent, rich_text=False)
+        box.exec()
 
     def tooltip_message(self, message):
         message = self.restrict_message_length(message)

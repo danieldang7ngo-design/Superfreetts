@@ -260,13 +260,20 @@ class MmsTTS(service.ServiceBase):
                     if os.path.exists(os.path.join(m_dir, "is_piper.txt")):
                         quality_suffix = " (High Quality)"
 
+                    voice_options = {
+                        'speed': {
+                            'type': 'number', 'default': 1.0, 'min': 0.5, 'max': 2.0,
+                            'label': 'Speed',
+                            'tooltip': 'Speed multiplier. 1.0 = normal, 2.0 = 2x faster, 0.5 = 2x slower'
+                        },
+                    }
                     voices.append(voice.build_voice_v3(
                         name=f"Sherpa - {audio_lang.name}{quality_suffix}",
                         gender=constants.Gender.Any,
                         language=audio_lang,
                         service=self,
                         voice_key=f"mms_{lang_code}",
-                        options={}
+                        options=voice_options
                     ))
         except Exception as e:
              logger.error(f"MmsTTS: Error listing models: {e}")
@@ -346,7 +353,8 @@ class MmsTTS(service.ServiceBase):
                 "output_file": temp_path,
                 "num_threads": int(threads_opt),
                 "provider": provider,
-                "lexicon_path": lexicon_path if has_lexicon else ""
+                "lexicon_path": lexicon_path if has_lexicon else "",
+                "speed": options.get('speed', 1.0)
             }
             
             # Send and Receive

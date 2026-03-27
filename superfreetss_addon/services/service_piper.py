@@ -177,13 +177,25 @@ class PiperTTS(service.ServiceBase):
                                     friendly_name = f"Piper - {lang_name} - {voice_name} [{quality}]"
 
                                 gender = _piper_infer_gender(config, voice_name, dataset)
+                                voice_options = {
+                                    'length_scale': {
+                                        'type': 'number', 'default': 1.0, 'min': 0.1, 'max': 3.0,
+                                        'label': 'Speed',
+                                        'tooltip': 'Speech speed multiplier. 1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower'
+                                    },
+                                    'sentence_silence': {
+                                        'type': 'number', 'default': 0.2, 'min': 0.0, 'max': 2.0,
+                                        'label': 'Pause (seconds)',
+                                        'tooltip': 'Silence between sentences in seconds. 0.2 = default, 0 = no pause'
+                                    },
+                                }
                                 voices.append(voice_module.build_voice_v3(
                                     name=friendly_name,
                                     gender=gender,
                                     language=audio_lang,
                                     service=self,
                                     voice_key=voice_name,
-                                    options={}
+                                    options=voice_options
                                 ))
                                 logger.info(f"Piper: Loaded voice {friendly_name}")
                             else:
@@ -195,13 +207,25 @@ class PiperTTS(service.ServiceBase):
             
         # Add a placeholder voice if none found
         if not voices:
+             voice_options = {
+                 'length_scale': {
+                     'type': 'number', 'default': 1.0, 'min': 0.1, 'max': 3.0,
+                     'label': 'Speed',
+                     'tooltip': 'Speech speed multiplier. 1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower'
+                 },
+                 'sentence_silence': {
+                     'type': 'number', 'default': 0.2, 'min': 0.0, 'max': 2.0,
+                     'label': 'Pause (seconds)',
+                     'tooltip': 'Silence between sentences in seconds. 0.2 = default, 0 = no pause'
+                 },
+             }
              voices.append(voice_module.build_voice_v3(
                  name="Piper - No Models Installed (Check Config)",
                  gender=constants.Gender.Any,
                  language=languages.AudioLanguage.en_US,
                  service=self,
                  voice_key="piper_none",
-                 options={}
+                 options=voice_options
              ))
              logger.info("Piper: Added placeholder voice because no models were found.")
 
@@ -239,6 +263,12 @@ class PiperTTS(service.ServiceBase):
             ]
             if num_threads > 0:
                 cmd.extend(["--thread", str(int(num_threads))])
+            
+            # Speed & silence options
+            length_scale = options.get('length_scale', 1.0)
+            sentence_silence = options.get('sentence_silence', 0.2)
+            cmd.extend(["--length_scale", str(length_scale)])
+            cmd.extend(["--sentence_silence", str(sentence_silence)])
             
             # Subprocess usually takes some text via stdin or --input
             process = subprocess.Popen(

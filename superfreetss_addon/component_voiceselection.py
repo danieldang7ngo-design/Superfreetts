@@ -508,8 +508,13 @@ class VoiceSelection(component_common.ConfigComponentBase):
                 widget.setRange(value['min'], value['max'])
                 widget.setValue(value['default'])
                 widget.valueChanged.connect(get_set_option_lambda(voice, key))
-                label_text = f"""{key} ({value['min']} to {value['max']})"""
+                display_name = value.get('label', key)
+                label_text = f"{display_name} ({value['min']} to {value['max']})"
                 label = aqt.qt.QLabel(label_text)
+                tooltip = value.get('tooltip', '')
+                if tooltip:
+                    label.setToolTip(tooltip)
+                    widget.setToolTip(tooltip)
                 self.voice_options_layout.addWidget(label, row, 0, 1, 1)
                 self.voice_options_layout.addWidget(widget, row, 1, 1, 1)
                 self.voice_options_widgets[widget_name] = widget
@@ -520,8 +525,12 @@ class VoiceSelection(component_common.ConfigComponentBase):
                 widget.addItems(value['values'])
                 widget.setCurrentText(value['default'])
                 widget.currentTextChanged.connect(get_set_option_lambda(voice, key))
-                label_text = f"""{key}"""
-                label = aqt.qt.QLabel(label_text)
+                display_name = value.get('label', key)
+                label = aqt.qt.QLabel(display_name)
+                tooltip = value.get('tooltip', '')
+                if tooltip:
+                    label.setToolTip(tooltip)
+                    widget.setToolTip(tooltip)
                 self.voice_options_layout.addWidget(label, row, 0, 1, 1)
                 self.voice_options_layout.addWidget(widget, row, 1, 1, 1)
                 self.voice_options_widgets[widget_name] = widget
@@ -531,8 +540,12 @@ class VoiceSelection(component_common.ConfigComponentBase):
                 widget.setObjectName(widget_name)
                 widget.setText(value.get('default', ''))
                 widget.textChanged.connect(get_set_option_lambda(voice, key))
-                label_text = f"""{key}"""
-                label = aqt.qt.QLabel(label_text)
+                display_name = value.get('label', key)
+                label = aqt.qt.QLabel(display_name)
+                tooltip = value.get('tooltip', '')
+                if tooltip:
+                    label.setToolTip(tooltip)
+                    widget.setToolTip(tooltip)
                 self.voice_options_layout.addWidget(label, row, 0, 1, 1)
                 self.voice_options_layout.addWidget(widget, row, 1, 1, 1)
                 self.voice_options_widgets[widget_name] = widget
