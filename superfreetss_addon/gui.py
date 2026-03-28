@@ -48,7 +48,7 @@ class ConfigurationDialog(aqt.qt.QDialog):
         # Cho phép thu nhỏ/phóng to cửa sổ cấu hình (min/max buttons trên title bar)
         # Giúp user có thể mở rộng ra full màn hình khi cần xem nhiều services hơn
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.configuration = component_configuration.Configuration(hypertts, self)
         self.configuration.load_model(hypertts.get_configuration())
 
@@ -69,7 +69,7 @@ class PreferencesDialog(aqt.qt.QDialog):
         self.hypertts = hypertts
         # Cho phép thu nhỏ/phóng to cho màn hình Preferences
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.preferences = component_preferences.ComponentPreferences(hypertts, self)
         self.preferences.load_model(hypertts.get_preferences())
 
@@ -94,7 +94,7 @@ class RealtimeDialog(DialogBase):
         self.hypertts = hypertts
         # Cho phép thu nhỏ/phóng to cho dialog Realtime TTS
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.realtime_component = component_realtime.ComponentRealtime(hypertts, self, card_ord)
 
     def setupUi(self):

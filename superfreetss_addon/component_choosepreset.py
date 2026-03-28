@@ -7,6 +7,7 @@ from . import component_common
 from . import config_models
 from . import constants
 from . import component_batch
+from . import gui_utils
 
 
 class ComponentChoosePreset(component_common.ComponentBase):
@@ -93,7 +94,7 @@ class ComponentChoosePreset(component_common.ComponentBase):
 class ChoosePresetDialog(aqt.qt.QDialog):
     def __init__(self, hypertts):
         super(aqt.qt.QDialog, self).__init__()
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.setupUi()
         self.choose_preset = ComponentChoosePreset(hypertts, self)
         self.choose_preset.draw(self.main_layout)

@@ -51,28 +51,28 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
         self.profile_open_button = aqt.qt.QPushButton(i18n.get_text("button_open", lang))
         self.profile_open_button.setToolTip(i18n.get_text("batch_tooltip_open_preset", lang))
-        gui_utils.configure_secondary_button(self.profile_open_button, min_height=30, min_width=60, font_size=10)
+        gui_utils.configure_pastel_button(self.profile_open_button, style_name="blue", font_size=10)
         self.profile_open_button.setVisible(False)
 
         self.profile_duplicate_button = aqt.qt.QPushButton(i18n.get_text("button_duplicate", lang))
         self.profile_duplicate_button.setToolTip(i18n.get_text("batch_tooltip_duplicate_preset", lang))
-        gui_utils.configure_secondary_button(self.profile_duplicate_button, min_height=30, min_width=80, font_size=10)
+        gui_utils.configure_pastel_button(self.profile_duplicate_button, style_name="purple", font_size=10)
 
         self.profile_save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         self.profile_save_button.setToolTip(i18n.get_text("batch_tooltip_save_preset", lang))
-        gui_utils.configure_secondary_button(self.profile_save_button, min_height=30, min_width=60, font_size=10)
+        gui_utils.configure_pastel_button(self.profile_save_button, style_name="emerald", font_size=10)
 
         self.profile_rename_button = aqt.qt.QPushButton(i18n.get_text("button_rename", lang))
         self.profile_rename_button.setToolTip(i18n.get_text("batch_tooltip_rename_preset", lang))
-        gui_utils.configure_secondary_button(self.profile_rename_button, min_height=30, min_width=70, font_size=10)
+        gui_utils.configure_pastel_button(self.profile_rename_button, style_name="amber", font_size=10)
 
         self.profile_delete_button = aqt.qt.QPushButton(i18n.get_text("button_delete", lang))
         self.profile_delete_button.setToolTip(i18n.get_text("batch_tooltip_delete_preset", lang))
-        gui_utils.configure_secondary_button(self.profile_delete_button, min_height=30, min_width=60, font_size=10)
+        gui_utils.configure_pastel_button(self.profile_delete_button, style_name="rose", font_size=10)
 
         self.profile_save_and_close_button = aqt.qt.QPushButton(i18n.get_text("button_save_and_close", lang))
         self.profile_save_and_close_button.setToolTip(i18n.get_text("batch_tooltip_save_and_close", lang))
-        gui_utils.configure_primary_button(self.profile_save_and_close_button)
+        gui_utils.configure_pastel_button(self.profile_save_and_close_button, style_name="emerald", is_primary=True)
 
 
 
@@ -231,39 +231,16 @@ class ComponentBatch(component_common.ConfigComponentBase):
     def enable_save_profile_button(self):
         logger.info('enable_save_profile_button')
         self.profile_save_button.setEnabled(True)
-        self.profile_save_button.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #E53935, stop:1 #C62828);
-                color: white;
-                border: none;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 14px;
-                min-height: 30px;
-                min-width: 60px;
-                font-size: 10pt;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #EF5350, stop:1 #D32F2F);
-            }
-        """)
+        self.profile_save_button.setProperty("cssClass", "btnPastelEmerald")
+        self.profile_save_button.style().unpolish(self.profile_save_button)
+        self.profile_save_button.style().polish(self.profile_save_button)
 
     def disable_save_profile_button(self):
         logger.info('disable_save_profile_button')
         self.profile_save_button.setEnabled(False)
-        self.profile_save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #E0E0E0;
-                color: #9E9E9E;
-                border: none;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 14px;
-                min-height: 30px;
-                min-width: 60px;
-                font-size: 10pt;
-            }
-        """)
+        self.profile_save_button.setProperty("cssClass", "")
+        self.profile_save_button.style().unpolish(self.profile_save_button)
+        self.profile_save_button.style().polish(self.profile_save_button)
 
     def enable_delete_profile_button(self):
         self.profile_delete_button.setEnabled(True)
@@ -317,20 +294,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         # === Sound Tag Options (collapsible) ===
         self.sound_tag_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_sound_tag", lang)}')
-        self.sound_tag_toggle.setStyleSheet("""
-            QPushButton {
-                background-color: #F1F3F4;
-                color: #5F6368;
-                border: 1px solid #DADCE0;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-                text-align: left;
-            }
-            QPushButton:hover {
-                background-color: #E8EAED;
-            }
-        """)
+        self.sound_tag_toggle.setProperty("cssClass", "secondaryButton")
         main_layout.addWidget(self.sound_tag_toggle)
 
         self.sound_tag_section = aqt.qt.QWidget()
@@ -371,20 +335,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         # === Advanced Source Mode (collapsible) ===
         self.source_mode_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_advanced_source", lang)}')
-        self.source_mode_toggle.setStyleSheet("""
-            QPushButton {
-                background-color: #F1F3F4;
-                color: #5F6368;
-                border: 1px solid #DADCE0;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-                text-align: left;
-            }
-            QPushButton:hover {
-                background-color: #E8EAED;
-            }
-        """)
+        self.source_mode_toggle.setProperty("cssClass", "secondaryButton")
         main_layout.addWidget(self.source_mode_toggle)
 
         self.source_mode_section = aqt.qt.QWidget()
@@ -510,20 +461,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.advanced_toggle_button = aqt.qt.QPushButton(f'Advanced: OFF')
             
         self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
-        gui_utils.configure_secondary_button(self.advanced_toggle_button, min_width=80)
-        self.advanced_toggle_button.setStyleSheet("""
-            QPushButton {
-                background-color: #F1F3F4;
-                color: #5F6368;
-                border: 1px solid #DADCE0;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #E8EAED;
-            }
-        """)
+        self.advanced_toggle_button.setProperty("cssClass", "secondaryButton")
         self.advanced_toggle_button.pressed.connect(self.toggle_advanced)
         hlayout.addWidget(self.advanced_toggle_button)
         
@@ -533,14 +471,14 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.preview_sound_button.setEnabled(False)
         else:
             self.preview_sound_button.setText(i18n.get_text("button_preview", lang))
-        gui_utils.configure_secondary_button(self.preview_sound_button)
+        gui_utils.configure_pastel_button(self.preview_sound_button, style_name="blue", font_size=10)
         hlayout.addWidget(self.preview_sound_button)
         
         # apply button
         apply_text = i18n.get_text("button_apply", lang)
         self.apply_button.setText(apply_text)
         if self.editor_mode == False:
-            gui_utils.configure_primary_button(self.apply_button)
+            gui_utils.configure_pastel_button(self.apply_button, style_name="emerald", is_primary=True, font_size=11)
         hlayout.addWidget(self.apply_button)
 
         # save and close
@@ -683,38 +621,18 @@ class ComponentBatch(component_common.ConfigComponentBase):
             else:
                 self.advanced_toggle_button.setText('Advanced: ON')
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_hide_advanced", lang))
-            self.advanced_toggle_button.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4CAF50, stop:1 #2E7D32);
-                    color: white;
-                    border: none;
-                    font-weight: bold;
-                    border-radius: 6px;
-                    padding: 6px 12px;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #66BB6A, stop:1 #388E3C);
-                }
-            """)
+            self.advanced_toggle_button.setProperty("cssClass", "primaryButton")
+            self.advanced_toggle_button.style().unpolish(self.advanced_toggle_button)
+            self.advanced_toggle_button.style().polish(self.advanced_toggle_button)
         else:
             if lang == 'vi':
                 self.advanced_toggle_button.setText('Nâng cao: TẮT')
             else:
                 self.advanced_toggle_button.setText('Advanced: OFF')
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
-            self.advanced_toggle_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #F1F3F4;
-                    color: #5F6368;
-                    border: 1px solid #DADCE0;
-                    font-weight: bold;
-                    border-radius: 6px;
-                    padding: 6px 12px;
-                }
-                QPushButton:hover {
-                    background-color: #E8EAED;
-                }
-            """)
+            self.advanced_toggle_button.setProperty("cssClass", "secondaryButton")
+            self.advanced_toggle_button.style().unpolish(self.advanced_toggle_button)
+            self.advanced_toggle_button.style().polish(self.advanced_toggle_button)
 
     @sc.event(Event.click_preview)
     def sound_preview_button_pressed(self):
@@ -823,7 +741,7 @@ class BatchDialog(aqt.qt.QDialog):
         self.hypertts = hypertts
         # Cho phép dialog Collection Mode thu nhỏ/phóng to
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         lang = self.hypertts.get_ui_language()
         self.setWindowTitle(i18n.get_text("dialog_collection_title", lang))
         self.main_layout = aqt.qt.QVBoxLayout(self)        

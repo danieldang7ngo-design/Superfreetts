@@ -286,7 +286,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
         reset_layout = aqt.qt.QHBoxLayout()
         reset_layout.addStretch()
         self.reset_filters_button.setText(i18n.get_text("voice_button_reset_filters", lang))
-        gui_utils.configure_secondary_button(self.reset_filters_button, min_width=140)
+        gui_utils.configure_pastel_button(self.reset_filters_button, style_name="amber", min_width=140)
         reset_layout.addWidget(self.reset_filters_button)
         reset_layout.addStretch()
         gridlayout.addLayout(reset_layout, 2, 0, 1, 4)
@@ -303,7 +303,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
         vlayout.addWidget(self.voices_combobox)
 
         self.play_sample_button.setText(i18n.get_text("voice_button_play_sample_wait", lang))
-        gui_utils.configure_secondary_button(self.play_sample_button)
+        gui_utils.configure_pastel_button(self.play_sample_button, style_name="blue")
         vlayout.addWidget(self.play_sample_button)
 
         self.voice_options_layout = aqt.qt.QGridLayout()
@@ -400,7 +400,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
         self.radio_button_priority.toggled.connect(self.voice_selection_mode_change)
 
         self.add_voice_button.pressed.connect(self.add_voice)
-        gui_utils.configure_primary_button(self.add_voice_button)
+        gui_utils.configure_pastel_button(self.add_voice_button, style_name="purple")
 
         self.filter_and_draw_voices()
 

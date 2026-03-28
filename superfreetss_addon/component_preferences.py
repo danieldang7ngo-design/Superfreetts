@@ -112,31 +112,21 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
     def model_part_updated_common(self):
         self.save_button.setEnabled(True)
-        self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+        self.save_button.setProperty("cssClass", "primaryButton")
+        self.save_button.style().unpolish(self.save_button)
+        self.save_button.style().polish(self.save_button)
 
     def _create_vibrant_card(self, title_text):
         """Helper to create a high-contrast card with a bold header."""
         card = aqt.qt.QFrame()
-        card.setObjectName("vibrantCard")
-        card.setStyleSheet(
-            f"QFrame#vibrantCard {{ "
-            f"  background-color: #FFFFFF; "
-            f"  border: 2px solid {constants.COLOR_BORDER}; "
-            f"  border-radius: 12px; "
-            f"  margin-top: 6px; "
-            f"}}"
-        )
+        card.setProperty("cssClass", "vibrantCard")
         
         card_layout = aqt.qt.QVBoxLayout(card)
         card_layout.setContentsMargins(16, 14, 16, 16)
         card_layout.setSpacing(10)
         
         header = aqt.qt.QLabel(title_text)
-        header_font = header.font()
-        header_font.setBold(True)
-        header_font.setPointSize(max(header_font.pointSize(), 11))
-        header.setFont(header_font)
-        header.setStyleSheet("color: #123A63; border: none; background: none; margin-bottom: 2px;")
+        header.setObjectName("vibrantCardHeader")
         
         card_layout.addWidget(header)
         return card, card_layout
@@ -161,7 +151,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.language_card, lang_card_layout = self._create_vibrant_card(i18n.get_text("preferences_group_language_title", lang))
         
         self.language_label = aqt.qt.QLabel(i18n.get_text("preferences_label_interface_language", lang))
-        self.language_label.setStyleSheet("border: none; background: none;")
         lang_card_layout.addWidget(self.language_label)
 
         self.language_combobox.clear()
@@ -178,11 +167,9 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_cache_row = aqt.qt.QHBoxLayout()
         h_cache_row.setSpacing(10)
         self.cache_retention_checkbox.setMinimumHeight(24)
-        self.cache_retention_checkbox.setStyleSheet("border: none; background: none;")
         h_cache_row.addWidget(self.cache_retention_checkbox)
         
         self.cache_label = aqt.qt.QLabel(i18n.get_text("preferences_cache_label", lang))
-        self.cache_label.setStyleSheet("border: none; background: none;")
         h_cache_row.addWidget(self.cache_label)
         
         self.cache_retention_spinbox.setMinimumHeight(30)
@@ -190,7 +177,7 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_cache_row.addStretch()
         
         cache_card_layout.addLayout(h_cache_row)
-        self.cache_helper_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        self.cache_helper_label.setProperty("cssClass", "helperText")
         cache_card_layout.addWidget(self.cache_helper_label)
         
         main_vlayout.addWidget(self.cache_card)
@@ -201,7 +188,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         h_format_row = aqt.qt.QHBoxLayout()
         h_format_row.setSpacing(10)
         self.format_label = aqt.qt.QLabel(i18n.get_text("pref_audio_format_desc", lang))
-        self.format_label.setStyleSheet("border: none; background: none;")
         h_format_row.addWidget(self.format_label)
 
         self.audio_format_combobox.clear()
@@ -223,13 +209,12 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         
         h_batch = aqt.qt.QHBoxLayout()
         self.perf_label = aqt.qt.QLabel(i18n.get_text("preferences_batch_concurrency_label", lang))
-        self.perf_label.setStyleSheet("border: none; background: none;")
         h_batch.addWidget(self.perf_label)
         self.batch_concurrency_spinbox.setFixedWidth(72)
         h_batch.addWidget(self.batch_concurrency_spinbox)
         h_batch.addStretch()
         
-        self.batch_concurrency_help_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        self.batch_concurrency_help_label.setProperty("cssClass", "helperText")
         batch_vlayout.addLayout(h_batch)
         batch_vlayout.addWidget(self.batch_concurrency_help_label)
         
@@ -242,13 +227,12 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         
         h_sherpa = aqt.qt.QHBoxLayout()
         self.sherpa_pool_label = aqt.qt.QLabel(i18n.get_text("pref_label_sherpa_max_processes", lang))
-        self.sherpa_pool_label.setStyleSheet("border: none; background: none;")
         h_sherpa.addWidget(self.sherpa_pool_label)
         self.sherpa_max_processes_spinbox.setFixedWidth(72)
         h_sherpa.addWidget(self.sherpa_max_processes_spinbox)
         h_sherpa.addStretch()
         
-        self.sherpa_pool_help_label.setStyleSheet("color: #64748B; border: none; background: none; font-size: 11px;")
+        self.sherpa_pool_help_label.setProperty("cssClass", "helperText")
         sherpa_vlayout.addLayout(h_sherpa)
         sherpa_vlayout.addWidget(self.sherpa_pool_help_label)
         
@@ -261,11 +245,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
         self.tabs = aqt.qt.QTabWidget()
         self.tabs.setDocumentMode(True)
-        self.tabs.setStyleSheet(
-            "QTabWidget::pane { border: none; background: #F8FBFF; border-radius: 12px; }"
-            "QTabBar::tab { padding: 8px 14px; border: none; border-radius: 10px; background: #DCEBFA; color: #244166; }"
-            "QTabBar::tab:selected { font-weight: 700; background: #FFF4C8; color: #133B5C; }"
-        )
         self.tabs.addTab(self.shortcuts.draw(), i18n.get_text("preferences_tab_shortcuts", lang))
         self.tabs.addTab(self.error_handling.draw(), i18n.get_text("preferences_tab_error_handling", lang))
         main_vlayout.addSpacing(4)

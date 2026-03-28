@@ -47,9 +47,9 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self._initial_snapshot = self._capture_snapshot()
     
     def _get_stylesheet(self):
-        """Return stylesheet for unified dialog (reuse from constants if available)."""
-        from . import constants
-        return constants.STYLESHEET_DIALOG
+        """Return stylesheet for unified dialog."""
+        from . import gui_utils
+        return gui_utils.get_dynamic_stylesheet()
     
     def setupUi(self):
         """Build dialog layout with tabbed interface."""
@@ -69,11 +69,6 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         # Tab widget
         self.tabs = aqt.qt.QTabWidget()
         self.tabs.setDocumentMode(True)
-        self.tabs.setStyleSheet(
-            "QTabWidget::pane { border: none; background: #F8FBFF; border-radius: 12px; }"
-            "QTabBar::tab { padding: 8px 14px; border: none; border-radius: 10px; background: #DCEBFA; color: #244166; }"
-            "QTabBar::tab:selected { font-weight: 700; background: #FFF4C8; color: #133B5C; }"
-        )
 
         # Tab containers are created immediately, but content is lazy-built on demand.
         self.services_container = aqt.qt.QWidget()

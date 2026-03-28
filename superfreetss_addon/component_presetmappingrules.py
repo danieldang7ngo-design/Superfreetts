@@ -164,7 +164,7 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
         hlayout.addStretch()
         self.save_button = aqt.qt.QPushButton(i18n.get_text("preset_rules_button_save_and_close", lang))
         self.cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
-        self.cancel_button.setStyleSheet(self.hypertts.anki_utils.get_red_stylesheet())
+        self.cancel_button.setProperty("cssClass", "secondaryButton")
         hlayout.addWidget(self.save_button)
         hlayout.addWidget(self.cancel_button)
         self.vlayout.addStretch()
@@ -290,18 +290,24 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
 
         # if there are no rules, set the green stylesheet on the add rule button
         if at_least_one_rule:
-            self.add_rule_button.setStyleSheet(None)
+            self.add_rule_button.setProperty("cssClass", "")
         else:
-            self.add_rule_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+            self.add_rule_button.setProperty("cssClass", "primaryButton")
+        self.add_rule_button.style().unpolish(self.add_rule_button)
+        self.add_rule_button.style().polish(self.add_rule_button)
         
 
     def enable_save_button(self):
         self.save_button.setEnabled(True)
-        self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+        self.save_button.setProperty("cssClass", "primaryButton")
+        self.save_button.style().unpolish(self.save_button)
+        self.save_button.style().polish(self.save_button)
 
     def disable_save_button(self):
         self.save_button.setEnabled(False)
-        self.save_button.setStyleSheet(None)
+        self.save_button.setProperty("cssClass", "")
+        self.save_button.style().unpolish(self.save_button)
+        self.save_button.style().polish(self.save_button)
 
     def preview_all_button_pressed(self):
         logger.debug('preview_all_button_pressed')
@@ -319,7 +325,7 @@ class PresetMappingRulesDialog(aqt.qt.QDialog):
         super(aqt.qt.QDialog, self).__init__()
         # Cho phép dialog Preset Mapping Rules thu nhỏ/phóng to
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(constants.STYLESHEET_DIALOG)
+        self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.setupUi()
         self.mapping_rules = ComponentPresetMappingRules(hypertts, 
             self, deck_note_type, editor_context)

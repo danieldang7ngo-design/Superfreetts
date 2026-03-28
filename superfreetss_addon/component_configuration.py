@@ -68,7 +68,9 @@ class Configuration(component_common.ConfigComponentBase):
     def model_change(self):
         if self.enable_model_change:
             self.save_button.setEnabled(True)
-            self.save_button.setStyleSheet(self.hypertts.anki_utils.get_green_stylesheet())
+            self.save_button.setProperty("cssClass", "primaryButton")
+            self.save_button.style().unpolish(self.save_button)
+            self.save_button.style().polish(self.save_button)
             self._refresh_service_status_badges()
 
     def _build_service_search_text(self, service, service_description):
@@ -98,11 +100,12 @@ class Configuration(component_common.ConfigComponentBase):
         """Return (text, bg_color, text_color) for current service readiness."""
         lang = self.hypertts.get_ui_language()
         enabled = bool(self.model.get_service_enabled(service.name))
+        dark = gui_utils.is_night_mode()
         if not enabled:
             return (
                 i18n.get_text("service_status_disabled", lang),
-                constants.COLOR_BORDER,
-                constants.COLOR_SECONDARY,
+                '#334155' if dark else constants.COLOR_BORDER,
+                '#CBD5E1' if dark else constants.COLOR_SECONDARY,
             )
 
         missing = 0
@@ -123,14 +126,14 @@ class Configuration(component_common.ConfigComponentBase):
         if missing > 0:
             return (
                 i18n.get_text("service_status_setup_needed", lang),
-                '#FEF3C7',
-                '#92400E',
+                '#78350F' if dark else '#FEF3C7', # Amber 900 vs 100
+                '#FDE68A' if dark else '#92400E', # Amber 200 vs 800
             )
 
         return (
             i18n.get_text("service_status_ready", lang),
-            constants.COLOR_ACCENT_LIGHT,
-            constants.COLOR_ACCENT_DARK,
+            '#022C22' if dark else '#FFFFFF', # Contrast with Enabled Card Backgrounds
+            '#34D399' if dark else '#059669',
         )
 
     def _refresh_service_status_badges(self):
@@ -609,26 +612,6 @@ class Configuration(component_common.ConfigComponentBase):
         advanced_btn = aqt.qt.QPushButton(f"⚙️ {advanced_text}")
         advanced_btn.setCheckable(True)
         advanced_btn.setChecked(False)
-        advanced_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: palette(alternate-base);
-                border: none;
-                border-radius: 6px;
-                padding: 6px 12px;
-                color: palette(text);
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: palette(base);
-            }}
-            QPushButton:pressed {{
-                background-color: palette(button);
-            }}
-            QPushButton:checked {{
-                background-color: {constants.COLOR_ACCENT_LIGHT};
-                color: {constants.COLOR_ACCENT_DARK};
-            }}
-        """)
         
         # Create collapsible widget for advanced options
         advanced_widget = aqt.qt.QWidget()
@@ -705,26 +688,17 @@ class Configuration(component_common.ConfigComponentBase):
 
     def _apply_service_card_style(self, service_card: aqt.qt.QFrame, enabled: bool):
         """
-        Apply a vibrant blocks style for service cards.
-        - enabled = True: vibrant green block
-        - enabled = False: playful rose block with strong navy outline
+        Apply a vibrant blocks style for service cards using dynamic stylesheet properties.
         """
+        service_card.setProperty("cssClass", "serviceCard")
         if enabled:
-            service_card.setStyleSheet(
-                f"""QFrame#serviceCard {{ 
-                    background-color: #84E3A0;
-                    border: none;
-                    border-radius: 18px;
-                }}"""
-            )
+            service_card.setProperty("cardState", "enabled")
         else:
-            service_card.setStyleSheet(
-                f"""QFrame#serviceCard {{ 
-                    background-color: #E8BCC1;
-                    border: none;
-                    border-radius: 18px;
-                }}"""
-            )
+            service_card.setProperty("cardState", "disabled")
+            
+        # Refresh the style so Qt picks up the property changes dynamically
+        service_card.style().unpolish(service_card)
+        service_card.style().polish(service_card)
 
     def draw_service(self, service, layout):
         logger.info(f'draw_service {service.name}')
@@ -779,18 +753,22 @@ class Configuration(component_common.ConfigComponentBase):
         
         # Add "Free" badge for free services
         if service.service_fee == constants.ServiceFee.free:
+            dark = gui_utils.is_night_mode()
             header_row.addSpacing(8)
             header_row.addWidget(gui_utils.get_status_badge(
-                i18n.get_text("service_badge_free", lang)
+                i18n.get_text("service_badge_free", lang),
+                bg_color="#FFFFFF" if not dark else "#022C22",
+                text_color="#059669" if not dark else "#34D399"
             ))
 
         # Highlight EdgeTTS with a "Recommended" badge
         if service.name == "EdgeTTS":
+            dark = gui_utils.is_night_mode()
             header_row.addSpacing(8)
             header_row.addWidget(gui_utils.get_status_badge(
                 i18n.get_text("service_badge_recommended", lang),
-                bg_color="#FEF3C7", # Amber 100
-                text_color="#92400E" # Amber 800
+                bg_color="#78350F" if dark else "#FEF3C7", # Amber 900 vs Amber 100
+                text_color="#FDE68A" if dark else "#92400E" # Amber 200 vs Amber 800
             ))
 
         header_row.addSpacing(8)
@@ -1126,7 +1104,6 @@ class Configuration(component_common.ConfigComponentBase):
             if self._services_scroll_area is not None:
                 self._services_scroll_area.setUpdatesEnabled(False)
 
-            # nếu ô tìm kiếm rỗng -> hiển thị lại tất cả services
             if not query:
                 for service in service_list:
                     card_widget = self.service_card_map.get(service.name)
@@ -1182,55 +1159,28 @@ class Configuration(component_common.ConfigComponentBase):
         toc_layout.setContentsMargins(8, 24, 8, 8)
         toc_layout.setSpacing(8)
 
-        # Modern Vibrant Tab Styles
-        toc_inactive_style = """
-            QPushButton { 
-                text-align: left; 
-                padding: 12px 14px; 
-                border: none; 
-                font-weight: 600; 
-                font-size: 13px;
-                border-radius: 12px; 
-                color: #94A3B8; 
-                background-color: transparent; 
-            }
-            QPushButton:hover { 
-                background-color: #1E293B; 
-                color: #E2E8F0;
-            }
-        """
-        toc_active_style = """
-            QPushButton { 
-                text-align: left; 
-                padding: 12px 14px; 
-                border: none; 
-                font-weight: 700; 
-                font-size: 13px;
-                border-radius: 12px; 
-                color: #FFFFFF; 
-                background-color: #10B981; 
-            }
-        """
+        # Modern Vibrant Tab Styles are now handled via cssClass in gui_utils.py
 
-        # Tab: Voice Engines
         btn_engines = aqt.qt.QPushButton(i18n.get_text("config_toc_services", lang))
         btn_engines.setFlat(True)
         btn_engines.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_engines.setStyleSheet(toc_active_style)
+        btn_engines.setProperty("cssClass", "tocButtonActive")
         toc_layout.addWidget(btn_engines)
 
-        # Tab: About & Help
         btn_about = aqt.qt.QPushButton(i18n.get_text("config_toc_about", lang))
         btn_about.setFlat(True)
         btn_about.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
-        btn_about.setStyleSheet(toc_inactive_style)
+        btn_about.setProperty("cssClass", "tocButtonInactive")
         toc_layout.addWidget(btn_about)
 
         # Function to handle tab switching visual and functional states
         def switch_tab(is_about: bool):
-            # Update Button Styles
-            btn_engines.setStyleSheet(toc_inactive_style if is_about else toc_active_style)
-            btn_about.setStyleSheet(toc_active_style if is_about else toc_inactive_style)
+            btn_engines.setProperty("cssClass", "tocButtonInactive" if is_about else "tocButtonActive")
+            btn_about.setProperty("cssClass", "tocButtonActive" if is_about else "tocButtonInactive")
+            btn_engines.style().unpolish(btn_engines)
+            btn_engines.style().polish(btn_engines)
+            btn_about.style().unpolish(btn_about)
+            btn_about.style().polish(btn_about)
             
             # Switch Content Visibility
             self._services_scroll_area.setVisible(not is_about)
@@ -1254,14 +1204,7 @@ class Configuration(component_common.ConfigComponentBase):
         toc_widget.setMinimumWidth(180)
         toc_widget.setMaximumWidth(240)
         toc_widget.setSizePolicy(aqt.qt.QSizePolicy.Policy.Preferred, aqt.qt.QSizePolicy.Policy.Expanding)
-        # Deep Slate (Slate 900) for high contrast vibrant layout
-        toc_widget.setStyleSheet("""
-            QWidget {
-                border-right: none;
-                background-color: #0F172A;
-                border-radius: 16px;
-            }
-        """)
+        toc_widget.setProperty("cssClass", "sidebarPanel")
 
         toc_scroll_area = aqt.qt.QScrollArea()
         toc_scroll_area.setWidgetResizable(True)

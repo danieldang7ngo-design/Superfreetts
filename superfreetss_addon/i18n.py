@@ -118,7 +118,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "services_button_disable_all": "Disable All Services",
         "config_toc_title": "Configuration",
         "config_toc_services": "🎙️ Voice Engines",
-        "config_toc_about": "ℹ️ Info & Help",
+        "config_toc_about": "ℹ️ About",
         "config_search_placeholder": "Search service…",
 
         # Service fee / type descriptions
@@ -603,7 +603,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "services_button_disable_all": "Tắt tất cả dịch vụ",
         "config_toc_title": "Cấu hình",
         "config_toc_services": "🎙️ Nguồn giọng đọc",
-        "config_toc_about": "ℹ️ Thông tin & Trợ giúp",
+        "config_toc_about": "ℹ️ About",
         "config_search_placeholder": "Tìm dịch vụ…",
 
         # Service fee / type descriptions
