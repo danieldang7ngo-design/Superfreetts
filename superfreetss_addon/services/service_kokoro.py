@@ -157,7 +157,7 @@ class KokoroTTS(service.ServiceBase):
         from .. import system_utils
         from .. import cpu_utils
         return {
-            'num_threads': ('number', 'CPU Threads (0=Auto/2 for Parallel)', 0, 0, system_utils.get_total_cpu_count()),
+            'num_threads': ('number', 'CPU Threads (0=Auto/Serial)', 1, 0, system_utils.get_total_cpu_count()),
             'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging', False),
         }
@@ -209,9 +209,9 @@ class KokoroTTS(service.ServiceBase):
             script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
             process = _sherpa_pool.get_process(engine_path, script_path, debug_enabled=debug_enabled)
             
-            threads_opt = self.get_configuration_value_optional('num_threads', 0)
+            threads_opt = self.get_configuration_value_optional('num_threads', 1)
             if threads_opt <= 0:
-                threads_opt = 2
+                threads_opt = 1
 
             if not hasattr(mw, "hyper_tts") or not mw.hyper_tts:
                  raise Exception("Main Hyper_TTS instance not found")

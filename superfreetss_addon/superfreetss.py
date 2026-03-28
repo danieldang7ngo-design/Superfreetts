@@ -66,17 +66,17 @@ class SuperFreeTTS():
             
             # Default concurrency workers for each service
             defaults = {
-                'PiperTTS': 2,
+                'PiperTTS': 1,
                 'KokoroTTS': 1,
-                'EdgeTTS': 3,
+                'EdgeTTS': 1,
                 'MmsTTS': 1,
             }
             
             # Fallback to preferences if available (backward compatibility)
             pref_fallback = {
-                'PiperTTS': getattr(prefs, 'piper_workers', 2),
+                'PiperTTS': getattr(prefs, 'piper_workers', 1),
                 'KokoroTTS': getattr(prefs, 'kokoro_workers', 1),
-                'EdgeTTS': getattr(prefs, 'edgetts_workers', 3),
+                'EdgeTTS': getattr(prefs, 'edgetts_workers', 1),
                 'MmsTTS': getattr(prefs, 'mms_workers', 1),
             }
             
@@ -106,7 +106,7 @@ class SuperFreeTTS():
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
         except Exception as e:
             logger.warning(f'[INIT] Failed to initialize multi-engine executor, falling back to unified: {e}')
-            self.executor = batch_executor.get_batch_executor(max_workers=4)
+            self.executor = batch_executor.get_batch_executor(max_workers=1)
 
         # do maintenance        # migration
         self.perform_config_migration()

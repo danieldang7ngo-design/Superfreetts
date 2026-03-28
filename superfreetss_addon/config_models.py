@@ -596,7 +596,7 @@ class Preferences:
     # Whether cache cleanup is enabled
     cache_enabled: bool = True
     # Number of concurrent threads for batch processing
-    batch_concurrency: int = 4
+    batch_concurrency: int = 1
     # Maximum RAM (in MB) allowed for batch processing (resource management)
     batch_max_ram_mb: int = 3000  # 3GB default (safe for 8GB RAM systems)
     # Maximum CPU cores allowed for batch processing (resource management)
@@ -605,11 +605,11 @@ class Preferences:
     sherpa_max_processes: int = 4
     
     # Multi-engine executor settings (workers per TTS engine)
-    piper_workers: int = 2         # Parallel Piper processes
+    piper_workers: int = 1         # Parallel Piper processes
     kokoro_workers: int = 1        # Sequential Kokoro (heavy)
-    edgetts_workers: int = 2       # Parallel EdgeTTS (network I/O)
+    edgetts_workers: int = 1       # Parallel EdgeTTS (network I/O)
     mms_workers: int = 1           # MMS (multilingual, heavy)
-    default_workers: int = 4       # Fallback for other engines
+    default_workers: int = 1       # Fallback for other engines
 
     # Audio output format
     audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
@@ -838,6 +838,25 @@ def migrate_configuration(anki_utils, config):
                             voice_entry['voice_id'] = voice_to_voice_id_conversion(voice)
                             voice_entry.pop('voice', None)                        
 
+    if current_config_schema_version < 5:
+        # Super Free TTS: Force all users to safe serial mode (1 thread, 1 worker) by default.
+        # This resolves issues where older defaults (Auto=2) were persisted.
+        service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
+        for service_name, s_config in service_config.items():
+            # Reset threads to 1 for all services
+            if 'num_threads' in s_config:
+                s_config['num_threads'] = 1
+            # Reset concurrency workers to 1 for all services
+            if 'concurrency_workers' in s_config:
+                s_config['concurrency_workers'] = 1
+
+        # Also reset global preference workers if they exist
+        if constants.CONFIG_PREFERENCES in config:
+            prefs = config[constants.CONFIG_PREFERENCES]
+            for worker_key in ['piper_workers', 'kokoro_workers', 'edgetts_workers', 'mms_workers', 'default_workers', 'batch_concurrency']:
+                if worker_key in prefs:
+                    prefs[worker_key] = 1
+
     if current_config_schema_version < 4:
         # remove the previously used unique_id
         if 'unique_id' in config:
@@ -847,10 +866,10 @@ def migrate_configuration(anki_utils, config):
     config[constants.CONFIG_SCHEMA] = constants.CONFIG_SCHEMA_VERSION
 
     # Ensure preferences has cache_enabled
-    if 'preferences' not in config:
-        config['preferences'] = {}
-    if 'cache_enabled' not in config['preferences']:
-        config['preferences']['cache_enabled'] = True
+    if constants.CONFIG_PREFERENCES not in config:
+        config[constants.CONFIG_PREFERENCES] = {}
+    if 'cache_enabled' not in config[constants.CONFIG_PREFERENCES]:
+        config[constants.CONFIG_PREFERENCES]['cache_enabled'] = True
 
     return config
     

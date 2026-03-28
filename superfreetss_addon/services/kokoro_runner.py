@@ -86,7 +86,7 @@ def main():
                     providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
             sess_options = ort.SessionOptions()
-            sess_options.intra_op_num_threads = threads if threads > 0 else 2
+            sess_options.intra_op_num_threads = threads if threads > 0 else 1
             sess_options.inter_op_num_threads = 1
 
             # Standard Stock Initialization

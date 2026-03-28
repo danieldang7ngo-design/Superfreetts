@@ -219,7 +219,7 @@ class UnifiedBatchExecutor:
         )
     """
     
-    def __init__(self, max_workers: int = 4, max_ram_mb: int = 3000, cache_size_mb: int = 100):
+    def __init__(self, max_workers: int = 1, max_ram_mb: int = 3000, cache_size_mb: int = 100):
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self.monitor = SimpleResourceMonitor(max_ram_mb)
         self.cache = UnifiedCache(max_size_mb=cache_size_mb)
@@ -381,10 +381,10 @@ class MultiEngineExecutor:
             cache_size_mb: Unified cache size in MB
         """
         self.engine_config = engine_config or {
-            'Piper': 2,
+            'Piper': 1,
             'Kokoro': 1,
-            'EdgeTTS': 2,
-            'default': 4
+            'EdgeTTS': 1,
+            'default': 1
         }
         
         # Create executors per engine
@@ -399,7 +399,7 @@ class MultiEngineExecutor:
         
         # Default executor for unknown engines
         self.default_executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=max(1, self.engine_config.get('default', 4)),
+            max_workers=max(1, self.engine_config.get('default', 1)),
             thread_name_prefix="TTS-Default"
         )
         
@@ -605,7 +605,7 @@ class MultiEngineExecutor:
         logger.info("[BATCH] MultiEngine executor reset")
 
 
-def get_batch_executor(max_workers: int = 4) -> UnifiedBatchExecutor:
+def get_batch_executor(max_workers: int = 1) -> UnifiedBatchExecutor:
     """Get or create global batch executor"""
     global _executor
     if _executor is None:

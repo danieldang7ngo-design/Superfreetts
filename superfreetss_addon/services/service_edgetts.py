@@ -55,7 +55,7 @@ class EdgeTTS(service.ServiceBase):
         """Advanced settings for EdgeTTS (hidden in dropdown)"""
         from .. import cpu_utils
         return {
-            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 3, 1, cpu_utils.CPUInfo.get_max_workers()),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging for EdgeTTS', False)
         }
 

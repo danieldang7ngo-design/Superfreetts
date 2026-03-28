@@ -104,7 +104,7 @@ CONFIG_ADDON_NAME = _get_addon_name()
 
 
 CONFIG_SCHEMA = 'config_schema'
-CONFIG_SCHEMA_VERSION = 4
+CONFIG_SCHEMA_VERSION = 5
 # deprecated, use CONFIG_PRESETS
 CONFIG_BATCH_CONFIG = 'batch_config'
 # this is the new config category, contains dict of uuids
@@ -113,6 +113,7 @@ CONFIG_DEFAULT_PRESETS = 'default_presets'
 CONFIG_MAPPING_RULES = 'mapping_rules'
 CONFIG_REALTIME_CONFIG = 'realtime_config'
 CONFIG_CONFIGURATION = 'configuration'
+CONFIG_SERVICE_CONFIG = 'service_config'
 CONFIG_PREFERENCES = 'preferences'
 CONFIG_KEYBOARD_SHORTCUTS = 'keyboard_shortcuts'
 CONFIG_LAST_USED_BATCH = 'last_used_batch'

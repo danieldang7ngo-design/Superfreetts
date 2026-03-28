@@ -226,7 +226,7 @@ class MmsTTS(service.ServiceBase):
         from .. import cpu_utils
         return {
             'use_gpu': ('bool', 'Use AMD/DirectML GPU (Windows)', system_utils.is_amd_gpu_detected()),
-            'num_threads': ('number', 'CPU Threads (0=Auto)', 0, 0, system_utils.get_total_cpu_count()),
+            'num_threads': ('number', 'CPU Threads (0=Auto)', 1, 0, system_utils.get_total_cpu_count()),
             'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging', False),
         }
@@ -332,10 +332,10 @@ class MmsTTS(service.ServiceBase):
             
             from .. import system_utils
             # Prepare optimization params
-            threads_opt = self.get_configuration_value_optional('num_threads', 0)
+            threads_opt = self.get_configuration_value_optional('num_threads', 1)
             if threads_opt <= 0:
-                # For pooled operations, use 2 threads per process
-                threads_opt = 2 
+                # For pooled operations, use 1 thread per process
+                threads_opt = 1 
             
             use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
             provider = "cpu"
