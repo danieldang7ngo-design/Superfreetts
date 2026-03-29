@@ -1456,9 +1456,9 @@ class SuperFreeTTS():
             service_config_map = configuration.get_service_config()
             
             defaults = {
-                'PiperTTS': 2,
+                'PiperTTS': 1,
                 'KokoroTTS': 1,
-                'EdgeTTS': 3,
+                'EdgeTTS': 1,
                 'MmsTTS': 1,
             }
             pref_fallback = {}

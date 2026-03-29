@@ -115,7 +115,7 @@ CONFIG_ADDON_NAME = _get_addon_name()
 
 
 CONFIG_SCHEMA = 'config_schema'
-CONFIG_SCHEMA_VERSION = 5
+CONFIG_SCHEMA_VERSION = 6
 # deprecated, use CONFIG_PRESETS
 CONFIG_BATCH_CONFIG = 'batch_config'
 # this is the new config category, contains dict of uuids

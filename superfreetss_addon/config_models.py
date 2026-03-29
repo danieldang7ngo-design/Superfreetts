@@ -602,9 +602,9 @@ class Preferences:
     # Maximum RAM (in MB) allowed for batch processing (resource management)
     batch_max_ram_mb: int = 3000  # 3GB default (safe for 8GB RAM systems)
     # Maximum CPU cores allowed for batch processing (resource management)
-    batch_max_cores: int = 8      # Cap at 8 cores (prevent over-utilization)
+    batch_max_cores: int = 1      # Cap at 1 core (single-core mode)
     # Maximum number of concurrent Sherpa/Kokoro processes to keep in pool
-    sherpa_max_processes: int = 4
+    sherpa_max_processes: int = 1
     
     # Multi-engine executor settings (workers per TTS engine)
     piper_workers: int = 1         # Parallel Piper processes
@@ -859,10 +859,29 @@ def migrate_configuration(anki_utils, config):
                 if worker_key in prefs:
                     prefs[worker_key] = 1
 
-    if current_config_schema_version < 4:
-        # remove the previously used unique_id
-        if 'unique_id' in config:
-            del config['unique_id']
+    if current_config_schema_version < 6:
+        # Super Free TTS: Clear all presets, mapping rules and realtime configs
+        # and ensure "đơn nhân" (single-core/single-worker) configuration.
+        config[constants.CONFIG_PRESETS] = {}
+        config[constants.CONFIG_MAPPING_RULES] = serialize_preset_mapping_rules(PresetMappingRules())
+        config[constants.CONFIG_REALTIME_CONFIG] = {}
+        
+        # Force all service configurations to single-worker mode
+        service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
+        for service_name, s_config in service_config.items():
+            s_config['num_threads'] = 1
+            s_config['concurrency_workers'] = 1
+
+        # Reset all worker-related preferences to 1
+        if constants.CONFIG_PREFERENCES in config:
+            prefs = config[constants.CONFIG_PREFERENCES]
+            worker_keys = [
+                'piper_workers', 'kokoro_workers', 'edgetts_workers', 
+                'mms_workers', 'default_workers', 'batch_concurrency',
+                'batch_max_cores', 'sherpa_max_processes'
+            ]
+            for worker_key in worker_keys:
+                prefs[worker_key] = 1
 
     # Update config schema version
     config[constants.CONFIG_SCHEMA] = constants.CONFIG_SCHEMA_VERSION
