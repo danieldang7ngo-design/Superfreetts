@@ -16,6 +16,7 @@ from . import i18n
 from . import logging_utils
 from . import constants
 from .downloader import TurboDownloader
+from .constants import DATA_DIR, KOKORO_ENGINE_DIR
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -27,8 +28,6 @@ KOKORO_V10_MODEL_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/dow
 KOKORO_V10_VOICES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
 
 # Local paths
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
 PYTHON_EXE = os.path.join(KOKORO_ENGINE_DIR, 'python.exe')
 
 # Modular subdirectories

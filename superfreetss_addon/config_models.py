@@ -163,6 +163,8 @@ def deserialize_batch_target(batch_target_config):
 
 class VoiceWithOptions():
     def __init__(self, voice_id: voice.TtsVoiceId_v3, options):
+        if not isinstance(voice_id, voice.TtsVoiceId_v3):
+            voice_id = voice.deserialize_voice_id_v3(voice_id)
         assert isinstance(voice_id, voice.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
         self.voice_id = voice_id
         self.options = copy.copy(options)

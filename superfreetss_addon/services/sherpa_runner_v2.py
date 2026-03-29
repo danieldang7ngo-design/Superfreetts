@@ -8,6 +8,11 @@ base_dir = os.path.dirname(sys.executable)
 site_packages = os.path.join(base_dir, 'Lib', 'site-packages')
 if os.path.exists(site_packages) and site_packages not in sys.path:
     sys.path.append(site_packages)
+
+# Inject local libs path (Added for unified SherpaManager)
+addon_libs = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'libs')
+if os.path.exists(addon_libs) and addon_libs not in sys.path:
+    sys.path.insert(0, addon_libs)
 # Also check for root site-packages (some setups)
 site_packages_root = os.path.join(base_dir, 'site-packages')
 if os.path.exists(site_packages_root) and site_packages_root not in sys.path:

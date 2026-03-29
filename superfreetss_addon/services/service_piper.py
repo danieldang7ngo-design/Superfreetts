@@ -8,17 +8,31 @@ import time
 import tempfile
 from typing import List, Optional
 
-from superfreetss_addon import voice as voice_module
-from superfreetss_addon import service
-from superfreetss_addon import errors
-from superfreetss_addon import constants
-from superfreetss_addon import languages
-from superfreetss_addon import logging_utils
+from .. import voice as voice_module
+from .. import service
+from .. import errors
+from .. import constants
+from .. import languages
+from .. import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
  
 from .service_mms import SherpaProcessPool
 _piper_pool = SherpaProcessPool("Piper", max_processes=2)
+
+def _get_kokoro_engine_dir():
+    try:
+        from ..constants import KOKORO_ENGINE_DIR
+        return KOKORO_ENGINE_DIR
+    except ImportError:
+        return None
+
+def _get_python_exe():
+    try:
+        from ..engine_manager import EngineManager
+        return EngineManager.get_python_exe()
+    except ImportError:
+        return None
 
 # Known Piper dataset/voice names -> gender (Rhasspy/Piper common models)
 _PIPER_DATASET_GENDER = {
@@ -103,31 +117,26 @@ class PiperTTS(service.ServiceBase):
         }
 
     def _get_piper_exe(self):
+        """
+        Return the path to the python executable that will run piper_runner.py.
+        We use the portable python from Kokoro for consistency.
+        """
+        # Try service configuration first (for advanced users)
         exe_path = self.get_configuration_value_optional(self.CONFIG_EXECUTABLE_PATH, '')
         if exe_path and os.path.exists(exe_path):
             return exe_path
-        
-        # Try default location
-        try:
-            # Try to avoid relative import if possible
-            try:
-                from superfreetss_addon import component_piper_setup
-            except ImportError:
-                from .. import component_piper_setup
             
-            if os.path.exists(component_piper_setup.PIPER_EXE_PATH):
-                return component_piper_setup.PIPER_EXE_PATH
-        except: pass
+        # Fallback to Kokoro's portable python
+        python_exe = _get_python_exe()
+        if python_exe and os.path.exists(python_exe):
+            return python_exe
             
         return None
 
     def _resolve_models_dir(self):
         """Resolve Piper models directory: config value or default addon path."""
-        try:
-            from superfreetss_addon import component_piper_setup
-        except ImportError:
-            from .. import component_piper_setup
-        default_dir = component_piper_setup.PIPER_MODELS_DIR
+        from ..constants import PIPER_MODELS_DIR
+        default_dir = PIPER_MODELS_DIR
         models_path = self.get_configuration_value_optional(self.CONFIG_MODELS_PATH, '') or None
         if models_path and os.path.exists(models_path):
             return models_path
@@ -135,6 +144,28 @@ class PiperTTS(service.ServiceBase):
             logger.info(f"Piper: Using default models path: {default_dir}")
             return default_dir
         return None
+
+    def __init__(self):
+        super().__init__()
+        # Proactively check for dependencies since we use the portable python
+        self._ensure_dependencies()
+
+    def _ensure_dependencies(self):
+        """Ensure sherpa-onnx is available via the unified SherpaManager."""
+        try:
+            from ..sherpa_manager import SherpaManager
+            
+            # This is non-blocking if already installed. 
+            # If not, it will download and extract the wheel to libs/
+            if not SherpaManager.is_installed():
+                logger.info("Piper: Sherpa-ONNX not found. Initializing unified downloader...")
+                # In a real scenario, we might want to show a progress dialog, 
+                # but for simplicity and since it runs in __init__, we'll do it quietly 
+                # or rely on the manager's background download if we refactor it further.
+                # For now, we call it.
+                SherpaManager.ensure_installed()
+        except Exception as e:
+            logger.warning(f"Piper: Unified dependency check failed: {e}")
 
     def voice_list(self) -> List[voice_module.TtsVoice_v3]:
         models_path = self._resolve_models_dir()

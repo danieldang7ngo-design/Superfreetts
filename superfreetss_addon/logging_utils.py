@@ -13,6 +13,8 @@ SILENT_LOGGING_MODE = True
 
 # Easy debug mode: Set this to True to enable logging for diagnostics
 FORCE_DEBUG_MODE = False
+# Local log file
+DEFAULT_LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'user_files', 'superfreetss.log')
 
 class NullLogger():
     def __init__(self):
@@ -82,6 +84,17 @@ class SentryLogger():
     def critical(self, msg, *args, **kwargs):
         self.send_event(logging.CRITICAL, msg)
 
+class SafeStreamHandler(logging.StreamHandler):
+    """A StreamHandler that doesn't crash if the stream is closed."""
+    def emit(self, record):
+        try:
+            if self.stream and hasattr(self.stream, 'closed') and self.stream.closed:
+                return
+            super().emit(record)
+        except (ValueError, AttributeError):
+            # Stream was likely closed during shutdown
+            pass
+
 def get_stream_handler():
     # Wrap stdout to handle encoding errors gracefully on Windows (cp1252)
     # This prevents UnicodeEncodeError when logging non-ASCII characters
@@ -101,7 +114,7 @@ def get_stream_handler():
         # If wrapping fails (closed file), use regular stdout as fallback
         wrapped_stdout = sys.stdout
     
-    handler = logging.StreamHandler(stream=wrapped_stdout)
+    handler = SafeStreamHandler(stream=wrapped_stdout)
     handler.setFormatter(logging.Formatter(fmt='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(name)s: %(message)s', datefmt='%H:%M:%S'))
     return handler
 
@@ -115,12 +128,14 @@ def configure_console_logging():
     global SILENT_LOGGING_MODE
     SILENT_LOGGING_MODE = False
     root_logger = logging.getLogger(constants.LOGGER_NAME)
-    root_logger.handlers.clear()
+    # Clear existing handlers to avoid duplicates
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
     root_logger.propagate = False
     root_logger.setLevel(logging.DEBUG)
     try:
         root_logger.addHandler(get_stream_handler())
-    except Exception as e:
+    except Exception:
         # If console logging fails, silently fall back to silent mode
         SILENT_LOGGING_MODE = True
 
@@ -128,14 +143,24 @@ def configure_file_logging(filename):
     global SILENT_LOGGING_MODE
     SILENT_LOGGING_MODE = False
     root_logger = logging.getLogger(constants.LOGGER_NAME)
-    root_logger.handlers.clear()
+    # Clear existing handlers to avoid duplicates
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
     root_logger.propagate = False
     root_logger.setLevel(logging.DEBUG)    
-    root_logger.addHandler(get_file_handler(filename))
+    try:
+        root_logger.addHandler(get_file_handler(filename))
+        # Note: We omit the stream handler here to avoid "I/O operation on closed file"
+        # especially since Anki redirects stdout/stderr and might close them unexpectedly.
+    except Exception:
+        SILENT_LOGGING_MODE = True
 
 def configure_silent():
     global SILENT_LOGGING_MODE
     SILENT_LOGGING_MODE = True
+    root_logger = logging.getLogger(constants.LOGGER_NAME)
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
 
 def get_child_logger(name):
     child_logger_name = name.split('.')[-1]
@@ -151,14 +176,7 @@ def get_child_logger(name):
         
         # If FORCE_DEBUG_MODE is on, ensure handler is configured
         if FORCE_DEBUG_MODE and not root_logger.handlers:
-            root_logger.handlers.clear()
-            root_logger.propagate = False
-            root_logger.setLevel(logging.DEBUG)
-            try:
-                root_logger.addHandler(get_stream_handler())
-            except Exception:
-                # If handler setup fails, continue without it
-                pass
+            configure_file_logging(DEFAULT_LOG_FILE)
         
         return root_logger.getChild(child_logger_name)
 

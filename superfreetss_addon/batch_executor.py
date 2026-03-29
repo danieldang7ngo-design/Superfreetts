@@ -338,7 +338,9 @@ class UnifiedBatchExecutor:
         audio_request_context = task['audio_request_context']
         
         # Check cache first
-        cache_key = f"{processed_text}_{batch.voice_selection.get_voice_id()}"
+        chosen_voice = task.get('chosen_voice')
+        voice_id_str = str(chosen_voice.voice_id) if chosen_voice else 'None'
+        cache_key = f"{processed_text}_{voice_id_str}"
         cached = self.cache.get(cache_key)
         if cached:
             source_text, audio_filename, full_filename = cached
@@ -446,25 +448,26 @@ class MultiEngineExecutor:
     
     def detect_service(self, task: Dict) -> str:
         """
-        Detect TTS service name from task's voice selection.
+        Detect TTS service name from task's selected voice.
         Returns service name or 'default'
         """
         try:
-            batch = task.get('batch')
-            if not batch or not hasattr(batch, 'voice_selection'):
-                return 'default'
+            voice = task.get('chosen_voice')
+            if not voice:
+                # Fallback to older mechanism if chosen_voice is not set
+                batch = task.get('batch')
+                if not batch or not hasattr(batch, 'voice_selection'):
+                    return 'default'
 
-            voice_sel = batch.voice_selection
-            voice = None
-
-            if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
-                voice = voice_sel._voice_with_options
-            elif hasattr(voice_sel, 'voice') and voice_sel.voice:
-                voice = voice_sel.voice
-            elif hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
-                voice = voice_sel._voice_list[0]
-            elif hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
-                voice = voice_sel.voice_list[0]
+                voice_sel = batch.voice_selection
+                if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
+                    voice = voice_sel._voice_with_options
+                elif hasattr(voice_sel, 'voice') and voice_sel.voice:
+                    voice = voice_sel.voice
+                elif hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
+                    voice = voice_sel._voice_list[0]
+                elif hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
+                    voice = voice_sel.voice_list[0]
 
             if not voice:
                 return 'default'

@@ -59,6 +59,10 @@ class BatchNoteActionContext():
         """Set the batch status for this note."""
         self.batch_status.set_status(self.note_id, status)
 
+    def set_error(self, exception: Exception) -> None:
+        """Set an error for this note and mark status as Error."""
+        self.batch_status.report_known_error(self.note_id, exception)
+
 class BatchRunningActionContext():
     """Context manager for running a batch operation."""
     

@@ -10,6 +10,7 @@ import time
 from .. import service, voice, errors
 from .. import constants
 from .. import languages
+from .. import logging_utils
 # from .. import system_utils # lazy loaded
 from aqt import mw
 
@@ -75,29 +76,35 @@ class SherpaProcessPool:
         self._semaphore.acquire()
         
         with self._lock:
-            # 1. Try to find an idle process for THIS script
+            # 1. Try to find an idle process for THIS script with SAME debug setting
             for i, (proc, exe, script, last_time) in enumerate(self._pool):
                 if proc.poll() is None and exe == executable_path and script == script_path:
-                    p, e, s, _ = self._pool.pop(i)
-                    return p
+                    # Check if debug setting matches (we need to store it in the pool)
+                    current_debug = getattr(proc, 'debug_enabled', False)
+                    if current_debug == debug_enabled:
+                        p, e, s, _ = self._pool.pop(i)
+                        return p
             
-            # 2. If no matching idle process, but we have OTHER idle processes and we're at capacity
+            # 2. If no matching idle process, but we have OTHER idle processes and we"re at capacity
             # we should kill the oldest idle one to make room for a NEW type (Script)
             if self._total_spawned >= self._max_processes and self._pool:
                 # Kill oldest (first in list)
                 p, e, s, _ = self._pool.pop(0)
                 logger.info(f"SherpaPool[{self.name}]: Capacity reached. Terminating oldest idle {os.path.basename(s)} for new {os.path.basename(script_path)}")
-                try:
-                    p.stdin.close()
-                    p.terminate()
-                except: pass
+                self.safe_terminate(p)
                 self._total_spawned -= 1
 
         # 3. Start new process
-        new_proc = self._start_new(executable_path, script_path, debug_enabled)
-        with self._lock:
-            self._total_spawned += 1
-        return new_proc
+        try:
+            new_proc = self._start_new(executable_path, script_path, debug_enabled)
+            new_proc.debug_enabled = debug_enabled
+            with self._lock:
+                self._total_spawned += 1
+            return new_proc
+        except Exception as e:
+            self._semaphore.release()
+            logger.error(f"SherpaPool[{self.name}]: Failed to start process {os.path.basename(script_path)}: {e}")
+            raise e
 
     def release_process(self, proc, executable_path, script_path):
         with self._lock:
@@ -182,7 +189,7 @@ class MmsTTS(service.ServiceBase):
 
     def _ensure_python_environment(self):
         try:
-            from ..component_mms_manager import KOKORO_ENGINE_DIR
+            from ..constants import KOKORO_ENGINE_DIR
             if os.path.exists(KOKORO_ENGINE_DIR):
                 pth_files = [f for f in os.listdir(KOKORO_ENGINE_DIR) if f.endswith('._pth')]
                 if pth_files:
@@ -195,6 +202,12 @@ class MmsTTS(service.ServiceBase):
                         content = content.replace('#import site', 'import site')
                         with open(pth_path, 'w') as f:
                             f.write(content)
+                
+                # Unified Sherpa-ONNX Library Setup
+                from ..sherpa_manager import SherpaManager
+                if not SherpaManager.is_installed():
+                    logger.info("MmsTTS: Sherpa-ONNX not found. Initializing unified downloader...")
+                    SherpaManager.ensure_installed()
         except Exception as e:
             logger.warning(f"MmsTTS: Failed to proactively configure python environment: {e}")
 
@@ -236,7 +249,7 @@ class MmsTTS(service.ServiceBase):
 
     def voice_list(self) -> typing.List[voice.TtsVoice_v3]:
         # We manually list installed models from data/mms_models
-        from ..component_mms_manager import DATA_DIR
+        from ..constants import DATA_DIR
         model_dir = os.path.join(DATA_DIR, 'mms_models')
         
         if not os.path.exists(model_dir):
@@ -310,15 +323,15 @@ class MmsTTS(service.ServiceBase):
         
         python_path = self.get_configuration_value_optional('python_path', '')
         if not python_path:
-            # Try to use Kokoro's python if configured
-            from ..component_kokoro_manager import PYTHON_EXE
-            python_path = PYTHON_EXE
+            # Use unified shared engine
+            from ..engine_manager import EngineManager
+            python_path = EngineManager.get_python_exe()
             
         if not os.path.exists(python_path):
             raise errors.RequestError(source_text, voice, "Python engine (Sherpa) not found. Please install MMS/Kokoro backend.")
 
         lang_code = voice.voice_key.replace("mms_", "")
-        from ..component_mms_manager import DATA_DIR
+        from ..constants import DATA_DIR
         model_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
         
         if not os.path.exists(model_dir):

@@ -8,6 +8,12 @@ import sherpa_onnx
 import io
 import base64
 
+# Inject local libs path
+base_dir = os.path.dirname(os.path.dirname(__file__))
+libs_path = os.path.join(base_dir, 'libs')
+if os.path.exists(libs_path) and libs_path not in sys.path:
+    sys.path.insert(0, libs_path)
+
 def log(msg):
     sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     sys.stderr.flush()
@@ -30,27 +36,31 @@ def main():
             log(f"Loading Piper-Sherpa engine: {os.path.basename(model_path)} on {device}...")
             
             # Piper Configuration for Sherpa-ONNX
-            config = sherpa_onnx.OfflineTtsVitsModelConfig(
-                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
-                    model=model_path,
-                    lexicon="",
-                    tokens=tokens_path,
-                    data_dir=data_dir,
-                    noise_scale=0.667,
-                    noise_scale_w=0.8,
-                    length_scale=1.0
-                )
+            vits_config = sherpa_onnx.OfflineTtsVitsModelConfig(
+                model=model_path,
+                lexicon="",
+                tokens=tokens_path,
+                data_dir=data_dir,
+                noise_scale=0.667,
+                noise_scale_w=0.8,
+                length_scale=1.0
             )
             
             # Overall Configuration
             # threads = processes (8) * 2 = 16 saturation
-            s_threads = threads if threads > 0 else 2
+            s_threads = threads if threads > 0 else 1
+            
+            model_config = sherpa_onnx.OfflineTtsModelConfig(
+                vits=vits_config,
+                num_threads=s_threads,
+                debug=False,
+                provider=device
+            )
             
             tts_config = sherpa_onnx.OfflineTtsConfig(
-                model=config,
+                model=model_config,
                 rule_fsts="",
-                max_num_sentences=1,
-                precision="fp32"
+                max_num_sentences=1
             )
             
             engine = sherpa_onnx.OfflineTts(tts_config)

@@ -128,9 +128,18 @@ else:
         current_script_dir = os.path.dirname(current_script_path)
         return os.path.join(current_script_dir, 'services')
 
+    # Derive the package name for services dynamically
+    # This ensures that if the addon is renamed or loaded as a sub-package (e.g. Superfreetts.superfreetss_addon),
+    # discovery still works correctly.
+    if __package__:
+        services_package = f"{__package__}.{constants.DIR_SERVICES}"
+    else:
+        # Fallback if __package__ is None (unlikely in Anki)
+        services_package = f"{constants.DIR_HYPERTTS_ADDON}.{constants.DIR_SERVICES}"
+
     service_manager = servicemanager.ServiceManager(
         services_dir(),
-        f'{constants.DIR_HYPERTTS_ADDON}.{constants.DIR_SERVICES}',
+        services_package,
         False
     )
 
@@ -143,6 +152,10 @@ else:
     # when services are lazily instantiated.
     with hyper_tts.error_manager.get_single_action_context('Configuring Services'):
         service_manager.configure(hyper_tts.get_configuration())
+
+    # Configure logging based on user preference
+    if hyper_tts.get_preferences().error_handling.debug_mode:
+        logging_utils.FORCE_DEBUG_MODE = True
 
     gui.init(hyper_tts)
 

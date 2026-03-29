@@ -7,12 +7,12 @@ import subprocess
 import espeakng
 from typing import List
 
-from superfreetss_addon import voice
-from superfreetss_addon import service
-from superfreetss_addon import errors
-from superfreetss_addon import constants
-from superfreetss_addon import languages
-from superfreetss_addon import logging_utils
+from .. import voice
+from .. import service
+from .. import errors
+from .. import constants
+from .. import languages
+from .. import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
 AUDIO_LANGUAGE_OVERRIDE_MAP = {

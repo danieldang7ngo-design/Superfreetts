@@ -100,6 +100,17 @@ def _get_addon_name():
     # Fallback to the detected folder name (e.g. 'super free tts' or 'anki-super-free-tts')
     return addon_folder
 
+ADDON_PACKAGE_DIR = os.path.dirname(__file__)
+DATA_DIR = os.path.join(ADDON_PACKAGE_DIR, 'data')
+
+# Engine Directories
+SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
+KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
+PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
+# The piper zip contains a internal folder named 'piper'
+PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
+PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
+
 CONFIG_ADDON_NAME = _get_addon_name()
 
 

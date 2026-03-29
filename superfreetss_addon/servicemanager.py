@@ -100,12 +100,21 @@ class ServiceManager():
     # to keep Anki startup time fast.
 
     def discover_services(self):
+        """Discover all files starting with service_ and ending with .py in the services directory."""
         module_names = []
-        for path, dirs, files in os.walk(self.services_directory):
-            for filename in files:
-                if filename.startswith('service_') and filename.endswith('.py'):
-                    module_name = filename.replace('.py', '')        
+        if not os.path.exists(self.services_directory):
+            logger.error(f'discover_services: directory does not exist: {self.services_directory}')
+            return []
+            
+        for filename in os.listdir(self.services_directory):
+            if filename.startswith('service_') and filename.endswith('.py'):
+                module_name = filename[:-3]
+                # check if it's already in the list
+                if module_name not in module_names:
                     module_names.append(module_name)
+        
+        if not module_names:
+            logger.warning(f'discover_services: no service modules found in {self.services_directory}')
         return module_names
 
     def init_services(self):
@@ -134,10 +143,16 @@ class ServiceManager():
 
     def import_services(self):
         module_names = self.discover_services()
-        logger.info(f'discovered {len(module_names)} services')
+        logger.info(f'import_services: discovered {len(module_names)} service modules in {self.services_directory}')
         for module_name in module_names:
-            logger.info(f'importing module {module_name}, package_name: {self.package_name}')
-            importlib.import_module(f'{self.package_name}.{module_name}')
+            try:
+                full_module_path = f'{self.package_name}.{module_name}'
+                logger.debug(f'import_services: attempting to import {full_module_path}')
+                importlib.import_module(full_module_path)
+                logger.debug(f'import_services: successfully imported {module_name}')
+            except Exception as e:
+                logger.error(f'import_services: failed to import module {module_name} with package {self.package_name}: {e}', exc_info=True)
+                # Continue with other modules even if one fails
 
     def _cache_service_classes(self):
         """Cache ServiceBase subclasses without instantiating them. Called during init_services()."""

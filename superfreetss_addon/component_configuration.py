@@ -249,8 +249,8 @@ class Configuration(component_common.ConfigComponentBase):
             from . import component_piper_setup
             dlg = component_piper_setup.PiperSetupDialog(self.dialog)
             dlg.exec()
-            if os.path.exists(component_piper_setup.PIPER_EXE_PATH):
-                self._set_service_config_value_with_ui_sync(service.name, "engine_path", component_piper_setup.PIPER_EXE_PATH)
+            if os.path.exists(constants.PIPER_EXE_PATH):
+                self._set_service_config_value_with_ui_sync(service.name, "engine_path", constants.PIPER_EXE_PATH)
             return
 
     def get_service_enable_change_fn(self, service):
@@ -438,8 +438,8 @@ class Configuration(component_common.ConfigComponentBase):
                           dlg = component_piper_setup.PiperSetupDialog(self.dialog)
                           dlg.exec()
                           # After setup, update path if exists
-                          if os.path.exists(component_piper_setup.PIPER_EXE_PATH):
-                              le.setText(component_piper_setup.PIPER_EXE_PATH)
+                          if os.path.exists(constants.PIPER_EXE_PATH):
+                              le.setText(constants.PIPER_EXE_PATH)
                      setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_piper_setup(le))
                      gui_utils.configure_primary_button(setup_btn)
                      actions_layout.addWidget(setup_btn)
@@ -483,8 +483,7 @@ class Configuration(component_common.ConfigComponentBase):
                      def open_downloader(le=lineedit):
                          dest_dir = le.text()
                          if not dest_dir:
-                             from . import component_piper_setup
-                             dest_dir = component_piper_setup.PIPER_MODELS_DIR
+                             dest_dir = constants.PIPER_MODELS_DIR
                              os.makedirs(dest_dir, exist_ok=True)
                              le.setText(dest_dir)
                          
@@ -511,12 +510,11 @@ class Configuration(component_common.ConfigComponentBase):
                          dlg.exec()
                          # After setup, set default path if empty
                          if not le.text():
-                             le.setText(component_piper_setup.PIPER_MODELS_DIR)
+                             le.setText(constants.PIPER_MODELS_DIR)
                          self.hypertts.service_manager.clear_voice_list_cache()
                          
                          # Auto-enable service
-                         from . import component_piper_setup
-                         if os.path.exists(component_piper_setup.PIPER_EXE_PATH):
+                         if os.path.exists(constants.PIPER_EXE_PATH):
                              self.model.set_service_enabled("PiperTTS", True)
                              piper_cb = self.service_checkbox_map.get("PiperTTS")
                              if piper_cb:

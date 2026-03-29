@@ -160,7 +160,17 @@ def serialize_voice_v3(voice: TtsVoice_v3) -> str:
 def serialize_voice_id_v3(voice_id: TtsVoiceId_v3) -> str:
     return databind.json.dump(voice_id, TtsVoiceId_v3)
 
-def deserialize_voice_id_v3(voice_id: str) -> TtsVoiceId_v3:
+def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_v3:
+    if isinstance(voice_id, TtsVoiceId_v3):
+        return voice_id
+    if isinstance(voice_id, str):
+        try:
+            import json
+            parsed = json.loads(voice_id)
+            if isinstance(parsed, dict) or isinstance(parsed, str):
+                voice_id = parsed
+        except Exception:
+            pass
     return databind.json.load(voice_id, TtsVoiceId_v3)
 
 def build_voice_v3(name, gender, language, service, voice_key, options) -> TtsVoice_v3:

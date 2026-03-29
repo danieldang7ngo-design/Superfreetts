@@ -64,6 +64,9 @@ class SuperFreeTTS():
             service_config_map = config.get('service_config', {})
             prefs = self.get_preferences()  # For backward compatibility fallback
             
+            # Apply logging preferences based on stored debug mode
+            self.apply_logging_preferences()
+            
             # Default concurrency workers for each service
             defaults = {
                 'PiperTTS': 1,
@@ -250,19 +253,30 @@ class SuperFreeTTS():
                             processed_text = self.text_processing_cache[cache_key]
                             logger.debug(f"[BATCH] Text cache hit")
                         
+                        # Priority mode voice list state
+                        priority_voice_list = None
+                        if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                            # We should initialize this outside the loop if we want it to persist,
+                            # but priority mode with unified batch executor is tricky since we group tasks.
+                            # Best effort: use the original list every time, or we can't fall back easily.
+                            # For now, let's just let it act like single/random if priority.
+                            priority_voice_list = copy.copy(batch.voice_selection.voice_list)
+
+                        chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list)
+
                         # Create simple task dict (no MemoryPool)
                         task = {
                             'note_id': note_id,
                             'source_text': source_text,
                             'processed_text': processed_text,
                             'batch': batch,
-                            'audio_request_context': audio_request_context
+                            'audio_request_context': audio_request_context,
+                            'chosen_voice': chosen_voice
                         }
                         tasks.append(task)
                     except Exception as e:
                         with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                            note_action_context.set_status(constants.BatchNoteStatus.Error)
-                            note_action_context.error = e
+                            note_action_context.set_error(e)
 
                 extract_time = time.time() - extract_start
                 logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
@@ -337,10 +351,10 @@ class SuperFreeTTS():
                     with batch_status.get_note_action_context(note_id, False) as note_action_context:
                         try:
                             if is_error:
-                                note_action_context.set_status(constants.BatchNoteStatus.Error)
-                                note_action_context.error = Exception(i18n.get_text("error_audio_gen_failed_dup", lang))
+                                # is_error now contains the actual exception object from the task
+                                note_action_context.set_error(is_error)
                                 if checkpoint:
-                                    checkpoint.errors[str(idx)] = str(note_action_context.error)
+                                    checkpoint['errors'][str(idx)] = str(is_error)
                             else:
                                 note = self.anki_utils.get_note_by_id(note_id)
                                 self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection)
@@ -352,8 +366,7 @@ class SuperFreeTTS():
                                     note_action_context.set_status(constants.BatchNoteStatus.Done)
                         except Exception as e:
                             logger.error(f"Error updating note {note_id}: {e}")
-                            note_action_context.set_status(constants.BatchNoteStatus.Error)
-                            note_action_context.error = e
+                            note_action_context.set_error(e)
                             if checkpoint:
                                 checkpoint['errors'][str(idx)] = str(e)
                     
@@ -397,9 +410,6 @@ class SuperFreeTTS():
         Analyze tasks to identify duplicate (processed_text, voice_id) combinations.
         Optimized: O(n) time complexity with direct tuple keys, no redundant hashing.
         
-        Note: Only works with VoiceSelectionSingle. Random and Priority modes have 
-        dynamic voice selection, so deduplication doesn't apply to them.
-        
         Args:
             tasks: List of task dictionaries containing note data and configuration
             
@@ -411,20 +421,10 @@ class SuperFreeTTS():
         if not tasks:
             return dedup_map
 
-        voice_selection = tasks[0]['batch'].voice_selection
-
-        # Only apply deduplication for single voice mode
-        if voice_selection.selection_mode != constants.VoiceSelectionMode.single:
-            # Can't deduplicate with random or priority selection, treat each task as unique
-            for task_idx, _ in enumerate(tasks):
-                dedup_key = (f'unique_{task_idx}',)
-                dedup_map[dedup_key] = [task_idx]
-            return dedup_map
-
-        # For single mode, voice is deterministic - use optimized key generation
+        # For all modes, voice is determined per task explicitly using 'chosen_voice'
         for task_idx, task_data in enumerate(tasks):
             processed_text = task_data['processed_text']
-            voice_with_options = task_data['batch'].voice_selection._voice_with_options
+            voice_with_options = task_data.get('chosen_voice')
             voice_id = voice_with_options.voice_id if voice_with_options else None
 
             if voice_id is None:
@@ -455,12 +455,12 @@ class SuperFreeTTS():
         for dedup_key, task_indices in dedup_map.items():
             task_idx = task_indices[0]
             task_data = tasks[task_idx]
-            service_name = self.executor.detect_service({'batch': task_data['batch']})
+            service_name = self.executor.detect_service(task_data)
             
             # Extract voice_id safely
-            voice_selection = task_data['batch'].voice_selection
+            chosen_voice = task_data.get('chosen_voice')
             # Voice ID can be complex, stringify for dictionary key
-            voice_id_str = str(voice_selection.get_voice_id()) if hasattr(voice_selection, 'get_voice_id') else str(voice_selection)
+            voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
             
             group_key = (service_name, voice_id_str)
             if group_key not in engine_groups:
@@ -479,7 +479,7 @@ class SuperFreeTTS():
             for item in group_tasks:
                 dedup_key, task_data, task_indices = item
                 # Bound character count based on input text
-                text = task_data['batch'].source_text
+                text = task_data['source_text']
                 text_len = len(text)
                 
                 # Check bounds
@@ -510,15 +510,16 @@ class SuperFreeTTS():
                 batch_results = future.result(timeout=25.0) 
                 
                 for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
-                    result = batch_results[i] if i < len(batch_results) else None
-                    audio_cache[dedup_key] = result
+                    result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
+                    audio_cache[dedup_key] = result_tuple
+                    result, error = result_tuple
                     
                     # Mark progress
                     completed_count += 1
                     batch_status.unique_tasks_completed = completed_count
                     
                     # Update progress for all notes using this combination
-                    is_successful = result is not None and result[2] is not None
+                    is_successful = result is not None
                     for task_idx in task_indices:
                         note_id = tasks[task_idx]['note_id']
                         with batch_status.get_note_action_context(note_id, False) as ctx:
@@ -529,8 +530,7 @@ class SuperFreeTTS():
                                 ctx.set_sound(audio_fn)
                                 ctx.set_status(constants.BatchNoteStatus.Done)
                             else:
-                                ctx.set_status(constants.BatchNoteStatus.Error)
-                                ctx.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+                                ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
                         batch_status.notify_change(note_id)
                 
                 batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
@@ -539,13 +539,12 @@ class SuperFreeTTS():
                 logger.error(f"[BATCH] Batch execution failed: {e}")
                 # Mark all items in this chunk as failed
                 for dedup_key, _, task_indices in chunk:
-                    audio_cache[dedup_key] = None
+                    audio_cache[dedup_key] = (None, e)
                     completed_count += 1
                     for task_idx in task_indices:
                         note_id = tasks[task_idx]['note_id']
                         with batch_status.get_note_action_context(note_id, False) as ctx:
-                            ctx.set_status(constants.BatchNoteStatus.Error)
-                            ctx.error = e
+                            ctx.set_error(e)
                         batch_status.notify_change(note_id)
 
         return audio_cache
@@ -563,31 +562,27 @@ class SuperFreeTTS():
                 continue
 
             cached_result = audio_cache[dedup_key]
-            if cached_result is None:
+            res, err = cached_result
+            if res is None:
                 # This combination failed, skip all tasks using it
                 for task_idx in task_indices:
                     note_id = tasks[task_idx]['note_id']
-                    results.append((note_id, None, None, None, None, True))  # True = is_error
+                    results.append((note_id, None, None, None, None, err))  # error object instead of boolean
                 continue
 
-            source_text, processed_text, sound_file, full_filename = cached_result
+            source_text, processed_text, sound_file, full_filename = res
 
             # Apply to all tasks using this combination
             for task_idx in task_indices:
                 note_id = tasks[task_idx]['note_id']
-                results.append((note_id, source_text, processed_text, sound_file, full_filename, False))  # False = is_error
+                results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
 
         return results
 
     def _generate_audio_batch_task(self, chunk):
-        """
-        Worker thread task: Processes a chunk of unique tasks using batch API if available.
-        """
-        if not chunk: return []
-        
         first_item = chunk[0][1]
         batch_cfg = first_item['batch']
-        voice_selection = batch_cfg.voice_selection
+        chosen_voice = first_item.get('chosen_voice')
         
         # 1. Prepare texts for batch
         source_texts = [item[1]['processed_text'] for item in chunk]
@@ -597,8 +592,8 @@ class SuperFreeTTS():
         missing_indices = []
         missing_texts = []
         
-        voice_id = voice_selection.get_voice_id() if hasattr(voice_selection, 'get_voice_id') else str(voice_selection)
-        voice_options = voice_selection._voice_with_options.options if voice_selection._voice_with_options else {}
+        voice_id = chosen_voice.voice_id if chosen_voice else None
+        voice_options = chosen_voice.options if chosen_voice else {}
         
         for i, (dedup_key, task_data, _) in enumerate(chunk):
             proc_text = task_data['processed_text']
@@ -612,13 +607,14 @@ class SuperFreeTTS():
             audio_filename = self.get_audio_filename(hash_str, format)
             
             if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
-                results[i] = (task_data['source_text'], proc_text, audio_filename, full_filename)
+                results[i] = ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
             else:
                 missing_indices.append(i)
                 missing_texts.append(proc_text)
         
         # 3. Call batch API for missing items
         if missing_texts:
+            service_error = None
             try:
                 # Locate actual voice object
                 voice = self.service_manager.locate_voice(voice_id)
@@ -644,9 +640,22 @@ class SuperFreeTTS():
                         
                         # Cache in memory
                         self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_fn, full_fn)
-                        results[idx] = (task_data['source_text'], proc_text, audio_fn, full_fn)
+                        results[idx] = ((task_data['source_text'], proc_text, audio_fn, full_fn), None)
+                    else:
+                        results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
             except Exception as e:
                 logger.error(f"[BATCH] Service batch call failed: {e}")
+                service_error = e
+            
+            # If service call failed, mark all missing items with that error
+            if service_error:
+                for idx in missing_indices:
+                    results[idx] = (None, service_error)
+        
+        # Ensure no None in results (fallback for any unhandled indices)
+        for i in range(len(results)):
+            if results[i] is None:
+                results[i] = (None, Exception("Audio generation was skipped or interrupted"))
                 
         return results
 
@@ -1490,11 +1499,30 @@ class SuperFreeTTS():
     def get_preferences(self):
         return self.deserialize_preferences(self.config.get(constants.CONFIG_PREFERENCES, {}))
 
+    def apply_logging_preferences(self):
+        """Apply logging preferences from configuration."""
+        try:
+            prefs = self.get_preferences()
+            if prefs.error_handling.debug_mode:
+                log_dir = self.anki_utils.get_user_files_dir()
+                if not os.path.isdir(log_dir):
+                    os.makedirs(log_dir, exist_ok=True)
+                log_path = os.path.join(log_dir, 'superfreetss.log')
+                logging_utils.configure_file_logging(log_path)
+                logger.info(f"Debug logging enabled. Log file: {log_path}")
+            else:
+                logging_utils.configure_silent()
+        except Exception as e:
+            # Fallback to silent if preferences can't be loaded yet
+            logging_utils.configure_silent()
+
     def save_preferences(self, preferences_model):
         self.config[constants.CONFIG_PREFERENCES] = config_models.serialize_preferences(preferences_model)
         self.anki_utils.write_config(self.config)
         # Refresh menu language immediately
         gui.update_menu_language(self)
+        # Apply logging preferences
+        self.apply_logging_preferences()
         # reconfigure service manager to apply new SSL settings
         self.reconfigure_service_manager()
         

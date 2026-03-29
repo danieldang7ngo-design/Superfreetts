@@ -13,7 +13,7 @@ from . import gui_utils
 from . import logging_utils
 from . import utils_hf
 from . import constants
-from .component_mms_manager import DATA_DIR
+from .constants import DATA_DIR
 
 logger = logging_utils.get_child_logger(__name__)
 

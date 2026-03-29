@@ -5,10 +5,10 @@ import threading
 from aqt import mw
 from aqt.qt import *
 from . import i18n
-from . import component_kokoro_manager
-from .component_kokoro_manager import PYTHON_EXE, KOKORO_ENGINE_DIR, DATA_DIR
 from . import gui_utils
 from .downloader import TurboDownloader
+from .engine_manager import EngineManager
+from .constants import DATA_DIR
 
 # MMS Models from Hugging Face (Sherpa-ONNX format by willwade)
 MMS_BASE_URL = "https://huggingface.co/willwade/mms-tts-multilingual-models-onnx/resolve/main"
@@ -448,17 +448,21 @@ class MmsInstallManager(QDialog):
 
     def batch_install_task(self, langs):
         try:
-            mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("mms_manager_status_checking_env", self.lang)))
-            self._configure_python_pth()
+            from .sherpa_manager import SherpaManager
             
-            import subprocess
-            check_cmd = [PYTHON_EXE, "-m", "pip", "show", "sherpa-onnx", "soundfile"]
-            res = subprocess.run(check_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-            
-            if "Name: sherpa-onnx" not in res.stdout:
-                mw.taskman.run_on_main(lambda: self.log(i18n.get_text("mms_manager_log_installing_sherpa", self.lang)))
-                install_cmd = [PYTHON_EXE, "-m", "pip", "install", "--upgrade", "--only-binary", ":all:", "sherpa-onnx", "soundfile"]
-                subprocess.run(install_cmd, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            def shared_progress(data):
+                percent = data.get('percent', 0)
+                msg = data.get('message', 'Processing...')
+                mw.taskman.run_on_main(lambda: self.update_status(f"[{percent}%] {msg}"))
+
+            if not EngineManager.is_installed():
+                mw.taskman.run_on_main(lambda: self.update_status("Installing Python Engine..."))
+                EngineManager.ensure_installed(progress_callback=shared_progress)
+
+            if not SherpaManager.is_installed():
+                mw.taskman.run_on_main(lambda: self.update_status("Checking Sherpa-ONNX library..."))
+                SherpaManager.ensure_installed(progress_callback=shared_progress)
+                mw.taskman.run_on_main(lambda: self.log("Sherpa-ONNX library ready."))
 
             total_langs = len(langs)
             for idx, (lang_code, lang_name) in enumerate(langs):
@@ -553,18 +557,6 @@ class MmsInstallManager(QDialog):
             mw.taskman.run_on_main(lambda err=e: self.log(f"Error: {err}"))
             return False
 
-    def _configure_python_pth(self):
-        pth_files = [f for f in os.listdir(KOKORO_ENGINE_DIR) if f.endswith('._pth')]
-        if pth_files:
-            pth_path = os.path.join(KOKORO_ENGINE_DIR, pth_files[0])
-            try:
-                with open(pth_path, 'r') as f:
-                    content = f.read()
-                if '#import site' in content:
-                    content = content.replace('#import site', 'import site')
-                    with open(pth_path, 'w') as f:
-                        f.write(content)
-            except: pass
 
     def uninstall_selected(self):
         selected_items = self.lang_list.selectedItems()
