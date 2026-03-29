@@ -20,6 +20,7 @@ else:
     import anki
     import anki.hooks
     import aqt
+    import aqt.gui_hooks
     import anki.sound
 
     # need to declare upfront whether we're doing crash reporting
@@ -162,3 +163,20 @@ else:
                                                         first_install,
                                                         False
                                                         )
+
+    # ---------------------------------------------------------
+    # Popup chào mừng (display_introduction_message = True sau first_install)
+    # ---------------------------------------------------------
+    def show_welcome_popup():
+        from . import component_welcome
+
+        try:
+            current_config = hyper_tts.get_configuration()
+            if current_config.display_introduction_message:
+                welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
+                welcome_dialog.exec()
+        except Exception as e:
+            logger.error(f"Failed to show welcome popup: {e}")
+
+    if not hasattr(sys, "_pytest_mode"):
+        aqt.gui_hooks.profile_did_open.append(show_welcome_popup)

@@ -295,6 +295,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "about_facebook": "Facebook",
         "about_description": "Super Free TTS is a 100% free text-to-speech addon for Anki, designed to make language learning more accessible and effective.",
         "about_footer": "Super Free TTS is documentation-driven and built for the community.",
+        "welcome_addons_promo": "AnkiVN shares Vietnamese Anki addons, docs, and tips — huge thanks to everyone who builds tools for learners. More on the website below.",
 
         # Preferences - General
         "preferences_button_apply": "Apply",
@@ -785,6 +786,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "about_facebook": "Facebook",
         "about_description": "Super Free TTS là một addon chuyển văn bản thành giọng nói hoàn toàn miễn phí cho Anki, được thiết kế để giúp việc học ngôn ngữ trở nên dễ dàng và hiệu quả hơn.",
         "about_footer": "Super Free TTS được phát triển hướng tới cộng đồng và dựa trên tài liệu kỹ thuật.",
+        "welcome_addons_promo": "AnkiVN là nơi chia sẻ addon Anki tiếng Việt, tài liệu và mẹo học — cảm ơn các bạn làm công cụ cho cộng đồng. Xem thêm ở trang web bên dưới.",
 
         # Batch Progress
         "progress_phase_loading": "Đang tải giọng đọc",
