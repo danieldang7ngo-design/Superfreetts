@@ -209,3 +209,41 @@ Superfreetts hướng tới việc trở thành add-on TTS:
   - Cố gắng thêm/giữ test liên quan (nếu có).
   - Cập nhật tài liệu nếu thay đổi hành vi user-facing (UI, config, tuỳ chọn mới).
 
+## Ý tưởng tương lai — Workflow / Queue Preset (chạy nhiều preset cùng lúc)
+
+> Ghi chú để review sau: thêm vào roadmap như một hướng mở rộng cho power user.
+
+Ý tưởng tạo **Workflow / Queue Preset (chạy nhiều preset cùng lúc)** là một tính năng xuất sắc và đánh trúng “nỗi đau” (pain-point) của nhóm người dùng Anki nâng cao (Power Users).
+
+### Tại sao tính năng này sẽ rất giá trị?
+
+1. **Học đa giọng (Multi-Accent):** Người học ngoại ngữ thường muốn nghe cả giọng Anh-Mỹ và Anh-Anh cho cùng một từ. Hiện tại họ phải chạy batch 2 lần. Nếu có Queue, họ chỉ cần 1 click.
+2. **Thẻ đa ngôn ngữ (Bilingual Flashcards):** Thẻ có mặt trước tiếng Anh (cần giọng US), mặt sau giải nghĩa tiếng Pháp/Việt (cần giọng khác). Chạy 2 preset cùng lúc sẽ tự động hóa hoàn toàn quy trình tạo thẻ.
+3. **Mô phỏng hội thoại (Male/Female):** Tạo 2 trường audio riêng biệt với giọng Nam và Nữ xen kẽ để luyện nghe.
+
+### Đánh giá tính khả thi trên codebase hiện tại
+
+Cơ sở hạ tầng của hệ thống đã sẵn sàng. Đang có `batch_executor.py` chạy tác vụ ngầm bằng Threading và `batch_state_manager.py` quản lý trạng thái rất tốt.
+
+### Gợi ý 2 hướng triển khai (từ dễ đến khó)
+
+**Hướng 1: Multi-Select Presets trong Batch UI (thực dụng, code nhanh)**
+
+- **Giao diện:** Trong cửa sổ Batch Generation, thay vì dùng Dropdown (`QComboBox`) chỉ cho phép chọn 1 Preset, dùng một danh sách **checkbox** (`QListWidget` thiết lập `ItemIsUserCheckable`). Người dùng có thể tick chọn nhiều Preset cần chạy.
+- **Logic:** `BatchExecutor` hiện tại nhận 1 cấu hình. Sửa lại để nhận một `List[Preset]`. Khi duyệt qua từng thẻ (Note) trong Anki, vòng lặp con chạy qua danh sách Preset này để tạo tuần tự từng file audio rồi gán vào các Target Field tương ứng.
+
+**Hướng 2: Khái niệm “Workflow / Pipeline” riêng biệt (chuyên nghiệp hơn)**
+
+- **Giao diện:** Trong màn hình Settings chính, tạo khu vực “Workflows”. Người dùng tạo Workflow mới (ví dụ: “Luyện nghe TOEIC”) và add nhiều Preset (Preset 1: từ vựng giọng UK; Preset 2: câu ví dụ giọng US).
+- **Logic:** Ở giao diện Batch, người dùng chọn Workflow. Khác Hướng 1: có thể thiết lập **Delay** (nghỉ 1 giây giữa các audio) nếu muốn nối (concatenate) 2 preset vào chung 1 file audio thay vì xuất ra 2 trường khác nhau.
+
+### Điểm nghẽn kỹ thuật (edge cases) cần lường trước
+
+1. **Xung đột Target Field (ghi đè):** Nếu chạy 2 Preset nhưng cả hai đều lưu vào trường “Audio”, file sau sẽ đè file trước. Cần **pre-check** trước khi chạy: nếu `preset1.target_field == preset2.target_field` → cảnh báo rõ, không cho bấm Start.
+2. **Tính toán Progress Bar:** Thanh tiến trình trong `batch_progress_ui.py` cần tính lại: **Tổng tác vụ = Số thẻ (Notes) × Số preset được chọn**.
+3. **Rate limit API:** Nếu 2 preset dùng chung một cloud engine (ví dụ EdgeTTS) cùng lúc, tốc độ request nhân đôi, dễ bị server block IP. Cân nhắc xử lý **tuần tự** (xong preset 1 cho thẻ A → mới chạy preset 2 cho thẻ A) thay vì bất đồng bộ ồ ạt.
+
+### Gợi ý ưu tiên
+
+Ưu tiên **Hướng 1** trước vì không cần thay đổi cấu trúc data model trong `config.json`, chỉ cần đổi UI cửa sổ Batch và vòng lặp trong `BatchExecutor`. Ước lượng triển khai: khoảng 1–2 ngày code.
+
