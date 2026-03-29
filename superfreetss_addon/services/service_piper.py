@@ -16,6 +16,9 @@ from superfreetss_addon import languages
 from superfreetss_addon import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
+ 
+from .service_mms import SherpaProcessPool
+_piper_pool = SherpaProcessPool("Piper", max_processes=2)
 
 # Known Piper dataset/voice names -> gender (Rhasspy/Piper common models)
 _PIPER_DATASET_GENDER = {
@@ -249,54 +252,133 @@ class PiperTTS(service.ServiceBase):
         if not os.path.exists(model_file):
             raise errors.RequestError(source_text, voice, f"Model file not found: {model_file}")
 
-        # Create temporary file for output
-        fd, temp_wav = tempfile.mkstemp(suffix=".wav")
-        os.close(fd) # Close it immediately so Piper can write to it
+        for attempt in [1, 2]:
+            try:
+                # Get process from pool
+                script_path = os.path.join(os.path.dirname(__file__), 'piper_runner.py')
+                process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                
+                try:
+                    # Prepare Piper-specific config
+                    tokens_path = model_file + ".json" 
+                    
+                    length_scale = options.get('length_scale', 1.0)
+                    request = {
+                        "text": source_text,
+                        "model_path": model_file,
+                        "tokens_path": tokens_path,
+                        "sid": 0,
+                        "speed": length_scale
+                    }
+                    
+                    payload = json.dumps(request) + "\n"
+                    process.stdin.write(payload.encode('utf-8'))
+                    process.stdin.flush()
+                    
+                    response_line = process.stdout.readline()
+                    if not response_line:
+                        raise BrokenPipeError("Piper process closed stream.")
+                    
+                    resp_data = response_line.decode('utf-8').strip()
+                    try:
+                        resp = json.loads(resp_data)
+                    except Exception:
+                        raise Exception(f"Invalid JSON from Piper: {resp_data}")
+
+                    if resp.get("status") == "ok":
+                        import base64
+                        audio_b64 = resp.get("audio_b64")
+                        if audio_b64:
+                            return base64.b64decode(audio_b64)
+                        else:
+                            raise Exception("No audio data in Piper response.")
+                    else:
+                        raise Exception(f"Piper Error: {resp.get('message')}")
+                        
+                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    process.is_healthy = False
+                    if attempt == 1:
+                        logger.warning(f"PiperTTS: Retry 1/1 after process failure: {e}")
+                        continue
+                    raise e
+                finally:
+                    _piper_pool.release_process(process, piper_exe, script_path)
+                    
+            except Exception as e:
+                if attempt == 2:
+                    logger.warning(f"Exception while generating piper audio (persistent): {e}")
+                    raise errors.RequestError(source_text, voice, str(e))
+
+    def get_tts_audio_batch(self, source_texts: List[str], voice: voice_module.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
+        piper_exe = self._get_piper_exe()
+        if not piper_exe:
+             return [None] * len(source_texts)
+             
+        models_path = self._resolve_models_dir()
+        if not models_path:
+             return [None] * len(source_texts)
+
+        model_file = os.path.join(models_path, voice.voice_key + ".onnx")
+        if not os.path.exists(model_file):
+             return [None] * len(source_texts)
+
+        debug_enabled = self.get_configuration_value_optional('debug_logging', False)
         
-        try:
-            # Command: piper.exe -m model.onnx -f output.wav
-            num_threads = self.get_configuration_value_optional('num_threads', 0)
-            cmd = [
-                piper_exe,
-                "--model", model_file,
-                "--output_file", temp_wav
-            ]
-            if num_threads > 0:
-                cmd.extend(["--thread", str(int(num_threads))])
-            
-            # Speed & silence options
-            length_scale = options.get('length_scale', 1.0)
-            sentence_silence = options.get('sentence_silence', 0.2)
-            cmd.extend(["--length_scale", str(length_scale)])
-            cmd.extend(["--sentence_silence", str(sentence_silence)])
-            
-            # Subprocess usually takes some text via stdin or --input
-            process = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding='utf-8',
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-            )
-            
-            stdout, stderr = process.communicate(input=source_text)
-            
-            if process.returncode != 0:
-                logger.warning(f"Piper error: {stderr}")
-                raise Exception(f"Piper process failed: {stderr}")
+        for attempt in [1, 2]:
+            try:
+                # Get process from pool
+                script_path = os.path.join(os.path.dirname(__file__), 'piper_runner.py')
+                process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                
+                try:
+                    tokens_path = model_file + ".json"
+                    tasks = []
+                    for text in source_texts:
+                        tasks.append({
+                            "text": text,
+                            "model_path": model_file,
+                            "tokens_path": tokens_path,
+                            "sid": 0,
+                            "speed": options.get('length_scale', 1.0)
+                        })
+                    
+                    request = {"action": "generate_batch", "tasks": tasks}
+                    payload = json.dumps(request) + "\n"
+                    process.stdin.write(payload.encode('utf-8'))
+                    process.stdin.flush()
+                    
+                    response_line = process.stdout.readline()
+                    if not response_line:
+                        raise BrokenPipeError("Piper process closed stream.")
+                    
+                    resp_text = response_line.decode('utf-8').strip()
+                    try:
+                        resp = json.loads(resp_text)
+                    except Exception:
+                        raise Exception(f"Invalid JSON from Piper: {resp_text}")
 
-            if not os.path.exists(temp_wav) or os.path.getsize(temp_wav) == 0:
-                raise Exception("Piper did not create valid output file.")
+                    if resp.get("status") == "ok":
+                        import base64
+                        results = []
+                        for item in resp.get("results", []):
+                            if item.get("status") == "ok" and item.get("audio_b64"):
+                                results.append(base64.b64decode(item["audio_b64"]))
+                            else:
+                                results.append(None)
+                        return results
+                    else:
+                        raise Exception(f"Piper batch Error: {resp.get('message')}")
 
-            with open(temp_wav, "rb") as f:
-                return f.read()
-
-        except Exception as e:
-            logger.warning(f'exception while generating piper audio (subprocess): {e}')
-            raise errors.RequestError(source_text, voice, str(e))
-        finally:
-            if os.path.exists(temp_wav):
-                try: os.remove(temp_wav)
-                except: pass
+                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    process.is_healthy = False
+                    if attempt == 1:
+                        logger.warning(f"PiperTTS Batch: Retry 1/1 after process failure: {e}")
+                        continue
+                    raise e
+                finally:
+                    _piper_pool.release_process(process, piper_exe, script_path)
+                    
+            except Exception as e:
+                if attempt == 2:
+                    logger.warning(f"Exception while generating piper audio batch (persistent): {e}")
+                    return [None] * len(source_texts)

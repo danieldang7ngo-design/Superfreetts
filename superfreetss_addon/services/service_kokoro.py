@@ -17,7 +17,8 @@ from aqt import mw
 
 logger = logging_utils.get_child_logger(__name__)
 
-from .service_mms import _sherpa_pool
+from .service_mms import SherpaProcessPool
+_kokoro_pool = SherpaProcessPool("Kokoro", max_processes=2)
 
 # Standard Voices included in the 35MB Official v1.0 Bundle
 KOKORO_V10_VOICES = [
@@ -109,22 +110,16 @@ class KokoroTTS(service.ServiceBase):
             engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
             if engine_path and os.path.exists(engine_path):
                 script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
-                from .. import config_models
-                from ..component_kokoro_manager import KOKORO_V10_MODEL_PATH
                 # Ensure hyper_tts is initialized
                 if not hasattr(mw, "hyper_tts") or not mw.hyper_tts:
                     return
                 
                 installed = self.voice_list()
-                target_voice = "af_bella" # default
-                if installed and installed[0].voice_key != "none":
-                    target_voice = installed[0].voice_key
+                if not installed or installed[0].voice_key == "none":
+                    return
 
-                _sherpa_pool.warmup(engine_path, script_path, init_payload={
-                    "action": "init",
-                    "model": "v1.0",
-                    "voices": target_voice
-                })
+                _kokoro_pool.get_process(engine_path, script_path, debug_enabled=True)
+                _kokoro_pool.release_process(None, engine_path, script_path) 
         except: pass
 
     @property
@@ -147,7 +142,6 @@ class KokoroTTS(service.ServiceBase):
         return False
 
     def configuration_options(self):
-        from .. import system_utils
         return {
             self.CONFIG_ENGINE_PATH: ('file', 'Kokoro Python Executable (python.exe);;All Files (*)'),
         }
@@ -204,54 +198,122 @@ class KokoroTTS(service.ServiceBase):
         if not engine_path or not os.path.exists(engine_path):
              raise errors.RequestError(source_text, voice, "Kokoro engine not configured.")
              
-        try:
-            debug_enabled = True # FORCE DEBUG FOR DIAGNOSIS
-            script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
-            process = _sherpa_pool.get_process(engine_path, script_path, debug_enabled=debug_enabled)
-            
-            threads_opt = self.get_configuration_value_optional('num_threads', 1)
-            if threads_opt <= 0:
-                threads_opt = 1
-
-            if not hasattr(mw, "hyper_tts") or not mw.hyper_tts:
-                 raise Exception("Main Hyper_TTS instance not found")
-
-            request = {
-                "text": source_text,
-                "voice": voice.voice_key,
-                "output_file": "MEMORY", # Extreme Optimization: No Disk I/O
-                "device": "cpu",
-                "threads": int(threads_opt),
-                "speed": options.get('speed', 1.0)
-            }
-            payload = json.dumps(request) + "\n"
-            
+        debug_enabled = self.get_configuration_value_optional('debug_logging', False)
+        for attempt in [1, 2]:
             try:
-                process.stdin.write(payload.encode('utf-8'))
-                process.stdin.flush()
+                # Get process from pool
+                script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
+                process = _kokoro_pool.get_process(engine_path, script_path, debug_enabled=debug_enabled)
                 
-                response_line = process.stdout.readline()
-                if not response_line:
-                    raise Exception("Kokoro process died unexpectedly")
-                
-                resp_text = response_line.decode('utf-8').strip()
                 try:
-                    resp = json.loads(resp_text)
-                except Exception:
-                    raise Exception(f"Invalid JSON from Kokoro: {resp_text}")
-            finally:
-                _sherpa_pool.release_process(process, engine_path, script_path)
+                    threads_opt = self.get_configuration_value_optional('num_threads', 1)
+                    if threads_opt <= 0:
+                        threads_opt = 1
 
-            if resp.get("status") == "ok":
-                import base64
-                audio_b64 = resp.get("audio_b64")
-                if audio_b64:
-                    return base64.b64decode(audio_b64)
-                else:
-                    raise Exception("No audio data in Kokoro response.")
-            else:
-                raise Exception(f"Kokoro Error: {resp.get('message')}")
-            
-        except Exception as e:
-            logger.warning(f'exception while generating kokoro audio: {e}')
-            raise errors.RequestError(source_text, voice, str(e))
+                    request = {
+                        "text": source_text,
+                        "voice": voice.voice_key,
+                        "output_file": "MEMORY", 
+                        "device": "cpu",
+                        "threads": int(threads_opt),
+                        "speed": options.get('speed', 1.0)
+                    }
+                    payload = json.dumps(request) + "\n"
+                    
+                    process.stdin.write(payload.encode('utf-8'))
+                    process.stdin.flush()
+                    
+                    response_line = process.stdout.readline()
+                    if not response_line:
+                        raise BrokenPipeError("Kokoro process closed stream.")
+                    
+                    resp_text = response_line.decode('utf-8').strip()
+                    try:
+                        resp = json.loads(resp_text)
+                    except Exception:
+                        raise Exception(f"Invalid JSON from Kokoro: {resp_text}")
+
+                    if resp.get("status") == "ok":
+                        import base64
+                        audio_b64 = resp.get("audio_b64")
+                        if audio_b64:
+                            return base64.b64decode(audio_b64)
+                        else:
+                            raise Exception("No audio data in Kokoro response.")
+                    else:
+                        raise Exception(f"Kokoro Error: {resp.get('message')}")
+                        
+                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    process.is_healthy = False
+                    if attempt == 1:
+                        logger.warning(f"KokoroTTS: Retry 1/1 after process failure: {e}")
+                        continue
+                    raise e
+                finally:
+                    _kokoro_pool.release_process(process, engine_path, script_path)
+            except Exception as e:
+                if attempt == 2:
+                    logger.warning(f"Exception while generating kokoro audio (persistent): {e}")
+                    raise errors.RequestError(source_text, voice, str(e))
+
+    def get_tts_audio_batch(self, source_texts: List[str], voice: voice.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
+        engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
+        if not engine_path or not os.path.exists(engine_path):
+             return [None] * len(source_texts)
+             
+        debug_enabled = self.get_configuration_value_optional('debug_logging', False)
+        for attempt in [1, 2]:
+            try:
+                # Get process from pool
+                script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
+                process = _kokoro_pool.get_process(engine_path, script_path, debug_enabled=debug_enabled)
+                
+                try:
+                    tasks = []
+                    for text in source_texts:
+                        tasks.append({
+                            "text": text,
+                            "voice": voice.voice_key,
+                            "speed": options.get('speed', 1.0)
+                        })
+                    
+                    request = {"action": "generate_batch", "tasks": tasks}
+                    payload = json.dumps(request) + "\n"
+                    process.stdin.write(payload.encode('utf-8'))
+                    process.stdin.flush()
+                    
+                    response_line = process.stdout.readline()
+                    if not response_line:
+                        raise BrokenPipeError("Kokoro process closed stream.")
+                    
+                    resp_data = response_line.decode('utf-8').strip()
+                    try:
+                        resp = json.loads(resp_data)
+                    except Exception:
+                        raise Exception(f"Invalid JSON from Kokoro: {resp_data}")
+
+                    if resp.get("status") == "ok":
+                        import base64
+                        results = []
+                        for item in resp.get("results", []):
+                            if item.get("status") == "ok" and item.get("audio_b64"):
+                                results.append(base64.b64decode(item["audio_b64"]))
+                            else:
+                                results.append(None)
+                        return results
+                    else:
+                        raise Exception(f"Kokoro batch Error: {resp.get('message')}")
+                
+                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    process.is_healthy = False
+                    if attempt == 1:
+                        logger.warning(f"Kokoro Batch: Retry 1/1 after process failure: {e}")
+                        continue
+                    raise e
+                finally:
+                    _kokoro_pool.release_process(process, engine_path, script_path)
+                    
+            except Exception as e:
+                if attempt == 2:
+                    logger.warning(f"Exception while generating kokoro audio batch (persistent): {e}")
+                    return [None] * len(source_texts)

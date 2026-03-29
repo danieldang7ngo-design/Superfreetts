@@ -435,6 +435,18 @@ class ServiceManager():
         logger.debug(f'voice: {voice}, using service {service.name}')
         return service.get_tts_audio(source_text, voice, options)
 
+    def get_tts_audio_batch(self, source_texts: typing.List[str], voice: voice_module.TtsVoice_v3, options: dict) -> typing.List[typing.Optional[bytes]]:
+        logger.debug(f'get_tts_audio_batch for voice: {voice}, count: {len(source_texts)}')
+        assert isinstance(voice, voice_module.TtsVoice_v3), f"Expected voice to be TtsVoice_v3, got {type(voice).__name__}"
+        
+        # Ensure service is instantiated before accessing it
+        self.instantiate_service_lazy(voice.service)
+        if voice.service not in self.services:
+            raise errors.ServiceException(f'Service {voice.service} could not be instantiated')
+        
+        service = self.services[voice.service]
+        return service.get_tts_audio_batch(source_texts, voice, options)
+
     def full_voice_list(self, single_service_name=None) -> typing.List[voice_module.TtsVoice_v3]:
         # Ensure services are discovered, instantiated, and configured before trying to get voice lists
         # This handles the case where voice selection is accessed before configuration dialog

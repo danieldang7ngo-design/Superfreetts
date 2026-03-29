@@ -16,25 +16,22 @@ from superfreetss_addon import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
-class EdgeLoopManager:
-    def __init__(self):
-        self._loop = None
-        self._thread = None
-        self._lock = threading.Lock()
-
-    def get_loop(self):
-        with self._lock:
-            if self._loop is None:
-                self._loop = asyncio.new_event_loop()
-                self._thread = threading.Thread(target=self._run_loop, daemon=True)
-                self._thread.start()
-            return self._loop
-
-    def _run_loop(self):
-        asyncio.set_event_loop(self._loop)
-        self._loop.run_forever()
-
-_edge_manager = EdgeLoopManager()
+def run_async_safe(coro):
+    """
+    Safely run an asyncio coroutine from a synchronous context.
+    Works whether or not an event loop is already running in the current thread.
+    """
+    try:
+        # Check if there's a running loop in the current thread
+        asyncio.get_running_loop()
+        # If yes, we can't use asyncio.run() or run_until_complete() here.
+        # We run it in a separate thread with its own loop to avoid blocking/crashing.
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            return executor.submit(asyncio.run, coro).result()
+    except RuntimeError:
+        # No loop running in this thread, safe to use asyncio.run()
+        return asyncio.run(coro)
 
 class EdgeTTS(service.ServiceBase):
     def __init__(self):
@@ -60,13 +57,9 @@ class EdgeTTS(service.ServiceBase):
         }
 
     def voice_list(self) -> List[voice.TtsVoice_v3]:
-        # Fetching voices still uses a temporary loop for simplicity in this sync call
+        # Use run_async_safe to avoid loop conflicts
         try:
-            loop = asyncio.new_event_loop()
-            try:
-                voices_data = loop.run_until_complete(edge_tts.VoicesManager.create())
-            finally:
-                loop.close()
+            voices_data = run_async_safe(edge_tts.VoicesManager.create())
 
             voices = []
             for v in voices_data.voices:
@@ -130,7 +123,6 @@ class EdgeTTS(service.ServiceBase):
             except: pass
 
         try:
-            loop = _edge_manager.get_loop()
             audio_data = io.BytesIO()
             
             async def _stream():
@@ -149,8 +141,8 @@ class EdgeTTS(service.ServiceBase):
                         audio_data.write(chunk["data"])
             
             start_time = time.time()
-            future = asyncio.run_coroutine_threadsafe(_stream(), loop)
-            future.result(timeout=30) # Wait for result
+            # Use run_async_safe for thread-safe execution
+            run_async_safe(_stream())
             
             # Log success
             if debug_enabled and log_dir:

@@ -66,6 +66,21 @@ class ServiceBase(abc.ABC):
     def get_tts_audio(self, source_text, voice: voice_module.TtsVoice_v3, options):
         pass
 
+    def get_tts_audio_batch(self, source_texts: typing.List[str], voice: voice_module.TtsVoice_v3, options: dict) -> typing.List[typing.Optional[bytes]]:
+        """
+        Generate audio for a batch of texts. 
+        Default implementation falls back to sequential calls.
+        Services supporting vector IPC should override this.
+        """
+        results = []
+        for text in source_texts:
+            try:
+                results.append(self.get_tts_audio(text, voice, options))
+            except Exception as e:
+                logger.warning(f"Batch item failed in fallback: {e}")
+                results.append(None)
+        return results
+
 
     # some helper functions
     def basic_voice_list(self) -> typing.List[voice_module.TtsVoice_v3]:

@@ -29,6 +29,26 @@ from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
 
+class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
+    """
+    ThreadPoolExecutor with a bounded queue. 
+    Blocks submit() when the queue reaches max_workers + max_waiting_tasks.
+    """
+    def __init__(self, max_workers, thread_name_prefix='', max_waiting_tasks=50):
+        super().__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix)
+        self._semaphore = threading.Semaphore(max_workers + max_waiting_tasks)
+
+    def submit(self, fn, *args, **kwargs):
+        self._semaphore.acquire()
+        try:
+            future = super().submit(fn, *args, **kwargs)
+        except:
+            self._semaphore.release()
+            raise
+        future.add_done_callback(lambda x: self._semaphore.release())
+        return future
+
+
 class UnifiedCache:
     """
     Single unified cache replacing 3 separate caches.
@@ -388,19 +408,21 @@ class MultiEngineExecutor:
         }
         
         # Create executors per engine
-        self.executors: Dict[str, concurrent.futures.ThreadPoolExecutor] = {}
+        self.executors: Dict[str, BoundedThreadPoolExecutor] = {}
         for engine_name, worker_count in self.engine_config.items():
             if engine_name != 'default':
-                self.executors[engine_name] = concurrent.futures.ThreadPoolExecutor(
+                self.executors[engine_name] = BoundedThreadPoolExecutor(
                     max_workers=max(1, worker_count),
-                    thread_name_prefix=f"TTS-{engine_name}"
+                    thread_name_prefix=f"TTS-{engine_name}",
+                    max_waiting_tasks=20 # Bounded backpressure
                 )
-                logger.info(f"[BATCH] Created executor for {engine_name}: {worker_count} workers")
+                logger.info(f"[BATCH] Created bounded executor for {engine_name}: {worker_count} workers")
         
         # Default executor for unknown engines
-        self.default_executor = concurrent.futures.ThreadPoolExecutor(
+        self.default_executor = BoundedThreadPoolExecutor(
             max_workers=max(1, self.engine_config.get('default', 1)),
-            thread_name_prefix="TTS-Default"
+            thread_name_prefix="TTS-Default",
+            max_waiting_tasks=20
         )
         
         self.monitor = SimpleResourceMonitor()

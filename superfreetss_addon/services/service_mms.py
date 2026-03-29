@@ -4,7 +4,6 @@ import logging
 import subprocess
 import threading
 import typing
-import typing
 import sys
 import time
 
@@ -17,33 +16,20 @@ from aqt import mw
 logger = logging.getLogger(__name__)
 
 class SherpaProcessPool:
-    def __init__(self, max_processes=4):
+    def __init__(self, name="Shared", max_processes=4):
+        self.name = name
         self._max_processes = max_processes
         self._pool = [] # List of (process, current_executable, current_script, last_used_time)
         self._lock = threading.Lock()
         self._semaphore = threading.Semaphore(max_processes)
         self._cleanup_timer = None
-        self._max_idle_age = 30 # Reduce to 30 seconds for RAM efficiency
+        self._max_idle_age = 180 # 180s idle timeout as mandated
+        self._total_spawned = 0 # Track total processes (active + idle)
         self._start_cleanup_timer()
 
-    def update_max_processes(self, new_max):
-        """Dynamically update the maximum number of processes in the pool."""
-        with self._lock:
-            # We don't shrink existing until they are released or cleaned up
-            diff = new_max - self._max_processes
-            self._max_processes = new_max
-            if diff > 0:
-                for _ in range(diff):
-                    self._semaphore.release()
-            elif diff < 0:
-                for _ in range(abs(diff)):
-                    # Try to acquire without blocking to shrink immediately
-                    # if possible, otherwise it will shrink as processes are released
-                    self._semaphore.acquire(blocking=False)
-            logger.info(f"SherpaPool: Max processes updated to {new_max}")
-
     def _start_cleanup_timer(self):
-        # Run cleanup every 15 seconds
+        if self._cleanup_timer:
+            self._cleanup_timer.cancel()
         self._cleanup_timer = threading.Timer(15.0, self._cleanup_idle)
         self._cleanup_timer.daemon = True
         self._cleanup_timer.start()
@@ -53,22 +39,76 @@ class SherpaProcessPool:
             now = time.time()
             alive_pool = []
             for proc, exe, script, last_time in self._pool:
-                if now - last_time > self._max_idle_age:
-                    logger.info(f"SherpaPool: Cleaning up idle process {exe}")
-                    try:
-                        proc.stdin.close()
-                        proc.terminate()
-                        # Give it a moment to die, then kill if still alive
-                        def force_kill(p):
-                            try:
-                                if p.poll() is None: p.kill()
-                            except: pass
-                        threading.Timer(2.0, force_kill, args=(proc,)).start()
-                    except: pass
+                # If process died, hit idle timeout, or is unhealthy, terminate it
+                is_unhealthy = not getattr(proc, 'is_healthy', True)
+                if proc.poll() is not None or (now - last_time > self._max_idle_age) or is_unhealthy:
+                    logger.info(f"SherpaPool[{self.name}]: Cleaning up process {os.path.basename(script)} (Reason: {'Health' if is_unhealthy else 'Timeout/Dead'})")
+                    # Offload termination to avoid blocking the lock
+                    threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
+                    self._total_spawned -= 1
                 else:
                     alive_pool.append((proc, exe, script, last_time))
             self._pool = alive_pool
         self._start_cleanup_timer()
+
+    def safe_terminate(self, proc):
+        """Enforce safe termination sequence and pipe closure."""
+        try:
+            proc.terminate()
+            try:
+                proc.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=1.0)
+        except:
+            pass
+        finally:
+            # Guaranteed triple pipe closure
+            for pipe in [proc.stdin, proc.stdout, proc.stderr]:
+                if pipe:
+                    try: pipe.close()
+                    except: pass
+            proc.is_healthy = False
+
+    def get_process(self, executable_path, script_path, debug_enabled=False):
+        # Limit concurrency - blocks if max_processes are "out"
+        self._semaphore.acquire()
+        
+        with self._lock:
+            # 1. Try to find an idle process for THIS script
+            for i, (proc, exe, script, last_time) in enumerate(self._pool):
+                if proc.poll() is None and exe == executable_path and script == script_path:
+                    p, e, s, _ = self._pool.pop(i)
+                    return p
+            
+            # 2. If no matching idle process, but we have OTHER idle processes and we're at capacity
+            # we should kill the oldest idle one to make room for a NEW type (Script)
+            if self._total_spawned >= self._max_processes and self._pool:
+                # Kill oldest (first in list)
+                p, e, s, _ = self._pool.pop(0)
+                logger.info(f"SherpaPool[{self.name}]: Capacity reached. Terminating oldest idle {os.path.basename(s)} for new {os.path.basename(script_path)}")
+                try:
+                    p.stdin.close()
+                    p.terminate()
+                except: pass
+                self._total_spawned -= 1
+
+        # 3. Start new process
+        new_proc = self._start_new(executable_path, script_path, debug_enabled)
+        with self._lock:
+            self._total_spawned += 1
+        return new_proc
+
+    def release_process(self, proc, executable_path, script_path):
+        with self._lock:
+            is_healthy = getattr(proc, 'is_healthy', True)
+            if proc.poll() is None and is_healthy:
+                self._pool.append((proc, executable_path, script_path, time.time()))
+            else:
+                self._total_spawned -= 1
+                if not is_healthy:
+                    threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
+        self._semaphore.release()
 
     def stop_all(self):
         with self._lock:
@@ -78,98 +118,61 @@ class SherpaProcessPool:
                     proc.terminate()
                 except: pass
             self._pool = []
-
-    def get_process(self, executable_path, script_path, debug_enabled=False):
-        # Limit concurrency - this will block until a process is available
-        self._semaphore.acquire()
-        
-        # Non-blocking check for idle process matching both exe and script
-        with self._lock:
-            for i, (proc, exe, script, last_time) in enumerate(self._pool):
-                if proc.poll() is None and exe == executable_path and script == script_path:
-                    p, e, s, _ = self._pool.pop(i)
-                    return p
-        
-        # Start new
-        return self._start_new(executable_path, script_path, debug_enabled)
-
-    def warmup(self, executable_path, script_path, init_payload=None):
-        """Pre-starts a process and optionally sends an initialization payload."""
-        with self._lock:
-            # Check if we already have an idle process for this
-            for proc, exe, script, _ in self._pool:
-                if proc.poll() is None and exe == executable_path and script == script_path:
-                    return # Already warmed up
-        
-        proc = self._start_new(executable_path, script_path, debug_enabled=True)
-        if init_payload:
-            try:
-                proc.stdin.write((json.dumps(init_payload) + "\n").encode('utf-8'))
-                proc.stdin.flush()
-                # Wait for response with timeout to ensure it's ready
-                proc.stdout.readline()
-            except Exception as e:
-                logger.warning(f"SherpaPool: Warmup payload failed: {e}")
-        
-        self.release_process(proc, executable_path, script_path)
-        logger.info(f"SherpaPool: Process warmed up for {script_path}")
-
-    def release_process(self, proc, executable_path, script_path):
-        with self._lock:
-            if proc.poll() is None:
-                self._pool.append((proc, executable_path, script_path, time.time()))
-            else:
-                pass
-            # Always release the semaphore
-            self._semaphore.release()
+            self._total_spawned = 0
 
     def _start_new(self, executable_path, script_path, debug_enabled=False):
         cwd = os.path.dirname(executable_path)
-        
         startupinfo = None
         if os.name == 'nt':
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
         env = os.environ.copy()
-        if debug_enabled:
-            appdata = os.environ.get('APPDATA')
-            if appdata:
-                log_dir = os.path.join(appdata, 'Anki2', 'addons21', 'Superfreetts', 'user_files')
-                os.makedirs(log_dir, exist_ok=True)
-                # Unique log file per process based on script name
-                script_basename = os.path.splitext(os.path.basename(script_path))[0]
-                env['SUPERFREETTS_LOG_FILE'] = os.path.join(log_dir, f'{script_basename}_{int(time.time()*1000)}.log')
+        logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)}")
 
-        logger.info(f"Starting NEW Sherpa Process: {executable_path}")
+        # Observability Upgrade: Initialize the output sink (default to DEVNULL)
+        stderr_sink = subprocess.DEVNULL
         
+        if debug_enabled:
+            try:
+                # Log Strategy: Per-engine files in user_files/logs
+                log_dir = os.path.join(os.path.dirname(os.path.dirname(script_path)), 'user_files', 'logs')
+                os.makedirs(log_dir, exist_ok=True)
+                log_path = os.path.join(log_dir, f"{self.name.lower()}_error.log")
+                
+                # Lightweight Log Rotation (Roll to .old if file > 5MB)
+                if os.path.exists(log_path) and os.path.getsize(log_path) > 5 * 1024 * 1024:
+                    backup_path = log_path + ".old"
+                    if os.path.exists(backup_path): os.remove(backup_path)
+                    os.rename(log_path, backup_path)
+                
+                # Use file-based logging (Safe: No PIPE deadlock risk)
+                stderr_sink = open(log_path, "a", encoding='utf-8', buffering=1, errors='replace') # Line-buffered
+            except Exception as e:
+                logger.warning(f"Failed to initialize file logging for {self.name}: {e}")
+                stderr_sink = subprocess.DEVNULL
+
         proc = subprocess.Popen(
             [executable_path, script_path],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=stderr_sink,
             cwd=cwd,
             startupinfo=startupinfo,
             env=env,
             text=False,
             bufsize=0
         )
+        proc.is_healthy = True
         
-        def drain_stderr(pipe):
-            try:
-                while True:
-                    line = pipe.readline()
-                    if not line: break
-                    msg = line.decode('utf-8', errors='ignore').strip()
-                    if msg:
-                        logger.info(f"[SherpaPool Process] {msg}")
-            except: pass
-        
-        threading.Thread(target=drain_stderr, args=(proc.stderr,), daemon=True).start()
+        # Guard: Close our handle in parent after child inherits it to avoid leaks
+        if hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
+            stderr_sink.close()
+
         return proc
 
-# Use 4 parallel generations by default (Save RAM for 8GB machines)
-_sherpa_pool = SherpaProcessPool(max_processes=4)
+# Default pool for MMS and other legacy services
+_sherpa_pool = SherpaProcessPool("MMS", max_processes=2)
 
 class MmsTTS(service.ServiceBase):
     def __init__(self):
@@ -326,64 +329,73 @@ class MmsTTS(service.ServiceBase):
         os.close(fd)
 
         try:
-            # Get process from pool
-            script_path = os.path.join(os.path.dirname(__file__), 'sherpa_runner_v2.py')
-            process = _sherpa_pool.get_process(python_path, script_path, debug_enabled=debug_enabled)
-            
-            from .. import system_utils
-            # Prepare optimization params
-            threads_opt = self.get_configuration_value_optional('num_threads', 1)
-            if threads_opt <= 0:
-                # For pooled operations, use 1 thread per process
-                threads_opt = 1 
-            
-            use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
-            provider = "cpu"
-            if use_gpu and system_utils.is_amd_gpu_detected():
-                provider = "directml"
-            
-            clean_text = source_text.replace("\n", " ").strip()
-            lexicon_path = os.path.join(model_dir, "lexicon.txt")
-            has_lexicon = os.path.exists(lexicon_path)
+            for attempt in [1, 2]:
+                try:
+                    # Get process from pool
+                    script_path = os.path.join(os.path.dirname(__file__), 'sherpa_runner_v2.py')
+                    process = _sherpa_pool.get_process(python_path, script_path, debug_enabled=debug_enabled)
+                    
+                    try:
+                        from .. import system_utils
+                        # Prepare optimization params
+                        threads_opt = self.get_configuration_value_optional('num_threads', 1)
+                        if threads_opt <= 0:
+                            # For pooled operations, use 1 thread per process
+                            threads_opt = 1 
+                        
+                        use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
+                        provider = "cpu"
+                        if use_gpu and system_utils.is_amd_gpu_detected():
+                            provider = "directml"
+                        
+                        clean_text = source_text.replace("\n", " ").strip()
+                        lexicon_path = os.path.join(model_dir, "lexicon.txt")
+                        has_lexicon = os.path.exists(lexicon_path)
 
-            request = {
-                "text": clean_text,
-                "lang_code": lang_code,
-                "model_dir": model_dir,
-                "output_file": temp_path,
-                "num_threads": int(threads_opt),
-                "provider": provider,
-                "lexicon_path": lexicon_path if has_lexicon else "",
-                "speed": options.get('speed', 1.0)
-            }
-            
-            # Send and Receive
-            payload = json.dumps(request) + "\n"
-            try:
-                process.stdin.write(payload.encode('utf-8'))
-                process.stdin.flush()
-                response_line = process.stdout.readline()
-                if not response_line:
-                    raise Exception("Sherpa process closed stream.")
-                
-                resp = json.loads(response_line.decode('utf-8').strip())
-            finally:
-                # Return process to pool
-                _sherpa_pool.release_process(process, python_path, script_path)
-            
-            if resp.get("status") == "ok":
-                if os.path.exists(temp_path):
-                    with open(temp_path, 'rb') as f:
-                        audio_data = f.read()
-                    return audio_data
-                else:
-                    raise Exception("Audio file not found after generation.")
-            else:
-                raise Exception(f"Sherpa Error: {resp.get('message')}")
-
-        except Exception as e:
-            # Don't kill the process immediately on logical errors, only on pipe errors (handled above)
-            raise errors.RequestError(source_text, voice, str(e))
+                        request = {
+                            "text": clean_text,
+                            "lang_code": lang_code,
+                            "model_dir": model_dir,
+                            "output_file": temp_path,
+                            "num_threads": int(threads_opt),
+                            "provider": provider,
+                            "lexicon_path": lexicon_path if has_lexicon else "",
+                            "speed": options.get('speed', 1.0)
+                        }
+                        
+                        # Send and Receive
+                        payload = json.dumps(request) + "\n"
+                        process.stdin.write(payload.encode('utf-8'))
+                        process.stdin.flush()
+                        
+                        response_line = process.stdout.readline()
+                        if not response_line:
+                            raise BrokenPipeError("Sherpa process closed stream.")
+                        
+                        resp = json.loads(response_line.decode('utf-8').strip())
+                        
+                        if resp.get("status") == "ok":
+                            if os.path.exists(temp_path):
+                                with open(temp_path, 'rb') as f:
+                                    audio_data = f.read()
+                                return audio_data
+                            else:
+                                raise Exception("Audio file not found after generation.")
+                        else:
+                            raise Exception(f"Sherpa Error: {resp.get('message')}")
+                            
+                    except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                        process.is_healthy = False
+                        if attempt == 1:
+                            logger.warning(f"MmsTTS: Retry 1/1 after process failure: {e}")
+                            continue
+                        raise e
+                    finally:
+                        # Return process to pool
+                        _sherpa_pool.release_process(process, python_path, script_path)
+                except Exception as e:
+                    if attempt == 2:
+                        raise errors.RequestError(source_text, voice, str(e))
         finally:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)

@@ -441,82 +441,112 @@ class SuperFreeTTS():
 
     def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status, max_workers=4):
         """
-        Execute unique tasks using MultiEngineExecutor per-engine worker pools.
-        IGNORES max_workers parameter - uses per-engine config instead.
-        Returns: {dedup_key: (source_text, processed_text, sound_file, full_filename)}
+        Execute unique tasks using MultiEngineExecutor with DYNAMIC BATCHING.
+        Groups tasks by (service, voice) and chunks them into vector IPC calls.
         """
         lang = self.get_ui_language()
         audio_cache = {}
         completed_count = 0
         unique_count = len(dedup_map)
         
-        # Map unique tasks to dedup keys for later lookup
-        unique_tasks_list = []  # [(dedup_key, task_data, task_indices), ...]
+        # 1. Group tasks by (service, voice_id) for batching compatibility
+        engine_groups = {} # (service_name, voice_id) -> list of (dedup_key, task_data, task_indices)
+        
         for dedup_key, task_indices in dedup_map.items():
             task_idx = task_indices[0]
             task_data = tasks[task_idx]
-            unique_tasks_list.append((dedup_key, task_data, task_indices))
-        
-        # Use MultiEngineExecutor per-engine pools instead of single pool
-        # Submit tasks to appropriate pools based on voice service
-        future_to_info = {}  # future -> (dedup_key, task_data, task_indices)
-        
-        logger.info(f"[BATCH] Submitting {len(unique_tasks_list)} unique tasks to per-engine pools:")
-        for dedup_key, task_data, task_indices in unique_tasks_list:
-            # Detect which TTS engine/service for this task
-            service = self.executor.detect_service({'batch': task_data['batch']})
-            executor_pool = self.executor.get_executor(service)
-            worker_count = executor_pool._max_workers if hasattr(executor_pool, '_max_workers') else 4
+            service_name = self.executor.detect_service({'batch': task_data['batch']})
             
-            # Log task routing
-            logger.info(f"[BATCH]   Task {dedup_key} → {service} pool ({worker_count} workers)")
+            # Extract voice_id safely
+            voice_selection = task_data['batch'].voice_selection
+            # Voice ID can be complex, stringify for dictionary key
+            voice_id_str = str(voice_selection.get_voice_id()) if hasattr(voice_selection, 'get_voice_id') else str(voice_selection)
             
-            # Submit to service-specific pool
-            future = executor_pool.submit(self._generate_audio_task_unified, task_data)
-            future_to_info[future] = (dedup_key, task_data, task_indices, service)
+            group_key = (service_name, voice_id_str)
+            if group_key not in engine_groups:
+                engine_groups[group_key] = []
+            engine_groups[group_key].append((dedup_key, task_data, task_indices))
+            
+        # 2. Chunk groups into batches and submit to per-engine executors
+        # Enforce strict 10-item (MAX_BATCH_SIZE) and 3000-character (MAX_TOTAL_CHARS) limits
+        future_to_chunk = {} # future -> chunk of (dedup_key, task_data, task_indices)
         
-        # Collect results as they complete (from any pool)
-        for future in concurrent.futures.as_completed(future_to_info):
+        for (service_name, _), group_tasks in engine_groups.items():
+            executor_pool = self.executor.get_executor(service_name)
+            
+            chunk = []
+            chunk_chars = 0
+            for item in group_tasks:
+                dedup_key, task_data, task_indices = item
+                # Bound character count based on input text
+                text = task_data['batch'].source_text
+                text_len = len(text)
+                
+                # Check bounds
+                if len(chunk) >= 10 or (chunk_chars + text_len > 3000 and chunk):
+                    # Dispatch current chunk to engine
+                    future = executor_pool.submit(self._generate_audio_batch_task, list(chunk))
+                    future_to_chunk[future] = list(chunk)
+                    chunk = []
+                    chunk_chars = 0
+                
+                chunk.append(item)
+                chunk_chars += text_len
+            
+            if chunk:
+                future = executor_pool.submit(self._generate_audio_batch_task, list(chunk))
+                future_to_chunk[future] = list(chunk)
+        
+        # 3. Collect results as batches complete
+        for future in concurrent.futures.as_completed(future_to_chunk):
             if not batch_status.must_continue:
-                # Cancel pending work to reduce CPU/memory pressure when user stops batch.
-                for pending_future in future_to_info:
-                    if not pending_future.done():
-                        pending_future.cancel()
+                for pending_future in future_to_chunk:
+                    if not pending_future.done(): pending_future.cancel()
                 break
-            
-            dedup_key, task_data, task_indices, service = future_to_info[future]
-            
+                
+            chunk = future_to_chunk[future]
             try:
-                result = future.result()
-                audio_cache[dedup_key] = result
-                logger.debug(f"[BATCH] Task from {service} pool completed: {dedup_key}")
+                # Enforce strict 25s timeout per batch as mandated
+                batch_results = future.result(timeout=25.0) 
+                
+                for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
+                    result = batch_results[i] if i < len(batch_results) else None
+                    audio_cache[dedup_key] = result
+                    
+                    # Mark progress
+                    completed_count += 1
+                    batch_status.unique_tasks_completed = completed_count
+                    
+                    # Update progress for all notes using this combination
+                    is_successful = result is not None and result[2] is not None
+                    for task_idx in task_indices:
+                        note_id = tasks[task_idx]['note_id']
+                        with batch_status.get_note_action_context(note_id, False) as ctx:
+                            if is_successful:
+                                src, proc, audio_fn, full_fn = result
+                                ctx.set_source_text(src)
+                                ctx.set_processed_text(proc)
+                                ctx.set_sound(audio_fn)
+                                ctx.set_status(constants.BatchNoteStatus.Done)
+                            else:
+                                ctx.set_status(constants.BatchNoteStatus.Error)
+                                ctx.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+                        batch_status.notify_change(note_id)
+                
+                batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
+                
             except Exception as e:
-                logger.error(f"[BATCH] Audio generation failed ({service}): {e}")
-                audio_cache[dedup_key] = None
-
-            # Mark one unique task completed.
-            completed_count += 1
-            batch_status.unique_tasks_completed = completed_count
-            batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
-
-            # Update progress for all notes using this combination
-            is_successful = audio_cache[dedup_key] is not None
-            for task_idx in task_indices:
-                note_id = tasks[task_idx]['note_id']
-                
-                if is_successful:
-                    source_text, processed_text, audio_filename, full_filename = audio_cache[dedup_key]
-                    with batch_status.get_note_action_context(note_id, False) as ctx:
-                        ctx.set_source_text(source_text)
-                        ctx.set_processed_text(processed_text)
-                        ctx.set_sound(audio_filename)
-                        ctx.set_status(constants.BatchNoteStatus.Done)
-                else:
-                    with batch_status.get_note_action_context(note_id, False) as ctx:
-                        ctx.set_status(constants.BatchNoteStatus.Error)
-                        ctx.error = Exception(i18n.get_text("error_audio_gen_failed", lang))
-                
-                batch_status.notify_change(note_id)
+                logger.error(f"[BATCH] Batch execution failed: {e}")
+                # Mark all items in this chunk as failed
+                for dedup_key, _, task_indices in chunk:
+                    audio_cache[dedup_key] = None
+                    completed_count += 1
+                    for task_idx in task_indices:
+                        note_id = tasks[task_idx]['note_id']
+                        with batch_status.get_note_action_context(note_id, False) as ctx:
+                            ctx.set_status(constants.BatchNoteStatus.Error)
+                            ctx.error = e
+                        batch_status.notify_change(note_id)
 
         return audio_cache
 
@@ -549,28 +579,76 @@ class SuperFreeTTS():
 
         return results
 
-    def _generate_audio_task_unified(self, task_data):
+    def _generate_audio_batch_task(self, chunk):
         """
-        Simplified audio generation - worker thread task.
-        Returns: (source_text, processed_text, audio_filename, full_filename)
+        Worker thread task: Processes a chunk of unique tasks using batch API if available.
         """
-        processed_text = task_data['processed_text']
-        batch = task_data['batch']
-        audio_request_context = task_data['audio_request_context']
-        source_text = task_data['source_text']
-
-        # Generate audio
-        full_filename, audio_filename = self.get_audio_file(
-            processed_text, batch.voice_selection, audio_request_context
-        )
-
-        # Cache in unified cache
-        voice_id = batch.voice_selection.get_voice_id() if hasattr(batch.voice_selection, 'get_voice_id') else str(batch.voice_selection)
-        cache_key = f"{processed_text}_{voice_id}"
-        if audio_filename:
-            self.executor.cache_result(processed_text, voice_id, source_text, audio_filename, full_filename)
-
-        return source_text, processed_text, audio_filename, full_filename
+        if not chunk: return []
+        
+        first_item = chunk[0][1]
+        batch_cfg = first_item['batch']
+        voice_selection = batch_cfg.voice_selection
+        
+        # 1. Prepare texts for batch
+        source_texts = [item[1]['processed_text'] for item in chunk]
+        
+        # 2. Check individual items for existing cache files to avoid redundant calling
+        results = [None] * len(chunk)
+        missing_indices = []
+        missing_texts = []
+        
+        voice_id = voice_selection.get_voice_id() if hasattr(voice_selection, 'get_voice_id') else str(voice_selection)
+        voice_options = voice_selection._voice_with_options.options if voice_selection._voice_with_options else {}
+        
+        for i, (dedup_key, task_data, _) in enumerate(chunk):
+            proc_text = task_data['processed_text']
+            
+            hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
+            format = options.AudioFormat.mp3
+            if options.AUDIO_FORMAT_PARAMETER in voice_options:
+                format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
+            
+            full_filename = self.get_full_audio_file_name(hash_str, format)
+            audio_filename = self.get_audio_filename(hash_str, format)
+            
+            if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
+                results[i] = (task_data['source_text'], proc_text, audio_filename, full_filename)
+            else:
+                missing_indices.append(i)
+                missing_texts.append(proc_text)
+        
+        # 3. Call batch API for missing items
+        if missing_texts:
+            try:
+                # Locate actual voice object
+                voice = self.service_manager.locate_voice(voice_id)
+                audio_datas = self.service_manager.get_tts_audio_batch(missing_texts, voice, voice_options)
+                
+                for i, idx in enumerate(missing_indices):
+                    audio_data = audio_datas[i] if i < len(audio_datas) else None
+                    if audio_data:
+                        task_data = chunk[idx][1]
+                        proc_text = task_data['processed_text']
+                        
+                        # Re-calculate filename for writing
+                        hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
+                        format = options.AudioFormat.mp3
+                        if options.AUDIO_FORMAT_PARAMETER in voice_options:
+                             format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
+                        
+                        full_fn = self.get_full_audio_file_name(hash_str, format)
+                        audio_fn = self.get_audio_filename(hash_str, format)
+                        
+                        with open(full_fn, 'wb') as f:
+                            f.write(audio_data)
+                        
+                        # Cache in memory
+                        self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_fn, full_fn)
+                        results[idx] = (task_data['source_text'], proc_text, audio_fn, full_fn)
+            except Exception as e:
+                logger.error(f"[BATCH] Service batch call failed: {e}")
+                
+        return results
 
     def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection):
         # Helper to update the note object

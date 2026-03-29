@@ -61,6 +61,27 @@ def main():
             log(f"Failed to load engine: {e}")
             return None
 
+    def generate_single(engine, text, sid, speed):
+        try:
+            log(f"Request: SID={sid}, Text='{text[:30]}...'")
+            start_time = time.time()
+            audio = engine.generate(text, sid=sid, speed=speed)
+            duration = time.time() - start_time
+            log(f"Generated in {duration:.2f}s")
+
+            buffer = io.BytesIO()
+            sf.write(buffer, audio.samples, audio.sample_rate, format='WAV')
+            audio_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            return {
+                "status": "ok", 
+                "audio_b64": audio_b64,
+                "duration": duration
+            }
+        except Exception as e:
+            log(f"Generation error: {e}")
+            return {"status": "error", "message": str(e)}
+
     while True:
         try:
             line = sys.stdin.readline()
@@ -70,7 +91,6 @@ def main():
             action = data.get('action', 'generate')
             
             if action == 'init':
-                # Warm-up call
                 model_path = data.get('model_path')
                 tokens_path = data.get('tokens_path')
                 data_dir = data.get('data_dir', os.path.dirname(model_path))
@@ -82,6 +102,38 @@ def main():
                 sys.stdout.buffer.flush()
                 continue
 
+            # Batch Generation
+            if action == 'generate_batch':
+                tasks = data.get('tasks', [])
+                # Use first task's model to resolve engine (assume batch is for same engine)
+                # This is standard for our batching logic
+                if not tasks: continue
+                
+                first = tasks[0]
+                model_path = first.get('model_path')
+                tokens_path = first.get('tokens_path')
+                data_dir = first.get('data_dir', os.path.dirname(model_path))
+                
+                engine = get_engine(model_path, tokens_path, data_dir)
+                if engine is None:
+                    response = json.dumps({"status": "error", "message": "Engine failed to load"}) + "\n"
+                    sys.stdout.buffer.write(response.encode('utf-8'))
+                    sys.stdout.buffer.flush()
+                    continue
+
+                batch_results = []
+                for task in tasks:
+                    t_text = task.get('text', '').strip()
+                    t_sid = task.get('sid', 0)
+                    t_speed = task.get('speed', 1.0)
+                    batch_results.append(generate_single(engine, t_text, t_sid, t_speed))
+                
+                response = json.dumps({"status": "ok", "results": batch_results}) + "\n"
+                sys.stdout.buffer.write(response.encode('utf-8'))
+                sys.stdout.buffer.flush()
+                continue
+
+            # Legacy Single Generation
             text = data.get('text', '').strip()
             model_path = data.get('model_path')
             tokens_path = data.get('tokens_path')
@@ -95,25 +147,8 @@ def main():
             if engine is None:
                 continue
 
-            log(f"Request: Model={os.path.basename(model_path)}, SID={sid}, Text='{text[:30]}...'")
-            
-            start_time = time.time()
-            # Generate
-            audio = engine.generate(text, sid=sid, speed=speed)
-            duration = time.time() - start_time
-            log(f"Generated in {duration:.2f}s")
-
-            # Encode to MEMORY (Base64 WAV)
-            buffer = io.BytesIO()
-            sf.write(buffer, audio.samples, audio.sample_rate, format='WAV')
-            audio_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            
-            response = json.dumps({
-                "status": "ok", 
-                "audio_b64": audio_b64,
-                "duration": duration
-            }) + "\n"
-            
+            res = generate_single(engine, text, sid, speed)
+            response = json.dumps(res) + "\n"
             sys.stdout.buffer.write(response.encode('utf-8'))
             sys.stdout.buffer.flush()
 

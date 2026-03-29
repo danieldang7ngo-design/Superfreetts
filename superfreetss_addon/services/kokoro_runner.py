@@ -110,6 +110,25 @@ def main():
         'i': 'it', 's': 'sv'
     }
 
+    def generate_single(kokoro, text, voice_name, speed, lang_code, output_file):
+        try:
+            log(f"Generating: Voice={voice_name}, Lang={lang_code}, Text='{text[:30]}...'")
+            samples, sample_rate = kokoro.create(text, voice=voice_name, speed=speed, lang=lang_code)
+            
+            if output_file == "MEMORY":
+                import io
+                import base64
+                buffer = io.BytesIO()
+                sf.write(buffer, samples, sample_rate, format='WAV')
+                audio_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                return {"status": "ok", "audio_b64": audio_b64}
+            else:
+                sf.write(output_file, samples, sample_rate)
+                return {"status": "ok", "file": output_file}
+        except Exception as e:
+            log(f"Generation error: {e}")
+            return {"status": "error", "message": str(e)}
+
     while True:
         try:
             line = sys.stdin.readline()
@@ -127,49 +146,59 @@ def main():
                 sys.stdout.buffer.flush()
                 continue
 
+            # Batch Generation (New High-Performance Action)
+            if action == 'generate_batch':
+                tasks = data.get('tasks', [])
+                device = data.get('device', 'cpu')
+                threads = data.get('threads', 0)
+                kokoro = get_engine(device, threads)
+                
+                if not kokoro:
+                    response = json.dumps({"status": "error", "message": "Engine not available"}) + "\n"
+                    sys.stdout.buffer.write(response.encode('utf-8'))
+                    sys.stdout.buffer.flush()
+                    continue
+
+                batch_results = []
+                for task in tasks:
+                    t_text = task.get('text', '').strip()
+                    t_voice = task.get('voice', 'af_bella')
+                    t_speed = task.get('speed', 1.0)
+                    t_out = task.get('output_file', 'MEMORY')
+                    
+                    t_prefix = t_voice[0].lower() if t_voice else 'a'
+                    t_lang = LANG_MAP.get(t_prefix, 'en-us')
+                    
+                    res = generate_single(kokoro, t_text, t_voice, t_speed, t_lang, t_out)
+                    batch_results.append(res)
+                
+                response = json.dumps({"status": "ok", "results": batch_results}) + "\n"
+                sys.stdout.buffer.write(response.encode('utf-8'))
+                sys.stdout.buffer.flush()
+                continue
+
+            # Legacy Single Generation
             text = data.get('text', '').strip()
             voice_name = data.get('voice', 'af_bella')
             speed = data.get('speed', 1.0)
             output_file = data.get('output_file')
-            
-            if not text or not output_file: continue
-            
-            # Determine Language
-            prefix = voice_name[0].lower() if voice_name else 'a'
-            lang_code = LANG_MAP.get(prefix, 'en-us')
-
             device = data.get('device', 'cpu')
             threads = data.get('threads', 0)
+            
+            if not text or not output_file: continue
             
             kokoro = get_engine(device, threads)
             if not kokoro:
                 log("Error: Engine not available.")
                 continue
 
-            # Standard Generation
-            try:
-                log(f"Generating: Voice={voice_name}, Lang={lang_code}, Text='{text[:30]}...'")
-                samples, sample_rate = kokoro.create(text, voice=voice_name, speed=speed, lang=lang_code)
-                
-                if output_file == "MEMORY":
-                    import io
-                    import base64
-                    buffer = io.BytesIO()
-                    sf.write(buffer, samples, sample_rate, format='WAV')
-                    audio_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                    response = json.dumps({"status": "ok", "audio_b64": audio_b64}) + "\n"
-                else:
-                    sf.write(output_file, samples, sample_rate)
-                    response = json.dumps({"status": "ok", "file": output_file}) + "\n"
-                
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+            prefix = voice_name[0].lower() if voice_name else 'a'
+            lang_code = LANG_MAP.get(prefix, 'en-us')
 
-            except Exception as e:
-                log(f"Generation error: {e}")
-                error_dict = {"status": "error", "message": str(e)}
-                sys.stdout.buffer.write((json.dumps(error_dict) + "\n").encode('utf-8'))
-                sys.stdout.buffer.flush()
+            res = generate_single(kokoro, text, voice_name, speed, lang_code, output_file)
+            response = json.dumps(res) + "\n"
+            sys.stdout.buffer.write(response.encode('utf-8'))
+            sys.stdout.buffer.flush()
 
         except Exception as e:
             log(f"Runner loop error: {e}")
