@@ -75,14 +75,6 @@ class SuperFreeTTS():
                 'MmsTTS': 1,
             }
             
-            # Fallback to preferences if available (backward compatibility)
-            pref_fallback = {
-                'PiperTTS': getattr(prefs, 'piper_workers', 1),
-                'KokoroTTS': getattr(prefs, 'kokoro_workers', 1),
-                'EdgeTTS': getattr(prefs, 'edgetts_workers', 1),
-                'MmsTTS': getattr(prefs, 'mms_workers', 1),
-            }
-            
             # Service name mappings for executor pool naming
             service_pool_map = {
                 'PiperTTS': 'Piper',
@@ -95,8 +87,8 @@ class SuperFreeTTS():
             engine_config = {}
             for service_name, pool_name in service_pool_map.items():
                 service_config = service_config_map.get(service_name, {})
-                # Try service config first, then prefer fallback (for backward compat), then default
-                concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
+                # Try service config first, then default to 1
+                concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
                 
                 # Validate against physical CPU cores
                 max_workers = cpu_utils.CPUInfo.get_max_workers()
@@ -312,9 +304,10 @@ class SuperFreeTTS():
                     logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
 
                 # 3. Parallel Generation with unified executor
-                prefs = self.get_preferences()
-                max_workers = max(1, min(prefs.batch_concurrency, cpu_utils.CPUInfo.get_max_workers()))
-                logger.info(f"[BATCH] Parallel generation requested: {max_workers} workers (engine pools may override)")
+                # Use a reasonable high limit for the overall collection of tasks, 
+                # but individual pools will respect their own limits.
+                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                logger.info(f"[BATCH] Parallel generation started: engine pools will respect their own limits")
 
                 batch_status.total_unique_tasks = unique_count
                 batch_status.unique_tasks_completed = 0
@@ -323,7 +316,7 @@ class SuperFreeTTS():
                 logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
                 gen_start = time.time()
 
-                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, max_workers)
+                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
 
                 gen_time = time.time() - gen_start
                 logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {gen_time:.2f}s')
@@ -453,7 +446,7 @@ class SuperFreeTTS():
 
         return dedup_map
 
-    def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status, max_workers=4):
+    def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status):
         """
         Execute unique tasks using MultiEngineExecutor with DYNAMIC BATCHING.
         Groups tasks by (service, voice) and chunks them into vector IPC calls.
@@ -1026,6 +1019,13 @@ class SuperFreeTTS():
     def generate_audio_write_file(self, source_text, voice_id: voice_module.TtsVoiceId_v3, voice_options, audio_request_context):
         assert isinstance(voice_id, voice_module.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
         format = options.AudioFormat.mp3 # default to mp3
+        # Use user preference if available
+        prefs = self.get_preferences()
+        if prefs.audio_format == "wav":
+            format = options.AudioFormat.wav
+        elif prefs.audio_format == "ogg":
+            format = options.AudioFormat.ogg_opus
+        
         if options.AUDIO_FORMAT_PARAMETER in voice_options:
             format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
 
@@ -1093,6 +1093,7 @@ class SuperFreeTTS():
     def get_audio_filename(self, hash_str, format: options.AudioFormat):
         extension_map = {
             options.AudioFormat.mp3: 'mp3',
+            options.AudioFormat.wav: 'wav',
             options.AudioFormat.ogg_vorbis: 'ogg',
             options.AudioFormat.ogg_opus: 'ogg',
         }

@@ -44,16 +44,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_helper_label = aqt.qt.QLabel()
         self.cache_helper_label.setWordWrap(True)
 
-        self.batch_concurrency_spinbox = aqt.qt.QSpinBox()
-        self.batch_concurrency_spinbox.setMinimum(1)
-        self.batch_concurrency_spinbox.setMaximum(16)
-        self.batch_concurrency_spinbox.setToolTip("Number of concurrent threads for batch processing. Keep at 4 for auto-detect CPU cores, or set custom value (1-20)")
-        self.perf_helper_label = aqt.qt.QLabel()
-        self.perf_helper_label.setWordWrap(True)
-        
-        self.batch_concurrency_help_label = aqt.qt.QLabel()
-        self.batch_concurrency_help_label.setWordWrap(True)
-        
         # Note: Per-service concurrency workers are now configured in each service's Advanced settings
 
         # UI layout for preferences
@@ -79,9 +69,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_checkbox.setChecked(self.model.cache_enabled)
         self.cache_retention_spinbox.setValue(self.model.cache_retention_days)
         self.cache_retention_spinbox.setEnabled(self.model.cache_enabled)
-        # load batch concurrency
-        self.batch_concurrency_spinbox.setValue(self.model.batch_concurrency)
-
         # load audio format
         format_values = ["mp3", "wav", "ogg"]
         current_format = getattr(self.model, 'audio_format', 'mp3') or 'mp3'
@@ -191,28 +178,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
 
         main_vlayout.addWidget(self.format_card)
 
-        # 3. Performance Card
-        self.perf_card, perf_card_layout = self._create_vibrant_card(i18n.get_text("preferences_group_performance_title", lang))
-        
-        # Batch Concurrency Sub-section
-        batch_vlayout = aqt.qt.QVBoxLayout()
-        batch_vlayout.setSpacing(4)
-        
-        h_batch = aqt.qt.QHBoxLayout()
-        self.perf_label = aqt.qt.QLabel(i18n.get_text("preferences_batch_concurrency_label", lang))
-        h_batch.addWidget(self.perf_label)
-        self.batch_concurrency_spinbox.setFixedWidth(72)
-        h_batch.addWidget(self.batch_concurrency_spinbox)
-        h_batch.addStretch()
-        
-        self.batch_concurrency_help_label.setProperty("cssClass", "helperText")
-        batch_vlayout.addLayout(h_batch)
-        batch_vlayout.addWidget(self.batch_concurrency_help_label)
-        
-        perf_card_layout.addLayout(batch_vlayout)
-        
-        main_vlayout.addWidget(self.perf_card)
-
         # tabs
         # ====================
 
@@ -238,7 +203,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.language_combobox.currentIndexChanged.connect(self.language_changed)
         self.cache_retention_checkbox.stateChanged.connect(self.cache_enabled_changed)
         self.cache_retention_spinbox.valueChanged.connect(self.cache_retention_changed)
-        self.batch_concurrency_spinbox.valueChanged.connect(self.batch_concurrency_changed)
         self.audio_format_combobox.currentIndexChanged.connect(self.audio_format_changed)
         
         if show_action_buttons:
@@ -288,11 +252,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_checkbox.setToolTip(i18n.get_text("preferences_cache_tooltip", lang))
         self.cache_helper_label.setText(i18n.get_text("preferences_cache_helper", lang))
         
-        self.perf_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("preferences_group_performance_title", lang))
-        self.perf_label.setText(i18n.get_text("preferences_batch_concurrency_label", lang))
-        self.batch_concurrency_spinbox.setToolTip(i18n.get_text("preferences_batch_concurrency_tooltip", lang))
-        self.batch_concurrency_help_label.setText(i18n.get_text("preferences_batch_concurrency_help", lang))
-        
         self.format_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("pref_audio_format", lang))
         self.format_label.setText(i18n.get_text("pref_audio_format_desc", lang))
         
@@ -331,19 +290,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
             None
         """
         self.model.cache_retention_days = value
-        self.model_part_updated_common()
-
-    def batch_concurrency_changed(self, value: int) -> None:
-        """
-        Handle batch concurrency threads spinbox change.
-        
-        Args:
-            value: Number of concurrent threads to use
-            
-        Returns:
-            None
-        """
-        self.model.batch_concurrency = value
         self.model_part_updated_common()
 
     def audio_format_changed(self, index: int) -> None:

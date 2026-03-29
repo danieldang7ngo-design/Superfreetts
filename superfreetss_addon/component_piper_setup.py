@@ -106,15 +106,16 @@ class PiperSetupDialog(QDialog):
             from .engine_manager import EngineManager
             
             if not EngineManager.is_installed():
-                mw.taskman.run_on_main(lambda: self.status_label.setText("Installing Python Engine..."))
-                mw.taskman.run_on_main(lambda: self.log("Python engine not found. Downloading shared environment..."))
+                mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_installing_runtime", self.lang)))
+                mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_runtime_not_found", self.lang)))
                 
                 def on_engine_progress(data):
                     percent = data['percent']
-                    mw.taskman.run_on_main(lambda: self.status_label.setText(f"Installing Engine ({percent}%)"))
+                    mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_installing_progress", self.lang).format(percent)))
+                    mw.taskman.run_on_main(lambda: self.progress_bar.setValue(percent))
                 
                 EngineManager.ensure_installed(progress_callback=on_engine_progress)
-                mw.taskman.run_on_main(lambda: self.log("Python engine integrated."))
+                mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_runtime_integrated", self.lang)))
 
             # Note: Sherpa-ONNX library is no longer required for Piper (Stock)
             # It will still be installed by Kokoro/MMS if needed.

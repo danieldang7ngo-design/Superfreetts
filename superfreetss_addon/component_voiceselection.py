@@ -402,7 +402,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
         self.add_voice_button.pressed.connect(self.add_voice)
         gui_utils.configure_pastel_button(self.add_voice_button, style_name="purple")
 
-        self.filter_and_draw_voices()
+        self.filter_and_draw_voices(is_initial=True)
 
         self.scroll_area.setWidget(self.layout_widget)
         return self.scroll_area
@@ -569,11 +569,22 @@ class VoiceSelection(component_common.ConfigComponentBase):
             self.voice_selection_model.set_voice(config_models.VoiceWithOptions(voice.voice_id, self.current_voice_options))
             self.notify_model_update()
 
-    def filter_and_draw_voices(self, _=None):
-        logger.info('filter_and_draw_voices')
+    def filter_and_draw_voices(self, _=None, is_initial=False):
+        if self._is_updating_filters:
+            return
+        
+        logger.info(f'filter_and_draw_voices (is_initial={is_initial})')
+
+        # 1. Update available filter options based on Service selection
+        # We only do this if it's not the initial load to avoid redundant calls,
+        # or we explicitly want to cascade.
+        if not is_initial:
+            self._update_available_filter_options()
+
         voice_list = self.voice_list
         logger.debug(f'initial voice count: {len(voice_list)}')
         
+        # 2. Apply filters to the voice list
         # check filtering by audio language
         if self.audio_languages_combobox.currentIndex() > 1:
             audio_language_name = self.audio_languages_combobox.currentText()
@@ -601,6 +612,83 @@ class VoiceSelection(component_common.ConfigComponentBase):
         voice_list.sort(key=voice_sort_key)
         self.filtered_voice_list = voice_list
         self.draw_all_voices(self.filtered_voice_list)
+
+    def _update_available_filter_options(self):
+        """
+        Dynamically update all filter comboboxes based on the selections of the others.
+        This implements bi-directional filtering (e.g. Language -> Service or Service -> Language).
+        """
+        lang = self.hypertts.get_ui_language()
+        all_text = i18n.get_text("voice_filter_all", lang)
+        
+        # Get current values to use as constraints
+        svc = self.services_combobox.currentText()
+        lng = self.languages_combobox.currentText()
+        loc = self.audio_languages_combobox.currentText()
+        gen = self.genders_combobox.currentText()
+
+        self._is_updating_filters = True
+        try:
+            # 1. Update Service dropdown based on (Language, Locale, Gender)
+            valid_services = set()
+            for v in self.voice_list:
+                match_lng = lng == all_text or any(l.lang_name == lng for l in v.languages)
+                match_loc = loc == all_text or any(al.audio_lang_name == loc for al in v.audio_languages)
+                match_gen = gen == all_text or v.gender.name == gen
+                if match_lng and match_loc and match_gen:
+                    valid_services.add(v.service)
+            self._repopulate_combobox_preserving_selection(self.services_combobox, sorted(list(valid_services)), all_text)
+
+            # 2. Update Language dropdown based on (Service, Locale, Gender)
+            valid_languages = set()
+            for v in self.voice_list:
+                match_svc = svc == all_text or v.service == svc
+                match_loc = loc == all_text or any(al.audio_lang_name == loc for al in v.audio_languages)
+                match_gen = gen == all_text or v.gender.name == gen
+                if match_svc and match_loc and match_gen:
+                    for l in v.languages:
+                        valid_languages.add(l.lang_name)
+            self._repopulate_combobox_preserving_selection(self.languages_combobox, sorted(list(valid_languages)), all_text)
+
+            # 3. Update Locale dropdown based on (Service, Language, Gender)
+            valid_locales = set()
+            for v in self.voice_list:
+                match_svc = svc == all_text or v.service == svc
+                match_lng = lng == all_text or any(l.lang_name == lng for l in v.languages)
+                match_gen = gen == all_text or v.gender.name == gen
+                if match_svc and match_lng and match_gen:
+                    for al in v.audio_languages:
+                        valid_locales.add(al.audio_lang_name)
+            self._repopulate_combobox_preserving_selection(self.audio_languages_combobox, sorted(list(valid_locales)), all_text)
+
+            # 4. Update Gender dropdown based on (Service, Language, Locale)
+            valid_genders = set()
+            for v in self.voice_list:
+                match_svc = svc == all_text or v.service == svc
+                match_lng = lng == all_text or any(l.lang_name == lng for l in v.languages)
+                match_loc = loc == all_text or any(al.audio_lang_name == loc for al in v.audio_languages)
+                if match_svc and match_lng and match_loc:
+                    valid_genders.add(v.gender.name)
+            self._repopulate_combobox_preserving_selection(self.genders_combobox, sorted(list(valid_genders)), all_text)
+                
+        finally:
+            self._is_updating_filters = False
+
+    def _repopulate_combobox_preserving_selection(self, combobox, items, all_text):
+        """Helper to update a combobox while keeping the user's choice if it's still there."""
+        current_selection = combobox.currentText()
+        
+        combobox.clear()
+        combobox.addItem(all_text)
+        combobox.insertSeparator(1)
+        combobox.addItems(items)
+        
+        # Restore selection
+        idx = combobox.findText(current_selection)
+        if idx >= 0:
+            combobox.setCurrentIndex(idx)
+        else:
+            combobox.setCurrentIndex(0) # Back to "All" if selected item vanished
 
     def draw_all_voices(self, voice_list):
         lang = self.hypertts.get_ui_language()

@@ -209,11 +209,6 @@ class PiperTTS(service.ServiceBase):
                                         'label': 'Speed',
                                         'tooltip': 'Speech speed multiplier. 1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower'
                                     },
-                                    'sentence_silence': {
-                                        'type': 'number', 'default': 0.2, 'min': 0.0, 'max': 2.0,
-                                        'label': 'Pause (seconds)',
-                                        'tooltip': 'Silence between sentences in seconds. 0.2 = default, 0 = no pause'
-                                    },
                                 }
                                 voices.append(voice_module.build_voice_v3(
                                     name=friendly_name,
@@ -317,7 +312,39 @@ class PiperTTS(service.ServiceBase):
                         import base64
                         audio_b64 = resp.get("audio_b64")
                         if audio_b64:
-                            return base64.b64decode(audio_b64)
+                            audio_data = base64.b64decode(audio_b64)
+                            
+                            # Convert to MP3 if requested
+                            # Use the global preferences from superfreetss.
+                            # Better: use the global preferences from superfreetss or similar.
+                            # In this context, we don't have direct access to the Preferences object unless we pass it.
+                            # However, we can use aqt.mw.pm.meta to get the raw config or use the existing service config.
+                            
+                            # Actually, service.py has access to the configuration via self.get_configuration_value_optional
+                            # but audio_format is a global preference.
+                            
+                            import aqt
+                            from .. import constants as addon_constants
+                            config = aqt.mw.addonManager.getConfig(addon_constants.CONFIG_ADDON_NAME) or {}
+                            prefs = config.get(addon_constants.CONFIG_PREFERENCES, {})
+                            pref_format = prefs.get("audio_format", "mp3")
+                            
+                            if pref_format == "mp3":
+                                logger.debug("PiperTTS: Converting WAV to MP3")
+                                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_file:
+                                    wav_file.write(audio_data)
+                                    wav_path = wav_file.name
+                                
+                                mp3_path = wav_path.replace(".wav", ".mp3")
+                                try:
+                                    aqt.sound._encode_mp3(wav_path, mp3_path)
+                                    with open(mp3_path, "rb") as mp3_file:
+                                        audio_data = mp3_file.read()
+                                finally:
+                                    if os.path.exists(wav_path): os.remove(wav_path)
+                                    if os.path.exists(mp3_path): os.remove(mp3_path)
+                            
+                            return audio_data
                         else:
                             raise Exception("No audio data in Piper response.")
                     else:

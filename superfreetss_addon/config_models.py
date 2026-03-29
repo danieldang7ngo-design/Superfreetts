@@ -597,22 +597,6 @@ class Preferences:
     cache_retention_days: int = 30
     # Whether cache cleanup is enabled
     cache_enabled: bool = True
-    # Number of concurrent threads for batch processing
-    batch_concurrency: int = 1
-    # Maximum RAM (in MB) allowed for batch processing (resource management)
-    batch_max_ram_mb: int = 3000  # 3GB default (safe for 8GB RAM systems)
-    # Maximum CPU cores allowed for batch processing (resource management)
-    batch_max_cores: int = 1      # Cap at 1 core (single-core mode)
-    # Maximum number of concurrent Sherpa/Kokoro processes to keep in pool
-    sherpa_max_processes: int = 1
-    
-    # Multi-engine executor settings (workers per TTS engine)
-    piper_workers: int = 1         # Parallel Piper processes
-    kokoro_workers: int = 1        # Sequential Kokoro (heavy)
-    edgetts_workers: int = 1       # Parallel EdgeTTS (network I/O)
-    mms_workers: int = 1           # MMS (multilingual, heavy)
-    default_workers: int = 1       # Fallback for other engines
-
     # Audio output format
     audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
 

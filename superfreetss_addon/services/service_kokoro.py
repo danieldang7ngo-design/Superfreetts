@@ -211,12 +211,11 @@ class KokoroTTS(service.ServiceBase):
                         threads_opt = 1
 
                     request = {
-                        "text": source_text,
+                        "text": source_text.strip(),
                         "voice": voice.voice_key,
                         "output_file": "MEMORY", 
-                        "device": "cpu",
-                        "threads": int(threads_opt),
-                        "speed": options.get('speed', 1.0)
+                        "num_threads": int(threads_opt),
+                        "speed": options.get('speed', 1.0),
                     }
                     payload = json.dumps(request) + "\n"
                     

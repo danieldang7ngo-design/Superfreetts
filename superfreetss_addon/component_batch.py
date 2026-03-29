@@ -431,6 +431,16 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.preview_widget = aqt.qt.QWidget()
             self.preview_widget.setLayout(self.preview.draw())
             self.splitter.addWidget(self.preview_widget)
+
+            # UI Fix: Prevent accidental collapsing of the results tab and ensure smooth resizing
+            self.splitter.setChildrenCollapsible(False)
+            self.splitter.setCollapsible(0, True)   # Settings can be hidden via button
+            self.splitter.setCollapsible(1, False)  # Results preview should stay visible
+            self.tabs.setMinimumWidth(350)
+            self.preview_widget.setMinimumWidth(350)
+            self.splitter.setStretchFactor(0, 1)
+            self.splitter.setStretchFactor(1, 1)
+
             self.vlayout.addWidget(self.splitter, 1) # splitter is what should stretch
         else:
             self.vlayout.addWidget(self.tabs, 1) # the tabs should stretch
@@ -511,16 +521,18 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     def collapse_settings(self):
         # when we have already loaded a batch
-        self.splitter.setSizes([0, self.MIN_WIDTH_COMPONENT])
-        self.dialog.setMinimumSize(self.MIN_WIDTH_COMPONENT, self.get_min_size())
+        # We use a very small value instead of exactly 0 to ensure predictable splitter state if needed,
+        # but QSplitter generally handles 0 fine when collapsible is True.
+        self.splitter.setSizes([0, 1000]) 
+        # Note: dialog minimum size remains respected
         self.show_settings = False
         lang = self.hypertts.get_ui_language()
         self.show_settings_button.setText(i18n.get_text("batch_button_show_settings", lang))
 
     def display_settings(self):
         # when configuring a new batch
-        self.splitter.setSizes([self.MIN_WIDTH_COMPONENT, self.MIN_WIDTH_COMPONENT])
-        self.dialog.setMinimumSize(self.MIN_WIDTH_COMPONENT * 2, self.get_min_size())
+        # Use a balanced size distribution
+        self.splitter.setSizes([500, 500])
         self.show_settings = True
         lang = self.hypertts.get_ui_language()
         self.show_settings_button.setText(i18n.get_text("batch_button_hide_settings", lang))
