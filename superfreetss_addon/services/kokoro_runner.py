@@ -154,7 +154,7 @@ def main():
                 kokoro = get_engine(device, threads)
                 
                 if not kokoro:
-                    response = json.dumps({"status": "error", "message": "Engine not available"}) + "\n"
+                    response = json.dumps({"status": "error", "message": "Engine not available for batch"}) + "\n"
                     sys.stdout.buffer.write(response.encode('utf-8'))
                     sys.stdout.buffer.flush()
                     continue
@@ -185,11 +185,18 @@ def main():
             device = data.get('device', 'cpu')
             threads = data.get('threads', 0)
             
-            if not text or not output_file: continue
+            if not text or not output_file: 
+                response = json.dumps({"status": "error", "message": "Missing text or output_file in legacy request"}) + "\n"
+                sys.stdout.buffer.write(response.encode('utf-8'))
+                sys.stdout.buffer.flush()
+                continue
             
             kokoro = get_engine(device, threads)
             if not kokoro:
                 log("Error: Engine not available.")
+                response = json.dumps({"status": "error", "message": "Engine not available for legacy request"}) + "\n"
+                sys.stdout.buffer.write(response.encode('utf-8'))
+                sys.stdout.buffer.flush()
                 continue
 
             prefix = voice_name[0].lower() if voice_name else 'a'

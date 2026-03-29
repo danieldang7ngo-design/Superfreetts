@@ -137,8 +137,9 @@ class ServiceManager():
             self._services_discovered = True
             logger.info(f'init_services: Completed. Discovered {len(self._service_classes)} service classes: {list(self._service_classes.keys())}')
         except Exception as e:
-            logger.error(f'init_services: Error during service discovery/import: {e}', exc_info=True)
-            # Don't set _services_discovered = True on error, so we can retry
+            logger.error(f'init_services: CRITICAL Error during service discovery/import: {e}', exc_info=True)
+            # Ensure we can still potentially use partially discovered services
+            self._services_discovered = True 
             raise
 
     def import_services(self):
@@ -175,8 +176,11 @@ class ServiceManager():
                 # Cache the class for later lazy instantiation
                 logger.info(f'caching service class {temp_instance.name}')
                 self._service_classes[temp_instance.name] = subclass
+            except AttributeError as ae:
+                logger.error(f'_cache_service_classes: AttributeError in {subclass.__name__}. Check for missing properties: {ae}')
+                continue
             except Exception as e:
-                logger.error(f'_cache_service_classes: Error caching service class {subclass.__name__}: {e}', exc_info=True)
+                logger.error(f'_cache_service_classes: Unexpected error caching service class {subclass.__name__}: {e}', exc_info=True)
                 # Continue with other services even if one fails
                 continue
         

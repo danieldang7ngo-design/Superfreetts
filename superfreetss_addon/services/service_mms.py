@@ -76,14 +76,22 @@ class SherpaProcessPool:
         self._semaphore.acquire()
         
         with self._lock:
+            logger.info(f"SherpaPool[{self.name}]: get_process (debug_enabled={debug_enabled})")
             # 1. Try to find an idle process for THIS script with SAME debug setting
             for i, (proc, exe, script, last_time) in enumerate(self._pool):
                 if proc.poll() is None and exe == executable_path and script == script_path:
                     # Check if debug setting matches (we need to store it in the pool)
                     current_debug = getattr(proc, 'debug_enabled', False)
                     if current_debug == debug_enabled:
+                        logger.info(f"SherpaPool[{self.name}]: Reusing idle process {os.path.basename(script)} (debug={current_debug})")
                         p, e, s, _ = self._pool.pop(i)
                         return p
+                    else:
+                        logger.info(f"SherpaPool[{self.name}]: Terminating idle process {os.path.basename(script)} due to debug mismatch ({current_debug} != {debug_enabled})")
+                        self.safe_terminate(proc)
+                        self._pool.pop(i)
+                        self._total_spawned -= 1
+                        break # Start fresh
             
             # 2. If no matching idle process, but we have OTHER idle processes and we"re at capacity
             # we should kill the oldest idle one to make room for a NEW type (Script)
@@ -127,6 +135,18 @@ class SherpaProcessPool:
             self._pool = []
             self._total_spawned = 0
 
+    def update_max_processes(self, new_max):
+        with self._lock:
+            if new_max == self._max_processes:
+                return
+            logger.info(f"SherpaPool[{self.name}]: Updating max_processes from {self._max_processes} to {new_max}")
+            self._max_processes = new_max
+            # Recreate semaphore with new value
+            # Note: This affects new requests. Existing requests holding the old semaphore 
+            # will still release against the old semaphore logic, but we replace the 
+            # reference for all future get_process() calls.
+            self._semaphore = threading.Semaphore(new_max)
+
     def _start_new(self, executable_path, script_path, debug_enabled=False):
         cwd = os.path.dirname(executable_path)
         startupinfo = None
@@ -135,7 +155,7 @@ class SherpaProcessPool:
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
         env = os.environ.copy()
-        logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)}")
+        logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)} (debug_enabled={debug_enabled})")
 
         # Observability Upgrade: Initialize the output sink (default to DEVNULL)
         stderr_sink = subprocess.DEVNULL
@@ -143,9 +163,16 @@ class SherpaProcessPool:
         if debug_enabled:
             try:
                 # Log Strategy: Per-engine files in user_files/logs
-                log_dir = os.path.join(os.path.dirname(os.path.dirname(script_path)), 'user_files', 'logs')
+                # Absolute path to the addon's root user_files/logs
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                addon_root = os.path.normpath(os.path.join(script_dir, ".."))
+                log_dir = os.path.join(addon_root, 'user_files', 'logs')
+                
+                logger.info(f"SherpaPool[{self.name}]: Creating log directory at {log_dir}")
                 os.makedirs(log_dir, exist_ok=True)
+                
                 log_path = os.path.join(log_dir, f"{self.name.lower()}_error.log")
+                logger.info(f"SherpaPool[{self.name}]: Logging stderr to {log_path}")
                 
                 # Lightweight Log Rotation (Roll to .old if file > 5MB)
                 if os.path.exists(log_path) and os.path.getsize(log_path) > 5 * 1024 * 1024:
@@ -156,11 +183,16 @@ class SherpaProcessPool:
                 # Use file-based logging (Safe: No PIPE deadlock risk)
                 stderr_sink = open(log_path, "a", encoding='utf-8', buffering=1, errors='replace') # Line-buffered
             except Exception as e:
+                logger.warning(f"SherpaPool[{self.name}]: Failed to create log sink: {e}")
+                stderr_sink = subprocess.DEVNULL
                 logger.warning(f"Failed to initialize file logging for {self.name}: {e}")
                 stderr_sink = subprocess.DEVNULL
 
+        # IPC BREAKING BUG FIX: 
+        # Previously actual_stderr was set to subprocess.STDOUT, which merges logs into 
+        # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
         proc = subprocess.Popen(
-            [executable_path, script_path],
+            [executable_path, "-u", script_path],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=stderr_sink,
@@ -174,7 +206,8 @@ class SherpaProcessPool:
         
         # Guard: Close our handle in parent after child inherits it to avoid leaks
         if hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
-            stderr_sink.close()
+            try: stderr_sink.close()
+            except: pass
 
         return proc
 
@@ -413,3 +446,106 @@ class MmsTTS(service.ServiceBase):
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
                 except: pass
+
+    def get_tts_audio_batch(self, source_texts: typing.List[str], voice: voice.TtsVoice_v3, options: dict) -> typing.List[typing.Optional[bytes]]:
+        if not source_texts:
+            return []
+
+        if voice.voice_key == "mms_none": return [None] * len(source_texts)
+
+        python_path = self.get_configuration_value_optional('python_path', '')
+        if not python_path:
+            from ..engine_manager import EngineManager
+            python_path = EngineManager.get_python_exe()
+            
+        if not os.path.exists(python_path):
+            return [None] * len(source_texts)
+
+        lang_code = voice.voice_key.replace("mms_", "")
+        from ..constants import DATA_DIR
+        model_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
+        
+        if not os.path.exists(model_dir):
+            return [None] * len(source_texts)
+
+        debug_enabled = self.get_configuration_value_optional('debug_logging', False)
+        
+        for attempt in [1, 2]:
+            try:
+                script_path = os.path.join(os.path.dirname(__file__), 'sherpa_runner_v2.py')
+                process = _sherpa_pool.get_process(python_path, script_path, debug_enabled=debug_enabled)
+                
+                try:
+                    from .. import system_utils
+                    threads_opt = self.get_configuration_value_optional('num_threads', 1)
+                    if threads_opt <= 0: threads_opt = 1 
+                    
+                    use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
+                    provider = "directml" if (use_gpu and system_utils.is_amd_gpu_detected()) else "cpu"
+                    
+                    import tempfile
+                    tasks = []
+                    temp_paths = []
+                    for text in source_texts:
+                        fd, t_path = tempfile.mkstemp(suffix='.wav')
+                        os.close(fd)
+                        temp_paths.append(t_path)
+                        
+                        clean_text = text.replace("\n", " ").strip()
+                        tasks.append({
+                            "text": clean_text,
+                            "model_dir": model_dir,
+                            "output_file": t_path,
+                            "speed": options.get('speed', 1.0)
+                        })
+
+                    request = {
+                        "action": "generate_batch",
+                        "tasks": tasks,
+                        "num_threads": int(threads_opt),
+                        "provider": provider
+                    }
+                    
+                    payload = json.dumps(request) + "\n"
+                    process.stdin.write(payload.encode('utf-8'))
+                    process.stdin.flush()
+                    
+                    response_line = process.stdout.readline()
+                    if not response_line:
+                        raise BrokenPipeError("Sherpa process closed stream during batch.")
+                    
+                    resp = json.loads(response_line.decode('utf-8').strip())
+                    
+                    results = []
+                    if resp.get("status") == "ok":
+                        for i, task_resp in enumerate(resp.get("results", [])):
+                            t_path = temp_paths[i]
+                            if task_resp.get("status") == "ok" and os.path.exists(t_path):
+                                with open(t_path, 'rb') as f:
+                                    results.append(f.read())
+                            else:
+                                results.append(None)
+                    else:
+                        logger.error(f"MmsTTS Batch Error: {resp.get('message')}")
+                        results = [None] * len(source_texts)
+                    
+                    # Cleanup temp files
+                    for t_path in temp_paths:
+                        try:
+                            if os.path.exists(t_path): os.remove(t_path)
+                        except: pass
+                        
+                    return results
+                            
+                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    process.is_healthy = False
+                    if attempt == 1:
+                        logger.warning(f"MmsTTS Batch: Retry 1/1 after process failure: {e}")
+                        continue
+                    raise e
+                finally:
+                    _sherpa_pool.release_process(process, python_path, script_path)
+            except Exception as e:
+                if attempt == 2:
+                    logger.error(f"MmsTTS Batch Failed: {e}")
+                    return [None] * len(source_texts)

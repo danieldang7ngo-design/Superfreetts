@@ -53,18 +53,11 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         
         self.batch_concurrency_help_label = aqt.qt.QLabel()
         self.batch_concurrency_help_label.setWordWrap(True)
-        self.sherpa_pool_help_label = aqt.qt.QLabel()
-        self.sherpa_pool_help_label.setWordWrap(True)
         
         # Note: Per-service concurrency workers are now configured in each service's Advanced settings
 
         # UI layout for preferences
         
-        # Sherpa Max Processes
-        self.sherpa_max_processes_spinbox = aqt.qt.QSpinBox()
-        self.sherpa_max_processes_spinbox.setMinimum(1)
-        self.sherpa_max_processes_spinbox.setMaximum(16)
-
         # Audio output format
         self.audio_format_combobox = aqt.qt.QComboBox()
 
@@ -88,8 +81,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_spinbox.setEnabled(self.model.cache_enabled)
         # load batch concurrency
         self.batch_concurrency_spinbox.setValue(self.model.batch_concurrency)
-        
-        self.sherpa_max_processes_spinbox.setValue(self.model.sherpa_max_processes)
 
         # load audio format
         format_values = ["mp3", "wav", "ogg"]
@@ -219,24 +210,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         batch_vlayout.addWidget(self.batch_concurrency_help_label)
         
         perf_card_layout.addLayout(batch_vlayout)
-        perf_card_layout.addSpacing(6)
-
-        # Sherpa Pool Sub-section
-        sherpa_vlayout = aqt.qt.QVBoxLayout()
-        sherpa_vlayout.setSpacing(4)
-        
-        h_sherpa = aqt.qt.QHBoxLayout()
-        self.sherpa_pool_label = aqt.qt.QLabel(i18n.get_text("pref_label_sherpa_max_processes", lang))
-        h_sherpa.addWidget(self.sherpa_pool_label)
-        self.sherpa_max_processes_spinbox.setFixedWidth(72)
-        h_sherpa.addWidget(self.sherpa_max_processes_spinbox)
-        h_sherpa.addStretch()
-        
-        self.sherpa_pool_help_label.setProperty("cssClass", "helperText")
-        sherpa_vlayout.addLayout(h_sherpa)
-        sherpa_vlayout.addWidget(self.sherpa_pool_help_label)
-        
-        perf_card_layout.addLayout(sherpa_vlayout)
         
         main_vlayout.addWidget(self.perf_card)
 
@@ -266,7 +239,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.cache_retention_checkbox.stateChanged.connect(self.cache_enabled_changed)
         self.cache_retention_spinbox.valueChanged.connect(self.cache_retention_changed)
         self.batch_concurrency_spinbox.valueChanged.connect(self.batch_concurrency_changed)
-        self.sherpa_max_processes_spinbox.valueChanged.connect(self.sherpa_max_processes_changed)
         self.audio_format_combobox.currentIndexChanged.connect(self.audio_format_changed)
         
         if show_action_buttons:
@@ -321,10 +293,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
         self.batch_concurrency_spinbox.setToolTip(i18n.get_text("preferences_batch_concurrency_tooltip", lang))
         self.batch_concurrency_help_label.setText(i18n.get_text("preferences_batch_concurrency_help", lang))
         
-        self.sherpa_pool_label.setText(i18n.get_text("pref_label_sherpa_max_processes", lang))
-        self.sherpa_pool_help_label.setText(i18n.get_text("preferences_sherpa_pool_help", lang))
-        self.sherpa_max_processes_spinbox.setToolTip(i18n.get_text("pref_tooltip_sherpa_max_processes", lang))
-        
         self.format_card.findChild(aqt.qt.QLabel).setText(i18n.get_text("pref_audio_format", lang))
         self.format_label.setText(i18n.get_text("pref_audio_format_desc", lang))
         
@@ -376,11 +344,6 @@ class ComponentPreferences(component_common.ConfigComponentBase):
             None
         """
         self.model.batch_concurrency = value
-        self.model_part_updated_common()
-
-    def sherpa_max_processes_changed(self, value: int) -> None:
-        """Handle Sherpa max processes spinbox change."""
-        self.model.sherpa_max_processes = value
         self.model_part_updated_common()
 
     def audio_format_changed(self, index: int) -> None:

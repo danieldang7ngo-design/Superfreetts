@@ -133,6 +133,15 @@ class PiperTTS(service.ServiceBase):
             
         return None
 
+    def _resolve_espeak_data_dir(self):
+        """Resolve the espeak-ng-data directory required for Piper phonemization."""
+        from ..constants import PIPER_ENGINE_DIR
+        # Based on structure: piper_engine/piper/espeak-ng-data
+        path = os.path.join(PIPER_ENGINE_DIR, 'piper', 'espeak-ng-data')
+        if os.path.exists(path):
+            return path
+        return None
+
     def _resolve_models_dir(self):
         """Resolve Piper models directory: config value or default addon path."""
         from ..constants import PIPER_MODELS_DIR
@@ -147,25 +156,8 @@ class PiperTTS(service.ServiceBase):
 
     def __init__(self):
         super().__init__()
-        # Proactively check for dependencies since we use the portable python
-        self._ensure_dependencies()
-
-    def _ensure_dependencies(self):
-        """Ensure sherpa-onnx is available via the unified SherpaManager."""
-        try:
-            from ..sherpa_manager import SherpaManager
-            
-            # This is non-blocking if already installed. 
-            # If not, it will download and extract the wheel to libs/
-            if not SherpaManager.is_installed():
-                logger.info("Piper: Sherpa-ONNX not found. Initializing unified downloader...")
-                # In a real scenario, we might want to show a progress dialog, 
-                # but for simplicity and since it runs in __init__, we'll do it quietly 
-                # or rely on the manager's background download if we refactor it further.
-                # For now, we call it.
-                SherpaManager.ensure_installed()
-        except Exception as e:
-            logger.warning(f"Piper: Unified dependency check failed: {e}")
+        # Piper no longer depends on Sherpa-ONNX. 
+        # Dependencies (piper.exe) are handled in component_piper_setup.py
 
     def voice_list(self) -> List[voice_module.TtsVoice_v3]:
         models_path = self._resolve_models_dir()
@@ -294,12 +286,17 @@ class PiperTTS(service.ServiceBase):
                     tokens_path = model_file + ".json" 
                     
                     length_scale = options.get('length_scale', 1.0)
+                    data_dir = self._resolve_espeak_data_dir() or os.path.dirname(model_file)
+                    num_threads = self.get_configuration_value_optional('num_threads', 1)
+
                     request = {
                         "text": source_text,
                         "model_path": model_file,
                         "tokens_path": tokens_path,
+                        "data_dir": data_dir,
                         "sid": 0,
-                        "speed": length_scale
+                        "speed": length_scale,
+                        "num_threads": num_threads
                     }
                     
                     payload = json.dumps(request) + "\n"
@@ -341,6 +338,9 @@ class PiperTTS(service.ServiceBase):
                     raise errors.RequestError(source_text, voice, str(e))
 
     def get_tts_audio_batch(self, source_texts: List[str], voice: voice_module.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
+        if not source_texts:
+            return []
+            
         piper_exe = self._get_piper_exe()
         if not piper_exe:
              return [None] * len(source_texts)
@@ -369,8 +369,10 @@ class PiperTTS(service.ServiceBase):
                             "text": text,
                             "model_path": model_file,
                             "tokens_path": tokens_path,
+                            "data_dir": self._resolve_espeak_data_dir() or os.path.dirname(model_file),
                             "sid": 0,
-                            "speed": options.get('length_scale', 1.0)
+                            "speed": options.get('length_scale', 1.0),
+                            "num_threads": self.get_configuration_value_optional('num_threads', 1)
                         })
                     
                     request = {"action": "generate_batch", "tasks": tasks}

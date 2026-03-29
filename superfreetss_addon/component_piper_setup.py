@@ -101,9 +101,9 @@ class PiperSetupDialog(QDialog):
             else:
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_already_exists", self.lang)))
 
-            # Unified Engine & Sherpa-ONNX Library Setup
+
+            # Unified Engine Setup (Portable Python)
             from .engine_manager import EngineManager
-            from .sherpa_manager import SherpaManager
             
             if not EngineManager.is_installed():
                 mw.taskman.run_on_main(lambda: self.status_label.setText("Installing Python Engine..."))
@@ -116,17 +116,8 @@ class PiperSetupDialog(QDialog):
                 EngineManager.ensure_installed(progress_callback=on_engine_progress)
                 mw.taskman.run_on_main(lambda: self.log("Python engine integrated."))
 
-            if not SherpaManager.is_installed():
-                mw.taskman.run_on_main(lambda: self.status_label.setText("Installing Sherpa-ONNX Library..."))
-                mw.taskman.run_on_main(lambda: self.log("Sherpa-ONNX not found. Downloading unified library..."))
-                
-                # Use a simple progress wrapper
-                def on_lib_progress(data):
-                    percent = data['percent']
-                    mw.taskman.run_on_main(lambda: self.status_label.setText(f"Installing Sherpa-ONNX ({percent}%)"))
-                
-                SherpaManager.ensure_installed(progress_callback=on_lib_progress)
-                mw.taskman.run_on_main(lambda: self.log("Sherpa-ONNX library integrated."))
+            # Note: Sherpa-ONNX library is no longer required for Piper (Stock)
+            # It will still be installed by Kokoro/MMS if needed.
 
             mw.taskman.run_on_main(self.setup_complete)
         except Exception as e:

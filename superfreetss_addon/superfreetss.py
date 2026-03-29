@@ -104,6 +104,20 @@ class SuperFreeTTS():
                     logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
                 engine_config[pool_name] = max(1, concurrency)
+                
+                # Auto-scale internal process pools for Sherpa-based services
+                try:
+                    if pool_name == 'Piper':
+                        from .services import service_piper
+                        service_piper._piper_pool.update_max_processes(engine_config[pool_name])
+                    elif pool_name == 'Kokoro':
+                        from .services import service_kokoro
+                        service_kokoro._kokoro_pool.update_max_processes(engine_config[pool_name])
+                    elif pool_name == 'MMS':
+                        from .services import service_mms
+                        service_mms._sherpa_pool.update_max_processes(engine_config[pool_name])
+                except Exception as pool_err:
+                    logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
             
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
@@ -1465,6 +1479,20 @@ class SuperFreeTTS():
                     logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
                 engine_config[pool_name] = max(1, concurrency)
+
+                # Auto-scale internal process pools for Sherpa-based services
+                try:
+                    if pool_name == 'Piper':
+                        from .services import service_piper
+                        service_piper._piper_pool.update_max_processes(engine_config[pool_name])
+                    elif pool_name == 'Kokoro':
+                        from .services import service_kokoro
+                        service_kokoro._kokoro_pool.update_max_processes(engine_config[pool_name])
+                    elif pool_name == 'MMS':
+                        from .services import service_mms
+                        service_mms._sherpa_pool.update_max_processes(engine_config[pool_name])
+                except Exception as pool_err:
+                    logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
             
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
@@ -1523,15 +1551,8 @@ class SuperFreeTTS():
         gui.update_menu_language(self)
         # Apply logging preferences
         self.apply_logging_preferences()
-        # reconfigure service manager to apply new SSL settings
+        # reconfigure service manager to apply new SSL/Concurrency settings
         self.reconfigure_service_manager()
-        
-        # Super Free TTS: Update worker pool size
-        try:
-            from .services import service_mms
-            service_mms._sherpa_pool.update_max_processes(preferences_model.sherpa_max_processes)
-        except Exception as pool_err:
-            logger.warning(f"Failed to update worker pool: {pool_err}")
 
     # ui language
     # ===========
