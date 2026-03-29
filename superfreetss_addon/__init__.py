@@ -172,20 +172,35 @@ else:
 
     def show_welcome_popup():
         global _welcome_popup_already_shown
+        # Chặn trước mọi thứ: hook có thể gọi lặp; không đọc config khi đã hiện trong session
         if _welcome_popup_already_shown:
             return
 
-        from . import component_welcome
-
         try:
             current_config = hyper_tts.get_configuration()
-            if current_config.display_introduction_message:
-                # Gán True trước exec() để lần gọi hook tiếp theo không mở dialog thứ hai
-                _welcome_popup_already_shown = True
-                welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
-                welcome_dialog.exec()
+            if not current_config.display_introduction_message:
+                return
+
+            # Gán True trước exec() (modal): lần gọi hook kế tiếp vẫn thấy True trong config
+            # nhưng guard session chặn mở dialog thứ hai
+            _welcome_popup_already_shown = True
+
+            from . import component_welcome
+
+            welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
+            welcome_dialog.exec()
         except Exception as e:
             logger.error(f"Failed to show welcome popup: {e}")
 
     if not hasattr(sys, "_pytest_mode"):
+        # Tránh chồng callback sau Tools → Add-ons → Reload (module mới append thêm, handler cũ vẫn nằm trong list)
+        _mw = getattr(aqt, "mw", None)
+        if _mw is not None:
+            _prev = getattr(_mw, "_sftts_welcome_profile_hook", None)
+            if _prev is not None:
+                try:
+                    aqt.gui_hooks.profile_did_open.remove(_prev)
+                except ValueError:
+                    pass
+            _mw._sftts_welcome_profile_hook = show_welcome_popup
         aqt.gui_hooks.profile_did_open.append(show_welcome_popup)

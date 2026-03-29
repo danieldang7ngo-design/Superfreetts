@@ -9,5 +9,6 @@ sys.path.insert(0, external_dir)
 # Add the current directory to sys.path
 sys.path.insert(0, addon_dir)
 
-# import superfreetss which should do the anki setup
+# Chỉ import package con; mọi gui_hooks (vd. profile_did_open cho welcome) phải đăng ký
+# trong superfreetss_addon/__init__.py — không thêm append ở đây để tránh đăng ký hook hai lần.
 from . import superfreetss_addon
