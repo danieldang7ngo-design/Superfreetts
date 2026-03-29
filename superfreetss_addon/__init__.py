@@ -166,13 +166,22 @@ else:
 
     # ---------------------------------------------------------
     # Popup chào mừng (display_introduction_message = True sau first_install)
+    # profile_did_open có thể gọi nhiều lần → guard để chỉ hiện 1 lần mỗi session
     # ---------------------------------------------------------
+    _welcome_popup_already_shown = False
+
     def show_welcome_popup():
+        global _welcome_popup_already_shown
+        if _welcome_popup_already_shown:
+            return
+
         from . import component_welcome
 
         try:
             current_config = hyper_tts.get_configuration()
             if current_config.display_introduction_message:
+                # Gán True trước exec() để lần gọi hook tiếp theo không mở dialog thứ hai
+                _welcome_popup_already_shown = True
                 welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
                 welcome_dialog.exec()
         except Exception as e:
