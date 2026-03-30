@@ -1,1 +1,957 @@
-{"name": "Super Free TTS by Daniel from AnkiVN", "mod": 1770042084, "min_point_version": 5, "max_point_version": 241100, "branch_index": 0, "disabled": false, "config": {"configuration": {"service_enabled": {"Cambridge": true, "DigitalesWorterbuchDeutschenSprache": true, "Duden": true, "Oxford": true, "SpanishDict": true, "Youdao": true, "ESpeakNg": true, "EdgeTTS": true, "GoogleTranslate": true, "MacOS": true, "Windows": true, "PiperTTS": true, "KokoroTTS": true, "MmsTTS": true}, "service_config": {"EdgeTTS": {"debug_logging": false, "concurrency_workers": 2}, "KokoroTTS": {"engine_path": "C:\\Users\\Administrator\\AppData\\Roaming\\Anki2\\addons21\\Superfreetts\\superfreetss_addon\\data\\kokoro_engine\\python.exe", "num_threads": 2, "debug_logging": false}, "PiperTTS": {"models_path": "C:\\Users\\Administrator\\AppData\\Roaming\\Anki2\\addons21\\Superfreetts\\superfreetss_addon\\data\\piper_models", "num_threads": 2, "debug_logging": false}, "GoogleTranslate": {"throttle_seconds": 3.0}}, "user_uuid": "825d1ef34f4e4143b30ed1c62b63b832", "user_choice_easy_advanced": true, "display_introduction_message": true, "trial_registration_step": "new_install", "install_time": 1770093472.044728, "vocabai_api_url_override": null, "use_vocabai_api": false, "hypertts_pro_api_key": null}, "preferences": {"keyboard_shortcuts": {"shortcut_editor_add_audio": null, "shortcut_editor_preview_audio": null}, "error_handling": {"realtime_tts_errors_dialog_type": "Dialog", "error_stats_reporting": true, "disable_ssl_verification": false, "debug_mode": false}, "ui_language": "en", "cache_retention_days": 30, "cache_enabled": true, "batch_concurrency": 1, "batch_max_ram_mb": 3000, "batch_max_cores": 8, "sherpa_max_processes": 1, "piper_workers": 2, "kokoro_workers": 1, "edgetts_workers": 3, "mms_workers": 1, "default_workers": 1}, "presets": {"7338b18a-116c-44e3-bc30-cb159e96c790": {"uuid": "7338b18a-116c-44e3-bc30-cb159e96c790", "name": "5 SWE", "source": {"mode": "simple", "source_field": "word", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "audio_word", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "random", "voice_list": [{"voice_id": {"voice_key": "sv_SE-lisa-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "sv_SE-nst-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "sv-SE-SofieNeural", "service": "EdgeTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "sv-SE-MattiasNeural", "service": "EdgeTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "mms_swe", "service": "MmsTTS"}, "options": {}, "weight": 1}]}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "6fdc344f-8dcb-4793-bb9b-b4e536e2f6fb": {"uuid": "6fdc344f-8dcb-4793-bb9b-b4e536e2f6fb", "name": "Preset 2", "source": {"mode": "simple", "source_field": "word", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "sv_SE-lisa-medium", "service": "PiperTTS"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "706f419b-69f4-4d4d-b899-a9e2cfb6a231": {"uuid": "706f419b-69f4-4d4d-b899-a9e2cfb6a231", "name": "Preset 3", "source": {"mode": "simple", "source_field": "word", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "en_US-danny-low", "service": "PiperTTS"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "3692f995-382e-400f-9684-b6e5194bd85f": {"uuid": "3692f995-382e-400f-9684-b6e5194bd85f", "name": "ENG 20", "source": {"mode": "simple", "source_field": "word", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "audio_word", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "random", "voice_list": [{"voice_id": {"voice_key": "af_alloy", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_aoede", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_bella", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_heart", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_jessica", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_kore", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_nicole", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_nova", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_river", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_sarah", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "af_sky", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_adam", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_echo", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_eric", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_fenrir", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_liam", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_michael", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_onyx", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_puck", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "am_santa", "service": "KokoroTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-arctic-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-l2arctic-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-libritts-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-amy-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-hfc_female-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-kristin-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-ljspeech-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-bryce-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-hfc_male-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-joe-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-john-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-kusal-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-lessac-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-norman-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-reza_ibrahim-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-ryan-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-sam-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}]}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "05701f3f-9aaa-42f5-9928-e0746774e9b0": {"uuid": "05701f3f-9aaa-42f5-9928-e0746774e9b0", "name": "Preset 1", "source": {"mode": "simple", "source_field": "word", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "audio_word", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "random", "voice_list": [{"voice_id": {"voice_key": "en_US-arctic-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-l2arctic-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-libritts-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-amy-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-hfc_female-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-kristin-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-ljspeech-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-bryce-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-hfc_male-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-joe-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-john-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-kusal-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-lessac-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-norman-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-reza_ibrahim-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-ryan-high", "service": "PiperTTS"}, "options": {}, "weight": 1}, {"voice_id": {"voice_key": "en_US-sam-medium", "service": "PiperTTS"}, "options": {}, "weight": 1}]}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "a06b7a64-0132-4568-8e7a-c94b833c5d73": {"uuid": "a06b7a64-0132-4568-8e7a-c94b833c5d73", "name": "Preset 4", "source": {"mode": "simple", "source_field": "id", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "af-ZA-AdriNeural", "service": "EdgeTTS"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "436d4187-1aa2-458e-9378-be30ce4e6402": {"uuid": "436d4187-1aa2-458e-9378-be30ce4e6402", "name": "Preset 6", "source": {"mode": "simple", "source_field": "id", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "af-ZA-AdriNeural", "service": "EdgeTTS"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "8212a48e-9d0f-4b67-ac2e-60c96f892034": {"uuid": "8212a48e-9d0f-4b67-ac2e-60c96f892034", "name": "Preset 5", "source": {"mode": "simple", "source_field": "id", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "vi-VN-HoaiMyNeural", "service": "EdgeTTS"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "f8c0cce8-c0fa-4395-a554-43ad061a5b19": {"uuid": "f8c0cce8-c0fa-4395-a554-43ad061a5b19", "name": "Preset 7", "source": {"mode": "simple", "source_field": "id", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "af-ZA-AdriNeural", "service": "EdgeTTS"}, "options": {"speed": 50}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "579c9b2b-3e4f-4fde-8115-2cd88286323b": {"uuid": "579c9b2b-3e4f-4fde-8115-2cd88286323b", "name": "english", "source": {"mode": "simple", "source_field": "STT", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "STT", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "af", "service": "GoogleTranslate"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}, "6ae383aa-a81d-4bbe-8942-4014307a351b": {"uuid": "6ae383aa-a81d-4bbe-8942-4014307a351b", "name": "Preset 8", "source": {"mode": "simple", "source_field": "id", "source_template": null, "template_format_version": "v1", "use_selection": false}, "target": {"target_field": "id", "text_and_sound_tag": false, "remove_sound_tag": true, "insert_location": "AFTER", "same_field": false}, "voice_selection": {"voice_selection_mode": "single", "voice": {"voice_id": {"voice_key": "af", "service": "GoogleTranslate"}, "options": {}}}, "text_processing": {"html_to_text_line": true, "strip_brackets": false, "strip_cloze": false, "ssml_convert_characters": true, "run_replace_rules_after": true, "ignore_case": false, "text_replacement_rules": []}}}, "mapping_rules": {"rules": [], "use_easy_mode": true}, "batch_config": {}, "realtime_config": {}, "default_presets": {}, "config_schema": 4}, "conflicts": [], "update_enabled": true}
+{
+    "name": "Super Free TTS by Paul from AnkiVN",
+    "mod": 1770042084,
+    "min_point_version": 5,
+    "max_point_version": 241100,
+    "branch_index": 0,
+    "disabled": false,
+    "config": {
+        "configuration": {
+            "service_enabled": {
+                "Cambridge": true,
+                "DigitalesWorterbuchDeutschenSprache": true,
+                "Duden": true,
+                "Oxford": true,
+                "SpanishDict": true,
+                "Youdao": true,
+                "ESpeakNg": true,
+                "EdgeTTS": true,
+                "GoogleTranslate": true,
+                "MacOS": true,
+                "Windows": true,
+                "PiperTTS": true,
+                "KokoroTTS": true,
+                "MmsTTS": true
+            },
+            "service_config": {
+                "EdgeTTS": {
+                    "debug_logging": false,
+                    "concurrency_workers": 2
+                },
+                "KokoroTTS": {
+                    "engine_path": "C:\\Users\\Administrator\\AppData\\Roaming\\Anki2\\addons21\\Superfreetts\\superfreetss_addon\\data\\kokoro_engine\\python.exe",
+                    "num_threads": 2,
+                    "debug_logging": false
+                },
+                "PiperTTS": {
+                    "models_path": "C:\\Users\\Administrator\\AppData\\Roaming\\Anki2\\addons21\\Superfreetts\\superfreetss_addon\\data\\piper_models",
+                    "num_threads": 2,
+                    "debug_logging": false
+                },
+                "GoogleTranslate": {
+                    "throttle_seconds": 3.0
+                }
+            },
+            "user_uuid": "825d1ef34f4e4143b30ed1c62b63b832",
+            "user_choice_easy_advanced": true,
+            "display_introduction_message": true,
+            "trial_registration_step": "new_install",
+            "install_time": 1770093472.044728,
+            "vocabai_api_url_override": null,
+            "use_vocabai_api": false,
+            "hypertts_pro_api_key": null
+        },
+        "preferences": {
+            "keyboard_shortcuts": {
+                "shortcut_editor_add_audio": null,
+                "shortcut_editor_preview_audio": null
+            },
+            "error_handling": {
+                "realtime_tts_errors_dialog_type": "Dialog",
+                "error_stats_reporting": true,
+                "disable_ssl_verification": false,
+                "debug_mode": false
+            },
+            "ui_language": "en",
+            "cache_retention_days": 30,
+            "cache_enabled": true,
+            "batch_concurrency": 1,
+            "batch_max_ram_mb": 3000,
+            "batch_max_cores": 8,
+            "sherpa_max_processes": 1,
+            "piper_workers": 2,
+            "kokoro_workers": 1,
+            "edgetts_workers": 3,
+            "mms_workers": 1,
+            "default_workers": 1
+        },
+        "presets": {
+            "7338b18a-116c-44e3-bc30-cb159e96c790": {
+                "uuid": "7338b18a-116c-44e3-bc30-cb159e96c790",
+                "name": "5 SWE",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "word",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "audio_word",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "random",
+                    "voice_list": [
+                        {
+                            "voice_id": {
+                                "voice_key": "sv_SE-lisa-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "sv_SE-nst-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "sv-SE-SofieNeural",
+                                "service": "EdgeTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "sv-SE-MattiasNeural",
+                                "service": "EdgeTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "mms_swe",
+                                "service": "MmsTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        }
+                    ]
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "6fdc344f-8dcb-4793-bb9b-b4e536e2f6fb": {
+                "uuid": "6fdc344f-8dcb-4793-bb9b-b4e536e2f6fb",
+                "name": "Preset 2",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "word",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "sv_SE-lisa-medium",
+                            "service": "PiperTTS"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "706f419b-69f4-4d4d-b899-a9e2cfb6a231": {
+                "uuid": "706f419b-69f4-4d4d-b899-a9e2cfb6a231",
+                "name": "Preset 3",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "word",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "en_US-danny-low",
+                            "service": "PiperTTS"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "3692f995-382e-400f-9684-b6e5194bd85f": {
+                "uuid": "3692f995-382e-400f-9684-b6e5194bd85f",
+                "name": "ENG 20",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "word",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "audio_word",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "random",
+                    "voice_list": [
+                        {
+                            "voice_id": {
+                                "voice_key": "af_alloy",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_aoede",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_bella",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_heart",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_jessica",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_kore",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_nicole",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_nova",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_river",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_sarah",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "af_sky",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_adam",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_echo",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_eric",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_fenrir",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_liam",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_michael",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_onyx",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_puck",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "am_santa",
+                                "service": "KokoroTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-arctic-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-l2arctic-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-libritts-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-amy-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-hfc_female-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-kristin-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-ljspeech-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-bryce-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-hfc_male-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-joe-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-john-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-kusal-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-lessac-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-norman-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-reza_ibrahim-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-ryan-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-sam-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        }
+                    ]
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "05701f3f-9aaa-42f5-9928-e0746774e9b0": {
+                "uuid": "05701f3f-9aaa-42f5-9928-e0746774e9b0",
+                "name": "Preset 1",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "word",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "audio_word",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "random",
+                    "voice_list": [
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-arctic-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-l2arctic-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-libritts-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-amy-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-hfc_female-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-kristin-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-ljspeech-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-bryce-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-hfc_male-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-joe-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-john-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-kusal-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-lessac-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-norman-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-reza_ibrahim-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-ryan-high",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        },
+                        {
+                            "voice_id": {
+                                "voice_key": "en_US-sam-medium",
+                                "service": "PiperTTS"
+                            },
+                            "options": {},
+                            "weight": 1
+                        }
+                    ]
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "a06b7a64-0132-4568-8e7a-c94b833c5d73": {
+                "uuid": "a06b7a64-0132-4568-8e7a-c94b833c5d73",
+                "name": "Preset 4",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "id",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "af-ZA-AdriNeural",
+                            "service": "EdgeTTS"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "436d4187-1aa2-458e-9378-be30ce4e6402": {
+                "uuid": "436d4187-1aa2-458e-9378-be30ce4e6402",
+                "name": "Preset 6",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "id",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "af-ZA-AdriNeural",
+                            "service": "EdgeTTS"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "8212a48e-9d0f-4b67-ac2e-60c96f892034": {
+                "uuid": "8212a48e-9d0f-4b67-ac2e-60c96f892034",
+                "name": "Preset 5",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "id",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "vi-VN-HoaiMyNeural",
+                            "service": "EdgeTTS"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "f8c0cce8-c0fa-4395-a554-43ad061a5b19": {
+                "uuid": "f8c0cce8-c0fa-4395-a554-43ad061a5b19",
+                "name": "Preset 7",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "id",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "af-ZA-AdriNeural",
+                            "service": "EdgeTTS"
+                        },
+                        "options": {
+                            "speed": 50
+                        }
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "579c9b2b-3e4f-4fde-8115-2cd88286323b": {
+                "uuid": "579c9b2b-3e4f-4fde-8115-2cd88286323b",
+                "name": "english",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "STT",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "STT",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "af",
+                            "service": "GoogleTranslate"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            },
+            "6ae383aa-a81d-4bbe-8942-4014307a351b": {
+                "uuid": "6ae383aa-a81d-4bbe-8942-4014307a351b",
+                "name": "Preset 8",
+                "source": {
+                    "mode": "simple",
+                    "source_field": "id",
+                    "source_template": null,
+                    "template_format_version": "v1",
+                    "use_selection": false
+                },
+                "target": {
+                    "target_field": "id",
+                    "text_and_sound_tag": false,
+                    "remove_sound_tag": true,
+                    "insert_location": "AFTER",
+                    "same_field": false
+                },
+                "voice_selection": {
+                    "voice_selection_mode": "single",
+                    "voice": {
+                        "voice_id": {
+                            "voice_key": "af",
+                            "service": "GoogleTranslate"
+                        },
+                        "options": {}
+                    }
+                },
+                "text_processing": {
+                    "html_to_text_line": true,
+                    "strip_brackets": false,
+                    "strip_cloze": false,
+                    "ssml_convert_characters": true,
+                    "run_replace_rules_after": true,
+                    "ignore_case": false,
+                    "text_replacement_rules": []
+                }
+            }
+        },
+        "mapping_rules": {
+            "rules": [],
+            "use_easy_mode": true
+        },
+        "batch_config": {},
+        "realtime_config": {},
+        "default_presets": {},
+        "config_schema": 4
+    },
+    "conflicts": [],
+    "update_enabled": true
+}
