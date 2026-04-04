@@ -30,26 +30,51 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self.hypertts = hypertts
         self.initial_tab = 0 if initial_tab not in (0, 1) else initial_tab
         self._saved_once = False
+        self._initial_snapshot = None
+
+        # --- Anti-flicker: block ALL repaints until the entire dialog is ready ---
+        # setUpdatesEnabled(False) prevents Qt from painting any intermediate states.
+        # setStyleSheet() is intentionally deferred to AFTER widgets are built so
+        # Qt only needs to polish the widget tree once instead of twice.
+        self.setUpdatesEnabled(False)
+
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
-        self.setStyleSheet(self._get_stylesheet())
-        
+
         # Create components (will lazily create UI when loaded into layout)
         self.config_component = component_configuration.Configuration(hypertts, self)
         self.config_component.load_model(hypertts.get_configuration())
-        
+
         self.prefs_component = component_preferences.ComponentPreferences(hypertts, self)
         self.prefs_component.load_model(hypertts.get_preferences())
-        
+
         self._services_built = False
         self._preferences_built = False
         self.setupUi()
         self.connectSignals()
-        self._initial_snapshot = self._capture_snapshot()
+
+        # Apply stylesheet AFTER all widgets exist → single polish pass, no flash.
+        self.setStyleSheet(self._get_stylesheet())
+
+        # Re-enable painting so the fully-composed dialog renders in one shot.
+        self.setUpdatesEnabled(True)
+
+        # Defer snapshot to after event loop tick so it does NOT block the
+        # initial render (avoids a visible freeze before the dialog appears).
+        aqt.qt.QTimer.singleShot(0, self._deferred_snapshot)
     
     def _get_stylesheet(self):
         """Return stylesheet for unified dialog."""
         from . import gui_utils
         return gui_utils.get_dynamic_stylesheet()
+
+    def _deferred_snapshot(self):
+        """Capture the initial config/prefs snapshot after the dialog is visible.
+
+        Running this via QTimer.singleShot(0) ensures the snapshot is taken
+        after the event loop has processed the first paint, so it cannot
+        block or delay the dialog appearing on screen.
+        """
+        self._initial_snapshot = self._capture_snapshot()
     
     def setupUi(self):
         """Build dialog layout with tabbed interface."""
@@ -58,14 +83,14 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         self.setMinimumSize(500, 400)
         self.resize(550, 600)
 
-        # Reduce visible relayout/flicker while composing heavy UI.
-        self.setUpdatesEnabled(False)
+        # NOTE: setUpdatesEnabled(False/True) is managed by __init__ for the
+        # entire construction lifecycle. No need to toggle it here separately.
 
         # Main layout
         main_layout = aqt.qt.QVBoxLayout(self)
         main_layout.setContentsMargins(16, 14, 16, 14)
         main_layout.setSpacing(12)
-        
+
         # Tab widget
         self.tabs = aqt.qt.QTabWidget()
         self.tabs.setDocumentMode(True)
@@ -90,27 +115,25 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
             self._build_preferences_tab()
 
         self.tabs.setCurrentIndex(self.initial_tab)
-        
+
         main_layout.addWidget(self.tabs)
-        
+
         # Button layout
         button_layout = aqt.qt.QHBoxLayout()
         button_layout.setContentsMargins(0, 6, 0, 0)
         button_layout.setSpacing(8)
-        
+
         save_button = aqt.qt.QPushButton(i18n.get_text("button_save", lang))
         cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
-        
+
         save_button.clicked.connect(self.save_and_close)
         cancel_button.clicked.connect(self.cancel)
-        
+
         button_layout.addStretch()
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
-        
-        main_layout.addLayout(button_layout)
 
-        self.setUpdatesEnabled(True)
+        main_layout.addLayout(button_layout)
 
     def _build_services_tab(self):
         if self._services_built:
@@ -145,6 +168,9 @@ class UnifiedSettingsDialog(aqt.qt.QDialog):
         )
 
     def _has_unsaved_changes(self):
+        # If snapshot hasn't been taken yet (deferred init), treat as no changes.
+        if self._initial_snapshot is None:
+            return False
         return self._capture_snapshot() != self._initial_snapshot
 
     def _confirm_discard_if_needed(self):
