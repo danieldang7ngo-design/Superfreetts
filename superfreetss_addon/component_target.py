@@ -47,10 +47,18 @@ class BatchTarget(component_common.ConfigComponentBase):
         self.radio_button_remove_sound.setChecked(self.batch_target_model.remove_sound_tag)
         self.radio_button_keep_sound.setChecked(not self.batch_target_model.remove_sound_tag)
 
-        # ensure model at the higher level gets updated
-        # this is important for example if the target field doesn't exist in the field list, we want to make
-        # sure the model is updated to select another field
-        self.update_field()
+        # FIX: After setCurrentText(), we must sync the model directly from the combobox text.
+        # Using update_field() (which reads currentIndex()) was unsafe because an editable
+        # combobox does NOT always update currentIndex() synchronously after setCurrentText().
+        # This caused the target_field to fall back to field_list[0] (the first field).
+        desired_field = self.batch_target_model.target_field
+        if desired_field in self.field_list:
+            # Field exists in the list: sync model directly (index-independent)
+            self.batch_target_model.target_field = desired_field
+            self.notify_model_update()
+        else:
+            # Field not found in current note type, fall back to first available field
+            self.update_field()
 
 
     def draw(self): # return scrollarea
@@ -169,6 +177,15 @@ class BatchTarget(component_common.ConfigComponentBase):
 
     def update_field(self):
         logger.info('update_field')
+        # Prefer currentText() over currentIndex() to handle editable combobox correctly.
+        # When setCurrentText() is called, currentIndex() may not be updated synchronously,
+        # potentially returning 0 (first field) even when a different field was intended.
+        current_text = self.target_field_combobox.currentText().strip()
+        if current_text and current_text in self.field_list:
+            self.batch_target_model.target_field = current_text
+            self.notify_model_update()
+            return
+        # Fallback: use index-based selection (for fresh draw() with no preset text)
         current_index = self.target_field_combobox.currentIndex()
         if current_index == -1 or current_index >= len(self.field_list) or len(self.field_list) == 0:
             return
