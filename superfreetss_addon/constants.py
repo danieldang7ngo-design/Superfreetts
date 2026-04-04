@@ -106,6 +106,7 @@ DATA_DIR = os.path.join(ADDON_PACKAGE_DIR, 'data')
 # Engine Directories
 SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
 KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
+MMS_ENGINE_DIR = os.path.join(DATA_DIR, 'mms_engine')
 PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
 # The piper zip contains a internal folder named 'piper'
 PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')

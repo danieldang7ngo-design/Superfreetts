@@ -7,7 +7,7 @@ from aqt.qt import *
 from . import i18n
 from . import gui_utils
 from .downloader import TurboDownloader
-from .engine_manager import EngineManager
+from .mms_engine_manager import MmsEngineManager
 from .constants import DATA_DIR
 
 # MMS Models from Hugging Face (Sherpa-ONNX format by willwade)
@@ -328,9 +328,8 @@ class MmsInstallManager(QDialog):
         os.startfile(lexicon_path)
 
     def open_log_folder(self):
-        log_dir = os.path.join(os.environ.get('APPDATA'), 'Anki2', 'addons21', 'Superfreetts', 'user_files')
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir, exist_ok=True)
+        from . import service_logger
+        log_dir = service_logger.get_log_dir()
         os.startfile(log_dir)
 
     def load_languages(self):
@@ -448,24 +447,34 @@ class MmsInstallManager(QDialog):
 
     def batch_install_task(self, langs):
         try:
-            from .sherpa_manager import SherpaManager
-            
             def shared_progress(data):
                 percent = data.get('percent', 0)
                 msg = data.get('message', 'Processing...')
                 mw.taskman.run_on_main(lambda: self.update_status(f"[{percent}%] {msg}"))
 
-            if not EngineManager.is_installed():
-                mw.taskman.run_on_main(lambda: self.update_status("Installing Python Engine..."))
-                EngineManager.ensure_installed(progress_callback=shared_progress)
+            if not MmsEngineManager.is_installed():
+                mw.taskman.run_on_main(lambda: self.update_status("Installing MMS Engine (Python + sherpa-onnx)..."))
+                mw.taskman.run_on_main(lambda: self.log("Setting up MMS Engine..."))
+                success = MmsEngineManager.ensure_installed(progress_callback=shared_progress)
+                if not success:
+                    mw.taskman.run_on_main(lambda: self.log("❌ MMS Engine installation FAILED. Check logs."))
+                    raise Exception("Failed to install MMS Engine. Please check your internet connection and try again.")
+                
+                # Verification step — actually test that sherpa_onnx is importable
+                mw.taskman.run_on_main(lambda: self.update_status("Verifying sherpa-onnx..."))
+                ok, msg = MmsEngineManager.verify_sherpa()
+                if not ok:
+                    mw.taskman.run_on_main(lambda m=msg: self.log(f"❌ Verification failed: {m}"))
+                    raise Exception(f"MMS Engine installed but sherpa-onnx verification failed: {msg}")
+                mw.taskman.run_on_main(lambda: self.log("✅ MMS Engine verified successfully."))
 
-            if not SherpaManager.is_installed():
-                mw.taskman.run_on_main(lambda: self.update_status("Checking Sherpa-ONNX library..."))
-                SherpaManager.ensure_installed(progress_callback=shared_progress)
-                mw.taskman.run_on_main(lambda: self.log("Sherpa-ONNX library ready."))
-
+            from . import service_logger
             total_langs = len(langs)
+            lang_codes_str = ", ".join([code for code, name in langs])
+            service_logger.write_install_separator('mms', f'Batch install {total_langs} models: {lang_codes_str}')
+            
             for idx, (lang_code, lang_name) in enumerate(langs):
+                service_logger.write_log('mms', 'install', 'INFO', f'Downloading model', {'LangCode': lang_code, 'LangName': lang_name})
                 mw.taskman.run_on_main(lambda n=lang_name, i=idx, t=total_langs: self.update_status(i18n.get_text("mms_manager_status_installing_n", self.lang).format(n, i+1, t)))
                 
                 mms_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
@@ -506,6 +515,7 @@ class MmsInstallManager(QDialog):
                             downloader.start()
                         except Exception as dl_err:
                             mw.taskman.run_on_main(lambda err=dl_err, u=url: self.log(f"Failed to download {u}: {err}"))
+                            service_logger.write_log('mms', 'install', 'ERROR', f'Download failed', {'URL': url, 'Error': str(dl_err)})
                             # If it's a critical file and not a 404 on a non-existent folder
                             # We might want to continue batch or fail. 
                             # For batch robustness, let's just log and continue the next language.
@@ -550,8 +560,11 @@ class MmsInstallManager(QDialog):
                         except Exception as lex_err:
                             mw.taskman.run_on_main(lambda err=lex_err: self.log(f"{i18n.get_text('mms_manager_error_write_lexicon', self.lang)}: {err}"))
 
+                service_logger.write_log('mms', 'install', 'OK', f'Installed model successfully', {'LangCode': lang_code})
+
             mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("mms_manager_status_batch_complete", self.lang)))
             mw.taskman.run_on_main(lambda: self.update_progress(100))
+            service_logger.write_log('mms', 'install', 'OK', f'Batch install completed successfully', {'Total': total_langs})
             return True
         except Exception as e:
             mw.taskman.run_on_main(lambda err=e: self.log(f"Error: {err}"))
@@ -571,6 +584,7 @@ class MmsInstallManager(QDialog):
             return
 
         import shutil
+        from . import service_logger
         success_count = 0
         for item in selected_items:
             iso = item.data(Qt.ItemDataRole.UserRole)
@@ -579,8 +593,10 @@ class MmsInstallManager(QDialog):
                 try:
                     shutil.rmtree(mms_dir)
                     success_count += 1
+                    service_logger.write_log('mms', 'install', 'INFO', f'Uninstalled model', {'LangCode': iso})
                 except Exception as e:
                     self.log(f"Failed to uninstall {iso}: {e}")
+                    service_logger.write_log('mms', 'install', 'ERROR', f'Failed to uninstall model', {'LangCode': iso, 'Error': str(e)})
 
         if success_count > 0:
             QMessageBox.information(self, i18n.get_text("mms_manager_uninstall_complete_title", self.lang), i18n.get_text("mms_manager_uninstall_complete_msg", self.lang).format(success_count))
@@ -591,11 +607,19 @@ class MmsInstallManager(QDialog):
             # but it was prone to errors. Anki will pick up changes on next use.
             self.log(f"Uninstalled {success_count} models. Refresh complete.")
 
-    def on_finished(self, success):
+    def on_finished(self, future):
         self.install_btn.setEnabled(True)
         self.search_bar.setEnabled(True)
         self.lang_combo.setEnabled(True)
         self.lang_list.setEnabled(True)
+        
+        # Extract actual result from Future object
+        try:
+            result = future.result()
+            success = bool(result)
+        except Exception as e:
+            success = False
+            self.log(f"Installation error: {e}")
         
         if success:
             QMessageBox.information(self, i18n.get_text("generic_success", self.lang), i18n.get_text("mms_manager_install_success_msg", self.lang))

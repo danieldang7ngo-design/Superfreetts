@@ -240,9 +240,14 @@ class Configuration(component_common.ConfigComponentBase):
         if service.name == "MmsTTS":
             dlg = component_mms_manager.MmsInstallManager(self.dialog)
             dlg.exec()
-            from .component_kokoro_manager import PYTHON_EXE
-            if os.path.exists(PYTHON_EXE):
-                self._set_service_config_value_with_ui_sync(service.name, "python_path", PYTHON_EXE)
+            # Refresh voice cache after installing/uninstalling models
+            self.hypertts.service_manager.clear_voice_list_cache()
+            self.model_change()
+            
+            from .mms_engine_manager import MmsEngineManager
+            engine_path = MmsEngineManager.get_python_exe()
+            if os.path.exists(engine_path):
+                self._set_service_config_value_with_ui_sync(service.name, "engine_path", engine_path)
             return
 
         if service.name == "PiperTTS":
@@ -380,13 +385,14 @@ class Configuration(component_common.ConfigComponentBase):
                 checkbox.setObjectName(widget_name)
                 checkbox.stateChanged.connect(self.get_service_config_bool_change_fn(service, key))
                 options_gridlayout.addWidget(checkbox, row, 1, 1, 1)
-            elif isinstance(type, tuple) and type[0] == 'file': # ('file', 'Filter (*.exe)')
-                filter_str = type[1]
+            elif isinstance(type, tuple) and type[0] == 'file': # ('file', 'Label', 'Filter (*.exe)')
+                filter_str = type[2] if len(type) > 2 else type[1]
                 h_layout = aqt.qt.QHBoxLayout()
-                actions_layout = aqt.qt.QHBoxLayout()
+                
                 lineedit = aqt.qt.QLineEdit()
                 lineedit.setText(self.model.get_service_configuration_key(service.name, key))
                 lineedit.setObjectName(widget_name)
+                lineedit.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
                 lineedit.textChanged.connect(self.get_service_config_str_change_fn(service, key))
                 
                 btn = aqt.qt.QPushButton("Browse...")
@@ -413,22 +419,24 @@ class Configuration(component_common.ConfigComponentBase):
                                  le.setText(default_path)
                      install_btn.clicked.connect(lambda checked=False, le=lineedit: open_kokoro_manager(le))
                      gui_utils.configure_primary_button(install_btn)
-                     actions_layout.addWidget(install_btn)
+                     h_layout.addWidget(install_btn)
 
-                # Special logic for MmsTTS: Add "Install MMS..." button
-                if service.name == "MmsTTS" and key == "python_path":
-                     install_btn = aqt.qt.QPushButton(i18n.get_text("button_install_mms", lang))
-                     def open_mms_manager(le=lineedit):
+                # Special logic for MmsTTS Engine Path
+                if service.name == "MmsTTS" and key == "engine_path":
+                     install_mms_btn = aqt.qt.QPushButton(i18n.get_text("button_install_mms", lang))
+                     def open_mms_manager_inline(le=lineedit):
                          from . import component_mms_manager
                          dlg = component_mms_manager.MmsInstallManager(self.dialog)
                          dlg.exec()
-                         # After closing, check if python path is now valid
-                         from .component_kokoro_manager import PYTHON_EXE
-                         if os.path.exists(PYTHON_EXE):
-                             le.setText(PYTHON_EXE)
-                     install_btn.clicked.connect(lambda checked=False, le=lineedit: open_mms_manager(le))
-                     gui_utils.configure_primary_button(install_btn)
-                     actions_layout.addWidget(install_btn)
+                         self.hypertts.service_manager.clear_voice_list_cache()
+                         self.model_change()
+                         from .mms_engine_manager import MmsEngineManager
+                         engine_path = MmsEngineManager.get_python_exe()
+                         if os.path.exists(engine_path):
+                             self._set_service_config_value_with_ui_sync(service.name, "engine_path", engine_path)
+                     install_mms_btn.clicked.connect(lambda checked=False, le=lineedit: open_mms_manager_inline(le))
+                     gui_utils.configure_primary_button(install_mms_btn)
+                     h_layout.addWidget(install_mms_btn)
 
                 # Special logic for PiperTTS: Add "Setup Piper" button
                 if service.name == "PiperTTS" and key == "engine_path":
@@ -442,16 +450,13 @@ class Configuration(component_common.ConfigComponentBase):
                               le.setText(constants.PIPER_EXE_PATH)
                      setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_piper_setup(le))
                      gui_utils.configure_primary_button(setup_btn)
-                     actions_layout.addWidget(setup_btn)
+                     h_layout.addWidget(setup_btn)
 
                 validation_label = aqt.qt.QLabel()
                 validation_label.setWordWrap(True)
                 self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
                 v_layout = aqt.qt.QVBoxLayout()
                 v_layout.addLayout(h_layout)
-                if actions_layout.count() > 0:
-                    actions_layout.addStretch()
-                    v_layout.addLayout(actions_layout)
                 v_layout.addWidget(validation_label)
                 self._wire_path_validation(lineedit, validation_label)
                 options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
@@ -462,6 +467,7 @@ class Configuration(component_common.ConfigComponentBase):
                 lineedit = aqt.qt.QLineEdit()
                 lineedit.setText(self.model.get_service_configuration_key(service.name, key))
                 lineedit.setObjectName(widget_name)
+                lineedit.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
                 lineedit.textChanged.connect(self.get_service_config_str_change_fn(service, key))
                 
                 btn = aqt.qt.QPushButton(i18n.get_text("button_browse", lang))
@@ -477,8 +483,6 @@ class Configuration(component_common.ConfigComponentBase):
                 
                 # Special logic for PiperTTS Models Path: Add "Download Models" button
                 if service.name == "PiperTTS" and key == "models_path":
-                     h_piper_layout = aqt.qt.QHBoxLayout()
-                     
                      dl_btn = aqt.qt.QPushButton(i18n.get_text("button_manage_voices", lang))
                      def open_downloader(le=lineedit):
                          dest_dir = le.text()
@@ -524,9 +528,8 @@ class Configuration(component_common.ConfigComponentBase):
                      setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_setup(le))
                      gui_utils.configure_primary_button(setup_btn)
                      
-                     h_piper_layout.addWidget(dl_btn)
-                     h_piper_layout.addWidget(setup_btn)
-                     h_layout.addLayout(h_piper_layout)
+                     h_layout.addWidget(dl_btn)
+                     h_layout.addWidget(setup_btn)
 
                 # MeloTTS removed
 
@@ -589,6 +592,8 @@ class Configuration(component_common.ConfigComponentBase):
             row += 1
         
         layout.addLayout(options_gridlayout)
+
+
 
         # Add Advanced dropdown for services with advanced options
         if hasattr(service, 'advanced_configuration_options'):

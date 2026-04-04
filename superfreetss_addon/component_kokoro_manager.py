@@ -15,6 +15,7 @@ from aqt.utils import showInfo, tooltip
 from . import i18n
 from . import logging_utils
 from . import constants
+from . import service_logger
 from .downloader import TurboDownloader
 from .constants import DATA_DIR, KOKORO_ENGINE_DIR
 
@@ -85,9 +86,7 @@ class KokoroInstallManager(QDialog):
         self.worker_thread = None
 
     def open_log_folder(self):
-        log_dir = os.path.join(os.environ.get('APPDATA'), 'Anki2', 'addons21', 'Superfreetts', 'user_files')
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir, exist_ok=True)
+        log_dir = service_logger.get_log_dir()
         os.startfile(log_dir)
 
     def log(self, message):
@@ -184,6 +183,7 @@ class KokoroInstallManager(QDialog):
             self._ensure_dir(KOKORO_ENGINE_DIR)
             self._ensure_dir(MODELS_DIR)
             self._ensure_dir(VOICES_DIR)
+            service_logger.write_log('kokoro', 'install', 'INFO', 'Starting Kokoro installation')
             
             # Step 1: Download Python Embeddable
             if not os.path.exists(PYTHON_EXE):
@@ -194,6 +194,7 @@ class KokoroInstallManager(QDialog):
                 self._configure_python_pth()
             else:
                 self.log(i18n.get_text("kokoro_setup_log_python_exists", self.lang))
+                service_logger.write_log('kokoro', 'install', 'INFO', 'Python already exists, skipping download')
             
             # Step 2: Install Pip
             scripts_dir = os.path.join(KOKORO_ENGINE_DIR, 'Scripts')
@@ -231,10 +232,12 @@ class KokoroInstallManager(QDialog):
 
             mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_complete", self.lang)))
             mw.taskman.run_on_main(lambda: self.update_progress(100))
+            service_logger.write_log('kokoro', 'install', 'OK', 'Kokoro installation complete')
             mw.taskman.run_on_main(lambda: showInfo(i18n.get_text("kokoro_setup_success_stock_msg", self.lang)))
 
         except Exception as e:
             self.log(f"Error during installation: {e}")
+            service_logger.write_log('kokoro', 'install', 'ERROR', f'Installation failed: {e}')
             mw.taskman.run_on_main(lambda: self.update_status("Installation failed"))
         finally:
             mw.taskman.run_on_main(self._on_worker_finished)
@@ -310,6 +313,9 @@ class KokoroInstallManager(QDialog):
         mw.taskman.run_on_main(lambda: self.update_progress(progress_val))
         mw.taskman.run_on_main(lambda: self.log(f"Running: {' '.join(cmd)}"))
         
+        cmd_str = ' '.join(cmd)
+        service_logger.write_install_separator('kokoro', cmd_str)
+        
         # Run command and capture output
         process = subprocess.Popen(
             cmd, 
@@ -324,6 +330,17 @@ class KokoroInstallManager(QDialog):
             mw.taskman.run_on_main(lambda l=line: self.log(f"CMD: {l.strip()}"))
         
         process.wait()
+        
+        # Log result
+        stdout_text = ''
+        stderr_text = ''
+        try:
+            if hasattr(process, 'stdout') and process.stdout:
+                process.stdout.seek(0)
+                stdout_text = process.stdout.read() if hasattr(process.stdout, 'read') else ''
+        except: pass
+        service_logger.write_install_result('kokoro', process.returncode, stdout_text or 'see UI log', stderr_text)
+        
         if process.returncode != 0:
             raise Exception(f"Command failed with code {process.returncode}")
 

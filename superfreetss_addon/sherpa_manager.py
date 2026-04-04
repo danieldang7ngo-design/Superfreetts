@@ -11,7 +11,7 @@ from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
 # Preferred Version
-SHERPA_VERSION = "1.10.42"
+SHERPA_VERSION = "1.12.34"
 # Official Wheel URL for Python 3.10 Windows x64 (matches our portable python)
 SHERPA_WHEEL_URL = f"https://github.com/k2-fsa/sherpa-onnx/releases/download/v{SHERPA_VERSION}/sherpa_onnx-{SHERPA_VERSION}-cp310-cp310-win_amd64.whl"
 

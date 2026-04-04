@@ -108,18 +108,18 @@ class EdgeTTS(service.ServiceBase):
             return []
 
     def get_tts_audio(self, source_text, voice: voice.TtsVoice_v3, options):
-        # Log request
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
-        log_dir = None
         
         if debug_enabled:
             try:
-                appdata = os.environ.get('APPDATA')
-                if appdata:
-                    log_dir = os.path.join(appdata, 'Anki2', 'addons21', 'Superfreetts', 'user_files')
-                    os.makedirs(log_dir, exist_ok=True)
-                    with open(os.path.join(log_dir, 'edgetts_debug.log'), 'a', encoding='utf-8') as f:
-                        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Request: {voice.voice_key}, Text='{source_text[:50]}...'\n")
+                from .. import service_logger
+                service_logger.write_log('edgetts', 'runtime', 'INFO', 'TTS Request', {
+                    'Voice': voice.voice_key,
+                    'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)',
+                    'Speed': options.get('speed', 0),
+                    'Pitch': options.get('pitch', 0),
+                    'Volume': options.get('volume', 0)
+                })
             except: pass
 
         try:
@@ -141,23 +141,25 @@ class EdgeTTS(service.ServiceBase):
                         audio_data.write(chunk["data"])
             
             start_time = time.time()
-            # Use run_async_safe for thread-safe execution
             run_async_safe(_stream())
             
-            # Log success
-            if debug_enabled and log_dir:
+            if debug_enabled:
                 try:
+                    from .. import service_logger
                     duration = time.time() - start_time
-                    with open(os.path.join(log_dir, 'edgetts_debug.log'), 'a', encoding='utf-8') as f:
-                        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Success: Generated in {duration:.2f}s\n")
+                    size_kb = len(audio_data.getvalue()) / 1024
+                    service_logger.write_log('edgetts', 'runtime', 'OK', 'Audio generated', {
+                        'Duration': f'{duration:.2f}s',
+                        'Size': f'{size_kb:.1f} KB'
+                    })
                 except: pass
 
             return audio_data.getvalue()
         except Exception as e:
-            if debug_enabled and log_dir:
+            if debug_enabled:
                 try:
-                    with open(os.path.join(log_dir, 'edgetts_debug.log'), 'a', encoding='utf-8') as f:
-                        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Error: {str(e)}\n")
+                    from .. import service_logger
+                    service_logger.write_log('edgetts', 'runtime', 'ERROR', f'TTS failed: {e}')
                 except: pass
             logger.warning(f'EdgeTTS: exception while retrieving sound for {source_text}: {e}')
             raise errors.RequestError(source_text, voice, str(e))

@@ -162,16 +162,16 @@ class SherpaProcessPool:
         
         if debug_enabled:
             try:
-                # Log Strategy: Per-engine files in user_files/logs
-                # Absolute path to the addon's root user_files/logs
+                # Log Strategy: Per-engine files in user_files/log
+                # Absolute path to the addon's root user_files/log
                 script_dir = os.path.dirname(os.path.abspath(__file__))
                 addon_root = os.path.normpath(os.path.join(script_dir, ".."))
-                log_dir = os.path.join(addon_root, 'user_files', 'logs')
+                log_dir = os.path.join(addon_root, 'user_files', 'log')
                 
                 logger.info(f"SherpaPool[{self.name}]: Creating log directory at {log_dir}")
                 os.makedirs(log_dir, exist_ok=True)
                 
-                log_path = os.path.join(log_dir, f"{self.name.lower()}_error.log")
+                log_path = os.path.join(log_dir, f"{self.name.lower()}_runtime.log")
                 logger.info(f"SherpaPool[{self.name}]: Logging stderr to {log_path}")
                 
                 # Lightweight Log Rotation (Roll to .old if file > 5MB)
@@ -221,12 +221,15 @@ class MmsTTS(service.ServiceBase):
         self._ensure_python_environment()
 
     def _ensure_python_environment(self):
+        """Proactively ensure the MMS-dedicated python environment is ready."""
         try:
-            from ..constants import KOKORO_ENGINE_DIR
-            if os.path.exists(KOKORO_ENGINE_DIR):
-                pth_files = [f for f in os.listdir(KOKORO_ENGINE_DIR) if f.endswith('._pth')]
+            from ..mms_engine_manager import MmsEngineManager
+            from ..constants import MMS_ENGINE_DIR
+            if os.path.exists(MMS_ENGINE_DIR):
+                # Fix ._pth if needed
+                pth_files = [f for f in os.listdir(MMS_ENGINE_DIR) if f.endswith('._pth')]
                 if pth_files:
-                    pth_path = os.path.join(KOKORO_ENGINE_DIR, pth_files[0])
+                    pth_path = os.path.join(MMS_ENGINE_DIR, pth_files[0])
                     with open(pth_path, 'r') as f:
                         content = f.read()
                     
@@ -235,12 +238,10 @@ class MmsTTS(service.ServiceBase):
                         content = content.replace('#import site', 'import site')
                         with open(pth_path, 'w') as f:
                             f.write(content)
-                
-                # Unified Sherpa-ONNX Library Setup
-                from ..sherpa_manager import SherpaManager
-                if not SherpaManager.is_installed():
-                    logger.info("MmsTTS: Sherpa-ONNX not found. Initializing unified downloader...")
-                    SherpaManager.ensure_installed()
+            
+            # Check if MMS engine needs installation
+            if not MmsEngineManager.is_installed():
+                logger.info("MmsTTS: MMS Engine not fully installed. Will install when models are downloaded.")
         except Exception as e:
             logger.warning(f"MmsTTS: Failed to proactively configure python environment: {e}")
 
@@ -264,9 +265,8 @@ class MmsTTS(service.ServiceBase):
         return True
 
     def configuration_options(self):
-        from .. import system_utils
         return {
-            'python_path': ('file', 'Python Executable Path (python.exe);;All Files (*)'),
+            'engine_path': ('file', 'MMS path', 'Executable (python.exe);;All Files (*)'),
         }
     
     def advanced_configuration_options(self):
@@ -274,7 +274,6 @@ class MmsTTS(service.ServiceBase):
         from .. import system_utils
         from .. import cpu_utils
         return {
-            'use_gpu': ('bool', 'Use AMD/DirectML GPU (Windows)', system_utils.is_amd_gpu_detected()),
             'num_threads': ('number', 'CPU Threads (0=Auto)', 1, 0, system_utils.get_total_cpu_count()),
             'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging', False),
@@ -344,24 +343,21 @@ class MmsTTS(service.ServiceBase):
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
         if debug_enabled:
             try:
-                appdata = os.environ.get('APPDATA')
-                if appdata:
-                    log_dir = os.path.join(appdata, 'Anki2', 'addons21', 'Superfreetts', 'user_files')
-                    os.makedirs(log_dir, exist_ok=True)
-                    with open(os.path.join(log_dir, 'sherpa_debug.log'), 'a', encoding='utf-8') as f:
-                        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ServiceMMS received: {source_text[:50]}...\n")
+                from .. import service_logger
+                service_logger.write_log('mms', 'runtime', 'INFO', 'TTS Request', {
+                    'Voice': voice.voice_key,
+                    'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
+                })
             except: pass
 
         if voice.voice_key == "mms_none": return None
         
-        python_path = self.get_configuration_value_optional('python_path', '')
-        if not python_path:
-            # Use unified shared engine
-            from ..engine_manager import EngineManager
-            python_path = EngineManager.get_python_exe()
+        # Always use MMS-dedicated engine (auto-detected)
+        from ..mms_engine_manager import MmsEngineManager
+        python_path = MmsEngineManager.get_python_exe()
             
         if not os.path.exists(python_path):
-            raise errors.RequestError(source_text, voice, "Python engine (Sherpa) not found. Please install MMS/Kokoro backend.")
+            raise errors.RequestError(source_text, voice, "MMS Engine not found. Please install an MMS language from the MMS Manager first.")
 
         lang_code = voice.voice_key.replace("mms_", "")
         from ..constants import DATA_DIR
@@ -382,17 +378,13 @@ class MmsTTS(service.ServiceBase):
                     process = _sherpa_pool.get_process(python_path, script_path, debug_enabled=debug_enabled)
                     
                     try:
-                        from .. import system_utils
                         # Prepare optimization params
                         threads_opt = self.get_configuration_value_optional('num_threads', 1)
                         if threads_opt <= 0:
                             # For pooled operations, use 1 thread per process
                             threads_opt = 1 
                         
-                        use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
                         provider = "cpu"
-                        if use_gpu and system_utils.is_amd_gpu_detected():
-                            provider = "directml"
                         
                         clean_text = source_text.replace("\n", " ").strip()
                         lexicon_path = os.path.join(model_dir, "lexicon.txt")
@@ -453,10 +445,9 @@ class MmsTTS(service.ServiceBase):
 
         if voice.voice_key == "mms_none": return [None] * len(source_texts)
 
-        python_path = self.get_configuration_value_optional('python_path', '')
-        if not python_path:
-            from ..engine_manager import EngineManager
-            python_path = EngineManager.get_python_exe()
+        # Always use MMS-dedicated engine (auto-detected)
+        from ..mms_engine_manager import MmsEngineManager
+        python_path = MmsEngineManager.get_python_exe()
             
         if not os.path.exists(python_path):
             return [None] * len(source_texts)
@@ -476,12 +467,10 @@ class MmsTTS(service.ServiceBase):
                 process = _sherpa_pool.get_process(python_path, script_path, debug_enabled=debug_enabled)
                 
                 try:
-                    from .. import system_utils
                     threads_opt = self.get_configuration_value_optional('num_threads', 1)
                     if threads_opt <= 0: threads_opt = 1 
                     
-                    use_gpu = self.get_configuration_value_optional('use_gpu', system_utils.is_amd_gpu_detected())
-                    provider = "directml" if (use_gpu and system_utils.is_amd_gpu_detected()) else "cpu"
+                    provider = "cpu"
                     
                     import tempfile
                     tasks = []

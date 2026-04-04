@@ -11,6 +11,7 @@ from . import gui_utils
 from . import logging_utils
 from . import component_piper_manager
 from . import constants
+from . import service_logger
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -82,6 +83,8 @@ class PiperSetupDialog(QDialog):
             if not os.path.exists(constants.PIPER_MODELS_DIR):
                 os.makedirs(constants.PIPER_MODELS_DIR, exist_ok=True)
 
+            service_logger.write_log('piper', 'install', 'INFO', 'Starting Piper setup')
+
             zip_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip")
             
             if not os.path.exists(constants.PIPER_EXE_PATH):
@@ -100,6 +103,7 @@ class PiperSetupDialog(QDialog):
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extraction_complete", self.lang)))
             else:
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_already_exists", self.lang)))
+                service_logger.write_log('piper', 'install', 'INFO', 'Piper engine already exists, skipping download')
 
 
             # Unified Engine Setup (Portable Python)
@@ -121,7 +125,9 @@ class PiperSetupDialog(QDialog):
             # It will still be installed by Kokoro/MMS if needed.
 
             mw.taskman.run_on_main(self.setup_complete)
+            service_logger.write_log('piper', 'install', 'OK', 'Piper setup complete')
         except Exception as e:
+            service_logger.write_log('piper', 'install', 'ERROR', f'Piper setup failed: {e}')
             mw.taskman.run_on_main(lambda err=e: self.setup_failed(str(err)))
 
     def start_uninstall(self):

@@ -143,7 +143,7 @@ class KokoroTTS(service.ServiceBase):
 
     def configuration_options(self):
         return {
-            self.CONFIG_ENGINE_PATH: ('file', 'Kokoro Python Executable (python.exe);;All Files (*)'),
+            self.CONFIG_ENGINE_PATH: ('file', 'Kokoro path', 'Executable (python.exe);;All Files (*)'),
         }
     
     def advanced_configuration_options(self):
@@ -199,6 +199,16 @@ class KokoroTTS(service.ServiceBase):
              raise errors.RequestError(source_text, voice, "Kokoro engine not configured.")
              
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
+
+        if debug_enabled:
+            try:
+                from .. import service_logger
+                service_logger.write_log('kokoro', 'runtime', 'INFO', 'TTS Request', {
+                    'Voice': voice.voice_key,
+                    'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
+                })
+            except: pass
+
         for attempt in [1, 2]:
             try:
                 # Get process from pool

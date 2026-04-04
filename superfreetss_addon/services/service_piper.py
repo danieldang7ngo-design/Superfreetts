@@ -103,7 +103,7 @@ class PiperTTS(service.ServiceBase):
     def configuration_options(self):
         from .. import system_utils
         return {
-            self.CONFIG_MODELS_PATH: ('directory', 'Piper Models Directory'),
+            self.CONFIG_MODELS_PATH: ('directory', 'Piper path'),
         }
     
     def advanced_configuration_options(self):
@@ -259,6 +259,16 @@ class PiperTTS(service.ServiceBase):
 
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
         models_path = self._resolve_models_dir()
+
+        if debug_enabled:
+            try:
+                from .. import service_logger
+                service_logger.write_log('piper', 'runtime', 'INFO', 'TTS Request', {
+                    'Voice': voice.voice_key,
+                    'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
+                })
+            except: pass
+
         if not models_path:
             raise errors.RequestError(source_text, voice, "No Piper models directory found. Please set 'Piper Models Directory' in configuration or run Setup Piper.")
 

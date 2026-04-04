@@ -33,6 +33,8 @@ def log(msg):
 
 log("SHERPA RUNNER V2 STARTED")
 log("Runner script started. Importing dependencies...")
+log(f"Python: {sys.executable}")
+log(f"sys.path: {sys.path}")
 
 try:
     import sherpa_onnx
