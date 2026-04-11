@@ -141,6 +141,9 @@ class KokoroTTS(service.ServiceBase):
     def cloudlanguagetools_enabled(self):
         return False
 
+    def enabled_by_default(self):
+        return True
+
     def configuration_options(self):
         return {
             self.CONFIG_ENGINE_PATH: ('file', 'Kokoro path', 'Executable (python.exe);;All Files (*)'),

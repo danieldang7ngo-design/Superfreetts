@@ -11,6 +11,8 @@ from .. import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
 class Youdao(service.ServiceBase):
+    def enabled_by_default(self):
+        return True
     # https://youdao.com/result?word=vehicle&lang=en
     # Direct audio API: https://dict.youdao.com/dictvoice?audio=vehicle&type=2
     AUDIO_API_URL = 'https://dict.youdao.com/dictvoice'

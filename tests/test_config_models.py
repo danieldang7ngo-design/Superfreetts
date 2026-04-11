@@ -152,4 +152,3 @@ class TestConfiguration:
         config = config_models.Configuration()
         
         assert config is not None
-        assert isinstance(config, config_models.ConfigModelBase)

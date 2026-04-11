@@ -37,6 +37,9 @@ class GoogleTranslate(service.ServiceBase):
     def __init__(self):
         service.ServiceBase.__init__(self)
 
+    def enabled_by_default(self):
+        return True
+
     def configuration_options(self):
         return {
             self.CONFIG_THROTTLE_SECONDS: float

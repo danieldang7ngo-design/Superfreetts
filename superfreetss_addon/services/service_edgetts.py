@@ -5,7 +5,7 @@ import asyncio
 import threading
 import time
 import edge_tts
-from typing import List
+from typing import List, Optional
 
 from .. import voice
 from .. import service
@@ -44,6 +44,9 @@ class EdgeTTS(service.ServiceBase):
     @property
     def service_fee(self) -> constants.ServiceFee:
         return constants.ServiceFee.free
+
+    def enabled_by_default(self):
+        return True
 
     def configuration_options(self):
         return {}
@@ -108,58 +111,69 @@ class EdgeTTS(service.ServiceBase):
             return []
 
     def get_tts_audio(self, source_text, voice: voice.TtsVoice_v3, options):
+        # Implementation for single request
+        results = self.get_tts_audio_batch([source_text], voice, options)
+        if results and results[0]:
+            return results[0]
+        raise errors.RequestError(source_text, voice, "EdgeTTS failed to generate audio")
+
+    def get_tts_audio_batch(self, source_texts: List[str], voice: voice.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
+        """
+        Synthesize multiple texts in a single asyncio event loop using gather().
+        This is much faster than running multiple sequential or even multi-threaded 
+        asyncio.run() calls because it reuses loop overhead.
+        """
+        if not source_texts:
+            return []
+
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
         
-        if debug_enabled:
-            try:
-                from .. import service_logger
-                service_logger.write_log('edgetts', 'runtime', 'INFO', 'TTS Request', {
-                    'Voice': voice.voice_key,
-                    'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)',
-                    'Speed': options.get('speed', 0),
-                    'Pitch': options.get('pitch', 0),
-                    'Volume': options.get('volume', 0)
-                })
-            except: pass
+        async def _stream_batch():
+            speed_val = options.get('speed', 0)
+            pitch_val = options.get('pitch', 0)
+            volume_val = options.get('volume', 0)
+            rate_str = f"{'+' if speed_val >= 0 else ''}{speed_val}%"
+            pitch_str = f"{'+' if pitch_val >= 0 else ''}{pitch_val}Hz"
+            volume_str = f"{'+' if volume_val >= 0 else ''}{volume_val}%"
+            
+            async def _fetch_one(text):
+                try:
+                    if debug_enabled:
+                         logger.debug(f"EdgeTTS: Starting synthesis for '{text[:20]}...'")
+                    
+                    communicate = edge_tts.Communicate(
+                        text, voice.voice_key,
+                        rate=rate_str, pitch=pitch_str, volume=volume_str
+                    )
+                    data = b""
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio":
+                            data += chunk["data"]
+                    return data
+                except Exception as e:
+                    logger.warning(f"EdgeTTS Batch: Exception for text '{text[:20]}...': {e}")
+                    return None
+
+            # Execute all requests in parallel within the SAME event loop
+            tasks = [_fetch_one(text) for text in source_texts]
+            return await asyncio.gather(*tasks)
 
         try:
-            audio_data = io.BytesIO()
-            
-            async def _stream():
-                speed_val = options.get('speed', 0)
-                pitch_val = options.get('pitch', 0)
-                volume_val = options.get('volume', 0)
-                rate_str = f"{'+' if speed_val >= 0 else ''}{speed_val}%"
-                pitch_str = f"{'+' if pitch_val >= 0 else ''}{pitch_val}Hz"
-                volume_str = f"{'+' if volume_val >= 0 else ''}{volume_val}%"
-                communicate = edge_tts.Communicate(
-                    source_text, voice.voice_key,
-                    rate=rate_str, pitch=pitch_str, volume=volume_str
-                )
-                async for chunk in communicate.stream():
-                    if chunk["type"] == "audio":
-                        audio_data.write(chunk["data"])
-            
             start_time = time.time()
-            run_async_safe(_stream())
+            results = run_async_safe(_stream_batch())
             
             if debug_enabled:
+                duration = time.time() - start_time
+                success_count = sum(1 for r in results if r is not None)
                 try:
                     from .. import service_logger
-                    duration = time.time() - start_time
-                    size_kb = len(audio_data.getvalue()) / 1024
-                    service_logger.write_log('edgetts', 'runtime', 'OK', 'Audio generated', {
-                        'Duration': f'{duration:.2f}s',
-                        'Size': f'{size_kb:.1f} KB'
+                    service_logger.write_log('edgetts', 'runtime', 'OK', 'Batch generated', {
+                        'Count': f'{success_count}/{len(source_texts)}',
+                        'Duration': f'{duration:.2f}s'
                     })
                 except: pass
-
-            return audio_data.getvalue()
+            
+            return results
         except Exception as e:
-            if debug_enabled:
-                try:
-                    from .. import service_logger
-                    service_logger.write_log('edgetts', 'runtime', 'ERROR', f'TTS failed: {e}')
-                except: pass
-            logger.warning(f'EdgeTTS: exception while retrieving sound for {source_text}: {e}')
-            raise errors.RequestError(source_text, voice, str(e))
+            logger.error(f"EdgeTTS: Batch execution failed: {e}")
+            return [None] * len(source_texts)

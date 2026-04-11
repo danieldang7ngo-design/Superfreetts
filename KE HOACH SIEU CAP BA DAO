@@ -1,0 +1,78 @@
+# Kế hoạch tối ưu hoá (Implementation Plan)
+
+Dưới đây là câu trả lời và kế hoạch chi tiết giải quyết 3 câu hỏi bạn đặt ra về việc Refactor, Scope Error, và Legacy Code.
+
+---
+
+## 1. Phân tách [superfreetss.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py) (Decompose God-Object)
+
+**Chiến lược:**
+Đúng vậy, chúng ta sẽ **KHÔNG ĐỔI BẤT KỲ LOGIC CỐT LÕI NÀO** (zero-logic-change refactor). Toàn bộ luồng dữ liệu vẫn giữ nguyên, nhưng sẽ được chia nhỏ thành các thư mục con `superfreetss_addon/core/` để dễ bảo trì, dễ viết test.
+
+**Số lượng module dự kiến:** [superfreetss.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py) (hiện tại ~1700 dòng) sẽ được tách thành **4 module cốt lõi** và 1 module "Bề mặt" (Facade).
+
+*   **[superfreetss_addon/superfreetss.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py) (Facade):**
+    *   **Mục tiêu:** Đóng vai trò là cổng giao tiếp (entry point) để Anki GUI và Hooks kết nối vào. File này sẽ chỉ chứa class [SuperFreeTTS](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#43-1686) với các hàm gọi thẳng xuống các module con.
+    *   **Kích thước dự kiến:** Giảm xuống ~200 dòng.
+*   **`core/batch_processor.py`:**
+    *   **Mục tiêu:** Xử lý logic tạo audio hàng loạt (Bulk Generation).
+    *   **Chứa các hàm:** [process_batch_audio](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#183-413), [_collect_batch_duplicates](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#415-448), [_apply_batch_deduplication](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#559-588), [_generate_audio_batch_task](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#589-668).
+*   **`core/note_processor.py`:**
+    *   **Mục tiêu:** Quản lý quy tắc (Mapping Rules) áp dụng lên từng Note trong Editor.
+    *   **Chứa các hàm:** [process_note_audio](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#692-726), [editor_note_process_rule](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#829-833), [preview_note_audio](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#938-943), [apply_all_mapping_rules](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1003-1014).
+*   **`core/audio_manager.py`:**
+    *   **Mục tiêu:** Giải quyết việc thao tác File và Naming, Hashing cache tĩnh/động.
+    *   **Chứa các hàm:** [get_audio_filename](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1093-1103), [get_hash_for_audio_request](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1104-1111), [cleanup_user_files](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#128-173).
+*   **`core/template_parser.py`:**
+    *   **Mục tiêu:** Bóc tách dữ liệu từ thẻ Note, xử lý tag `[sound:...]`, hỗ trợ preview nội dung đọc.
+    *   **Chứa các hàm:** [expand_simple_template](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#903-910), [build_realtime_tts_tag](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1126-1152), [keep_only_sound_tags](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1112-1115), [get_source_text](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#889-902).
+
+---
+
+## 2. Khoanh vùng Bắt Lỗi (Error Handling Scoping) & Testing
+
+**Vấn đề:** Hiện tại addon đang có quá nhiều khối `except Exception as e:`. Nếu ổ cứng đầy, lỗi phân quyền (IOError) hay ONNX nạp thất bại (ModelLoadError), addon sẽ im lặng nuốt lỗi hoặc văng lỗi không rõ ràng.
+
+**Chiến lược Thực thi:**
+1.  **Dò Từng Chỗ:** Truy quét mọi `except Exception` trong vòng lặp batch và trong `audio_manager`.
+2.  **Bắt đúng nhóm Lỗi Hành Vi (Behavioral Exceptions):**
+    *   Thay `except Exception` khi mở File/Ghi cache bằng `except IOError:` và ném ra tuỳ chỉnh `errors.SystemResourceError` (để GUI có cảnh báo "Hết dung lượng/Lỗi quyền Disk").
+    *   Trong Runner của MMS/Kokoro/Piper, thay vì bắt lỗi chung, sẽ bắt `except RuntimeError:` và `except ImportError:` bọc trong `errors.ModelLoadError("ONNX Engine Failed to boot")`.
+
+**Kế hoạch Test Giả Lập (Simulation Plan):**
+Để test xem bắt lỗi có đúng như quy hoạch hay không, chúng ta có sẵn môi trường Unit Test [pytest](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/tests/conftest.py#120-131) (nhờ [tests/conftest.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/tests/conftest.py)). Mình sẽ viết các test tự động bằng cách dùng thư viện `unittest.mock`:
+*   *Test IOError:* Dùng `patch('os.makedirs')` ép ném `PermissionError` trong lúc generate batch, sau đó `assert` (xác nhận) rằng `Superfreetts` trả ngược `SystemResourceError` lên GUI một cách chính xác thay vì nuốt lỗi.
+*   *Test ModelLoadError:* Dùng `patch` ép cái subprocess Kokoro ném ra `exit_code = 1`, sau đó xác nhận pipeline audio văng đúng exception thay vì im lặng ghi ra thẻ rỗng.
+
+---
+
+## 3. Loại bỏ Code cũ (Legacy Methods Cleanup)
+
+**Tình trạng:** Addon có độ trượt (technical debt) sau nhiều năm do Anki cập nhật (chuyển từ Anki 2.1.2x sang 2.1.5x+). Có khoảng **4 cụm chức năng cũ** không còn hiệu quả hoặc trùng lặp.
+
+**Kế hoạch Xóa Dọn Cụ Thể:**
+1.  **[get_realtime_audio()](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#734-740) và fallback logic thời điểm thực:** Hiện nay Anki đã có Audio Engine gốc được tối ưu. Khối lượng legacy xử lý Realtime riêng biệt trong [superfreetss.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py) khá cồng kềnh, có thể thay qua interface native của `aqt.sound.play`.
+2.  **Khối Backward Compatibility Preference (Line 65):**
+    *   Trong [__init__](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/services/service_edgetts.py#37-39) và phần cấu hình có đoạn `self.get_preferences()  # For backward compatibility`. Vì addon đã qua nhiều revision thiết lập config_models.py (với class Configuration), ta có thể dập bỏ luồng migration rườm rà này để tăng tốc khởi động.
+3.  **Các Wrapper Không Cần Thiết:**
+    *   Hàm [get_collection_sound_tag](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1079-1082) và [get_full_audio_file_name](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/superfreetss.py#1083-1092) đều bị trùng logic với nhau tới 70%. Sẽ gộp làm một hàm.
+## 4. Sửa lỗi hiển thị EdgeTTS & Tối ưu hóa UI
+**Vấn đề:** EdgeTTS đôi khi biến mất trong Menu mặc dù vẫn đang chạy dưới nền. Nguyên nhân chẩn đoán là do so sánh Enum `constants.ServiceFee.free` đôi khi bị sai lệch định danh (identity) khi Anki reload addon.
+
+**Giải pháp:**
+*   Thay đổi cách so sánh Enum trong [component_configuration.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/component_configuration.py) từ so sánh đối tượng (`==`) sang so sánh giá trị chuỗi (`.name == 'free'`) để đảm bảo tính ổn định qua các lần reload.
+*   Thêm log chuẩn đoán nâng cao trong [draw_service](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/superfreetss_addon/component_configuration.py#706-875) để theo dõi quá trình vẽ card.
+
+---
+
+## 5. Tổ chức lại Thư mục Test & Dọn dẹp
+**Yêu cầu:** Toàn bộ file test và mock môi trường sẽ được đưa vào folder `tests/` để giữ folder gốc sạch sẽ cho người dùng.
+
+**Hành động:**
+*   Di chuyển các file [verify_all_services.py](file:///C:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/verify_all_services.py), [debug_gui_logic.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/debug_gui_logic.py), [mock_anki.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/mock_anki.py), [verify_gui_logic.py](file:///c:/Users/Administrator/AppData/Roaming/Anki2/addons21/Superfreetts/verify_gui_logic.py) vào thư mục `tests/`.
+*   Tích hợp logic của chúng vào bộ test suite hiện có.
+*   Xóa các file rác trong thư mục gốc của addon.
+
+## Kế hoạch Duyệt / Chốt
+
+Nếu bạn đồng ý với kế hoạch này, toàn bộ khối lượng công việc sẽ được triển khai, đảm bảo vượt qua **100% test suite** hiện tại trong thư mục `tests`. Bạn kiểm tra xem còn muốn bổ sung góc nhìn nào vào các điểm mù trên nữa không nhé.

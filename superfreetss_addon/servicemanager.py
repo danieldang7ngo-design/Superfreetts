@@ -255,7 +255,11 @@ class ServiceManager():
             # CRITICAL: Clear voice list cache since expensive services were just added
             self.clear_voice_list_cache()
             logger.info('Voice list cache cleared - expensive services now available in voice selection')
-            return
+            
+            # Return early ONLY IF lightweight services were already previously initialized.
+            # If they aren't initialized yet, we must fall through to instantiate them now.
+            if self._services_initialized:
+                return
 
         if self._services_initialized:
             logger.debug('services already instantiated, skipping')

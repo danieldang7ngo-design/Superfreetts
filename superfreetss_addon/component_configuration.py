@@ -704,7 +704,7 @@ class Configuration(component_common.ConfigComponentBase):
         service_card.style().polish(service_card)
 
     def draw_service(self, service, layout):
-        logger.info(f'draw_service {service.name}')
+        logger.debug(f'draw_service {service.name}')
         lang = self.hypertts.get_ui_language()
         
         def get_service_header_label(service):
@@ -755,7 +755,7 @@ class Configuration(component_common.ConfigComponentBase):
         header_row.addWidget(get_service_header_label(service))
         
         # Add "Free" badge for free services
-        if service.service_fee == constants.ServiceFee.free:
+        if service.service_fee.name == 'free':
             dark = gui_utils.is_night_mode()
             header_row.addSpacing(8)
             header_row.addWidget(gui_utils.get_status_badge(
@@ -876,7 +876,8 @@ class Configuration(component_common.ConfigComponentBase):
     def get_service_list(self):
         # HyperTTS Lite: Only show Free services
         # Order is determined by ServiceManager (Edge -> Piper -> Kokoro -> MMS)
-        service_list = [s for s in self.hypertts.service_manager.get_all_services() if s.service_fee == constants.ServiceFee.free]
+        all_services = self.hypertts.service_manager.get_all_services()
+        service_list = [s for s in all_services if s.service_fee.name == 'free']
         return service_list
 
 
@@ -955,8 +956,8 @@ class Configuration(component_common.ConfigComponentBase):
         self.services_vlayout.setSpacing(14)
 
         # Split services
-        tts_services = [s for s in service_list if s.service_type == constants.ServiceType.tts]
-        dict_services = [s for s in service_list if s.service_type == constants.ServiceType.dictionary]
+        tts_services = [s for s in service_list if s.service_type.name == 'tts']
+        dict_services = [s for s in service_list if s.service_type.name == 'dictionary']
         category_sections = []
 
         # Helper to draw category

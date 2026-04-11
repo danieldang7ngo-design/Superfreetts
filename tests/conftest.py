@@ -3,9 +3,13 @@ Pytest configuration and fixtures for Super Free TTS testing.
 """
 
 import sys
+# Mock Anki/AQT before anything else
+from . import mock_anki
+mock_anki.mock_all()
+
 import os
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 # Add parent directory to path for imports
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +27,19 @@ class MockAnkiUtils:
     
     def get_uuid(self):
         return self.user_uuid
+    
+    def get_config(self):
+        return {
+            'service_config': {},
+            'batch_concurrency': 2
+        }
+        
+    def write_config(self, config):
+        pass
+        
+    def get_preferences(self):
+        from superfreetss_addon import config_models
+        return config_models.Preferences()
     
     def get_media_folder(self):
         return "/tmp/anki_test/media"
