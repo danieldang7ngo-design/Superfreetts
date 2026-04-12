@@ -9,6 +9,7 @@ import copy
 import json
 import datetime
 import time
+import threading
 import concurrent.futures
 from typing import List, Dict, Tuple, Optional, Any
 import pprint
@@ -89,6 +90,11 @@ class SuperFreeTTS():
                 service_config = service_config_map.get(service_name, {})
                 # Try service config first, then default to 1
                 concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
+                
+                # EdgeTTS: hard cap at 3 workers regardless of CPU cores
+                if service_name == 'EdgeTTS' and concurrency > 3:
+                    logger.info(f'EdgeTTS concurrency capped to 3 (requested {concurrency})')
+                    concurrency = 3
                 
                 # Validate against physical CPU cores
                 max_workers = cpu_utils.CPUInfo.get_max_workers()
@@ -450,6 +456,10 @@ class SuperFreeTTS():
         """
         Execute unique tasks using MultiEngineExecutor with DYNAMIC BATCHING.
         Groups tasks by (service, voice) and chunks them into vector IPC calls.
+        
+        Uses a producer-consumer pattern: background thread submits chunks while
+        the main thread collects results immediately to avoid blocking on the
+        BoundedThreadPoolExecutor's semaphore.
         """
         lang = self.get_ui_language()
         audio_cache = {}
@@ -474,26 +484,24 @@ class SuperFreeTTS():
                 engine_groups[group_key] = []
             engine_groups[group_key].append((dedup_key, task_data, task_indices))
             
-        # 2. Chunk groups into batches and submit to per-engine executors
-        # Enforce strict 10-item (MAX_BATCH_SIZE) and 3000-character (MAX_TOTAL_CHARS) limits
-        future_to_chunk = {} # future -> chunk of (dedup_key, task_data, task_indices)
+        # 2. Chunk groups into batches — prepared upfront
+        # Per-engine batch size: EdgeTTS uses 1 (no batching) so workers
+        # directly control concurrency (1 worker = 1 request). Other engines use 10.
+        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 1}
+        DEFAULT_BATCH_SIZE = 10
+        all_chunks = []  # list of (service_name, chunk_items)
         
         for (service_name, _), group_tasks in engine_groups.items():
-            executor_pool = self.executor.get_executor(service_name)
-            
+            max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
             chunk = []
             chunk_chars = 0
             for item in group_tasks:
                 dedup_key, task_data, task_indices = item
-                # Bound character count based on input text
                 text = task_data['source_text']
                 text_len = len(text)
                 
-                # Check bounds
-                if len(chunk) >= 10 or (chunk_chars + text_len > 3000 and chunk):
-                    # Dispatch current chunk to engine
-                    future = executor_pool.submit(self._generate_audio_batch_task, list(chunk))
-                    future_to_chunk[future] = list(chunk)
+                if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
+                    all_chunks.append((service_name, list(chunk)))
                     chunk = []
                     chunk_chars = 0
                 
@@ -501,58 +509,102 @@ class SuperFreeTTS():
                 chunk_chars += text_len
             
             if chunk:
-                future = executor_pool.submit(self._generate_audio_batch_task, list(chunk))
-                future_to_chunk[future] = list(chunk)
+                all_chunks.append((service_name, list(chunk)))
         
-        # 3. Collect results as batches complete
-        for future in concurrent.futures.as_completed(future_to_chunk):
-            if not batch_status.must_continue:
-                for pending_future in future_to_chunk:
-                    if not pending_future.done(): pending_future.cancel()
-                break
-                
-            chunk = future_to_chunk[future]
+        # 3. Submit chunks in a background thread (producer) while main thread
+        #    collects results immediately (consumer). This avoids the blocking delay
+        #    caused by submitting ALL chunks before starting result collection.
+        future_to_chunk = {}  # future -> chunk items
+        future_lock = threading.Lock()  # protects future_to_chunk during concurrent access
+        submit_error = [None]  # capture any submit-thread exception
+        
+        def _submit_all():
+            """Background thread: submit chunks to per-engine executors."""
             try:
-                # Enforce strict 25s timeout per batch as mandated
-                batch_results = future.result(timeout=25.0) 
-                
-                for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
-                    result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
-                    audio_cache[dedup_key] = result_tuple
-                    result, error = result_tuple
-                    
-                    # Mark progress
-                    completed_count += 1
-                    batch_status.unique_tasks_completed = completed_count
-                    
-                    # Update progress for all notes using this combination
-                    is_successful = result is not None
-                    for task_idx in task_indices:
-                        note_id = tasks[task_idx]['note_id']
-                        with batch_status.get_note_action_context(note_id, False) as ctx:
-                            if is_successful:
-                                src, proc, audio_fn, full_fn = result
-                                ctx.set_source_text(src)
-                                ctx.set_processed_text(proc)
-                                ctx.set_sound(audio_fn)
-                                ctx.set_status(constants.BatchNoteStatus.Done)
-                            else:
-                                ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
-                        batch_status.notify_change(note_id)
-                
-                batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
-                
+                for service_name, chunk_items in all_chunks:
+                    if not batch_status.must_continue:
+                        break
+                    executor_pool = self.executor.get_executor(service_name)
+                    future = executor_pool.submit(self._generate_audio_batch_task, list(chunk_items))
+                    with future_lock:
+                        future_to_chunk[future] = list(chunk_items)
             except Exception as e:
-                logger.error(f"[BATCH] Batch execution failed: {e}")
-                # Mark all items in this chunk as failed
-                for dedup_key, _, task_indices in chunk:
-                    audio_cache[dedup_key] = (None, e)
-                    completed_count += 1
-                    for task_idx in task_indices:
-                        note_id = tasks[task_idx]['note_id']
-                        with batch_status.get_note_action_context(note_id, False) as ctx:
-                            ctx.set_error(e)
-                        batch_status.notify_change(note_id)
+                logger.error(f"[BATCH] Submit thread error: {e}")
+                submit_error[0] = e
+        
+        submit_thread = threading.Thread(target=_submit_all, daemon=True)
+        submit_thread.start()
+        
+        # 4. Collect results immediately as they arrive (no blocking wait for all submits)
+        
+        while submit_thread.is_alive() or future_to_chunk:
+            if not batch_status.must_continue:
+                with future_lock:
+                    for pending_future in list(future_to_chunk):
+                        if not pending_future.done():
+                            pending_future.cancel()
+                break
+            
+            # Find completed futures
+            done_futures = []
+            with future_lock:
+                for future in list(future_to_chunk):
+                    if future.done():
+                        done_futures.append((future, future_to_chunk.pop(future)))
+            
+            if not done_futures:
+                # Brief sleep to avoid busy-waiting, then re-check
+                time.sleep(0.05)
+                continue
+            
+            for future, chunk in done_futures:
+                try:
+                    # Enforce strict 25s timeout per batch as mandated
+                    batch_results = future.result(timeout=25.0) 
+                    
+                    for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
+                        result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
+                        audio_cache[dedup_key] = result_tuple
+                        result, error = result_tuple
+                        
+                        # Mark progress
+                        completed_count += 1
+                        batch_status.unique_tasks_completed = completed_count
+                        
+                        # Update progress for all notes using this combination
+                        is_successful = result is not None
+                        for task_idx in task_indices:
+                            note_id = tasks[task_idx]['note_id']
+                            with batch_status.get_note_action_context(note_id, False) as ctx:
+                                if is_successful:
+                                    src, proc, audio_fn, full_fn = result
+                                    ctx.set_source_text(src)
+                                    ctx.set_processed_text(proc)
+                                    ctx.set_sound(audio_fn)
+                                    ctx.set_status(constants.BatchNoteStatus.Done)
+                                else:
+                                    ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                            batch_status.notify_change(note_id)
+                    
+                    batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
+                    
+                except Exception as e:
+                    logger.error(f"[BATCH] Batch execution failed: {e}")
+                    # Mark all items in this chunk as failed
+                    for dedup_key, _, task_indices in chunk:
+                        audio_cache[dedup_key] = (None, e)
+                        completed_count += 1
+                        for task_idx in task_indices:
+                            note_id = tasks[task_idx]['note_id']
+                            with batch_status.get_note_action_context(note_id, False) as ctx:
+                                ctx.set_error(e)
+                            batch_status.notify_change(note_id)
+        
+        # Wait for submit thread to finish (should be done already)
+        submit_thread.join(timeout=5.0)
+        
+        if submit_error[0]:
+            logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
 
         return audio_cache
 
@@ -1474,6 +1526,11 @@ class SuperFreeTTS():
             for service_name, pool_name in service_pool_map.items():
                 service_config = service_config_map.get(service_name, {})
                 concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
+                
+                # EdgeTTS: hard cap at 3 workers regardless of CPU cores
+                if service_name == 'EdgeTTS' and concurrency > 3:
+                    logger.info(f'EdgeTTS concurrency capped to 3 (requested {concurrency})')
+                    concurrency = 3
                 
                 max_workers = cpu_utils.CPUInfo.get_max_workers()
                 if concurrency > max_workers:

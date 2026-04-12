@@ -17,6 +17,7 @@ from . import component_about
 from . import component_piper_manager
 from . import component_kokoro_manager, component_mms_manager
 from . import component_onnx_manager
+from . import component_donation
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -57,6 +58,7 @@ class Configuration(component_common.ConfigComponentBase):
         self.search_debounce_timer = None
         self.option_validation_label_map = {}
         self.about_component = component_about.AboutComponent(hypertts)
+        self.donation_component = component_donation.DonationComponent(hypertts)
 
     def get_model(self):
         return self.model
@@ -1074,6 +1076,16 @@ class Configuration(component_common.ConfigComponentBase):
         self.about_container.setVisible(False) # We'll swap visibility
         self.global_vlayout.addWidget(self.about_container, 1)
 
+        # 5. Donation Section (invisible by default)
+        self.donation_container = aqt.qt.QWidget()
+        self.donation_layout = aqt.qt.QVBoxLayout(self.donation_container)
+        donation_logo_widget = aqt.qt.QWidget()
+        donation_logo_widget.setLayout(gui_utils.get_superfreetss_label_header(False))
+        self.donation_layout.addWidget(donation_logo_widget)
+        self.donation_component.draw(self.donation_layout)
+        self.donation_container.setVisible(False)
+        self.global_vlayout.addWidget(self.donation_container, 1)
+
         # bottom buttons
         # ==============
 
@@ -1171,6 +1183,12 @@ class Configuration(component_common.ConfigComponentBase):
         btn_engines.setProperty("cssClass", "tocButtonActive")
         toc_layout.addWidget(btn_engines)
 
+        btn_donation = aqt.qt.QPushButton(i18n.get_text("config_toc_donation", lang))
+        btn_donation.setFlat(True)
+        btn_donation.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
+        btn_donation.setProperty("cssClass", "tocButtonInactive")
+        toc_layout.addWidget(btn_donation)
+
         btn_about = aqt.qt.QPushButton(i18n.get_text("config_toc_about", lang))
         btn_about.setFlat(True)
         btn_about.setCursor(aqt.qt.Qt.CursorShape.PointingHandCursor)
@@ -1178,29 +1196,33 @@ class Configuration(component_common.ConfigComponentBase):
         toc_layout.addWidget(btn_about)
 
         # Function to handle tab switching visual and functional states
-        def switch_tab(is_about: bool):
-            btn_engines.setProperty("cssClass", "tocButtonInactive" if is_about else "tocButtonActive")
-            btn_about.setProperty("cssClass", "tocButtonActive" if is_about else "tocButtonInactive")
-            btn_engines.style().unpolish(btn_engines)
-            btn_engines.style().polish(btn_engines)
-            btn_about.style().unpolish(btn_about)
-            btn_about.style().polish(btn_about)
+        def switch_tab(mode: str): # 'engines', 'donation', 'about'
+            btn_engines.setProperty("cssClass", "tocButtonActive" if mode == 'engines' else "tocButtonInactive")
+            btn_donation.setProperty("cssClass", "tocButtonActive" if mode == 'donation' else "tocButtonInactive")
+            btn_about.setProperty("cssClass", "tocButtonActive" if mode == 'about' else "tocButtonInactive")
+            
+            for btn in [btn_engines, btn_donation, btn_about]:
+                btn.style().unpolish(btn)
+                btn.style().polish(btn)
             
             # Switch Content Visibility
-            self._services_scroll_area.setVisible(not is_about)
-            self.about_container.setVisible(is_about)
+            self._services_scroll_area.setVisible(mode == 'engines')
+            self.donation_container.setVisible(mode == 'donation')
+            self.about_container.setVisible(mode == 'about')
             
             # Toggle Extra UI Elements specific to Services list
-            self.search_input.setVisible(not is_about)
-            self.services_summary_label.setVisible(not is_about)
+            is_engines = mode == 'engines'
+            self.search_input.setVisible(is_engines)
+            self.services_summary_label.setVisible(is_engines)
 
             # Scroll to top when switching back to engines
-            if not is_about and self._services_scroll_area is not None:
+            if is_engines and self._services_scroll_area is not None:
                 self._services_scroll_area.verticalScrollBar().setValue(0)
 
         # Connect tabs
-        btn_engines.pressed.connect(lambda: switch_tab(False))
-        btn_about.pressed.connect(lambda: switch_tab(True))
+        btn_engines.pressed.connect(lambda: switch_tab('engines'))
+        btn_donation.pressed.connect(lambda: switch_tab('donation'))
+        btn_about.pressed.connect(lambda: switch_tab('about'))
 
         # Keep tabs pushed to the top.
         toc_layout.addStretch()

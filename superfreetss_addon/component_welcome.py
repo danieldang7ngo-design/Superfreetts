@@ -1,10 +1,28 @@
-"""
-Hộp thoại chào mừng khi cài addon lần đầu (display_introduction_message).
-Nội dung bổ sung từ màn About + quảng bá AnkiVN / cộng đồng làm addon.
-"""
 import html
+import random
+import time
 
 import aqt.qt
+from aqt.qt import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QCheckBox,
+    QTimer,
+    QPainter,
+    QColor,
+    QPen,
+    Qt,
+    QBrush,
+    QRadialGradient,
+)
+
+try:
+    from aqt.theme import theme_manager
+except ImportError:
+    theme_manager = None
 
 from . import constants
 from . import i18n
@@ -14,7 +32,42 @@ from . import version
 logger = logging_utils.get_child_logger(__name__)
 
 
-class WelcomeDialog(aqt.qt.QDialog):
+class SnowFlake:
+    def __init__(self, width, height, is_dark=True):
+        self.width = width
+        self.height = height
+        self.is_dark = is_dark
+        if not self.is_dark:
+            colors = [QColor("#3b82f6"), QColor("#ef4444"), QColor("#10b981"), QColor("#f59e0b"), QColor("#8b5cf6"), QColor("#ec4899")]
+            self.color = random.choice(colors)
+            self.color.setAlpha(180)
+        else:
+            self.color = QColor(255, 255, 255, 200)
+
+        self.reset()
+        # Randomize initial Y position to fill the screen
+        self.y = random.uniform(0, height)
+
+    def reset(self):
+        self.x = random.uniform(0, self.width)
+        self.y = random.uniform(-20, 0)
+        self.size = random.uniform(2, 6)
+        self.speed = random.uniform(0.5, 2.0)
+        self.amplitude = random.uniform(0.5, 1.5)
+        self.angle = random.uniform(0, 2 * 3.14159)
+        self.rotation = random.uniform(0, 360)
+        self.rot_speed = random.uniform(-5, 5)
+
+    def update(self):
+        self.y += self.speed
+        self.angle += 0.02
+        self.rotation += self.rot_speed
+        self.x += self.amplitude * (random.uniform(-1, 1) + 0.5)  # Slight drift
+        if self.y > self.height:
+            self.reset()
+
+
+class WelcomeDialog(QDialog):
     def __init__(self, hypertts, parent=None):
         super().__init__(parent)
         self.hypertts = hypertts
@@ -22,85 +75,170 @@ class WelcomeDialog(aqt.qt.QDialog):
         accent = constants.COLOR_ACCENT
 
         self.setWindowTitle("Welcome to Super Free TTS")
-        # Nội dung dài hơn (About + link) nên tăng kích thước cửa sổ
-        self.setFixedSize(540, 560)
+        self.setFixedSize(560, 620)
         self.setWindowFlags(
-            self.windowFlags() & ~aqt.qt.Qt.WindowType.WindowContextHelpButtonHint
+            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
         )
 
-        layout = aqt.qt.QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
+        # Check theme
+        if theme_manager:
+            self.is_dark = theme_manager.night_mode
+        else:
+            self.is_dark = True
+            
+        # Colors dependent on theme
+        if self.is_dark:
+            self.bg_color = QColor("#1e293b")  # Slate 800
+            self.color_header = "white"
+            self.color_desc = "#e2e8f0"
+            self.color_promo = "#fef3c7"
+            self.color_footer = "#94a3b8"
+            self.color_checkbox = "#cbd5e1"
+        else:
+            self.bg_color = QColor("#f8fafc")  # Slate 50
+            self.color_header = "#0f172a"
+            self.color_desc = "#334155"
+            self.color_promo = "#b45309"
+            self.color_footer = "#64748b"
+            self.color_checkbox = "#475569"
 
-        # Dùng cùng thông tin About + link như component_about (Facebook / AnkiVN)
+        # Particles
+        self.particles = [SnowFlake(560, 620, self.is_dark) for _ in range(50)]
+
+        # Timer for animation
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_animation)
+        self.timer.start(33)  # ~30 FPS
+
+        # Main layout
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Content container (transparent background to show snow)
+        self.content_widget = aqt.qt.QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(30, 40, 30, 30)
+        self.main_layout.addWidget(self.content_widget)
+
+        # Header
+        header_label = QLabel(i18n.get_text("welcome_header", lang))
+        header_label.setStyleSheet(
+            f"font-size: 24px; font-weight: bold; color: {self.color_header}; margin-bottom: 20px;"
+        )
+        header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.content_layout.addWidget(header_label)
+
+        # Description
         author_url = "https://facebook.com/dangngooooo"
         contributor_url = "https://www.facebook.com/tui.la.phuc747"
         site_url = "https://ankivn.com"
 
-        welcome_html = f"""
-        <h2 style="color: #2c3e50; text-align: center;">Welcome to Super Free TTS! 🎉</h2>
-        <p style="font-size: 14px; margin-top: 10px;">
-            Cảm ơn bạn đã cài đặt <b>Super Free TTS</b> — trợ lý TTS miễn phí cho Anki.
-        </p>
-        <p style="font-size: 13px; color: #1E3A5F; line-height: 1.45;">
-            {html.escape(i18n.get_text("about_description", lang))}
-        </p>
-        <ul style="font-size: 13px; margin-top: 8px;">
-            <li>Hỗ trợ đa dạng các engine như EdgeTTS, Kokoro, Piper, MMS...</li>
-            <li>Hoạt động Offline (với các local engine) bảo vệ quyền riêng tư.</li>
-            <li>Tạo audio hàng loạt (Batch) hoặc tạo ngay khi thêm thẻ (Realtime).</li>
-        </ul>
-        <p style="font-size: 13px; margin-top: 10px;">
-            Để bắt đầu, hãy bôi đen văn bản trong trình chỉnh sửa thẻ hoặc cấu hình trong menu
-            <i>Tools -&gt; Super Free TTS</i>.
-        </p>
-        <p style="font-size: 12px; margin-top: 12px; padding: 10px; background-color: #FFF4C8;
-           border-radius: 10px; color: #1E3A5F; line-height: 1.5;">
-            {html.escape(i18n.get_text("welcome_addons_promo", lang))}
-        </p>
-        <p style="font-size: 12px; margin-top: 8px;">
-            <b>{html.escape(i18n.get_text("about_version", lang))}</b>
-            {html.escape(version.ANKI_SUPER_FREE_TTS_VERSION)}<br/>
-            <b>{html.escape(i18n.get_text("about_author", lang))}</b>
-            <a href="{author_url}" style="color: {accent}; text-decoration: none;">Daniel from AnkiVN</a><br/>
-            <b>{html.escape(i18n.get_text("about_contributor", lang))}</b>
-            <a href="{contributor_url}" style="color: {accent}; text-decoration: none;">Lê Hoàng Phúc</a><br/>
-            <b>{html.escape(i18n.get_text("about_website", lang))}</b>
-            <a href="{site_url}" style="color: {accent}; text-decoration: none;">AnkiVN</a>
-        </p>
-        <p style="font-size: 10px; font-style: italic; color: #2C5B87; text-align: center; margin-top: 6px;">
-            {html.escape(i18n.get_text("about_footer", lang))}
-        </p>
+        welcome_text = f"""
+        <div style="color: {self.color_desc}; font-size: 14px; line-height: 1.6;">
+            <p>{i18n.get_text("welcome_thanks", lang)}</p>
+            <p>{html.escape(i18n.get_text("about_description", lang))}</p>
+            <ul style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
+                <li>{html.escape(i18n.get_text("welcome_list_engines", lang))}</li>
+                <li>{html.escape(i18n.get_text("welcome_list_offline", lang))}</li>
+                <li>{html.escape(i18n.get_text("welcome_list_batch", lang))}</li>
+            </ul>
+            <p>{i18n.get_text("welcome_instruction", lang)}</p>
+        </div>
         """
+        
+        desc_label = QLabel(welcome_text)
+        desc_label.setWordWrap(True)
+        self.content_layout.addWidget(desc_label)
 
-        label_msg = aqt.qt.QLabel(welcome_html)
-        label_msg.setWordWrap(True)
-        label_msg.setOpenExternalLinks(True)
-        layout.addWidget(label_msg)
-
-        layout.addStretch()
-
-        cb_layout = aqt.qt.QHBoxLayout()
-        self.cb_dont_show = aqt.qt.QCheckBox(
-            "Don't show this again (Không hiển thị lại)"
+        # Promo section (Semi-transparent card)
+        promo_text = i18n.get_text("welcome_addons_promo", lang)
+        promo_card = QLabel(
+            f'<div style="padding: 10px; color: {self.color_promo}; line-height: 1.5; font-size: 13px;">'
+            f'{html.escape(promo_text)}'
+            f'</div>'
         )
-        self.cb_dont_show.setChecked(False)
-        cb_layout.addWidget(self.cb_dont_show)
-        layout.addLayout(cb_layout)
+        promo_card.setWordWrap(True)
+        self.content_layout.addWidget(promo_card)
 
-        btn_layout = aqt.qt.QHBoxLayout()
-        btn_layout.addStretch()
-        self.btn_start = aqt.qt.QPushButton("Get Started / Bắt đầu")
-        self.btn_start.setMinimumWidth(150)
-        self.btn_start.setFixedHeight(35)
-        self.btn_start.setStyleSheet(
-            "font-weight: bold; background-color: #3498db; color: white; border-radius: 5px;"
-        )
+        self.content_layout.addStretch()
+
+        # Footer info
+        footer_html = f"""
+        <div style="color: {self.color_footer}; font-size: 12px; line-height: 1.6;">
+            <b>{html.escape(i18n.get_text("about_version", lang))}</b> {html.escape(version.ANKI_SUPER_FREE_TTS_VERSION)}<br/>
+            <b>{html.escape(i18n.get_text("about_author", lang))}</b> <a href="{author_url}" style="color: {accent}; text-decoration: none;">Paul from AnkiVN</a> | 
+            <b>Contributor:</b> <a href="{contributor_url}" style="color: {accent}; text-decoration: none;">Hoàng Phúc</a><br/>
+            <b>{html.escape(i18n.get_text("about_website", lang))}</b> <a href="{site_url}" style="color: {accent}; text-decoration: none;">AnkiVN.com</a>
+        </div>
+        """
+        footer_label = QLabel(footer_html)
+        footer_label.setOpenExternalLinks(True)
+        self.content_layout.addWidget(footer_label)
+
+        # Checkbox & Button section
+        bottom_layout = QHBoxLayout()
+        self.cb_dont_show = QCheckBox("Don't show this again")
+        self.cb_dont_show.setStyleSheet(f"color: {self.color_checkbox}; font-size: 11px;")
+        bottom_layout.addWidget(self.cb_dont_show)
+
+        bottom_layout.addStretch()
+
+        self.btn_start = QPushButton("Bắt đầu / Get Started")
+        self.btn_start.setMinimumWidth(160)
+        self.btn_start.setFixedHeight(40)
+        self.btn_start.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_start.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {accent};
+                color: white;
+                border-radius: 0px;
+                font-weight: bold;
+                font-size: 14px;
+                border: 1px solid transparent;
+                outline: none;
+            }}
+            QPushButton:hover {{
+                background-color: {constants.COLOR_ACCENT_HOVER};
+                border-radius: 0px;
+                border: 1px solid transparent;
+            }}
+        """)
         self.btn_start.clicked.connect(self.accept)
-        btn_layout.addWidget(self.btn_start)
-        btn_layout.addStretch()
+        bottom_layout.addWidget(self.btn_start)
+        
+        self.content_layout.addLayout(bottom_layout)
 
-        layout.addLayout(btn_layout)
-        self.setLayout(layout)
+    def update_animation(self):
+        for p in self.particles:
+            p.update()
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Draw background
+        painter.fillRect(self.rect(), self.bg_color)
+
+        # Draw snow or confetti
+        painter.setPen(Qt.PenStyle.NoPen)
+        for p in self.particles:
+            if self.is_dark:
+                # Snow style for dark mode
+                gradient = QRadialGradient(p.x, p.y, p.size)
+                gradient.setColorAt(0, p.color) # Core
+                gradient.setColorAt(1, QColor(255, 255, 255, 0))   # Edge
+                painter.setBrush(QBrush(gradient))
+                painter.drawEllipse(aqt.qt.QPointF(p.x, p.y), p.size, p.size)
+            else:
+                # Confetti style for light mode
+                painter.setBrush(QBrush(p.color))
+                painter.save()
+                painter.translate(p.x, p.y)
+                painter.rotate(p.rotation)
+                # Small rectangles for confetti
+                painter.drawRect(aqt.qt.QRectF(-p.size, -p.size/2, p.size*2, p.size))
+                painter.restore()
 
     def accept(self):
         if self.cb_dont_show.isChecked():
@@ -108,10 +246,7 @@ class WelcomeDialog(aqt.qt.QDialog):
                 config = self.hypertts.get_configuration()
                 config.display_introduction_message = False
                 self.hypertts.save_configuration(config)
-                logger.info(
-                    "User selected 'Don't show again'. Welcome popup disabled."
-                )
+                logger.info("Welcome popup disabled by user.")
             except Exception as e:
                 logger.error(f"Failed to save welcome popup state: {e}")
-
         super().accept()

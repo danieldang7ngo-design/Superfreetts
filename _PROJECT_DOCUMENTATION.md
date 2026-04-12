@@ -1,4 +1,4 @@
-# Super Free TTS by Daniel from AnkiVN - Tài Liệu Dự Án
+# Super Free TTS by Paul from AnkiVN - Tài Liệu Dự Án
 
 > Tài liệu này mô tả chi tiết dự án Super Free TTS. Để xem nhanh tóm tắt kiến trúc và định hướng dành riêng cho AI Agents, vui lòng đọc [AI_SUMMARY.md](./AI_SUMMARY.md).
 
@@ -16,9 +16,9 @@
 
 ### Dự án là gì?
 
-**Super Free TTS** là một addon (tiện ích mở rộng) **100% MIỄN PHÍ** cho [Anki](https://apps.ankiweb.net/) - ứng dụng học flashcard phổ biến. Addon này giúp người dùng tự động thêm âm thanh text-to-speech (TTS) vào thẻ học của họ.
+**Super Free TTS** là một addon (tiện ích mở rộng) **100% MIỄN PHÍ** cho [Anki](https://apps.ankiweb.net/) - ứng dụng học flashcard phổ biến. Addon này được **fork từ dự án HyperTTS** và tiếp tục phát triển để phục vụ cộng đồng.
 
-**Tác giả**: Daniel from AnkiVN
+**Tác giả**: Paul from AnkiVN
 
 ### Giải quyết vấn đề gì?
 
@@ -32,9 +32,8 @@ Khi học ngôn ngữ hoặc bất kỳ môn học nào cần phát âm, việc 
 ### Thông tin
 
 - **Tên addon**: Super Free TTS
-- **Tác giả**: Daniel from AnkiVN
-- **Phiên bản hiện tại**: 1.0 (trong `version.py`; có thể khác với số hiển thị trong Anki)
-- **Thư mục add-on**: Có thể là `Superfreetts` hoặc ID số (vd. 655806401) trong `Anki2/addons21/`
+- **Tác giả**: Paul from AnkiVN
+- **Phiên bản hiện tại**: 1.0 (trong `version.py`)
 - **Website**: ankivn.com
 - **Tương thích Anki**: `min_point_version: 5`, `max_point_version: 241100` (meta.json)
 
@@ -109,29 +108,16 @@ Superfreetts/                       # Thư mục gốc addon (hoặc ID số tro
 ├── meta.json                       # Cấu hình Anki, min/max version, config addon
 │
 ├── superfreetss_addon/             # Code chính
-│   ├── __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init (lazy load services)
-│   ├── version.py                  # ANKI_SUPER_FREE_TTS_VERSION (1.0)
-│   ├── constants.py                # ServiceType, ServiceFee, BatchMode, enums, CONFIG_ADDON_NAME, DIR_HYPERTTS_ADDON
-│   ├── config_models.py            # Configuration, BatchConfig, VoiceSelection, Preferences, v.v.
-│   ├── errors.py                   # Custom exceptions, ErrorManager
-│   ├── superfreetss.py             # ⭐ CORE – get_audio_file, process_batch_audio, presets, realtime
-│   ├── servicemanager.py           # ⭐ Quản lý TTS: lazy init (ensure_initialized), configure, get_tts_audio, full_voice_list, clear_voice_list_cache
-│   ├── anki_utils.py               # Tương tác Anki, media, config read/write
-│   ├── gui.py                      # Menu (AnkiVN top-level + Tools aliases), actions, dialog entry points
-│   ├── service.py                  # ServiceBase abstract: voice_list(), get_tts_audio(), service_fee, configuration_options()
-│   ├── voice.py                    # TtsVoice_v3, TtsVoiceId_v3, build_voice_v3, voice_str()
-│   ├── languages.py                # Language, AudioLanguage enums (map ngôn ngữ TTS)
-│   ├── options.py                  # AudioFormat (mp3, ogg_vorbis, ogg_opus)
-│   ├── context.py                  # AudioRequestContext (batch/preview/realtime, batch_uuid)
-│   ├── text_utils.py               # Xử lý text (strip HTML, cloze, replace rules)
-│   ├── logging_utils.py            # Logger setup
-│   ├── stats.py                    # Usage statistics (optional)
-│   ├── ttsplayer.py                # Anki TTS tag player (realtime)
-│   ├── batch_status.py             # Trạng thái batch (note status, progress)
-│   ├── preset_rules_status.py      # Preset mapping rules
-│   ├── i18n.py                     # Đa ngôn ngữ UI (en / vi)
-│   ├── gui_utils.py                # Helper UI (buttons, font)
-│   ├── system_utils.py             # GPU/detect (MMS, Kokoro)
+│   ├── __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init
+│   ├── superfreetss.py             # ⭐ CORE – SuperFreeTTS class: text extraction, process_batch_audio, presets
+│   ├── batch_executor.py           # ⭐ ASYNC – UnifiedBatchExecutor & MultiEngineExecutor (Producer-Consumer pattern)
+│   ├── cpu_utils.py                # CPU info & concurrency validation
+│   ├── performance_tracker.py      # Tracking batch performance & latency
+│   ├── batch_progress_ui.py        # UI for batch progress and status
+│   ├── servicemanager.py           # TTS Service Management (lazy loading)
+│   ├── anki_utils.py               # Anki API interaction
+│   ├── gui.py                      # Menu and main UI actions
+│   ├── ...
 │   ├── cloudlanguagetools.py       # CloudLanguageTools (Super Free TTS: disabled)
 │   ├── constants_events.py         # Event names cho stats
 │   ├── sentry_utils.py             # Sentry filter (crash reporting)
@@ -679,11 +665,14 @@ Trước khi commit code:
 
 #### 3. Performance
 
-- **Lazy load add-on:** Services **không** được load lúc Anki khởi động. Chỉ khi lần đầu cần (mở Configuration/Generate, hoặc gọi `get_tts_audio`/`full_voice_list`), `ServiceManager.ensure_initialized()` mới chạy `init_services()` và `configure()`. Chi tiết: `UPGRADE_IDEAS.md`.
+- **Lazy load add-on:** Services **không** được load lúc Anki khởi động. Chỉ khi lần đầu cần (mở Configuration/Generate, hoặc gọi `get_tts_audio`/`full_voice_list`), `ServiceManager.ensure_initialized()` mới chạy `init_services()` và `configure()`.
+- **New Executor Architecture:** Sử dụng `MultiEngineExecutor` (`batch_executor.py`) với các pool riêng biệt cho từng engine.
+- **Concurrency Capping:** 
+    - **EdgeTTS**: Được giới hạn cứng ở **3 workers** để tránh bị Microsoft rate-limit.
+    - **Offline Engines**: Sử dụng `BoundedThreadPoolExecutor` để giới hạn hàng chờ và quản lý tài nguyên (RAM/CPU). Đề xuất 4-8 workers cho CPU Ryzen 7.
+- **Interleaved Batching:** Áp dụng mô hình producer-consumer để bắt đầu tạo audio ngay khi có yêu cầu, không đợi nạp xong toàn bộ danh sách, giúp giảm đáng kể độ trễ khởi động (startup latency).
 - **Cache audio files:** `generate_audio_write_file()` dùng hash `(source_text, voice_id, options)` → file `superfreetss-{hash}.mp3`; nếu đã tồn tại thì không gọi TTS lại.
-- **Voice list cache:** `get_service_voice_list()` và `locate_voice()` dùng `functools.lru_cache`; sau khi tải Piper/đổi config cần gọi `clear_voice_list_cache()` (đã gọi khi reconfigure và khi đóng Piper Manager/Setup).
-- **Batch:** `process_batch_audio()` dùng `ThreadPoolExecutor(max_workers=batch_concurrency)` (Preferences, mặc định 4). Mỗi task gọi `get_audio_file()` → tận dụng cache file.
-- **Background processing:** Dùng `anki_utils.run_in_background()` cho thao tác lâu.
+- **Voice list cache:** `get_service_voice_list()` và `locate_voice()` dùng `functools.lru_cache`.
 
 #### 4. UI/UX
 
@@ -777,18 +766,18 @@ Super Free TTS hiện hỗ trợ **2 ngôn ngữ giao diện**: **English** và 
 
 ## 📝 License
 
-Super Free TTS được phát triển bởi **Daniel from AnkiVN**. 100% miễn phí cho cộng đồng Anki Việt Nam.
+Super Free TTS được phát triển bởi **Paul from AnkiVN**. 100% miễn phí cho cộng đồng Anki Việt Nam.
 
 ---
 
 ## 📞 Liên Hệ & Hỗ Trợ
 
 - **Website**: https://ankivn.com
-- **Tác giả**: Daniel from AnkiVN
+- **Tác giả**: Paul from AnkiVN
 - **Issues**: Báo cáo lỗi hoặc đề xuất tính năng qua AnkiVN
 
 ---
 
-**Tài liệu cập nhật**: 2026-02-16  
+**Tài liệu cập nhật**: 2026-04-11  
 **Phiên bản addon (version.py)**: 1.0  
-**Tác giả**: Daniel from AnkiVN  
+**Tác giả**: Paul from AnkiVN  

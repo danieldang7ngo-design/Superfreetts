@@ -194,18 +194,10 @@ def remove_realtime_tts_tag(hypertts, browser, note_id_list):
 
 
 
-# Global references to menu actions for dynamic updates
-action_services = None
-action_preferences = None
-
 def update_menu_language(hypertts):
     """Update the text of the menu items based on current UI language."""
-    global action_services, action_preferences, ankivn_menu, action_unified_settings
+    global ankivn_menu, action_unified_settings
     lang = hypertts.get_ui_language()
-    if action_services:
-        action_services.setText(i18n.get_text("menu_services_configuration", lang))
-    if action_preferences:
-        action_preferences.setText(i18n.get_text("menu_preferences", lang))
     if ankivn_menu:
         ankivn_menu.setTitle("AnkiVN")
     if action_unified_settings:
@@ -327,32 +319,13 @@ def init(hypertts):
 
             return buttons
 
-    # anki tools menu
-    global action_services, action_preferences, ankivn_menu, action_unified_settings
-    
-    # Robust Check for existing actions using objectName
-    # This survives addon reloads where globals are reset but menu items stay
+    # Clean up legacy Anki Tools menu items if they exist from previous reloads
     existing_actions = aqt.mw.form.menuTools.actions()
-    
-    # Try to find existing actions in the actual menu
     for action in existing_actions:
-        if action.objectName() == "sf_action_services":
-            action_services = action
-        if action.objectName() == "sf_action_preferences":
-            action_preferences = action
-
-    # Create and add if not found
-    if action_services is None:
-        action_services = aqt.qt.QAction("", aqt.mw)
-        action_services.setObjectName("sf_action_services")
-        action_services.triggered.connect(lambda: launch_configuration_dialog(hypertts))
-        aqt.mw.form.menuTools.addAction(action_services)
-    
-    if action_preferences is None:
-        action_preferences = aqt.qt.QAction("", aqt.mw)
-        action_preferences.setObjectName("sf_action_preferences")
-        action_preferences.triggered.connect(lambda: launch_preferences_dialog(hypertts))
-        aqt.mw.form.menuTools.addAction(action_preferences)
+        # Catch and remove any previous tool actions including the pesky extra About button
+        if action.objectName() in ["sf_action_services", "sf_action_preferences", "sf_action_about"] or \
+           "Super Free TTS" in action.text():
+            aqt.mw.form.menuTools.removeAction(action)
 
     # Create AnkiVN top-level menu
     global ankivn_menu, action_unified_settings

@@ -406,7 +406,7 @@ class Configuration:
     # whether the user has chosen easy/advanced mode
     user_choice_easy_advanced: Optional[bool] = False
     # whether to display the introduction message
-    display_introduction_message: bool = False
+    display_introduction_message: bool = True
     # trial registration step
     trial_registration_step: TrialRegistrationStep = TrialRegistrationStep.finished
     # installation timestamp

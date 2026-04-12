@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
 from tests.conftest import MockAnkiUtils, MockServiceManager
 from superfreetss_addon import logging_utils
-logging_utils.FORCE_DEBUG_MODE = True
 from superfreetss_addon.servicemanager import ServiceManager
 
 def test_edgetts_discovery():

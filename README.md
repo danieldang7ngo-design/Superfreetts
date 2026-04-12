@@ -1,45 +1,58 @@
-Superfreetts Anki Add-on
+# Super Free TTS Anki Add-on
 ========================
 
-👉 Xem lộ trình phát triển chi tiết: [ROADMAP](./ROADMAP.md)
-🤖 Để nắm bắt nhanh cấu trúc dự án (đặc biệt cho AI), xem: [AI SUMMARY](./AI_SUMMARY.md)
+👉 View detailed development roadmap: [_ROADMAP](./_ROADMAP.md)
+🤖 For a quick project overview (especially for AI), see: [_AI_SUMMARY](./_AI_SUMMARY.md)
 
-## Giới thiệu
+## Introduction
 
-Đây là mã nguồn add-on Superfreetts cho Anki. Thư mục này đã được làm sạch, không chứa
-file sinh ra trong quá trình chạy (log, tmp, cache, v.v.) để sẵn sàng:
+This is the source code for the Super Free TTS add-on for Anki. This folder has been cleaned and does not contain files generated during runtime (logs, tmp, cache, etc.), making it ready to:
 
-- Cài đặt vào thư mục `addons21` của Anki
-- Đẩy thẳng lên GitHub như một bản mã nguồn "clean"
+- Install into the Anki `addons21` directory.
+- Push directly to GitHub as a "clean" source code repository.
 
-## Cấu trúc chính
+## Key Differences from HyperTTS
 
-- `superfreetss_addon/`: Mã nguồn chính của add-on (Python, UI, logic xử lý)
-- `PROJECT_DOCUMENTATION.md`: Tài liệu thiết kế / mô tả chi tiết chức năng bên trong add-on
-- `README.md`: Tệp mô tả ngắn gọn cho GitHub và người dùng
+Super Free TTS is a fork of HyperTTS with a focus on providing high-quality Text-to-Speech using exclusively free resources.
 
-Có thể còn một số thư mục/tệp khác tùy theo phiên bản add-on, nhưng sẽ không bao gồm:
+### 1. 100% Free Services
+- **Removed Paid Services:** All services requiring API keys or subscriptions have been removed (Alibaba, Amazon, Azure, ElevenLabs, Google Cloud, OpenAI, etc.).
+- **Added Free AI Engines:** Integrated powerful free engines including **EdgeTTS** (Microsoft), **Piper TTS**, **Kokoro TTS** (high-quality ONNX), and **MMS TTS** (Meta).
 
-- `__pycache__/`
-- File `*.pyc`, `*.pyo`
-- File log tạm (`*.log`), file tạm (`*.tmp`) hoặc file backup (`*.bak`, `*~`)
+### 2. High-Performance Architecture
+- **Multi-threaded Processing:** Features a new `UnifiedBatchExecutor` and `MultiEngineExecutor` for asynchronous, non-blocking audio generation.
+- **Service-Specific Concurrency:** Intelligent worker management (e.g., EdgeTTS is capped at 3 workers to prevent IP bans while Piper can run more aggressive threads).
+- **Unified Cache & Resource Monitoring:** Shared caching system and RAM tracking to ensure stability during large batches.
 
-## Cài đặt (Anki)
+### 3. Improved UI/UX
+- **Unified Settings:** Merged Configuration and Preferences into a single, intuitive tabbed dialog.
+- **Top-Level Menu:** Added an "AnkiVN" menu to the main toolbar for faster access.
+- **Simplified Workflow:** "Easy Mode" for quick single-note updates and "Collection Mode" for powerful batch processing.
 
-1. Đảm bảo Anki đã đóng.
-2. Sao chép thư mục `Superfreetts` này vào:
-   - Windows: `C:\\Users\\<TênUser>\\AppData\\Roaming\\Anki2\\addons21\\`
-3. Mở lại Anki, add-on sẽ tự động được nạp.
+### 4. Reliability & Recovery
+- **Checkpoint System:** Automatically saves progress during batch generation, allowing you to resume if Anki crashes or is closed.
 
-## Phát triển / Đóng góp
+## Main Structure
 
-- Sửa mã nguồn trong thư mục `superfreetss_addon/`.
-- Khi debug hoặc chạy test, có thể sinh ra các file log/tạm; trước khi đóng gói/commit,
-  hãy xóa chúng để giữ repo sạch.
+- `superfreetss_addon/`: Core add-on source code (Python, UI, processing logic).
+- `_PROJECT_DOCUMENTATION.md`: Detailed design and internal function documentation.
+- `README.md`: Brief description for GitHub and users.
 
-Đề xuất khi phát triển:
+Standard temporary files (like `__pycache__`, `*.pyc`, `*.log`, `*.tmp`) are excluded from this repository.
 
-- Không commit các file log, cache, file tạm.
-- Nếu thêm test, để chúng trong thư mục `tests/` (nếu có), có thể giữ lại trên GitHub
-  nhưng không cần copy vào bản phát hành đưa vào `addons21` khi phân phối cho người dùng.
+## Installation (Anki)
+
+1. Ensure Anki is closed.
+2. Copy this `Superfreetts` folder to:
+   - Windows: `C:\Users\<YourUser>\AppData\Roaming\Anki2\addons21\`
+3. Restart Anki; the add-on will load automatically.
+
+## Development / Contributing
+
+- Modify source code in the `superfreetss_addon/` directory.
+- Before committing or packaging, ensure logs and temporary files are removed to keep the repository clean.
+- Unit tests are located in the `tests/` directory.
+
+---
+Maintained by Paul from AnkiVN.
 

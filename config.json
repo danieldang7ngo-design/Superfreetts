@@ -1,5 +1,7 @@
 {
-    "configuration": {},
+    "configuration": {
+        "display_introduction_message": true
+    },
     "preferences": {},
     "presets": {},
     "mapping_rules": {},

@@ -3,7 +3,7 @@
 > **Note to AI Agents and Contributors:** This file provides a concise, high-level overview of the Super Free TTS Anki Add-on project. Read this first to quickly understand the architecture, data flow, and development guidelines before diving into the codebase.
 
 ## 1. Overview & Vision
-**Super Free TTS** is a 100% free Anki add-on created by Daniel from AnkiVN. Its primary goal is to help users automatically generate text-to-speech (TTS) audio for their flashcards, without relying on paid APIs or complex configurations.
+**Super Free TTS** is a 100% free Anki add-on, forked from HyperTTS and maintained by Paul from AnkiVN. Its primary goal is to help users automatically generate text-to-speech (TTS) audio for their flashcards using only free resources.
 
 **Key Values:**
 - **Free:** Exclusively uses free TTS engines (EdgeTTS, Piper, Kokoro, MMS, Google Translate, Windows SAPI, macOS TTS, eSpeak-ng).
@@ -14,7 +14,8 @@
 The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external requirements within the `external/` directory. 
 
 ### Key Components:
-- **`superfreetss.py` (Core Logic):** Contains the `HyperTTS` class handling text extraction, text processing (stripping HTML/cloze), audio generation with cache checks, and dynamic realtime TTS tags setup.
+- **`superfreetss.py` (Core Logic):** Contains the `SuperFreeTTS` class handling text extraction, text processing (stripping HTML/cloze), audio generation with cache checks, and dynamic batch execution logic.
+- **`batch_executor.py` (Async Execution):** Implements `UnifiedBatchExecutor` and `MultiEngineExecutor`. Uses a producer-consumer pattern with background threads to ensure non-blocking UI and interleaved audio generation.
 - **`servicemanager.py` (Service Manager):** Handles runtime discovery and lazy-loading of TTS services. It ensures that TTS engines are only initialized when actually needed, preventing slow Anki startup times.
 - **`gui.py` & `component_*.py` (UI Components):** Modular UI split into distinct components:
   - Unified settings dialog (`component_unified_settings.py`, `component_configuration.py`, `component_preferences.py`).
@@ -26,8 +27,8 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 ### Data Flow for Audio Generation:
 1. The user triggers generation (via Easy Mode or Collection Mode).
 2. `get_source_text()` extracts content.
-3. `get_audio_file()` processes the extracted text and delegates generation to the `ServiceManager`.
-4. The generation utilizes a hashing mechanism for the `(source_text, voice_id, options)` tuple. If a file like `superfreetss-{hash}.mp3` already exists in `user_files/`, it uses the cache; otherwise, it hits the TTS engine asynchronously in the background.
+3. `get_audio_file()` processes the extracted text and delegates generation to the `ServiceManager` or the new batch executor.
+4. The generation utilizes a hashing mechanism for the `(source_text, voice_id, options)` tuple. If a file like `superfreetss-{hash}.mp3` already exists in `user_files/`, it uses the cache; otherwise, it hits the TTS engine asynchronously in the background. EdgeTTS is hard-capped at 3 concurrent workers to ensure stability.
 
 ## 3. Key Features & Functionality
 - **Flexible UI Modes:** Easy Mode for single notes, Collection Mode for batch processing.
@@ -37,10 +38,9 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 - **Localization (i18n):** User interface comes in both English and Tiếng Việt (Vietnamese).
 
 ## 4. Development Roadmap Summary
-- **Phase P0 & 1 (Completed):** Unified Settings UI & AnkiVN Menu integration. Multi-threading issues successfully fixed, reduced UI freezing during batch operations, and optimized logging.
-- **Phase 2 (In Progress):** UX & Configuration. Enhancing setup indicators, fixing UI layout bug overlays (e.g., overlapping QLabels in Preferences), and adding inline validation hints. Plans remain to introduce visual speed/pitch sliders.
-- **Phase 3 & 4 (Planned):** Performance & Caching / Advanced Features. Limiting repeated API calls, configurable destinations for generated audio, custom renaming templates, and multiple Preset slots.
-- **Phase 5 (Planned):** Testing & Community. Introduction of automated test suites into a `tests/` directory.
+- **Phase P0 & 1 (Completed):** Unified Settings UI & AnkiVN Menu integration. Multi-threading issues fixed, UI freezing reduced, and logging optimized.
+- **Phase 2 & 3 (Completed):** UX, Configuration & Performance. Resolved overlap bugs in Preferences, implemented interleaved batch producer-consumer pattern, and added per-service concurrency capping (EdgeTTS limit).
+- **Phase 4 & 5 (Completed/In Progress):** Project is fully cleaned (no cache/logs in release). Automated test suites integrated into `tests/`. Plans remain for advanced destination templates.
 
 ## 5. Guide for Contributors & AI Agents
 If you wish to debug or expand the project, follow these technical guidelines:

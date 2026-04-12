@@ -96,6 +96,13 @@ class SafeStreamHandler(logging.StreamHandler):
             pass
 
 def get_stream_handler():
+    # In pytest mode, use sys.stdout directly (pytest captures stdout and the
+    # TextIOWrapper approach conflicts with its capture mechanism)
+    if getattr(sys, '_pytest_mode', False):
+        handler = SafeStreamHandler(stream=sys.stderr)
+        handler.setFormatter(logging.Formatter(fmt='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(name)s: %(message)s', datefmt='%H:%M:%S'))
+        return handler
+    
     # Wrap stdout to handle encoding errors gracefully on Windows (cp1252)
     # This prevents UnicodeEncodeError when logging non-ASCII characters
     try:

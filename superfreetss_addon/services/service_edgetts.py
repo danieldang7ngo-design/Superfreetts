@@ -53,9 +53,9 @@ class EdgeTTS(service.ServiceBase):
 
     def advanced_configuration_options(self):
         """Advanced settings for EdgeTTS (hidden in dropdown)"""
-        from .. import cpu_utils
+        # Hard cap: EdgeTTS max 3 workers to prevent API rate-limiting and ensure stability
         return {
-            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-3)', 1, 1, 3),
             'debug_logging': ('bool', 'Enable Debug Logging for EdgeTTS', False)
         }
 

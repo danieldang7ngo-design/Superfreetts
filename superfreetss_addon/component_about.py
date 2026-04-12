@@ -78,7 +78,7 @@ class AboutComponent(component_common.ConfigComponentBase):
 
         add_row(0, i18n.get_text("about_version", lang), version.ANKI_SUPER_FREE_TTS_VERSION)
         # Author name is now a green link to Facebook
-        add_row(1, i18n.get_text("about_author", lang), "https://facebook.com/dangngooooo", is_link=True, link_text="Daniel from AnkiVN")
+        add_row(1, i18n.get_text("about_author", lang), "https://facebook.com/dangngooooo", is_link=True, link_text="Paul from AnkiVN")
         # Added Honorable Contributor
         add_row(2, i18n.get_text("about_contributor", lang), "https://www.facebook.com/tui.la.phuc747", is_link=True, link_text="Lê Hoàng Phúc")
         add_row(3, i18n.get_text("about_website", lang), "https://ankivn.com", is_link=True, link_text="AnkiVN")

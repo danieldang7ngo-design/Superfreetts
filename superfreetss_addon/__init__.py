@@ -185,14 +185,15 @@ else:
 
     def show_welcome_popup():
         global _welcome_popup_already_shown
-        # Chặn trước mọi thứ: hook có thể gọi lặp; không đọc config khi đã hiện trong session
         if _welcome_popup_already_shown:
             return
 
         try:
             current_config = hyper_tts.get_configuration()
+            # Force show if requested, but respect existing session guard
             if not current_config.display_introduction_message:
-                return
+                current_config.display_introduction_message = True
+                save_configuration(current_config)
 
             # Gán True trước exec() (modal): lần gọi hook kế tiếp vẫn thấy True trong config
             # nhưng guard session chặn mở dialog thứ hai

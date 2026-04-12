@@ -45,6 +45,8 @@ Superfreetts hướng tới việc trở thành add-on TTS:
 | 3    | Hiệu suất & cache            | Planned     | Queue lớn, IO, cache text        |
 | 4    | Tính năng nâng cao           | Planned     | Preset, naming, folder            |
 | 5    | Test, tài liệu & cộng đồng   | Planned     | Test, docs, guideline, issue flow |
+| 6    | Refactor & Technical Debt    | Planned     | Decompose, error scope, legacy cleanup |
+| 7    | Performance Audit & Code Quality | Planned | Timeout per-engine, voicelist shrink, DI, test coverage |
 
 ---
 
@@ -209,7 +211,100 @@ Superfreetts hướng tới việc trở thành add-on TTS:
   - Cố gắng thêm/giữ test liên quan (nếu có).
   - Cập nhật tài liệu nếu thay đổi hành vi user-facing (UI, config, tuỳ chọn mới).
 
+## Phase 6 – Refactor & Technical Debt
+
+> Nguồn: `KE HOACH SIEU CAP BA DAO` – 5 ý tưởng tối ưu hoá codebase.
+
+- **Mục tiêu chính**
+  - Giảm nợ kỹ thuật (technical debt) tích lũy qua nhiều phiên bản.
+  - Tăng khả năng bảo trì, test, và mở rộng cho contributor mới.
+
+- **Các hạng mục chính**
+  - [Priority: High] **Decompose God-Object** – Tách `superfreetss.py` (~1700 dòng) thành 4 core modules + 1 Facade:
+    - `core/batch_processor.py` – Logic tạo audio hàng loạt
+    - `core/note_processor.py` – Quản lý mapping rules cho từng Note
+    - `core/audio_manager.py` – File IO, naming, hashing cache
+    - `core/template_parser.py` – Bóc tách dữ liệu từ Note, xử lý `[sound:...]`
+    - `superfreetss.py` giảm xuống ~200 dòng (Facade only)
+  - [Priority: High] **Error Handling Scoping** – Thay `except Exception` bằng typed exceptions:
+    - `except IOError` → `errors.SystemResourceError` (hết disk, lỗi phân quyền)
+    - `except RuntimeError` / `except ImportError` → `errors.ModelLoadError` (ONNX fail)
+    - Unit test giả lập với `unittest.mock` để xác nhận bắt lỗi đúng
+  - [Priority: Medium] **Legacy Methods Cleanup** – Xoá/gộp code cũ:
+    - Xoá `get_realtime_audio()` fallback logic (Anki đã có Audio Engine gốc)
+    - Xoá backward compatibility preference migration rườm rà
+    - Gộp `get_collection_sound_tag` + `get_full_audio_file_name` (trùng 70%)
+  - [Priority: Medium] **EdgeTTS UI Display Fix** – Sửa lỗi biến mất trong Menu:
+    - Thay so sánh Enum đối tượng (`==`) bằng so sánh giá trị (`.name == 'free'`) trong `component_configuration.py`
+    - Thêm log chẩn đoán trong `draw_service`
+  - [Priority: Medium] **Test Directory Reorganization** – Dọn dẹp thư mục test:
+    - Di chuyển `verify_all_services.py`, `debug_gui_logic.py`, `mock_anki.py`, `verify_gui_logic.py` vào `tests/`
+    - Tích hợp logic vào test suite hiện có, xoá file rác trong thư mục gốc
+
+- **Definition of Done**
+  - `superfreetss.py` ≤ 300 dòng, 4 core modules có unit test riêng.
+  - Không còn `except Exception` trong vòng lặp batch và audio_manager.
+  - Thư mục gốc addon sạch, không còn file test/debug lẻ.
+  - 100% test suite hiện tại vẫn pass sau refactor.
+
+---
+
+## Phase 7 – Performance Audit & Code Quality (từ đánh giá so sánh addon)
+
+> Nguồn: Báo cáo đánh giá toàn diện AnkivnTTS vs Superfreetts (2026-04-11)
+
+- **Mục tiêu chính**
+  - Tối ưu hiệu năng batch generation dựa trên kết quả audit thực tế.
+  - Giảm kích thước codebase, tăng testability, hỗ trợ long-term maintenance.
+
+- **Các hạng mục chính**
+
+  - [Priority: High] **Tách `superfreetss.py` (1696 LOC)** – Hiện tại là "god class" chứa quá nhiều trách nhiệm:
+    - Tách thành `batch_orchestrator.py` (điều phối batch flow), `audio_manager.py` (generate + cache + file hash), `note_updater.py` (Anki note field operations)
+    - `superfreetss.py` giữ vai trò Facade ≤ 300 dòng
+    - _Note: Bổ sung cho Phase 6 nhưng scope cụ thể hơn dựa trên audit_
+
+  - [Priority: High] **Timeout per-engine thay vì hardcode 25s** – Kokoro ONNX inference và MMS có thể cần 30-60s cho batch lớn:
+    - Thêm `batch_timeout_seconds` vào `advanced_configuration_options()` của mỗi service
+    - Default: EdgeTTS=15s, Piper=30s, Kokoro=60s, MMS=60s
+    - `_execute_unique_tasks_unified()` đọc timeout từ service config thay vì `future.result(timeout=25.0)`
+
+  - [Priority: High] **Tăng test coverage cho core flow** – `process_batch_audio()` chưa có unit test:
+    - Mock `service_manager` + `anki_utils` để test deduplication logic
+    - Test checkpoint save/resume flow
+    - Test cancellation mid-batch (verify futures cancelled + checkpoint saved)
+    - Target: ≥ 80% coverage cho `batch_orchestrator.py` sau khi tách
+
+  - [Priority: Medium] **Giảm kích thước `voicelist.py` (2.5MB)** – File quá lớn bundle trong source:
+    - Chuyển voice data sang JSON/compressed file trong `data/` hoặc `cache/`
+    - Lazy-load khi service lần đầu gọi `voice_list()`
+    - Giảm addon package size đáng kể
+
+  - [Priority: Medium] **Dependency Injection thay module-level singletons** – Hiện có 3 singleton (`_executor`, `_multi_executor`, `_resource_manager`):
+    - Chuyển sang constructor injection trong `SuperFreeTTS.__init__()`
+    - Dễ mock trong test, dễ kiểm soát lifecycle
+    - Tránh race condition khi reload addon
+
+  - [Priority: Medium] **Cleanup placeholder code trong `batch_executor.py`** – `_execute_single_task()` trả về `None`:
+    - Hoặc implement thực sự hoặc xóa và document rằng caller phải override
+    - Giảm confusion cho contributor mới đọc code
+
+  - [Priority: Low] **Cân nhắc `httpx` thay `requests`** cho async-native HTTP:
+    - Hiện tại `requests` import global nhưng chỉ dùng sync
+    - `httpx` hỗ trợ cả sync lẫn async, phù hợp với `asyncio.gather()` pattern của EdgeTTS
+    - Chỉ áp dụng nếu có service mới cần async HTTP
+
+- **Definition of Done**
+  - `superfreetss.py` ≤ 300 dòng, core logic nằm trong 3 module riêng có unit test.
+  - Timeout per-engine configurable từ GUI, không còn hardcode 25s.
+  - `voicelist.py` không còn > 500KB trong source tree.
+  - Test coverage cho batch flow ≥ 80%.
+  - Không còn module-level singleton nào không có factory function tương ứng.
+
+---
+
 ## Ý tưởng tương lai — Workflow / Queue Preset (chạy nhiều preset cùng lúc)
+
 
 > Ghi chú để review sau: thêm vào roadmap như một hướng mở rộng cho power user.
 

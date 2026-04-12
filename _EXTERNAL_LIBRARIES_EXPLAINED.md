@@ -21,6 +21,7 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 - **propcache/** - Cache properties
 - **yarl/** - Parse URL cho aiohttp
 - **attrs/** - Tạo classes dễ dàng
+- **psutil/** - Theo dõi tài nguyên hệ thống (RAM/CPU)
 
 ### 🎯 **Cho Google Translate TTS**
 - **gtts/** - Google Text-to-Speech library
@@ -38,6 +39,8 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 - **certifi/** - SSL certificates
 - **charset_normalizer/** - Detect encoding
 - **idna/** - Xử lý domain names quốc tế
+- **aiohappyeyeballs/** - DNS resolver nhanh cho aiohttp (đã thêm)
+- **frozenlist/** - Data structure cho aiohttp (đã thêm)
 
 ### 🎯 **Utilities**
 - **tabulate/** - Tạo bảng đẹp (hiển thị danh sách voices)
@@ -50,19 +53,18 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 ### 🎯 **Data Processing**
 - **databind/** - Serialize/deserialize data
 - **typeapi/** - Type introspection
-- **nr/** - Utilities
+- **nr/** - Utilities package (nr.stream, nr.date)
 - **deprecated/** - Đánh dấu code deprecated
 - **wrapt/** - Decorators
 
 ---
 
-## Các Thư Viện Có Thể Xóa (Không Dùng Nữa)
+Những thư viện này đã được xóa hoặc làm sạch để giảm dung lượng addon:
 
-Những thư viện này có thể xóa an toàn vì không còn service nào dùng:
-
-### ❌ Không cần thiết
-- **bin/** - Binary executables (không rõ)
-- **__pycache__/** - Python cache (tự tạo lại)
+### ❌ Đã xóa / Đã làm sạch
+- **__pycache__/** - Đã xóa sạch toàn bộ project
+- **.pytest_cache/** - Đã xóa sạch
+- **Files rác (log, tmp)** - Đã dọn dẹp hoàn toàn
 
 ---
 

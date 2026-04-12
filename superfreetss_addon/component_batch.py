@@ -411,12 +411,12 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         self.tabs = aqt.qt.QTabWidget()
 
-        # Tab 1: Voice Selection (the "wow" moment — first thing users see)
-        self.tabs.addTab(self.voice_selection.draw(), i18n.get_text("tab_voice_selection", lang))
-
-        # Tab 2: Field Mapping (merged Source + Target)
+        # Tab 1: Field Mapping (left, default active)
         self.field_mapping_widget = self._build_field_mapping_tab()
         self.tabs.addTab(self.field_mapping_widget, i18n.get_text("tab_field_mapping", lang))
+
+        # Tab 2: Voice Selection (right)
+        self.tabs.addTab(self.voice_selection.draw(), i18n.get_text("tab_voice_selection", lang))
 
         # Text Processing tab - hidden by default for simplicity
         self.text_processing_widget = self.text_processing.draw()

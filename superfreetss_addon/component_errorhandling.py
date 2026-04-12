@@ -24,8 +24,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
         for error_dialog_type in constants.ErrorDialogType:
             self.realtime_tts_errors_dialog_type.addItem(error_dialog_type.name, error_dialog_type)
 
-        self.error_stats_reporting = aqt.qt.QCheckBox()
-
         self.disable_ssl_verification = aqt.qt.QCheckBox()
         self.debug_mode = aqt.qt.QCheckBox()
 
@@ -36,7 +34,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
         self.model = model
         self.propagate_model_change = False
         self.realtime_tts_errors_dialog_type.setCurrentText(self.model.realtime_tts_errors_dialog_type.name)
-        self.error_stats_reporting.setChecked(self.model.error_stats_reporting)
         self.disable_ssl_verification.setChecked(self.model.disable_ssl_verification)
         self.debug_mode.setChecked(self.model.debug_mode)
         self.propagate_model_change = True
@@ -65,13 +62,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
         self.realtime_groupbox.setLayout(realtime_vlayout)
         layout.addWidget(self.realtime_groupbox)
 
-        # Error Reporting group
-        self.reporting_groupbox = aqt.qt.QGroupBox(i18n.get_text("errors_group_reporting", lang))
-        reporting_vlayout = aqt.qt.QVBoxLayout()
-        reporting_vlayout.addWidget(self.error_stats_reporting)
-        self.reporting_groupbox.setLayout(reporting_vlayout)
-        layout.addWidget(self.reporting_groupbox)
-
         # Network Connection group
         self.network_groupbox = aqt.qt.QGroupBox(i18n.get_text("errors_group_network", lang))
         network_vlayout = aqt.qt.QVBoxLayout()
@@ -93,7 +83,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
 
         # wire events
         self.realtime_tts_errors_dialog_type.currentIndexChanged.connect(self.realtime_tts_errors_dialog_type_changed)
-        self.error_stats_reporting.stateChanged.connect(self.error_stats_reporting_changed)
         self.disable_ssl_verification.stateChanged.connect(self.disable_ssl_verification_changed)
         self.debug_mode.stateChanged.connect(self.debug_mode_changed)
 
@@ -102,8 +91,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
     def update_ui_labels(self, lang: str):
         self.realtime_groupbox.setTitle(i18n.get_text("errors_group_realtime", lang))
         self.realtime_tts_error_dialog.setText(i18n.get_text("errors_label_realtime", lang))
-        self.reporting_groupbox.setTitle(i18n.get_text("errors_group_reporting", lang))
-        self.error_stats_reporting.setText(i18n.get_text("errors_label_stats", lang))
         self.network_groupbox.setTitle(i18n.get_text("error_handling_group_network", lang))
         self.ssl_description.setText(i18n.get_text("errors_label_ssl", lang))
         self.disable_ssl_verification.setText(i18n.get_text("error_handling_disable_ssl_label", lang))
@@ -115,11 +102,6 @@ class ErrorHandling(component_common.ConfigComponentBase):
     def realtime_tts_errors_dialog_type_changed(self, index):
         logger.info(f'realtime_tts_errors_dialog_type_changed {index}')
         self.model.realtime_tts_errors_dialog_type = self.realtime_tts_errors_dialog_type.itemData(index)
-        self.notify_model_update()
-
-    def error_stats_reporting_changed(self, state):
-        logger.info(f'error_stats_reporting_changed {state}')
-        self.model.error_stats_reporting = bool(state)
         self.notify_model_update()
 
     def disable_ssl_verification_changed(self, state):
