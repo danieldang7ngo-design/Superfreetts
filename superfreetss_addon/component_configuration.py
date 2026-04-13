@@ -234,7 +234,7 @@ class Configuration(component_common.ConfigComponentBase):
         if service.name == "KokoroTTS":
             dlg = component_kokoro_manager.KokoroInstallManager(self.dialog)
             if dlg.exec():
-                engine_path = component_kokoro_manager.PYTHON_EXE
+                engine_path = component_kokoro_manager._get_python_exe()
                 if os.path.exists(engine_path):
                     self._set_service_config_value_with_ui_sync(service.name, "engine_path", engine_path)
             return
@@ -256,8 +256,9 @@ class Configuration(component_common.ConfigComponentBase):
             from . import component_piper_setup
             dlg = component_piper_setup.PiperSetupDialog(self.dialog)
             dlg.exec()
-            if os.path.exists(constants.PIPER_EXE_PATH):
-                self._set_service_config_value_with_ui_sync(service.name, "engine_path", constants.PIPER_EXE_PATH)
+            # Set Piper engine directory
+            if os.path.exists(constants.PIPER_ENGINE_DIR):
+                self._set_service_config_value_with_ui_sync(service.name, "executable_path", constants.PIPER_ENGINE_DIR)
             return
 
     def get_service_enable_change_fn(self, service):
@@ -416,7 +417,7 @@ class Configuration(component_common.ConfigComponentBase):
                          dlg = component_kokoro_manager.KokoroInstallManager(self.dialog)
                          if dlg.exec():
                              # If installed successfully, update the path
-                             default_path = os.path.join(component_kokoro_manager.PYTHON_EXE)
+                             default_path = component_kokoro_manager._get_python_exe()
                              if os.path.exists(default_path):
                                  le.setText(default_path)
                      install_btn.clicked.connect(lambda checked=False, le=lineedit: open_kokoro_manager(le))
@@ -441,15 +442,15 @@ class Configuration(component_common.ConfigComponentBase):
                      h_layout.addWidget(install_mms_btn)
 
                 # Special logic for PiperTTS: Add "Setup Piper" button
-                if service.name == "PiperTTS" and key == "engine_path":
+                if service.name == "PiperTTS" and key == "executable_path":
                      setup_btn = aqt.qt.QPushButton(i18n.get_text("button_setup_piper", lang))
                      def open_piper_setup(le=lineedit):
                           from . import component_piper_setup
                           dlg = component_piper_setup.PiperSetupDialog(self.dialog)
                           dlg.exec()
-                          # After setup, update path if exists
-                          if os.path.exists(constants.PIPER_EXE_PATH):
-                              le.setText(constants.PIPER_EXE_PATH)
+                          # After setup, update path to the Piper engine directory
+                          if os.path.exists(constants.PIPER_ENGINE_DIR):
+                              le.setText(constants.PIPER_ENGINE_DIR)
                      setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_piper_setup(le))
                      gui_utils.configure_primary_button(setup_btn)
                      h_layout.addWidget(setup_btn)

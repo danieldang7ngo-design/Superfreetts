@@ -165,6 +165,7 @@ class PiperSetupDialog(QDialog):
         self.manage_models_btn.setEnabled(True)
         QMessageBox.information(self, i18n.get_text("generic_success", self.lang), i18n.get_text("piper_setup_success_msg", self.lang))
         self.open_model_manager()
+        self.accept()  # Close dialog and return True so engine_path gets set
 
     def uninstall_complete(self):
         self.status_label.setText(i18n.get_text("piper_setup_uninstall_success", self.lang))

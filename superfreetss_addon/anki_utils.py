@@ -363,7 +363,10 @@ class AnkiUtils():
     def report_unknown_exception_interactive(self, exception, action):
         error_message = f'Encountered an unknown error while {action}: {str(exception)}'
         if hasattr(sys, '_sentry_crash_reporting'):
-            sentry_sdk.capture_exception(exception)
+            if isinstance(exception, str):
+                sentry_sdk.capture_exception(RuntimeError(exception))
+            else:
+                sentry_sdk.capture_exception(exception)
         else:
             logger.critical(exception, exc_info=True)
         self.critical_message(error_message, None)
@@ -371,7 +374,10 @@ class AnkiUtils():
 
     def report_unknown_exception_background(self, exception):
         if hasattr(sys, '_sentry_crash_reporting'):
-            sentry_sdk.capture_exception(exception)
+            if isinstance(exception, str):
+                sentry_sdk.capture_exception(RuntimeError(exception))
+            else:
+                sentry_sdk.capture_exception(exception)
         else:
             logger.critical(exception, exc_info=True)
 

@@ -155,6 +155,17 @@ class SherpaProcessPool:
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
         env = os.environ.copy()
+        
+        # For Piper: pass DATA_DIR so it can find piper.exe in the profile folder
+        if 'piper' in script_path.lower():
+            try:
+                from .. import constants
+                data_dir = constants.DATA_DIR
+                env['SUPERFREETSS_DATA_DIR'] = data_dir
+                logger.info(f"SherpaPool[{self.name}]: Set SUPERFREETSS_DATA_DIR={data_dir}")
+            except Exception as e:
+                logger.warning(f"SherpaPool[{self.name}]: Failed to set SUPERFREETSS_DATA_DIR: {e}")
+        
         logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)} (debug_enabled={debug_enabled})")
 
         # Observability Upgrade: Initialize the output sink (default to DEVNULL)
@@ -224,12 +235,12 @@ class MmsTTS(service.ServiceBase):
         """Proactively ensure the MMS-dedicated python environment is ready."""
         try:
             from ..mms_engine_manager import MmsEngineManager
-            from ..constants import MMS_ENGINE_DIR
-            if os.path.exists(MMS_ENGINE_DIR):
+            mms_engine_dir = constants.MMS_ENGINE_DIR
+            if os.path.exists(mms_engine_dir):
                 # Fix ._pth if needed
-                pth_files = [f for f in os.listdir(MMS_ENGINE_DIR) if f.endswith('._pth')]
+                pth_files = [f for f in os.listdir(mms_engine_dir) if f.endswith('._pth')]
                 if pth_files:
-                    pth_path = os.path.join(MMS_ENGINE_DIR, pth_files[0])
+                    pth_path = os.path.join(mms_engine_dir, pth_files[0])
                     with open(pth_path, 'r') as f:
                         content = f.read()
                     
@@ -281,8 +292,7 @@ class MmsTTS(service.ServiceBase):
 
     def voice_list(self) -> typing.List[voice.TtsVoice_v3]:
         # We manually list installed models from data/mms_models
-        from ..constants import DATA_DIR
-        model_dir = os.path.join(DATA_DIR, 'mms_models')
+        model_dir = os.path.join(constants.DATA_DIR, 'mms_models')
         
         if not os.path.exists(model_dir):
             return []
@@ -361,7 +371,7 @@ class MmsTTS(service.ServiceBase):
 
         lang_code = voice.voice_key.replace("mms_", "")
         from ..constants import DATA_DIR
-        model_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
+        model_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
         
         if not os.path.exists(model_dir):
             raise errors.RequestError(source_text, voice, f"MMS Model for {lang_code} not installed.")
@@ -454,7 +464,7 @@ class MmsTTS(service.ServiceBase):
 
         lang_code = voice.voice_key.replace("mms_", "")
         from ..constants import DATA_DIR
-        model_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
+        model_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
         
         if not os.path.exists(model_dir):
             return [None] * len(source_texts)

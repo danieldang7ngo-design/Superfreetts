@@ -178,6 +178,23 @@ else:
                                                         )
 
     # ---------------------------------------------------------
+    # Persistent Storage Setup
+    # ---------------------------------------------------------
+    def setup_data_directory():
+        """Point DATA_DIR to the current Anki profile folder."""
+        try:
+            profile_path = aqt.mw.pm.profileFolder()
+            if profile_path:
+                new_data_dir = os.path.join(profile_path, 'superfreetts_data')
+                constants.update_paths(new_data_dir)
+                # Ensure directory exists
+                if not os.path.exists(new_data_dir):
+                    os.makedirs(new_data_dir, exist_ok=True)
+                logger.info(f"Data directory set to: {new_data_dir}")
+        except Exception as e:
+            logger.error(f"Failed to setup data directory: {e}")
+
+    # ---------------------------------------------------------
     # Popup chào mừng (display_introduction_message = True sau first_install)
     # profile_did_open có thể gọi nhiều lần → guard để chỉ hiện 1 lần mỗi session
     # ---------------------------------------------------------
@@ -190,10 +207,9 @@ else:
 
         try:
             current_config = hyper_tts.get_configuration()
-            # Force show if requested, but respect existing session guard
+            # Respect user's "Don't show again" preference
             if not current_config.display_introduction_message:
-                current_config.display_introduction_message = True
-                save_configuration(current_config)
+                return
 
             # Gán True trước exec() (modal): lần gọi hook kế tiếp vẫn thấy True trong config
             # nhưng guard session chặn mở dialog thứ hai
@@ -202,19 +218,32 @@ else:
             from . import component_welcome
 
             welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
-            welcome_dialog.exec()
+            result = welcome_dialog.exec()
+            
+            # Nếu user không check "Don't show again" và đóng dialog, reload config để kiểm tra
+            # Nếu đã được set False (user checked), không cần làm gì thêm
+            # Nếu vẫn True, dialog sẽ hiện lại lần sau khi profile mở lại
+            if result != 1:  # Dialog bị reject/cancel
+                # Kiểm tra lại config sau khi dialog đóng
+                updated_config = hyper_tts.get_configuration()
+                if not updated_config.display_introduction_message:
+                    logger.info("Welcome popup disabled by user via Don't show again.")
         except Exception as e:
             logger.error(f"Failed to show welcome popup: {e}")
+
+    def on_profile_did_open():
+        setup_data_directory()
+        show_welcome_popup()
 
     if not hasattr(sys, "_pytest_mode"):
         # Tránh chồng callback sau Tools → Add-ons → Reload (module mới append thêm, handler cũ vẫn nằm trong list)
         _mw = getattr(aqt, "mw", None)
         if _mw is not None:
-            _prev = getattr(_mw, "_sftts_welcome_profile_hook", None)
+            _prev = getattr(_mw, "_sftts_profile_hook", None)
             if _prev is not None:
                 try:
                     aqt.gui_hooks.profile_did_open.remove(_prev)
                 except ValueError:
                     pass
-            _mw._sftts_welcome_profile_hook = show_welcome_popup
-        aqt.gui_hooks.profile_did_open.append(show_welcome_popup)
+            _mw._sftts_profile_hook = on_profile_did_open
+        aqt.gui_hooks.profile_did_open.append(on_profile_did_open)

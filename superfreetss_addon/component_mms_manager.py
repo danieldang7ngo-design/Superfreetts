@@ -8,7 +8,7 @@ from . import i18n
 from . import gui_utils
 from .downloader import TurboDownloader
 from .mms_engine_manager import MmsEngineManager
-from .constants import DATA_DIR
+from . import constants
 
 # MMS Models from Hugging Face (Sherpa-ONNX format by willwade)
 MMS_BASE_URL = "https://huggingface.co/willwade/mms-tts-multilingual-models-onnx/resolve/main"
@@ -115,7 +115,7 @@ class MmsInstallManager(QDialog):
              ret = QMessageBox.question(self, i18n.get_text("generic_warning", self.lang), i18n.get_text("mms_manager_confirm_autofix_non_eng", self.lang), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
              if ret == QMessageBox.StandardButton.No: return
 
-        mms_dir = os.path.join(DATA_DIR, 'mms_models', iso)
+        mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', iso)
         if not os.path.exists(os.path.join(mms_dir, "model.onnx")):
              QMessageBox.warning(self, i18n.get_text("generic_error", self.lang), i18n.get_text("mms_manager_error_not_installed", self.lang).format(iso))
              return
@@ -139,7 +139,7 @@ class MmsInstallManager(QDialog):
             # OR ask the user if they want to download the full 5MB CMU dict.
             
             # Let's try downloading the standard CMU dict if not present
-            cmu_path = os.path.join(DATA_DIR, 'cmudict-0.7b')
+            cmu_path = os.path.join(constants.DATA_DIR, 'cmudict-0.7b')
             if not os.path.exists(cmu_path):
                  ret = QMessageBox.question(self, i18n.get_text("mms_manager_dialog_download_cmu_title", self.lang), i18n.get_text("mms_manager_dialog_download_cmu_msg", self.lang), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                  if ret == QMessageBox.StandardButton.No: return
@@ -231,7 +231,7 @@ class MmsInstallManager(QDialog):
             return
 
         iso = selected_items[0].data(Qt.ItemDataRole.UserRole)
-        mms_dir = os.path.join(DATA_DIR, 'mms_models', iso)
+        mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', iso)
         
         if not os.path.exists(os.path.join(mms_dir, "model.onnx")):
              QMessageBox.warning(self, i18n.get_text("generic_error", self.lang), i18n.get_text("mms_manager_error_not_installed", self.lang).format(iso))
@@ -309,7 +309,7 @@ class MmsInstallManager(QDialog):
             return
 
         iso = selected_items[0].data(Qt.ItemDataRole.UserRole)
-        mms_dir = os.path.join(DATA_DIR, 'mms_models', iso)
+        mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', iso)
         
         if not os.path.exists(os.path.join(mms_dir, "model.onnx")):
              QMessageBox.warning(self, "Not Installed", f"The model for {iso} is not installed yet.")
@@ -397,7 +397,7 @@ class MmsInstallManager(QDialog):
                 display_text = f"{name} ({country}) [{iso}]"
                 
                 # Check if installed
-                mms_model_path = os.path.join(DATA_DIR, 'mms_models', iso, "model.onnx")
+                mms_model_path = os.path.join(constants.DATA_DIR, 'mms_models', iso, "model.onnx")
                 is_installed = os.path.exists(mms_model_path)
 
                 if iso in FEATURED_LANGS:
@@ -477,7 +477,7 @@ class MmsInstallManager(QDialog):
                 service_logger.write_log('mms', 'install', 'INFO', f'Downloading model', {'LangCode': lang_code, 'LangName': lang_name})
                 mw.taskman.run_on_main(lambda n=lang_name, i=idx, t=total_langs: self.update_status(i18n.get_text("mms_manager_status_installing_n", self.lang).format(n, i+1, t)))
                 
-                mms_dir = os.path.join(DATA_DIR, 'mms_models', lang_code)
+                mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
                 os.makedirs(mms_dir, exist_ok=True)
                 
                 # Check for High Quality Piper Model
@@ -588,7 +588,7 @@ class MmsInstallManager(QDialog):
         success_count = 0
         for item in selected_items:
             iso = item.data(Qt.ItemDataRole.UserRole)
-            mms_dir = os.path.join(DATA_DIR, 'mms_models', iso)
+            mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', iso)
             if os.path.exists(mms_dir):
                 try:
                     shutil.rmtree(mms_dir)

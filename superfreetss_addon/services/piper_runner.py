@@ -33,12 +33,19 @@ def main():
     log("PIPER-STOCK RUNNER STARTED")
     
     # Resolve piper.exe path
-    # Expected structure: superfreetss_addon/data/piper_engine/piper/piper.exe
-    addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    piper_exe = os.path.join(addon_dir, 'data', 'piper_engine', 'piper', 'piper.exe')
+    # Try to get data_dir from environment variable (set by service_piper.py)
+    data_dir = os.environ.get('SUPERFREETSS_DATA_DIR')
+    
+    if data_dir:
+        piper_exe = os.path.join(data_dir, 'piper_engine', 'piper', 'piper.exe')
+    else:
+        # Fallback: use addon-relative path for backward compatibility
+        addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        piper_exe = os.path.join(addon_dir, 'data', 'piper_engine', 'piper', 'piper.exe')
     
     if not os.path.exists(piper_exe):
         log(f"CRITICAL: piper.exe not found at {piper_exe}")
+        log(f"SUPERFREETSS_DATA_DIR env var: {data_dir}")
 
     while True:
         try:
@@ -95,7 +102,7 @@ def generate_single(piper_exe, data, global_threads=1):
             return {"status": "error", "message": "Missing text or model_path"}
 
         if not os.path.exists(piper_exe):
-            return {"status": "error", "message": f"piper.exe not found at {piper_exe}"}
+            return {"status": "error", "message": f"piper.exe not found at {piper_exe} (SUPERFREETSS_DATA_DIR={data_dir})"}
 
         # Piper speed is controlled by length-scale (inverse of speed)
         # 1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower

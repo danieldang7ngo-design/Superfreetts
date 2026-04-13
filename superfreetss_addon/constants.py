@@ -103,7 +103,8 @@ def _get_addon_name():
 ADDON_PACKAGE_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(ADDON_PACKAGE_DIR, 'data')
 
-# Engine Directories
+# Engine Directories - these are initially relative to the addon, 
+# but will be updated by update_paths() once the Anki profile is loaded.
 SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
 KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
 MMS_ENGINE_DIR = os.path.join(DATA_DIR, 'mms_engine')
@@ -111,6 +112,20 @@ PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
 # The piper zip contains a internal folder named 'piper'
 PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
 PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
+
+def update_paths(new_data_dir):
+    """
+    Update all data-related paths. This is used to point the data directory
+    to the Anki profile folder instead of the addon package folder.
+    """
+    global DATA_DIR, SHARED_ENGINE_DIR, KOKORO_ENGINE_DIR, MMS_ENGINE_DIR, PIPER_ENGINE_DIR, PIPER_EXE_PATH, PIPER_MODELS_DIR
+    DATA_DIR = new_data_dir
+    SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
+    KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
+    MMS_ENGINE_DIR = os.path.join(DATA_DIR, 'mms_engine')
+    PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
+    PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
+    PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
 
 CONFIG_ADDON_NAME = _get_addon_name()
 

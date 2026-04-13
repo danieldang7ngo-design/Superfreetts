@@ -22,9 +22,8 @@ _piper_pool = SherpaProcessPool("Piper", max_processes=2)
 
 def _get_kokoro_engine_dir():
     try:
-        from ..constants import KOKORO_ENGINE_DIR
-        return KOKORO_ENGINE_DIR
-    except ImportError:
+        return constants.KOKORO_ENGINE_DIR
+    except AttributeError:
         return None
 
 def _get_python_exe():
@@ -135,17 +134,15 @@ class PiperTTS(service.ServiceBase):
 
     def _resolve_espeak_data_dir(self):
         """Resolve the espeak-ng-data directory required for Piper phonemization."""
-        from ..constants import PIPER_ENGINE_DIR
         # Based on structure: piper_engine/piper/espeak-ng-data
-        path = os.path.join(PIPER_ENGINE_DIR, 'piper', 'espeak-ng-data')
+        path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'espeak-ng-data')
         if os.path.exists(path):
             return path
         return None
 
     def _resolve_models_dir(self):
         """Resolve Piper models directory: config value or default addon path."""
-        from ..constants import PIPER_MODELS_DIR
-        default_dir = PIPER_MODELS_DIR
+        default_dir = constants.PIPER_MODELS_DIR
         models_path = self.get_configuration_value_optional(self.CONFIG_MODELS_PATH, '') or None
         if models_path and os.path.exists(models_path):
             return models_path

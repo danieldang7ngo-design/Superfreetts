@@ -11,13 +11,12 @@ import time
 
 from aqt import mw
 from aqt.qt import *
-from aqt.utils import showInfo, tooltip
+from aqt.utils import showInfo, tooltip, showWarning
 from . import i18n
 from . import logging_utils
 from . import constants
 from . import service_logger
 from .downloader import TurboDownloader
-from .constants import DATA_DIR, KOKORO_ENGINE_DIR
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -28,16 +27,17 @@ GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 KOKORO_V10_MODEL_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
 KOKORO_V10_VOICES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
 
-# Local paths
-PYTHON_EXE = os.path.join(KOKORO_ENGINE_DIR, 'python.exe')
+def _get_python_exe():
+    return os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
 
-# Modular subdirectories
-MODELS_DIR = os.path.join(KOKORO_ENGINE_DIR, 'models')
-VOICES_DIR = os.path.join(KOKORO_ENGINE_DIR, 'voices')
+def _get_models_dir():
+    return os.path.join(constants.KOKORO_ENGINE_DIR, 'models')
 
-# Default paths for v1.0 (Standard)
-KOKORO_V10_MODEL_PATH = os.path.join(MODELS_DIR, 'kokoro-v1.0.onnx')
-VOICES_V10_BIN_PATH = os.path.join(MODELS_DIR, 'voices-v1.0.bin')
+def _get_kokoro_v10_model_path():
+    return os.path.join(_get_models_dir(), 'kokoro-v1.0.onnx')
+
+def _get_voices_v10_bin_path():
+    return os.path.join(_get_models_dir(), 'voices-v1.0.bin')
 
 class KokoroInstallManager(QDialog):
     def __init__(self, parent=None):
@@ -130,7 +130,7 @@ class KokoroInstallManager(QDialog):
             try:
                 from .services.service_mms import _sherpa_pool
                 script_path = os.path.join(os.path.dirname(__file__), 'services', 'kokoro_runner.py')
-                _sherpa_pool.cleanup_all(PYTHON_EXE, script_path)
+                _sherpa_pool.cleanup_all(_get_python_exe(), script_path)
             except: pass
 
             # 2. Nuclear option: Kill any process running from this directory
@@ -144,15 +144,15 @@ class KokoroInstallManager(QDialog):
                 time.sleep(1) # Wait for OS to release locks
             except: pass
 
-            if os.path.exists(KOKORO_ENGINE_DIR):
-                self.log(f"Wiping directory: {KOKORO_ENGINE_DIR}")
+            if os.path.exists(constants.KOKORO_ENGINE_DIR):
+                self.log(f"Wiping directory: {constants.KOKORO_ENGINE_DIR}")
                 # 3. Clear Read-Only attributes (WinError 5 fix)
                 def make_writable(func, path, excinfo):
                     import stat
                     os.chmod(path, stat.S_IWRITE)
                     func(path)
 
-                shutil.rmtree(KOKORO_ENGINE_DIR, onerror=make_writable)
+                shutil.rmtree(constants.KOKORO_ENGINE_DIR, onerror=make_writable)
                 self.log("Deletion complete.")
             
             mw.taskman.run_on_main(lambda: showInfo("Kokoro Engine uninstalled successfully."))
@@ -179,49 +179,50 @@ class KokoroInstallManager(QDialog):
             os.makedirs(path, exist_ok=True)
 
     def _install_worker(self):
+        from . import service_logger
         try:
-            self._ensure_dir(KOKORO_ENGINE_DIR)
-            self._ensure_dir(MODELS_DIR)
-            self._ensure_dir(VOICES_DIR)
+            self._ensure_dir(constants.KOKORO_ENGINE_DIR)
+            self._ensure_dir(_get_models_dir())
+            self._ensure_dir(os.path.join(constants.KOKORO_ENGINE_DIR, 'voices'))
             service_logger.write_log('kokoro', 'install', 'INFO', 'Starting Kokoro installation')
             
             # Step 1: Download Python Embeddable
-            if not os.path.exists(PYTHON_EXE):
+            if not os.path.exists(_get_python_exe()):
                 mw.taskman.run_on_main(lambda: self.update_progress(10))
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_python", self.lang)))
-                self._download_file(PYTHON_EMBED_URL, os.path.join(KOKORO_ENGINE_DIR, 'python.zip'))
-                self._extract_zip(os.path.join(KOKORO_ENGINE_DIR, 'python.zip'), KOKORO_ENGINE_DIR, i18n.get_text("kokoro_setup_extracting_python", self.lang), 20)
+                self._download_file(PYTHON_EMBED_URL, os.path.join(constants.KOKORO_ENGINE_DIR, 'python.zip'))
+                self._extract_zip(os.path.join(constants.KOKORO_ENGINE_DIR, 'python.zip'), constants.KOKORO_ENGINE_DIR, i18n.get_text("kokoro_setup_extracting_python", self.lang), 20)
                 self._configure_python_pth()
             else:
                 self.log(i18n.get_text("kokoro_setup_log_python_exists", self.lang))
                 service_logger.write_log('kokoro', 'install', 'INFO', 'Python already exists, skipping download')
             
             # Step 2: Install Pip
-            scripts_dir = os.path.join(KOKORO_ENGINE_DIR, 'Scripts')
+            scripts_dir = os.path.join(constants.KOKORO_ENGINE_DIR, 'Scripts')
             pip_exe = os.path.join(scripts_dir, 'pip.exe')
             if not os.path.exists(pip_exe):
-                self._download_file(GET_PIP_URL, os.path.join(KOKORO_ENGINE_DIR, 'get-pip.py'))
-                self._run_command([PYTHON_EXE, 'get-pip.py'], i18n.get_text("kokoro_setup_installing_pip", self.lang), 30)
+                self._download_file(GET_PIP_URL, os.path.join(constants.KOKORO_ENGINE_DIR, 'get-pip.py'))
+                self._run_command([_get_python_exe(), 'get-pip.py'], i18n.get_text("kokoro_setup_installing_pip", self.lang), 30)
             else:
                 self.log(i18n.get_text("kokoro_setup_log_pip_exists", self.lang))
             
             # Step 3: Install Core Foundations (No heavy dictionaries)
-            self._run_command([PYTHON_EXE, '-m', 'pip', 'install', 'numpy<2.0.0', 'setuptools', 'wheel'], i18n.get_text("kokoro_setup_installing_foundations", self.lang), 40)
+            self._run_command([_get_python_exe(), '-m', 'pip', 'install', 'numpy<2.0.0', 'setuptools', 'wheel'], i18n.get_text("kokoro_setup_installing_foundations", self.lang), 40)
             
             # misaki core and soundfile (+ metadata helpers)
-            self._run_command([PYTHON_EXE, '-m', 'pip', 'install', 'kokoro-onnx>=0.3.0', 'soundfile', 'misaki', 'regex', 'rdflib', 'importlib-metadata'], i18n.get_text("kokoro_setup_finalizing_core", self.lang), 60)
+            self._run_command([_get_python_exe(), '-m', 'pip', 'install', 'kokoro-onnx>=0.3.0', 'soundfile', 'misaki', 'regex', 'rdflib', 'importlib-metadata'], i18n.get_text("kokoro_setup_finalizing_core", self.lang), 60)
             
             # Step 4: Download Standard v1.0 Brain (Required)
             self.log("Installing Standard v1.0 Brain (Core Engine)...")
-            if not os.path.exists(KOKORO_V10_MODEL_PATH):
+            if not os.path.exists(_get_kokoro_v10_model_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_v10", self.lang)))
-                self._download_file(KOKORO_V10_MODEL_URL, KOKORO_V10_MODEL_PATH)
+                self._download_file(KOKORO_V10_MODEL_URL, _get_kokoro_v10_model_path())
 
             # Step 5: Download Global Voice Bundle (Essential)
             self.log("Installing Global Voice Bundle (35MB)...")
-            if not os.path.exists(VOICES_V10_BIN_PATH):
+            if not os.path.exists(_get_voices_v10_bin_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_voices_v10", self.lang)))
-                self._download_file(KOKORO_V10_VOICES_URL, VOICES_V10_BIN_PATH)
+                self._download_file(KOKORO_V10_VOICES_URL, _get_voices_v10_bin_path())
 
             # Step 6: Finalize and Automate Optimization
             self.log("Finalizing Installation. Running automatic optimization (Ep-can)...")
@@ -247,7 +248,7 @@ class KokoroInstallManager(QDialog):
         count = 0
         size_saved = 0
         # 1. Clear __pycache__
-        for root, dirs, files in os.walk(KOKORO_ENGINE_DIR):
+        for root, dirs, files in os.walk(constants.KOKORO_ENGINE_DIR):
             if "__pycache__" in dirs:
                 p = os.path.join(root, "__pycache__")
                 size_saved += self._get_dir_size(p)
@@ -296,9 +297,9 @@ class KokoroInstallManager(QDialog):
 
     def _configure_python_pth(self):
         # We need to uncomment 'import site' in python3xx._pth to make pip work
-        pth_files = [f for f in os.listdir(KOKORO_ENGINE_DIR) if f.endswith('._pth')]
+        pth_files = [f for f in os.listdir(constants.KOKORO_ENGINE_DIR) if f.endswith('._pth')]
         if pth_files:
-            pth_path = os.path.join(KOKORO_ENGINE_DIR, pth_files[0])
+            pth_path = os.path.join(constants.KOKORO_ENGINE_DIR, pth_files[0])
             with open(pth_path, 'r') as f:
                 content = f.read()
             
@@ -322,7 +323,7 @@ class KokoroInstallManager(QDialog):
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT, 
             text=True, 
-            cwd=KOKORO_ENGINE_DIR,
+            cwd=constants.KOKORO_ENGINE_DIR,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         

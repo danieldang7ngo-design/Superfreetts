@@ -13,12 +13,11 @@ from . import gui_utils
 from . import logging_utils
 from . import utils_hf
 from . import constants
-from .constants import DATA_DIR
 
 logger = logging_utils.get_child_logger(__name__)
 
-# Standard directory for all ONNX models
-ONNX_MODELS_DIR = os.path.join(DATA_DIR, 'onnx_models')
+def _get_onnx_models_dir():
+    return os.path.join(constants.DATA_DIR, 'onnx_models')
 
 class OnnxManagerComponent:
     """A component to be drawn inside the main configuration UI using HTML for display."""
@@ -131,11 +130,12 @@ class OnnxManagerComponent:
 
     def refresh_installed_models(self):
         self.installed_models = []
-        if not os.path.exists(ONNX_MODELS_DIR):
-            os.makedirs(ONNX_MODELS_DIR, exist_ok=True)
+        onnx_dir = _get_onnx_models_dir()
+        if not os.path.exists(onnx_dir):
+            os.makedirs(onnx_dir, exist_ok=True)
             
-        for category in os.listdir(ONNX_MODELS_DIR):
-            cat_path = os.path.join(ONNX_MODELS_DIR, category)
+        for category in os.listdir(onnx_dir):
+            cat_path = os.path.join(onnx_dir, category)
             if not os.path.isdir(cat_path): continue
             for model_name in os.listdir(cat_path):
                 model_path = os.path.join(cat_path, model_name)
@@ -229,7 +229,7 @@ class OnnxManagerComponent:
         name, ok = QInputDialog.getText(self.parent_dialog, i18n.get_text("onnx_manager_input_name_title", self.lang), i18n.get_text("onnx_manager_input_name_label", self.lang), QLineEdit.EchoMode.Normal, default_name)
         if not ok: return
         
-        dest_dir = os.path.join(ONNX_MODELS_DIR, cat, name)
+        dest_dir = os.path.join(_get_onnx_models_dir(), cat, name)
         os.makedirs(dest_dir, exist_ok=True)
         
         self.progress_bar.setVisible(True)

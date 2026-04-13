@@ -10,7 +10,7 @@ from typing import Optional, Callable, Tuple
 from . import logging_utils
 from . import service_logger
 from .downloader import TurboDownloader
-from .constants import DATA_DIR, MMS_ENGINE_DIR
+from . import constants
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -21,8 +21,9 @@ GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 # Sherpa-ONNX version to install via pip
 SHERPA_VERSION = "1.12.34"
 
-PYTHON_EXE = os.path.join(MMS_ENGINE_DIR, 'python.exe')
-SITE_PACKAGES = os.path.join(MMS_ENGINE_DIR, 'Lib', 'site-packages')
+# Deprecated, use MmsEngineManager methods instead
+# PYTHON_EXE = os.path.join(MMS_ENGINE_DIR, 'python.exe')
+# SITE_PACKAGES = os.path.join(MMS_ENGINE_DIR, 'Lib', 'site-packages')
 
 # Install logging is handled by service_logger module
 # Log files: user_files/log/mms_install.log
@@ -40,15 +41,20 @@ class MmsEngineManager:
     @staticmethod
     def get_python_exe() -> str:
         """Return the path to the MMS-dedicated python executable."""
-        return PYTHON_EXE
+        return os.path.join(constants.MMS_ENGINE_DIR, 'python.exe')
 
     @staticmethod
-    def is_installed() -> bool:
+    def get_site_packages() -> str:
+        """Return the path to the MMS-dedicated site-packages."""
+        return os.path.join(constants.MMS_ENGINE_DIR, 'Lib', 'site-packages')
+
+    @classmethod
+    def is_installed(cls) -> bool:
         """Check if the MMS engine is fully installed (Python + sherpa_onnx)."""
-        if not os.path.exists(PYTHON_EXE):
+        if not os.path.exists(cls.get_python_exe()):
             return False
         # Check that sherpa_onnx is actually importable
-        site_packages = os.path.join(MMS_ENGINE_DIR, 'Lib', 'site-packages')
+        site_packages = cls.get_site_packages()
         sherpa_pkg = os.path.join(site_packages, 'sherpa_onnx')
         return os.path.exists(sherpa_pkg) and os.path.exists(os.path.join(sherpa_pkg, '__init__.py'))
 
@@ -58,6 +64,8 @@ class MmsEngineManager:
         Thread-safe installation of MMS engine.
         Returns True on success, False on failure.
         """
+        from . import service_logger
+        
         if cls.is_installed():
             logger.info("MmsEngineManager: Already installed.")
             service_logger.write_log('mms', 'install', 'INFO', 'Engine already installed, skipping')
@@ -70,7 +78,7 @@ class MmsEngineManager:
             cls._installing = True
 
         try:
-            os.makedirs(MMS_ENGINE_DIR, exist_ok=True)
+            os.makedirs(constants.MMS_ENGINE_DIR, exist_ok=True)
 
             def _report(msg, percent=0):
                 logger.info(f"MmsEngineManager: {msg}")
@@ -78,18 +86,18 @@ class MmsEngineManager:
                     progress_callback({'message': msg, 'percent': percent})
 
             # ── Step 1: Download & Extract Python ──
-            if not os.path.exists(PYTHON_EXE):
+            if not os.path.exists(cls.get_python_exe()):
                 _report("Downloading Python 3.10...", 5)
                 service_logger.write_log('mms', 'install', 'INFO', 'Downloading Python 3.10 embeddable', {'URL': PYTHON_EMBED_URL})
-                zip_path = os.path.join(MMS_ENGINE_DIR, 'python.zip')
+                zip_path = os.path.join(constants.MMS_ENGINE_DIR, 'python.zip')
                 
                 downloader = TurboDownloader(PYTHON_EMBED_URL, zip_path, progress_callback=progress_callback)
                 downloader.start()
 
                 _report("Extracting Python...", 20)
-                service_logger.write_log('mms', 'install', 'INFO', 'Extracting Python to engine directory', {'Path': MMS_ENGINE_DIR})
+                service_logger.write_log('mms', 'install', 'INFO', 'Extracting Python to engine directory', {'Path': constants.MMS_ENGINE_DIR})
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(MMS_ENGINE_DIR)
+                    zip_ref.extractall(constants.MMS_ENGINE_DIR)
 
                 if os.path.exists(zip_path):
                     os.remove(zip_path)
@@ -99,16 +107,16 @@ class MmsEngineManager:
                 _report("Python extracted.", 25)
 
             # ── Step 2: Install Pip ──
-            scripts_dir = os.path.join(MMS_ENGINE_DIR, 'Scripts')
+            scripts_dir = os.path.join(constants.MMS_ENGINE_DIR, 'Scripts')
             pip_exe = os.path.join(scripts_dir, 'pip.exe')
             if not os.path.exists(pip_exe):
                 _report("Downloading pip...", 30)
-                get_pip_path = os.path.join(MMS_ENGINE_DIR, 'get-pip.py')
+                get_pip_path = os.path.join(constants.MMS_ENGINE_DIR, 'get-pip.py')
                 downloader = TurboDownloader(GET_PIP_URL, get_pip_path)
                 downloader.start()
 
                 _report("Installing pip...", 35)
-                cls._run_command([PYTHON_EXE, get_pip_path])
+                cls._run_command([cls.get_python_exe(), get_pip_path])
 
                 if os.path.exists(get_pip_path):
                     os.remove(get_pip_path)
@@ -119,7 +127,7 @@ class MmsEngineManager:
             missing_deps = [d for d in core_deps if not cls._is_package_installed(d)]
             if missing_deps:
                 _report(f"Installing {', '.join(missing_deps)}...", 45)
-                cls._run_command([PYTHON_EXE, '-m', 'pip', 'install', 
+                cls._run_command([cls.get_python_exe(), '-m', 'pip', 'install', 
                                 'numpy<2.0.0', 'setuptools', 'wheel', 'soundfile'])
             else:
                 _report("Core dependencies already installed, skipping.", 45)
@@ -128,7 +136,7 @@ class MmsEngineManager:
             # ── Step 4: Install sherpa-onnx ──
             if not cls._is_package_installed('sherpa_onnx'):
                 _report(f"Installing sherpa-onnx v{SHERPA_VERSION} (this may take a while)...", 55)
-                cls._run_command([PYTHON_EXE, '-m', 'pip', 'install', 
+                cls._run_command([cls.get_python_exe(), '-m', 'pip', 'install', 
                                 f'sherpa-onnx=={SHERPA_VERSION}'])
                 _report("sherpa-onnx installed.", 85)
             else:
@@ -162,14 +170,16 @@ class MmsEngineManager:
         Actually run the MMS python interpreter and try to import sherpa_onnx.
         Returns (True, 'ok') on success, (False, error_message) on failure.
         """
-        if not os.path.exists(PYTHON_EXE):
+        from . import service_logger
+        
+        if not os.path.exists(cls.get_python_exe()):
             return False, "Python executable not found"
 
         try:
             result = subprocess.run(
-                [PYTHON_EXE, '-c', 'import sherpa_onnx; print("OK")'],
+                [cls.get_python_exe(), '-c', 'import sherpa_onnx; print("OK")'],
                 capture_output=True, text=True, timeout=30,
-                cwd=MMS_ENGINE_DIR,
+                cwd=constants.MMS_ENGINE_DIR,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
             if result.returncode == 0 and 'OK' in result.stdout:
@@ -185,34 +195,38 @@ class MmsEngineManager:
     @staticmethod
     def _configure_python_pth():
         """Uncomment 'import site' in ._pth file to enable site-packages."""
-        pth_files = [f for f in os.listdir(MMS_ENGINE_DIR) if f.endswith('._pth')]
-        if pth_files:
-            pth_path = os.path.join(MMS_ENGINE_DIR, pth_files[0])
-            with open(pth_path, 'r') as f:
-                content = f.read()
+        try:
+            pth_files = [f for f in os.listdir(constants.MMS_ENGINE_DIR) if f.endswith('._pth')]
+            if pth_files:
+                pth_path = os.path.join(constants.MMS_ENGINE_DIR, pth_files[0])
+                with open(pth_path, 'r') as f:
+                    content = f.read()
 
-            if '#import site' in content:
-                content = content.replace('#import site', 'import site')
-                with open(pth_path, 'w') as f:
-                    f.write(content)
-                logger.info("MmsEngineManager: Enabled 'import site' in ._pth")
+                if '#import site' in content:
+                    content = content.replace('#import site', 'import site')
+                    with open(pth_path, 'w') as f:
+                        f.write(content)
+                    logger.info("MmsEngineManager: Enabled 'import site' in ._pth")
+        except Exception as e:
+            logger.error(f"MmsEngineManager: Failed to configure Python pth: {e}")
+            raise
 
-    @staticmethod
-    def _is_package_installed(pkg_name):
+    @classmethod
+    def _is_package_installed(cls, pkg_name):
         """Check if a Python package is installed in the MMS engine's site-packages."""
-        if not os.path.exists(SITE_PACKAGES):
+        if not os.path.exists(cls.get_site_packages()):
             return False
         # Check for package directory (e.g. numpy/, sherpa_onnx/)
-        pkg_dir = os.path.join(SITE_PACKAGES, pkg_name)
+        pkg_dir = os.path.join(cls.get_site_packages(), pkg_name)
         if os.path.isdir(pkg_dir):
             return True
         # Check for single-file module (e.g. soundfile.py)
-        pkg_file = os.path.join(SITE_PACKAGES, f"{pkg_name}.py")
+        pkg_file = os.path.join(cls.get_site_packages(), f"{pkg_name}.py")
         if os.path.isfile(pkg_file):
             return True
         # Check for dist-info (handles cases like 'soundfile' installed as 'SoundFile')
         try:
-            for item in os.listdir(SITE_PACKAGES):
+            for item in os.listdir(cls.get_site_packages()):
                 if item.lower().startswith(pkg_name.lower().replace('-', '_')) and item.endswith('.dist-info'):
                     return True
         except OSError:
@@ -222,6 +236,8 @@ class MmsEngineManager:
     @staticmethod
     def _run_command(cmd):
         """Run a command in the MMS engine directory, logging output to file."""
+        from . import service_logger
+        
         cmd_str = ' '.join(cmd)
         logger.info(f"MmsEngineManager: Running: {cmd_str}")
         
@@ -233,7 +249,7 @@ class MmsEngineManager:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd=MMS_ENGINE_DIR,
+            cwd=constants.MMS_ENGINE_DIR,
             timeout=600,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )

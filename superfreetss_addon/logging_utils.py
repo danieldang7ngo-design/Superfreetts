@@ -77,7 +77,12 @@ class SentryLogger():
         # check if exc_info=True was passed
         exc_info = kwargs.get('exc_info', None)
         if exc_info == True:
-            sentry_sdk.capture_exception(msg)
+            # Sentry's capture_exception requires an actual Exception object.
+            # If msg is a string, wrap it in an Exception to prevent a crash in the error reporter.
+            if isinstance(msg, str):
+                sentry_sdk.capture_exception(RuntimeError(msg))
+            else:
+                sentry_sdk.capture_exception(msg)
         else:
             self.send_event(logging.ERROR, msg)
 
