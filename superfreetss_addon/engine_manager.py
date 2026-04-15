@@ -12,6 +12,8 @@ from . import constants
 
 logger = logging_utils.get_child_logger(__name__)
 
+logger = logging_utils.get_child_logger(__name__)
+
 # Constants for Python Installation
 PYTHON_EMBED_URL = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip"
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"

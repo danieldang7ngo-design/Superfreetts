@@ -102,7 +102,8 @@ class PiperTTS(service.ServiceBase):
     def configuration_options(self):
         from .. import system_utils
         return {
-            self.CONFIG_MODELS_PATH: ('directory', 'Piper path'),
+            self.CONFIG_EXECUTABLE_PATH: ('directory', 'Python Folder (Manual Override, Optional)'),
+            self.CONFIG_MODELS_PATH: ('directory', 'Piper Models Folder (Manual Override, Optional)'),
         }
     
     def advanced_configuration_options(self):
@@ -118,18 +119,26 @@ class PiperTTS(service.ServiceBase):
     def _get_piper_exe(self):
         """
         Return the path to the python executable that will run piper_runner.py.
-        We use the portable python from Kokoro for consistency.
+        Try user config first, then auto-detect from profile.
         """
-        # Try service configuration first (for advanced users)
-        exe_path = self.get_configuration_value_optional(self.CONFIG_EXECUTABLE_PATH, '')
-        if exe_path and os.path.exists(exe_path):
-            return exe_path
-            
-        # Fallback to Kokoro's portable python
+        # Try user manual override first
+        user_python_folder = self.get_configuration_value_optional(self.CONFIG_EXECUTABLE_PATH, '')
+        if user_python_folder and os.path.isdir(user_python_folder):
+            python_exe = os.path.join(user_python_folder, 'python.exe')
+            if os.path.exists(python_exe):
+                logger.info(f"[PiperTTS] ✓ Using manual Python path: {python_exe}")
+                return python_exe
+            else:
+                logger.warning(f"[PiperTTS] ⚠ Manual Python path does not contain python.exe: {user_python_folder}")
+        
+        # Auto-detect from profile
         python_exe = _get_python_exe()
+        logger.info(f"[PiperTTS] Auto-detecting Python: {python_exe}")
         if python_exe and os.path.exists(python_exe):
+            logger.info(f"[PiperTTS] ✓ Using auto-detected Python: {python_exe}")
             return python_exe
-            
+        
+        logger.error(f"[PiperTTS] ❌ Python not found (manual: {user_python_folder}, auto: {python_exe})")
         return None
 
     def _resolve_espeak_data_dir(self):
@@ -141,25 +150,36 @@ class PiperTTS(service.ServiceBase):
         return None
 
     def _resolve_models_dir(self):
-        """Resolve Piper models directory: config value or default addon path."""
-        default_dir = constants.PIPER_MODELS_DIR
-        models_path = self.get_configuration_value_optional(self.CONFIG_MODELS_PATH, '') or None
+        """Resolve Piper models directory: user config or auto-detect."""
+        # Try user config first (manual override)
+        models_path = self.get_configuration_value_optional(self.CONFIG_MODELS_PATH, '')
         if models_path and os.path.exists(models_path):
-            return models_path
+            # Validate: check if folder contains .onnx files
+            has_models = any(f.endswith('.onnx.json') for f in os.listdir(models_path) if os.path.isfile(os.path.join(models_path, f)))
+            if has_models:
+                logger.info(f"[PiperTTS] ✓ Using manual models path: {models_path}")
+                return models_path
+            else:
+                logger.warning(f"[PiperTTS] ⚠ Manual path has no .onnx models: {models_path}")
+        
+        # Fallback: auto-detect from profile
+        default_dir = constants.PIPER_MODELS_DIR
         if os.path.exists(default_dir):
-            logger.info(f"Piper: Using default models path: {default_dir}")
-            return default_dir
+            has_models = any(f.endswith('.onnx.json') for f in os.listdir(default_dir) if os.path.isfile(os.path.join(default_dir, f)))
+            if has_models:
+                logger.info(f"[PiperTTS] ✓ Auto-detected models path: {default_dir}")
+                return default_dir
+            else:
+                logger.warning(f"[PiperTTS] ⚠ Auto-detected path has no .onnx models: {default_dir}")
+        
+        logger.error(f"[PiperTTS] ❌ No models directory found (manual: {models_path}, auto: {default_dir})")
         return None
 
-    def __init__(self):
-        super().__init__()
-        # Piper no longer depends on Sherpa-ONNX. 
-        # Dependencies (piper.exe) are handled in component_piper_setup.py
-
     def voice_list(self) -> List[voice_module.TtsVoice_v3]:
-        models_path = self._resolve_models_dir()
-
         voices = []
+        
+        # Scan models folder
+        models_path = self._resolve_models_dir()
         if models_path and os.path.exists(models_path):
             logger.info(f"Piper: Listing models in {models_path}")
             try:
@@ -220,8 +240,16 @@ class PiperTTS(service.ServiceBase):
                                 logger.warning(f"Piper: Unsupported language code '{lang_code_raw}' (mapped to '{lang_code}') in {filename}")
                         except Exception as e:
                             logger.error(f"Piper: Error parsing model config {json_path}: {e}")
+            except PermissionError as e:
+                logger.error(f"[PiperTTS] ❌ PERMISSION DENIED accessing {models_path}")
+                logger.error(f"[PiperTTS] Error details: {e}")
+                logger.error(f"[PiperTTS] Check folder permissions or antivirus settings")
+                import traceback
+                logger.error(traceback.format_exc())
             except Exception as e:
                 logger.error(f"Piper: Error listing piper models in {models_path}: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
             
         # Add a placeholder voice if none found
         if not voices:
@@ -281,7 +309,19 @@ class PiperTTS(service.ServiceBase):
             try:
                 # Get process from pool
                 script_path = os.path.join(os.path.dirname(__file__), 'piper_runner.py')
-                process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                if not os.path.exists(script_path):
+                    raise errors.RequestError(source_text, voice, f"piper_runner.py not found at: {script_path}")
+                
+                try:
+                    process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                except (PermissionError, OSError) as e:
+                    logger.error(f"[PiperTTS] ❌ ACCESS DENIED when creating process!")
+                    logger.error(f"[PiperTTS] Executable: {piper_exe}")
+                    logger.error(f"[PiperTTS] Script: {script_path}")
+                    logger.error(f"[PiperTTS] Error: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    raise errors.RequestError(source_text, voice, f"Access denied to Piper engine or script. Check antivirus or permissions.")
                 
                 try:
                     # Prepare Piper-specific config
@@ -377,8 +417,9 @@ class PiperTTS(service.ServiceBase):
             
         piper_exe = self._get_piper_exe()
         if not piper_exe:
+             logger.error("[PiperTTS Batch] No piper_exe found!")
              return [None] * len(source_texts)
-             
+        
         models_path = self._resolve_models_dir()
         if not models_path:
              return [None] * len(source_texts)
@@ -393,7 +434,20 @@ class PiperTTS(service.ServiceBase):
             try:
                 # Get process from pool
                 script_path = os.path.join(os.path.dirname(__file__), 'piper_runner.py')
-                process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                if not os.path.exists(script_path):
+                    logger.error(f"[PiperTTS Batch] Script not found: {script_path}")
+                    return [None] * len(source_texts)
+                
+                try:
+                    process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
+                except (PermissionError, OSError) as e:
+                    logger.error(f"[PiperTTS Batch] ❌ ACCESS DENIED when creating process!")
+                    logger.error(f"[PiperTTS Batch] Executable: {piper_exe}")
+                    logger.error(f"[PiperTTS Batch] Script: {script_path}")
+                    logger.error(f"[PiperTTS Batch] Error: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    return [None] * len(source_texts)
                 
                 try:
                     tokens_path = model_file + ".json"
