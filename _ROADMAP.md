@@ -1,4 +1,4 @@
-Superfreetts – Product Roadmap
+<img width="1920" height="1001" alt="image" src="https://github.com/user-attachments/assets/86109496-841c-4ce7-891b-998858c9ed07" />Superfreetts – Product Roadmap
 ==============================
 
 ## Giới thiệu & cách đọc roadmap
@@ -341,4 +341,17 @@ Cơ sở hạ tầng của hệ thống đã sẵn sàng. Đang có `batch_execu
 ### Gợi ý ưu tiên
 
 Ưu tiên **Hướng 1** trước vì không cần thay đổi cấu trúc data model trong `config.json`, chỉ cần đổi UI cửa sổ Batch và vòng lặp trong `BatchExecutor`. Ước lượng triển khai: khoảng 1–2 ngày code.
+
+
+
+---
+
+
+
+Tìm hiểu tại sao khi dùng priority kiểu Cambridge -> Oxford -> Edge TTS. Khi từ không có trong từ điển Cambridge, Oxford nó không chạy Edge TTS cho tui nhỉ??? Tìm hiểu nguyên nhân tại sao?
+<img width="1920" height="1001" alt="image" src="https://github.com/user-attachments/assets/1f1f01c8-f557-464b-be50-2b4629c94762" />
+Với lại hypertts nó fixx được lỗi creating backup hiện lên rồi
+
+
+
 
