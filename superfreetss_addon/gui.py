@@ -22,6 +22,7 @@ from . import stats
 from . import config_models
 from . import errors
 from . import component_batch
+from . import component_workflow
 from . import component_realtime
 from . import component_presetmappingrules
 from . import component_configuration
@@ -234,6 +235,12 @@ def init(hypertts):
                     remove_realtime_tts_tag(hypertts, browser, browser.selectedNotes())
             return launch
 
+        def get_launch_workflow_browser_fn(hypertts, browser):
+            def launch():
+                with hypertts.error_manager.get_single_action_context('Running Workflow from Browser'):
+                    component_workflow.create_workflow_dialog_browser(hypertts, browser.selectedNotes())
+            return launch
+
         # Prevent duplicate menus in the same browser window
         existing_menu = browser.form.menubar.findChild(aqt.qt.QMenu, "sf_browser_menu")
         if existing_menu:
@@ -255,6 +262,10 @@ def init(hypertts):
                 action = aqt.qt.QAction(preset_info.name, browser)
                 action.triggered.connect(get_launch_dialog_browser_existing_fn(hypertts, browser, preset_info.id))
                 quick_apply_menu.addAction(action)
+
+        action = aqt.qt.QAction("Workflow", browser)
+        action.triggered.connect(get_launch_workflow_browser_fn(hypertts, browser))
+        menu.addAction(action)
 
         menu.addSeparator()
 
