@@ -407,6 +407,8 @@ class Configuration:
     user_choice_easy_advanced: Optional[bool] = False
     # whether to display the introduction message
     display_introduction_message: bool = True
+    # last addon version for which the user has already seen startup announcements
+    last_seen_announcement_version: Optional[str] = None
     # trial registration step
     trial_registration_step: TrialRegistrationStep = TrialRegistrationStep.finished
     # installation timestamp

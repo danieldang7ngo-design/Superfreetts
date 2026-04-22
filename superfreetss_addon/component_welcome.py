@@ -74,7 +74,7 @@ class WelcomeDialog(QDialog):
         lang = self.hypertts.get_ui_language()
         accent = constants.COLOR_ACCENT
 
-        self.setWindowTitle("Welcome to Super Free TTS")
+        self.setWindowTitle(i18n.get_text("welcome_dialog_title", lang))
         self.setFixedSize(560, 620)
         self.setWindowFlags(
             self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
@@ -177,7 +177,7 @@ class WelcomeDialog(QDialog):
 
         # Checkbox & Button section
         bottom_layout = QHBoxLayout()
-        self.cb_dont_show = QCheckBox("Don't show this again")
+        self.cb_dont_show = QCheckBox(i18n.get_text("welcome_dont_show_again", lang))
         self.cb_dont_show.setStyleSheet(f"color: {self.color_checkbox}; font-size: 11px;")
         bottom_layout.addWidget(self.cb_dont_show)
 

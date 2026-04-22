@@ -112,6 +112,8 @@ else:
     from . import servicemanager
     from . import superfreetss
     from . import gui
+    from . import release_notes
+    from . import version
 
     # initialize superfreetss
     # =======================
@@ -199,6 +201,58 @@ else:
     # profile_did_open có thể gọi nhiều lần → guard để chỉ hiện 1 lần mỗi session
     # ---------------------------------------------------------
     _welcome_popup_already_shown = False
+    _startup_popup_already_shown = False
+
+    def mark_announcement_version_seen(current_version: str) -> None:
+        current_config = hyper_tts.get_configuration()
+        if current_config.last_seen_announcement_version == current_version:
+            return
+        current_config.last_seen_announcement_version = current_version
+        hyper_tts.save_configuration(current_config)
+
+    def show_startup_popup():
+        global _startup_popup_already_shown
+        if _startup_popup_already_shown:
+            return
+
+        current_version = version.ANKI_SUPER_FREE_TTS_VERSION
+
+        try:
+            current_config = hyper_tts.get_configuration()
+
+            if first_install:
+                mark_announcement_version_seen(current_version)
+                if not current_config.display_introduction_message:
+                    return
+
+                _startup_popup_already_shown = True
+                from . import component_welcome
+
+                welcome_dialog = component_welcome.WelcomeDialog(hyper_tts, aqt.mw)
+                welcome_dialog.exec()
+                return
+
+            pending_release_notes = release_notes.get_release_notes_since(
+                current_config.last_seen_announcement_version,
+                current_version,
+            )
+            if len(pending_release_notes) == 0:
+                mark_announcement_version_seen(current_version)
+                return
+
+            _startup_popup_already_shown = True
+            from . import component_release_notes
+
+            release_notes_dialog = component_release_notes.ReleaseNotesDialog(
+                hyper_tts,
+                pending_release_notes,
+                current_version,
+                aqt.mw,
+            )
+            release_notes_dialog.exec()
+            mark_announcement_version_seen(current_version)
+        except Exception as e:
+            logger.error(f"Failed to show startup popup: {e}")
 
     def show_welcome_popup():
         global _welcome_popup_already_shown
@@ -233,7 +287,7 @@ else:
 
     def on_profile_did_open():
         setup_data_directory()
-        show_welcome_popup()
+        show_startup_popup()
 
     if not hasattr(sys, "_pytest_mode"):
         # Tránh chồng callback sau Tools → Add-ons → Reload (module mới append thêm, handler cũ vẫn nằm trong list)
