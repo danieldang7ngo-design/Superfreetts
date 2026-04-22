@@ -131,11 +131,12 @@ CONFIG_ADDON_NAME = _get_addon_name()
 
 
 CONFIG_SCHEMA = 'config_schema'
-CONFIG_SCHEMA_VERSION = 6
+CONFIG_SCHEMA_VERSION = 7
 # deprecated, use CONFIG_PRESETS
 CONFIG_BATCH_CONFIG = 'batch_config'
 # this is the new config category, contains dict of uuids
 CONFIG_PRESETS = 'presets'
+CONFIG_WORKFLOWS = 'workflows'
 CONFIG_DEFAULT_PRESETS = 'default_presets'
 CONFIG_MAPPING_RULES = 'mapping_rules'
 CONFIG_REALTIME_CONFIG = 'realtime_config'
@@ -164,9 +165,11 @@ DIALOG_ID_PRESET_MAPPING_RULES = 'preset_mapping_rules'
 DIALOG_ID_EASY = 'easy'
 DIALOG_ID_CHDOOSE_EASY_ADVANCED = 'choose_easy_advanced'
 DIALOG_ID_SERVICES_CONFIGURATION = 'services_configuration'
+DIALOG_ID_WORKFLOW = 'workflow'
 
 TTS_TAG_VOICE = 'SuperFreeTTS'
 TTS_TAG_HYPERTTS_PRESET = 'superfreetss_preset'
+WORKFLOW_ERROR_TAG = 'superfreetts_error'
 
 PYCMD_ADD_AUDIO = 'addaudio'
 PYCMD_PREVIEW_AUDIO = 'previewaudio'

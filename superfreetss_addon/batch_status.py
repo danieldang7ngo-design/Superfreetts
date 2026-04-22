@@ -1,10 +1,21 @@
 import sys
+from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 
 from . import constants
 from . import errors
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
+
+
+@dataclass
+class FailureRecord:
+    note_id: int
+    failed_text: str
+    error_message: str
+    source_text: Optional[str] = None
+    processed_text: Optional[str] = None
+    preset_name: Optional[str] = None
 
 class NoteStatus():
     """Tracks the status and data of a single note in batch processing."""
@@ -232,3 +243,31 @@ class BatchStatus():
 
     def notify_end(self, completed):
         self.change_listener.batch_end(completed)
+
+    def get_failure_records(self, preset_name: Optional[str] = None) -> List[FailureRecord]:
+        failure_records: List[FailureRecord] = []
+        for note_status in self.note_status_array:
+            if note_status.status != constants.BatchNoteStatus.Error:
+                continue
+            failed_text = note_status.processed_text or note_status.source_text or ''
+            error_message = ''
+            if note_status.error is not None:
+                error_message = str(note_status.error)
+            failure_records.append(
+                FailureRecord(
+                    note_id=note_status.note_id,
+                    failed_text=failed_text,
+                    error_message=error_message,
+                    source_text=note_status.source_text,
+                    processed_text=note_status.processed_text,
+                    preset_name=preset_name,
+                )
+            )
+        return failure_records
+
+    def get_failed_note_ids(self) -> List[int]:
+        failed_note_ids: List[int] = []
+        for note_status in self.note_status_array:
+            if note_status.status == constants.BatchNoteStatus.Error:
+                failed_note_ids.append(note_status.note_id)
+        return failed_note_ids

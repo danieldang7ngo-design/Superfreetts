@@ -615,6 +615,33 @@ class PresetInfo:
     id: str
     name: str
 
+class WorkflowConfig(ConfigModelBase):
+    def __init__(self, anki_utils):
+        self.uuid = anki_utils.get_uuid()
+        self.name = None
+        self.preset_ids = []
+
+    def reset_uuid(self, anki_utils):
+        self.uuid = anki_utils.get_uuid()
+
+    def serialize(self):
+        return {
+            'uuid': self.uuid,
+            'name': self.name,
+            'preset_ids': list(self.preset_ids),
+        }
+
+    def validate(self):
+        if self.name == None or len(self.name) == 0:
+            raise errors.HyperTTSError('Workflow name not set.')
+        if len(self.preset_ids) == 0:
+            raise errors.HyperTTSError('Workflow must contain at least one preset.')
+
+@dataclass
+class WorkflowInfo:
+    id: str
+    name: str
+
 @dataclass
 class DeckNoteType:
     model_id: int
@@ -867,6 +894,10 @@ def migrate_configuration(anki_utils, config):
             for worker_key in worker_keys:
                 prefs[worker_key] = 1
 
+    if current_config_schema_version < 7:
+        if constants.CONFIG_WORKFLOWS not in config:
+            config[constants.CONFIG_WORKFLOWS] = {}
+
     # Update config schema version
     config[constants.CONFIG_SCHEMA] = constants.CONFIG_SCHEMA_VERSION
 
@@ -875,6 +906,8 @@ def migrate_configuration(anki_utils, config):
         config[constants.CONFIG_PREFERENCES] = {}
     if 'cache_enabled' not in config[constants.CONFIG_PREFERENCES]:
         config[constants.CONFIG_PREFERENCES]['cache_enabled'] = True
+    if constants.CONFIG_WORKFLOWS not in config:
+        config[constants.CONFIG_WORKFLOWS] = {}
 
     return config
     

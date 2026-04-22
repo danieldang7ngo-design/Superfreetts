@@ -10,6 +10,7 @@ from . import constants
 from . import component_common
 from . import batch_status
 from . import batch_progress_ui
+from . import component_failure_report
 from . import logging_utils
 from . import i18n
 logger = logging_utils.get_child_logger(__name__)
@@ -109,6 +110,7 @@ class BatchPreview(component_common.ComponentBase):
         self.selected_row = None
 
         self.apply_to_notes_batch_started = False
+        self.failed_note_ids_to_tag: List[int] = []
 
         self.table_repaint_timer = TableRepaintTimer(500)
 
@@ -254,6 +256,7 @@ class BatchPreview(component_common.ComponentBase):
 
     def apply_audio_to_notes(self):
         self.apply_to_notes_batch_started = True
+        self.failed_note_ids_to_tag = []
         self.hypertts.anki_utils.run_in_background_collection_op(self.dialog, self.apply_audio_fn, self.finished_apply_audio_fn)
 
     def stop_button_pressed(self):
@@ -264,6 +267,36 @@ class BatchPreview(component_common.ComponentBase):
 
     def finished_apply_audio_fn(self, result):
         logger.debug(f'finished_apply_audio_fn, result: {result}')
+        failure_records = self.batch_status.get_failure_records()
+        if len(failure_records) == 0:
+            return
+        add_tag_requested = component_failure_report.show_failure_report(self.hypertts, self.dialog, failure_records)
+        if add_tag_requested:
+            self.failed_note_ids_to_tag = list(dict.fromkeys(record.note_id for record in failure_records))
+            self.hypertts.anki_utils.run_in_background_collection_op(
+                self.dialog,
+                self.apply_error_tags_fn,
+                self.finished_apply_error_tags_fn,
+            )
+
+    def apply_error_tags_fn(self, anki_collection):
+        self.hypertts.tag_error_notes(self.failed_note_ids_to_tag, anki_collection)
+
+    def finished_apply_error_tags_fn(self, result):
+        if len(self.failed_note_ids_to_tag) == 0:
+            return
+        self.hypertts.anki_utils.tooltip_message(
+            self._t(
+                f'Added tag {constants.WORKFLOW_ERROR_TAG} to {len(self.failed_note_ids_to_tag)} notes.',
+                f'Đã thêm tag {constants.WORKFLOW_ERROR_TAG} vào {len(self.failed_note_ids_to_tag)} notes.',
+            )
+        )
+        self.failed_note_ids_to_tag = []
+
+    def _t(self, en_text: str, vi_text: str) -> str:
+        if self.hypertts.get_ui_language() == 'vi':
+            return vi_text
+        return en_text
 
     def batch_start(self):
         self.hypertts.anki_utils.run_on_main(self.show_running_stack)

@@ -241,6 +241,17 @@ def init(hypertts):
                     component_workflow.create_workflow_dialog_browser(hypertts, browser.selectedNotes())
             return launch
 
+        def get_run_saved_workflow_browser_fn(hypertts, browser, workflow_id: str):
+            def launch():
+                with hypertts.error_manager.get_single_action_context('Quick Running Workflow from Browser'):
+                    component_workflow.create_workflow_dialog_browser(
+                        hypertts,
+                        browser.selectedNotes(),
+                        workflow_id=workflow_id,
+                        autorun=True,
+                    )
+            return launch
+
         # Prevent duplicate menus in the same browser window
         existing_menu = browser.form.menubar.findChild(aqt.qt.QMenu, "sf_browser_menu")
         if existing_menu:
@@ -263,9 +274,19 @@ def init(hypertts):
                 action.triggered.connect(get_launch_dialog_browser_existing_fn(hypertts, browser, preset_info.id))
                 quick_apply_menu.addAction(action)
 
-        action = aqt.qt.QAction("Workflow", browser)
+        workflow_action_title = 'Workflow...' if lang == 'en' else 'Workflow...'
+        action = aqt.qt.QAction(workflow_action_title, browser)
         action.triggered.connect(get_launch_workflow_browser_fn(hypertts, browser))
         menu.addAction(action)
+
+        workflow_list = hypertts.get_workflow_list()
+        if workflow_list:
+            workflow_menu_title = 'Quick Run Workflow' if lang == 'en' else 'Chạy nhanh Workflow'
+            quick_workflow_menu = menu.addMenu(workflow_menu_title)
+            for workflow_info in workflow_list:
+                action = aqt.qt.QAction(workflow_info.name, browser)
+                action.triggered.connect(get_run_saved_workflow_browser_fn(hypertts, browser, workflow_info.id))
+                quick_workflow_menu.addAction(action)
 
         menu.addSeparator()
 

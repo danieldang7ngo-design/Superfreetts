@@ -1361,6 +1361,31 @@ class SuperFreeTTS():
         processed_text = text_utils.process_text(source_text, text_processing)
         return source_text, processed_text
 
+    def ensure_note_tag(self, note, tag_name: str) -> bool:
+        tags = list(getattr(note, 'tags', []) or [])
+        if tag_name in tags:
+            return False
+
+        if hasattr(note, 'add_tag'):
+            try:
+                note.add_tag(tag_name)
+                return True
+            except Exception as e:
+                logger.debug(f'falling back to direct tag assignment for [{tag_name}]: {e}')
+
+        tags.append(tag_name)
+        note.tags = tags
+        return True
+
+    def tag_error_notes(self, note_ids: List[int], anki_collection, tag_name: str = constants.WORKFLOW_ERROR_TAG) -> int:
+        tagged_count = 0
+        for note_id in dict.fromkeys(note_ids):
+            note = self.anki_utils.get_note_by_id(note_id)
+            if self.ensure_note_tag(note, tag_name):
+                anki_collection.update_note(note)
+                tagged_count += 1
+        return tagged_count
+
     # functions related to addon config
     # =================================
 
@@ -1395,6 +1420,9 @@ class SuperFreeTTS():
             raise errors.PresetNotFound(preset_id)        
         return self.config[constants.CONFIG_PRESETS][preset_id]['name']
 
+    def preset_exists(self, preset_id: str) -> bool:
+        return preset_id in self.config.get(constants.CONFIG_PRESETS, {})
+
     def delete_preset(self, preset_id: str):
         if preset_id not in self.config[constants.CONFIG_PRESETS]:
             raise errors.PresetNotFound(preset_id)
@@ -1413,6 +1441,64 @@ class SuperFreeTTS():
             i += 1
             new_preset_name = f'Preset {i}'
         return new_preset_name
+
+    # workflows
+
+    def get_workflow_list(self) -> List[config_models.WorkflowInfo]:
+        if constants.CONFIG_WORKFLOWS not in self.config:
+            return []
+        workflow_list = []
+        for workflow_id, workflow_data in self.config[constants.CONFIG_WORKFLOWS].items():
+            workflow_list.append(config_models.WorkflowInfo(id=workflow_id, name=workflow_data['name']))
+        workflow_list.sort(key=lambda x: x.name)
+        return workflow_list
+
+    def save_workflow(self, workflow: config_models.WorkflowConfig):
+        workflow.validate()
+        if constants.CONFIG_WORKFLOWS not in self.config:
+            self.config[constants.CONFIG_WORKFLOWS] = {}
+        self.config[constants.CONFIG_WORKFLOWS][workflow.uuid] = workflow.serialize()
+        self.anki_utils.write_config(self.config)
+        logger.info(f'saved workflow [{workflow.name}] {pprint.pformat(workflow.serialize(), compact=True, width=500)}')
+
+    def load_workflow(self, workflow_id: str) -> config_models.WorkflowConfig:
+        logger.info(f'loading workflow [{workflow_id}]')
+        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
+            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
+        return self.deserialize_workflow_config(self.config[constants.CONFIG_WORKFLOWS][workflow_id])
+
+    def workflow_exists(self, workflow_id: str) -> bool:
+        return workflow_id in self.config.get(constants.CONFIG_WORKFLOWS, {})
+
+    def get_workflow_name(self, workflow_id: str) -> str:
+        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
+            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
+        return self.config[constants.CONFIG_WORKFLOWS][workflow_id]['name']
+
+    def delete_workflow(self, workflow_id: str):
+        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
+            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
+        del self.config[constants.CONFIG_WORKFLOWS][workflow_id]
+        self.anki_utils.write_config(self.config)
+
+    def get_next_workflow_name(self) -> str:
+        workflow_list: List[config_models.WorkflowInfo] = self.get_workflow_list()
+        workflow_name_dict = {}
+        for workflow_info in workflow_list:
+            workflow_name_dict[workflow_info.name] = True
+        i = 1
+        new_workflow_name = f'Workflow {i}'
+        while new_workflow_name in workflow_name_dict:
+            i += 1
+            new_workflow_name = f'Workflow {i}'
+        return new_workflow_name
+
+    def get_missing_workflow_preset_ids(self, workflow: config_models.WorkflowConfig) -> List[str]:
+        missing = []
+        for preset_id in workflow.preset_ids:
+            if not self.preset_exists(preset_id):
+                missing.append(preset_id)
+        return missing
 
     # default presets / easy mode
 
@@ -1651,6 +1737,13 @@ class SuperFreeTTS():
         batch.name = batch_config['name']
         
         return batch
+
+    def deserialize_workflow_config(self, workflow_config):
+        workflow = config_models.WorkflowConfig(self.anki_utils)
+        workflow.uuid = workflow_config['uuid']
+        workflow.name = workflow_config['name']
+        workflow.preset_ids = list(workflow_config.get('preset_ids', []))
+        return workflow
 
     def deserialize_realtime_config(self, realtime_config):
         realtime = config_models.RealtimeConfig()
