@@ -6,6 +6,7 @@ from . import component_common
 from . import constants
 from . import config_models
 from . import gui_utils
+from . import i18n
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
@@ -14,10 +15,11 @@ class BatchSource(component_common.ConfigComponentBase):
     SOURCE_CONFIG_STACK_TEMPLATE = 1
     SOURCE_CONFIG_STACK_ADVANCED_TEMPLATE = 2
 
-    def __init__(self, hypertts, field_list, model_change_callback):
+    def __init__(self, hypertts, field_list, model_change_callback, show_use_selection=False):
         self.hypertts = hypertts
         self.field_list = field_list
         self.model_change_callback = model_change_callback
+        self.show_use_selection = show_use_selection
 
         self.batch_source_model = None
         self.events_enabled = True
@@ -164,9 +166,12 @@ class BatchSource(component_common.ConfigComponentBase):
         stack_vlayout.addWidget(self.source_field_label)
         stack_vlayout.addWidget(self.source_field_combobox)
         stack_vlayout.addWidget(self.source_field_error_label)
-        self.use_selection_checkbox = aqt.qt.QCheckBox(constants.GUI_TEXT_SOURCE_USE_SELECTION)
-        stack_vlayout.addWidget(aqt.qt.QLabel('Additional Settings:'))
-        stack_vlayout.addWidget(self.use_selection_checkbox)
+        lang = self.hypertts.get_ui_language()
+        self.use_selection_checkbox = aqt.qt.QCheckBox(
+            i18n.get_text("const_gui_text_source_use_selection", lang)
+        )
+        if self.show_use_selection:
+            stack_vlayout.addWidget(self.use_selection_checkbox)
         stack_vlayout.addStretch()
         simple_stack.setLayout(stack_vlayout)
 
@@ -223,10 +228,17 @@ class BatchSource(component_common.ConfigComponentBase):
         if current_index == -1 or current_index >= len(self.field_list) or len(self.field_list) == 0:
             return
         field_name = self.field_list[current_index]
-        self.batch_source_model = config_models.BatchSource(mode=constants.BatchMode.simple, source_field=field_name)
+        use_selection = self.use_selection_checkbox.isChecked()
+        self.batch_source_model = config_models.BatchSource(
+            mode=constants.BatchMode.simple,
+            source_field=field_name,
+            use_selection=use_selection,
+        )
         self.notify_model_update()
 
     def use_selection_checkbox_change(self):
+        if self.batch_source_model == None:
+            return
         use_selection = self.use_selection_checkbox.isChecked()
         self.batch_source_model.use_selection = use_selection
         self.notify_model_update()

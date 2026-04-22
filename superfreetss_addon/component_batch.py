@@ -1,5 +1,6 @@
 import sys
 import aqt.qt
+import copy
 import pprint
 
 from typing import List, Optional
@@ -47,12 +48,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.profile_name_combobox.currentIndexChanged.connect(self.profile_combobox_changed)
         self.show_settings_button = aqt.qt.QPushButton(i18n.get_text("batch_button_hide_settings", lang))
         self.preview_sound_button = aqt.qt.QPushButton(i18n.get_text("batch_button_preview_sound", lang))
-        self.apply_button = aqt.qt.QPushButton(i18n.get_text("batch_button_apply_to_notes", lang))
+        self.apply_button = aqt.qt.QPushButton(i18n.get_text("batch_button_generate_audio", lang))
         self.cancel_button = aqt.qt.QPushButton(i18n.get_text("button_cancel", lang))
-        self.profile_open_button = aqt.qt.QPushButton(i18n.get_text("button_open", lang))
-        self.profile_open_button.setToolTip(i18n.get_text("batch_tooltip_open_preset", lang))
-        gui_utils.configure_pastel_button(self.profile_open_button, style_name="blue", font_size=10)
-        self.profile_open_button.setVisible(False)
+        self.profile_new_button = aqt.qt.QPushButton(i18n.get_text("button_new", lang))
+        self.profile_new_button.setToolTip(i18n.get_text("batch_tooltip_new_preset", lang))
+        gui_utils.configure_pastel_button(self.profile_new_button, style_name="blue", font_size=10)
 
         self.profile_duplicate_button = aqt.qt.QPushButton(i18n.get_text("button_duplicate", lang))
         self.profile_duplicate_button.setToolTip(i18n.get_text("batch_tooltip_duplicate_preset", lang))
@@ -81,7 +81,12 @@ class ComponentBatch(component_common.ConfigComponentBase):
         field_list = self.hypertts.get_all_fields_from_notes(note_id_list)
         if len(field_list) == 0:
             raise Exception(i18n.get_text("error_no_fields_found", self.hypertts.get_ui_language()).format(len(note_id_list)))
-        self.source = component_source.BatchSource(self.hypertts, field_list, self.source_model_updated)
+        self.source = component_source.BatchSource(
+            self.hypertts,
+            field_list,
+            self.source_model_updated,
+            show_use_selection=False,
+        )
         self.target = component_target.BatchTarget(self.hypertts, field_list, self.target_model_updated)
         self.voice_selection = component_voiceselection.VoiceSelection(self.hypertts, self.dialog, self.voice_selection_model_updated)
         self.text_processing = component_text_processing.TextProcessing(self.hypertts, self.text_processing_model_updated)
@@ -96,7 +101,12 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.editor = editor_context.editor
         self.add_mode = editor_context.add_mode
         field_list = list(self.note.keys())
-        self.source = component_source.BatchSource(self.hypertts, field_list, self.source_model_updated)
+        self.source = component_source.BatchSource(
+            self.hypertts,
+            field_list,
+            self.source_model_updated,
+            show_use_selection=True,
+        )
         self.target = component_target.BatchTarget(self.hypertts, field_list, self.target_model_updated)
         self.voice_selection = component_voiceselection.VoiceSelection(self.hypertts, self.dialog, self.voice_selection_model_updated)
         self.text_processing = component_text_processing.TextProcessing(self.hypertts, self.text_processing_model_updated)
@@ -130,21 +140,47 @@ class ComponentBatch(component_common.ConfigComponentBase):
         preset_id = self.profile_name_combobox.itemData(index)
         if preset_id == "UNSAVED_NEW_PRESET":
             return
-            
+             
         if hasattr(self, 'batch_model') and preset_id != getattr(self.batch_model, 'uuid', None):
             self.save_profile_if_changed()
             self.load_preset(preset_id)
 
+    def build_new_preset_model(self, preset_name=None):
+        if preset_name == None:
+            preset_name = self.hypertts.get_next_preset_name()
+
+        field_list = self.source.field_list
+        source_field = field_list[0]
+        target_field = field_list[0]
+
+        voice_list = getattr(self.voice_selection, 'voice_list', None)
+        if voice_list == None or len(voice_list) == 0:
+            voice_list = self.hypertts.service_manager.full_voice_list()
+        if len(voice_list) == 0:
+            raise errors.NoVoicesAvailable()
+
+        model = config_models.BatchConfig(self.hypertts.anki_utils)
+        model.name = preset_name
+        model.set_source(config_models.BatchSource(
+            mode=constants.BatchMode.simple,
+            source_field=source_field,
+            use_selection=False,
+        ))
+        model.set_target(config_models.BatchTarget(target_field=target_field))
+
+        voice_selection = config_models.VoiceSelectionSingle()
+        voice_selection.set_voice(config_models.VoiceWithOptions(voice_list[0].voice_id, {}))
+        model.set_voice_selection(voice_selection)
+        model.set_text_processing(config_models.TextProcessing())
+        return model
+
     def new_preset(self, preset_name = None):
         """start with a new preset"""
-        if preset_name == None:
-            new_preset_name = self.hypertts.get_next_preset_name()
+        self.batch_model = self.build_new_preset_model(preset_name)
+        if hasattr(self, 'tabs'):
+            self.load_model(self.batch_model)
         else:
-            new_preset_name = preset_name
-        self.batch_model = config_models.BatchConfig(self.hypertts.anki_utils)
-        self.batch_model.name = new_preset_name
-        self.update_profile_dropdown(new_preset_name, getattr(self.batch_model, 'uuid', None))
-        # set default for skip backup
+            self.update_profile_dropdown(self.batch_model.name, getattr(self.batch_model, 'uuid', None))
         self.model_changed = True
         self.update_save_profile_button_state()
         self.disable_delete_profile_button()
@@ -273,10 +309,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         # Draw the full source component (creates all widgets + wires events)
         self.source.draw()
-        # Re-use the source_field_combobox, error label, and use_selection_checkbox from the source component
+        # Re-use the source widgets from the source component.
         source_vlayout.addWidget(self.source.source_field_combobox)
         source_vlayout.addWidget(self.source.source_field_error_label)
-        source_vlayout.addWidget(self.source.use_selection_checkbox)
+        if self.source.show_use_selection:
+            source_vlayout.addWidget(self.source.use_selection_checkbox)
         source_group.setLayout(source_vlayout)
         main_layout.addWidget(source_group)
 
@@ -388,11 +425,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.profile_name_combobox.setFont(font)
 
         hlayout.addWidget(self.profile_name_combobox)
+        hlayout.addWidget(self.profile_new_button)
         hlayout.addWidget(self.profile_save_button)
+        hlayout.addWidget(self.profile_duplicate_button)
         hlayout.addWidget(self.profile_rename_button)
         hlayout.addWidget(self.profile_delete_button)
-        hlayout.addWidget(self.profile_open_button)
-        hlayout.addWidget(self.profile_duplicate_button)
 
 
         hlayout.addStretch()
@@ -400,7 +437,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         hlayout.addLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
         self.vlayout.addLayout(hlayout)
 
-        self.profile_open_button.pressed.connect(self.open_profile_button_pressed)
+        self.profile_new_button.pressed.connect(self.new_profile_button_pressed)
         self.profile_save_button.pressed.connect(self.save_profile_button_pressed)
         self.profile_delete_button.pressed.connect(self.delete_profile_button_pressed)
         self.profile_rename_button.pressed.connect(self.rename_profile_button_pressed)
@@ -485,7 +522,10 @@ class ComponentBatch(component_common.ConfigComponentBase):
         hlayout.addWidget(self.preview_sound_button)
         
         # apply button
-        apply_text = i18n.get_text("button_apply", lang)
+        if self.editor_mode:
+            apply_text = i18n.get_text("batch_button_apply_to_note", lang)
+        else:
+            apply_text = i18n.get_text("batch_button_generate_audio", lang)
         self.apply_button.setText(apply_text)
         if self.editor_mode == False:
             gui_utils.configure_pastel_button(self.apply_button, style_name="emerald", is_primary=True, font_size=11)
@@ -537,40 +577,22 @@ class ComponentBatch(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
         self.show_settings_button.setText(i18n.get_text("batch_button_hide_settings", lang))
 
-    def choose_existing_preset(self, title):
-        # returns preset_id if user chose a preset, None otherwise
-        preset_list = self.hypertts.get_preset_list()
-        preset_name_list = [preset.name for preset in preset_list]
-        chosen_preset_row, retvalue = self.hypertts.anki_utils.ask_user_choose_from_list(self.dialog, title, preset_name_list)
-        logger.info(f'chosen preset row: {chosen_preset_row}, retvalue: {retvalue}')
-        if retvalue == 1:
-            preset_id = preset_list[chosen_preset_row].id
-            return preset_id
-        return None
-
-    def open_profile_button_pressed(self):
-        with self.hypertts.error_manager.get_single_action_context('Opening Profile'):
-            lang = self.hypertts.get_ui_language()
-            preset_id = self.choose_existing_preset(i18n.get_text("dialog_choose_preset_open", lang))
-            if preset_id != None:
-                self.load_preset(preset_id)
+    def new_profile_button_pressed(self):
+        self.save_profile_if_changed()
+        self.new_preset()
+        if not self.editor_mode and not self.show_settings:
+            self.display_settings()
+        self.tabs.setCurrentIndex(0)
 
     def duplicate_profile_button_pressed(self):
         with self.hypertts.error_manager.get_single_action_context('Duplicating Profile'):
-            lang = self.hypertts.get_ui_language()
-            preset_id = self.choose_existing_preset(i18n.get_text("dialog_choose_preset_duplicate", lang))
-            if preset_id != None:
-                # load preset, and change uuid
-                self.load_preset(preset_id)
-                self.batch_model.reset_uuid(self.hypertts.anki_utils)
-                # rename the preset
-                new_profile_name = self.batch_model.name + ' (copy)'
-                self.batch_model.name = new_profile_name
-                # reflect new name
-                self.update_profile_dropdown(new_profile_name, getattr(self.batch_model, 'uuid', None))
-                # indicate the model has changed
-                self.model_changed = True
-                self.update_save_profile_button_state()
+            duplicate_model = copy.deepcopy(self.get_model())
+            duplicate_model.reset_uuid(self.hypertts.anki_utils)
+            duplicate_model.name = f'{duplicate_model.name} (copy)'
+            self.load_model(duplicate_model)
+            self.model_changed = True
+            self.update_save_profile_button_state()
+            self.disable_delete_profile_button()
 
 
     def save_profile(self):
@@ -725,7 +747,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
     def batch_interrupted_button_setup(self):
         self.enable_bottom_buttons()
         lang = self.hypertts.get_ui_language()
-        self.apply_button.setText(i18n.get_text("batch_button_apply_to_notes", lang))
+        self.apply_button.setText(i18n.get_text("batch_button_generate_audio", lang))
 
     def batch_completed_button_setup(self):
         lang = self.hypertts.get_ui_language()
