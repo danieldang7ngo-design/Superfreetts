@@ -20,6 +20,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
         bullets={
             "en": [
                 "Renamed the batch dialog to Generate Audio Files so the window title matches the Browser menu.",
+                "Added Workflow to the Super Free TTS Browser menu for running multi-preset flows from selected notes.",
                 "Added a New preset button and simplified the preset toolbar by removing the unused Open flow.",
                 "Changed the main batch action label to Generate Audio and cleaned up the preset switching logic.",
                 "Removed the editor-only selected text option from batch mode to avoid confusion when many notes are selected.",
@@ -27,6 +28,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
             ],
             "vi": [
                 "Đổi tên hộp thoại batch thành Generate Audio Files để title cửa sổ khớp với menu trong Browser.",
+                "Thêm Workflow vào menu Super Free TTS trong Browser để chạy luồng nhiều preset trên các note đang chọn.",
                 "Thêm nút New cho preset và đơn giản hóa thanh preset bằng cách bỏ luồng Open không còn cần thiết.",
                 "Đổi nhãn nút chạy batch thành Generate Audio và làm gọn logic chuyển preset.",
                 "Ẩn tùy chọn chọn đoạn văn bản khỏi batch mode vì nó chỉ có ý nghĩa trong editor của một note.",
