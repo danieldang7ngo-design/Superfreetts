@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased - 2026-04-24
+
+### English
+
+- Refactored the Settings window into modular components: `Settings`, `Services`, `Preferences`, and `Troubleshooting`.
+- Split the previous unified settings implementation into dedicated modules and updated the main UI wiring accordingly.
+- Fixed incorrect `Preferences` translations where English could show Vietnamese or mojibake text.
+- Added the missing Vietnamese translations for the new `Preferences` sections and helper text.
+
+### Tiếng Việt
+
+- Tái cấu trúc cửa sổ `Settings` thành các component riêng: `Settings`, `Services`, `Preferences` và `Troubleshooting`.
+- Tách phần cài đặt hợp nhất trước đây thành các module chuyên biệt và cập nhật lại phần nối UI chính cho phù hợp.
+- Sửa lỗi bản dịch trong `Preferences` khiến giao diện tiếng Anh có thể hiển thị tiếng Việt hoặc chuỗi lỗi mã hóa.
+- Bổ sung các bản dịch tiếng Việt còn thiếu cho các section mới trong `Preferences` và các helper text liên quan.
+
 ## 1.1.0 - 2026-04-22
 
 ### English
