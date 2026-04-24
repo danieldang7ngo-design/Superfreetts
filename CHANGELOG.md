@@ -8,6 +8,9 @@
 - Split the previous unified settings implementation into dedicated modules and updated the main UI wiring accordingly.
 - Fixed incorrect `Preferences` translations where English could show Vietnamese or mojibake text.
 - Added the missing Vietnamese translations for the new `Preferences` sections and helper text.
+- Redesigned the `About` tab with a new hero layout, scan-friendly info cards, and a dedicated external links section.
+- Added a GitHub link to the `About` tab and moved the footer text to i18n resources.
+- Updated the `About` version badge styling and removed the border from the `Open Links` section for a cleaner layout.
 
 ### Tiếng Việt
 
@@ -15,6 +18,10 @@
 - Tách phần cài đặt hợp nhất trước đây thành các module chuyên biệt và cập nhật lại phần nối UI chính cho phù hợp.
 - Sửa lỗi bản dịch trong `Preferences` khiến giao diện tiếng Anh có thể hiển thị tiếng Việt hoặc chuỗi lỗi mã hóa.
 - Bổ sung các bản dịch tiếng Việt còn thiếu cho các section mới trong `Preferences` và các helper text liên quan.
+
+- Thiáº¿t káº¿ láº¡i tab `About` vá»›i hero layout má»›i, cÃ¡c info card dá»… quÃ©t vÃ  khu vá»±c liÃªn káº¿t ngoÃ i riÃªng biá»‡t.
+- ThÃªm liÃªn káº¿t GitHub vÃ o tab `About` vÃ  chuyá»ƒn footer sang dÃ¹ng text tá»« i18n.
+- Cáº­p nháº­t style badge phiÃªn báº£n trong `About` vÃ  bá» viá»n á»Ÿ khu `Open Links` Ä‘á»ƒ bÃ´ cá»¥c gá»n hÆ¡n.
 
 ## 1.1.0 - 2026-04-22
 
