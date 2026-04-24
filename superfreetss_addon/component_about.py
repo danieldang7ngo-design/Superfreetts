@@ -215,7 +215,7 @@ class AboutPage(component_common.ConfigComponentBase):
             f"""
             QFrame {{
                 background-color: {palette['card_bg']};
-                border: 1px solid {palette['card_border']};
+                border: none;
                 border-radius: 22px;
             }}
             """
