@@ -10,7 +10,7 @@ from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 
 
-class Shortcuts(component_common.ConfigComponentBase):
+class ShortcutsSection(component_common.ConfigComponentBase):
 
     def __init__(self, hypertts, dialog, model_change_callback):
         self.hypertts = hypertts
@@ -138,3 +138,6 @@ class Shortcuts(component_common.ConfigComponentBase):
         logger.info(f'key_sequence.toString(): {key_sequence.toString()}')        
         self.model.shortcut_editor_preview_audio = self.convert_shortcut(key_sequence)
         self.notify_model_update()
+
+
+Shortcuts = ShortcutsSection

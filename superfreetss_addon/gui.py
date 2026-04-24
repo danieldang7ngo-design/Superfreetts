@@ -25,9 +25,9 @@ from . import component_batch
 from . import component_workflow
 from . import component_realtime
 from . import component_presetmappingrules
-from . import component_configuration
+from . import component_services
 from . import component_preferences
-from . import component_unified_settings
+from . import component_settings
 # from . import component_easy removed
 # from . import component_choose_easy_advanced removed
 from . import text_utils
@@ -50,7 +50,7 @@ class ConfigurationDialog(aqt.qt.QDialog):
         # Giúp user có thể mở rộng ra full màn hình khi cần xem nhiều services hơn
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
-        self.configuration = component_configuration.Configuration(hypertts, self)
+        self.configuration = component_services.ServicesPage(hypertts, self)
         self.configuration.load_model(hypertts.get_configuration())
 
     def setupUi(self):
@@ -71,7 +71,7 @@ class PreferencesDialog(aqt.qt.QDialog):
         # Cho phép thu nhỏ/phóng to cho màn hình Preferences
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
-        self.preferences = component_preferences.ComponentPreferences(hypertts, self)
+        self.preferences = component_preferences.PreferencesPage(hypertts, self)
         self.preferences.load_model(hypertts.get_preferences())
 
     def setupUi(self):
@@ -149,7 +149,7 @@ def launch_unified_dialog(hypertts, initial_tab=0):
     """
     with hypertts.error_manager.get_single_action_context('Launching Unified Settings Dialog'):
         logger.info(f'launch_unified_dialog, initial_tab={initial_tab}')
-        dialog = component_unified_settings.UnifiedSettingsDialog(hypertts, initial_tab=initial_tab, parent=aqt.mw)
+        dialog = component_settings.SettingsDialog(hypertts, initial_tab=initial_tab, parent=aqt.mw)
         dialog.exec()
 
 def launch_realtime_dialog_browser(hypertts, note_id_list):

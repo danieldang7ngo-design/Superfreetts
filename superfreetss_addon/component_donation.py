@@ -27,7 +27,7 @@ class ResponsiveImageLabel(aqt.qt.QLabel):
             self.setPixmap(scaled)
         super().resizeEvent(event)
 
-class DonationComponent(component_common.ConfigComponentBase):
+class DonationPage(component_common.ConfigComponentBase):
     def __init__(self, hypertts):
         self.hypertts = hypertts
 
@@ -81,3 +81,6 @@ class DonationComponent(component_common.ConfigComponentBase):
         vlayout.addLayout(info_layout)
         
         layout.addWidget(container)
+
+
+DonationComponent = DonationPage

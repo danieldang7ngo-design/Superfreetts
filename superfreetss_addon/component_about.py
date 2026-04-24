@@ -9,7 +9,7 @@ from . import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
-class AboutComponent(component_common.ConfigComponentBase):
+class AboutPage(component_common.ConfigComponentBase):
     def __init__(self, hypertts):
         self.hypertts = hypertts
 
@@ -94,3 +94,6 @@ class AboutComponent(component_common.ConfigComponentBase):
 
         vlayout.addStretch()
         layout.addWidget(container)
+
+
+AboutComponent = AboutPage

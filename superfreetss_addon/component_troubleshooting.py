@@ -10,7 +10,7 @@ from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 
 
-class ErrorHandling(component_common.ConfigComponentBase):
+class TroubleshootingSection(component_common.ConfigComponentBase):
 
     def __init__(self, hypertts, dialog, model_change_callback):
         self.hypertts = hypertts
@@ -26,6 +26,10 @@ class ErrorHandling(component_common.ConfigComponentBase):
 
         self.disable_ssl_verification = aqt.qt.QCheckBox()
         self.debug_mode = aqt.qt.QCheckBox()
+        self.ssl_helper = aqt.qt.QLabel()
+        self.ssl_helper.setWordWrap(True)
+        self.debug_helper = aqt.qt.QLabel()
+        self.debug_helper.setWordWrap(True)
 
     def get_model(self):
         return self.model
@@ -63,12 +67,14 @@ class ErrorHandling(component_common.ConfigComponentBase):
         layout.addWidget(self.realtime_groupbox)
 
         # Network Connection group
-        self.network_groupbox = aqt.qt.QGroupBox(i18n.get_text("errors_group_network", lang))
+        self.network_groupbox = aqt.qt.QGroupBox(i18n.get_text("error_handling_group_network", lang))
         network_vlayout = aqt.qt.QVBoxLayout()
         self.ssl_description = aqt.qt.QLabel(i18n.get_text("errors_label_ssl", lang))
         self.ssl_description.setWordWrap(True)
         network_vlayout.addWidget(self.ssl_description)
         network_vlayout.addWidget(self.disable_ssl_verification)
+        self.ssl_helper.setProperty("cssClass", "helperText")
+        network_vlayout.addWidget(self.ssl_helper)
         self.network_groupbox.setLayout(network_vlayout)
         layout.addWidget(self.network_groupbox)
 
@@ -76,6 +82,8 @@ class ErrorHandling(component_common.ConfigComponentBase):
         self.developer_groupbox = aqt.qt.QGroupBox(i18n.get_text("error_handling_group_developer", lang))
         developer_vlayout = aqt.qt.QVBoxLayout()
         developer_vlayout.addWidget(self.debug_mode)
+        self.debug_helper.setProperty("cssClass", "helperText")
+        developer_vlayout.addWidget(self.debug_helper)
         self.developer_groupbox.setLayout(developer_vlayout)
         layout.addWidget(self.developer_groupbox)
 
@@ -95,9 +103,11 @@ class ErrorHandling(component_common.ConfigComponentBase):
         self.ssl_description.setText(i18n.get_text("errors_label_ssl", lang))
         self.disable_ssl_verification.setText(i18n.get_text("error_handling_disable_ssl_label", lang))
         self.disable_ssl_verification.setToolTip(i18n.get_text("error_handling_disable_ssl_tooltip", lang))
+        self.ssl_helper.setText(i18n.get_text("preferences_ssl_warning", lang))
         self.developer_groupbox.setTitle(i18n.get_text("error_handling_group_developer", lang))
         self.debug_mode.setText(i18n.get_text("error_handling_debug_mode_label", lang))
         self.debug_mode.setToolTip(i18n.get_text("error_handling_debug_mode_tooltip", lang))
+        self.debug_helper.setText(i18n.get_text("preferences_debug_helper", lang))
 
     def realtime_tts_errors_dialog_type_changed(self, index):
         logger.info(f'realtime_tts_errors_dialog_type_changed {index}')
@@ -113,4 +123,7 @@ class ErrorHandling(component_common.ConfigComponentBase):
         logger.info(f'debug_mode_changed {state}')
         self.model.debug_mode = bool(state)
         self.notify_model_update()
+
+
+ErrorHandling = TroubleshootingSection
 
