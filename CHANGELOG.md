@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased - 2026-04-24
+## 1.1.1 - 2026-04-24
 
 ### English
 
