@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.2 - 2026-04-24
+
+### English
+
+- Added Korean as a supported UI language and expanded the Preferences language picker.
+- Localized the main Settings dialogs, About tab, Workflow, Failure Report, and shared browser/editor controls for Korean.
+- Fixed the Preferences language combobox so it restores the saved language correctly after reopening Settings.
+- Updated the addon version and release notes flow so Korean users see localized update text.
+
+### Tiếng Việt
+
+- Bổ sung tiếng Hàn như một ngôn ngữ giao diện được hỗ trợ và mở rộng bộ chọn ngôn ngữ trong Preferences.
+- Dịch các hộp thoại Settings chính, tab About, Workflow, Failure Report và các điều khiển chung trong browser/editor sang tiếng Hàn.
+- Sửa combobox ngôn ngữ trong Preferences để nó khôi phục đúng ngôn ngữ đã lưu khi mở lại Settings.
+- Cập nhật version addon và luồng release notes để người dùng tiếng Hàn thấy nội dung cập nhật đã được bản địa hóa.
+
 ## 1.1.1 - 2026-04-24
 
 ### English

@@ -44,7 +44,7 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
-        self.setWindowTitle(self._t('Super Free TTS: Workflow', 'Super Free TTS: Workflow'))
+        self.setWindowTitle(self._text("workflow_dialog_title"))
         self.resize(920, 620)
 
         self._build_ui()
@@ -57,21 +57,22 @@ class WorkflowDialog(aqt.qt.QDialog):
         if self.autorun:
             aqt.qt.QTimer.singleShot(0, self.run_workflow_button_pressed)
 
-    def _t(self, en_text: str, vi_text: str) -> str:
-        if self.hypertts.get_ui_language() == 'vi':
-            return vi_text
-        return en_text
+    def _text(self, key: str, **kwargs: Any) -> str:
+        text = i18n.get_text(key, self.hypertts.get_ui_language())
+        if kwargs:
+            return text.format(**kwargs)
+        return text
 
     def _build_ui(self) -> None:
         lang = self.hypertts.get_ui_language()
         self.main_layout = aqt.qt.QVBoxLayout(self)
 
         top_layout = aqt.qt.QHBoxLayout()
-        top_layout.addWidget(aqt.qt.QLabel(self._t('Workflow:', 'Workflow:')))
+        top_layout.addWidget(aqt.qt.QLabel(self._text("workflow_label_name")))
         self.workflow_name_combobox = aqt.qt.QComboBox()
         top_layout.addWidget(self.workflow_name_combobox, stretch=1)
 
-        self.new_button = aqt.qt.QPushButton(self._t('New', 'Mới'))
+        self.new_button = aqt.qt.QPushButton(i18n.get_text("button_new", lang))
         self.open_button = aqt.qt.QPushButton(i18n.get_text('button_open', lang))
         self.save_button = aqt.qt.QPushButton(i18n.get_text('button_save', lang))
         self.duplicate_button = aqt.qt.QPushButton(i18n.get_text('button_duplicate', lang))
@@ -91,17 +92,14 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.main_layout.addLayout(top_layout)
 
         info_label = aqt.qt.QLabel(
-            self._t(
-                f'Run multiple presets in sequence on the same {len(self.note_id_list)} selected notes.',
-                f'Chạy nhiều preset tuần tự trên cùng {len(self.note_id_list)} notes đã chọn.',
-            )
+            self._text("workflow_info_selected_notes", count=len(self.note_id_list))
         )
         info_label.setWordWrap(True)
         self.main_layout.addWidget(info_label)
 
         lists_layout = aqt.qt.QHBoxLayout()
 
-        available_group = aqt.qt.QGroupBox(self._t('Available Presets', 'Preset khả dụng'))
+        available_group = aqt.qt.QGroupBox(self._text("workflow_available_presets"))
         available_layout = aqt.qt.QVBoxLayout()
         self.available_list = aqt.qt.QListWidget()
         self.available_list.setSelectionMode(aqt.qt.QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -111,11 +109,11 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         controls_layout = aqt.qt.QVBoxLayout()
         controls_layout.addStretch()
-        self.add_button = aqt.qt.QPushButton(self._t('Add ->', 'Thêm ->'))
-        self.remove_button = aqt.qt.QPushButton(self._t('<- Remove', '<- Xóa'))
-        self.up_button = aqt.qt.QPushButton(self._t('Up', 'Lên'))
-        self.down_button = aqt.qt.QPushButton(self._t('Down', 'Xuống'))
-        self.clear_button = aqt.qt.QPushButton(self._t('Clear', 'Xóa hết'))
+        self.add_button = aqt.qt.QPushButton(self._text("workflow_add"))
+        self.remove_button = aqt.qt.QPushButton(self._text("workflow_remove"))
+        self.up_button = aqt.qt.QPushButton(self._text("workflow_up"))
+        self.down_button = aqt.qt.QPushButton(self._text("workflow_down"))
+        self.clear_button = aqt.qt.QPushButton(self._text("workflow_clear"))
         for button in [
             self.add_button,
             self.remove_button,
@@ -127,7 +125,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         controls_layout.addStretch()
         lists_layout.addLayout(controls_layout)
 
-        workflow_group = aqt.qt.QGroupBox(self._t('Workflow Order', 'Thứ tự workflow'))
+        workflow_group = aqt.qt.QGroupBox(self._text("workflow_order"))
         workflow_layout = aqt.qt.QVBoxLayout()
         self.workflow_list = aqt.qt.QListWidget()
         self.workflow_list.setSelectionMode(aqt.qt.QAbstractItemView.SelectionMode.SingleSelection)
@@ -137,11 +135,11 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         self.main_layout.addLayout(lists_layout)
 
-        progress_group = aqt.qt.QGroupBox(self._t('Progress', 'Tiến độ'))
+        progress_group = aqt.qt.QGroupBox(self._text("workflow_progress"))
         progress_layout = aqt.qt.QVBoxLayout()
-        self.workflow_status_label = aqt.qt.QLabel(self._t('Ready.', 'Sẵn sàng.'))
+        self.workflow_status_label = aqt.qt.QLabel(self._text("workflow_ready"))
         self.workflow_status_label.setWordWrap(True)
-        self.current_preset_label = aqt.qt.QLabel(self._t('Current preset: -', 'Preset hiện tại: -'))
+        self.current_preset_label = aqt.qt.QLabel(self._text("workflow_current_preset_idle"))
         self.preset_progress = aqt.qt.QProgressBar()
         self.note_progress = aqt.qt.QProgressBar()
         self.note_progress.setFormat('%p%')
@@ -154,8 +152,8 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         buttons_layout = aqt.qt.QHBoxLayout()
         buttons_layout.addStretch()
-        self.run_button = aqt.qt.QPushButton(self._t('Run Workflow', 'Chạy Workflow'))
-        self.stop_button = aqt.qt.QPushButton(self._t('Stop', 'Dừng'))
+        self.run_button = aqt.qt.QPushButton(self._text("workflow_run"))
+        self.stop_button = aqt.qt.QPushButton(i18n.get_text("button_stop", lang))
         self.close_button = aqt.qt.QPushButton(i18n.get_text('button_close', lang))
         buttons_layout.addWidget(self.run_button)
         buttons_layout.addWidget(self.stop_button)
@@ -198,10 +196,7 @@ class WorkflowDialog(aqt.qt.QDialog):
     def _workflow_item_text(self, preset_id: str) -> str:
         if self.hypertts.preset_exists(preset_id):
             return self.hypertts.get_preset_name(preset_id)
-        return self._t(
-            f'[Missing preset] {preset_id}',
-            f'[Thiếu preset] {preset_id}',
-        )
+        return self._text("workflow_missing_preset", preset_id=preset_id)
 
     def update_workflow_dropdown(self, current_name: str, current_id: Optional[str]) -> None:
         workflow_list = self.hypertts.get_workflow_list()
@@ -276,7 +271,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         workflow_list = self.hypertts.get_workflow_list()
         workflow_name_list = [workflow.name for workflow in workflow_list]
         if len(workflow_name_list) == 0:
-            raise errors.HyperTTSError(self._t('No saved workflows found.', 'Không có workflow đã lưu.'))
+            raise errors.HyperTTSError(self._text("workflow_no_saved"))
         chosen_row, retvalue = self.hypertts.anki_utils.ask_user_choose_from_list(self, title, workflow_name_list)
         if retvalue == 1:
             return workflow_list[chosen_row].id
@@ -366,10 +361,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         if missing_preset_ids:
             missing_text = ', '.join(missing_preset_ids)
             raise errors.HyperTTSError(
-                self._t(
-                    f'Workflow contains missing presets. Repair it before running: {missing_text}',
-                    f'Workflow đang chứa preset bị thiếu. Hãy sửa workflow trước khi chạy: {missing_text}',
-                )
+                self._text("workflow_missing_presets_run", presets=missing_text)
             )
         return workflow_model
 
@@ -387,7 +379,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         if not self.model_changed:
             return
         proceed = self.hypertts.anki_utils.ask_user(
-            self._t('Save changes to current workflow?', 'Lưu thay đổi của workflow hiện tại?'),
+            self._text("workflow_save_changes_prompt"),
             self,
         )
         if proceed:
@@ -400,7 +392,7 @@ class WorkflowDialog(aqt.qt.QDialog):
 
     def open_workflow_button_pressed(self) -> None:
         with self.hypertts.error_manager.get_single_action_context('Opening Workflow'):
-            workflow_id = self.choose_existing_workflow(self._t('Choose a workflow to open', 'Chọn workflow để mở'))
+            workflow_id = self.choose_existing_workflow(self._text("workflow_choose_open"))
             if workflow_id != None:
                 self.save_workflow_if_changed()
                 self.load_workflow(workflow_id)
@@ -411,7 +403,7 @@ class WorkflowDialog(aqt.qt.QDialog):
 
     def duplicate_workflow_button_pressed(self) -> None:
         with self.hypertts.error_manager.get_single_action_context('Duplicating Workflow'):
-            workflow_id = self.choose_existing_workflow(self._t('Choose a workflow to duplicate', 'Chọn workflow để nhân bản'))
+            workflow_id = self.choose_existing_workflow(self._text("workflow_choose_duplicate"))
             if workflow_id != None:
                 self.load_workflow(workflow_id)
                 self.workflow_model.reset_uuid(self.hypertts.anki_utils)
@@ -425,10 +417,10 @@ class WorkflowDialog(aqt.qt.QDialog):
         with self.hypertts.error_manager.get_single_action_context('Renaming Workflow'):
             current_name = self.get_model().name
             new_name, result = self.hypertts.anki_utils.ask_user_get_text(
-                self._t('Enter new workflow name', 'Nhập tên workflow mới'),
+                self._text("workflow_enter_new_name"),
                 self,
                 current_name,
-                self._t('Rename Workflow', 'Đổi tên Workflow'),
+                self._text("workflow_rename_title"),
             )
             if result == 1:
                 self.workflow_model.name = new_name
@@ -441,10 +433,7 @@ class WorkflowDialog(aqt.qt.QDialog):
             self.new_workflow_after_delete()
             return
         proceed = self.hypertts.anki_utils.ask_user(
-            self._t(
-                f'Delete workflow {workflow_model.name}?',
-                f'Xóa workflow {workflow_model.name}?',
-            ),
+            self._text("workflow_delete_confirm", name=workflow_model.name),
             self,
         )
         if proceed:
@@ -464,8 +453,8 @@ class WorkflowDialog(aqt.qt.QDialog):
             self.preset_progress.setValue(0)
             self.note_progress.setRange(0, 100)
             self.note_progress.setValue(0)
-            self.workflow_status_label.setText(self._t('Starting workflow...', 'Đang bắt đầu workflow...'))
-            self.current_preset_label.setText(self._t('Current preset: -', 'Preset hiện tại: -'))
+            self.workflow_status_label.setText(self._text("workflow_starting"))
+            self.current_preset_label.setText(self._text("workflow_current_preset_idle"))
             self.workflow_running = True
             self.refresh_button_states()
 
@@ -479,7 +468,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.workflow_cancelled = True
         if self.current_batch_status != None:
             self.current_batch_status.stop()
-        self.workflow_status_label.setText(self._t('Stopping workflow...', 'Đang dừng workflow...'))
+        self.workflow_status_label.setText(self._text("workflow_stopping"))
 
     def close_button_pressed(self) -> None:
         if self.workflow_running:
@@ -496,10 +485,7 @@ class WorkflowDialog(aqt.qt.QDialog):
 
             if not self.hypertts.preset_exists(preset_id):
                 raise errors.HyperTTSError(
-                    self._t(
-                        f'Workflow contains missing preset: {preset_id}',
-                        f'Workflow chứa preset bị thiếu: {preset_id}',
-                    )
+                    self._text("workflow_missing_preset_single", preset_id=preset_id)
                 )
 
             preset = self.hypertts.load_preset(preset_id)
@@ -538,17 +524,18 @@ class WorkflowDialog(aqt.qt.QDialog):
     def finish_workflow_ui(self) -> None:
         completed = not self.workflow_cancelled
         if completed:
-            self.workflow_status_label.setText(self._t('Workflow completed.', 'Workflow đã hoàn tất.'))
+            self.workflow_status_label.setText(self._text("workflow_completed"))
             self.current_preset_label.setText(
-                self._t(
-                    f'Current preset: done ({self.total_presets}/{self.total_presets})',
-                    f'Preset hiện tại: xong ({self.total_presets}/{self.total_presets})',
+                self._text(
+                    "workflow_completed_current_preset",
+                    done=self.total_presets,
+                    total=self.total_presets,
                 )
             )
             self.preset_progress.setValue(self.total_presets)
             self.note_progress.setValue(100)
         else:
-            self.workflow_status_label.setText(self._t('Workflow stopped.', 'Workflow đã dừng.'))
+            self.workflow_status_label.setText(self._text("workflow_stopped"))
         self.workflow_running = False
         self.refresh_button_states()
         self.show_failure_report_if_needed()
@@ -558,16 +545,15 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.preset_progress.setValue(max(0, preset_index - 1))
         self.note_progress.setValue(0)
         self.current_preset_label.setText(
-            self._t(
-                f'Current preset: {preset_name} ({preset_index}/{total_presets})',
-                f'Preset hiện tại: {preset_name} ({preset_index}/{total_presets})',
+            self._text(
+                "workflow_current_preset_progress",
+                preset_name=preset_name,
+                index=preset_index,
+                total=total_presets,
             )
         )
         self.workflow_status_label.setText(
-            self._t(
-                f'Running preset: {preset_name}',
-                f'Đang chạy preset: {preset_name}',
-            )
+            self._text("workflow_running_preset", preset_name=preset_name)
         )
 
     def batch_start(self) -> None:
@@ -579,17 +565,11 @@ class WorkflowDialog(aqt.qt.QDialog):
                 self.note_progress.setValue(100)
                 self.preset_progress.setValue(self.current_preset_index)
                 self.workflow_status_label.setText(
-                    self._t(
-                        f'Completed preset: {self.current_preset_name}',
-                        f'Đã xong preset: {self.current_preset_name}',
-                    )
+                    self._text("workflow_completed_preset", preset_name=self.current_preset_name)
                 )
             else:
                 self.workflow_status_label.setText(
-                    self._t(
-                        f'Stopped during preset: {self.current_preset_name}',
-                        f'Đã dừng ở preset: {self.current_preset_name}',
-                    )
+                    self._text("workflow_stopped_preset", preset_name=self.current_preset_name)
                 )
 
         self.hypertts.anki_utils.run_on_main(update)
@@ -617,9 +597,9 @@ class WorkflowDialog(aqt.qt.QDialog):
         progress_percent = 0
         if progress_total > 0:
             progress_percent = int((progress_done / progress_total) * 100)
-        status_message = current_batch_status.status_message or self._t(
-            f'Processing note {note_id}',
-            f'Đang xử lý note {note_id}',
+        status_message = current_batch_status.status_message or self._text(
+            "workflow_processing_note",
+            note_id=note_id,
         )
 
         self.hypertts.anki_utils.run_on_main(
@@ -655,9 +635,10 @@ class WorkflowDialog(aqt.qt.QDialog):
         if len(self.failed_note_ids_to_tag) == 0:
             return
         self.hypertts.anki_utils.tooltip_message(
-            self._t(
-                f'Added tag {constants.WORKFLOW_ERROR_TAG} to {len(self.failed_note_ids_to_tag)} notes.',
-                f'Đã thêm tag {constants.WORKFLOW_ERROR_TAG} vào {len(self.failed_note_ids_to_tag)} notes.',
+            self._text(
+                "workflow_error_tag_added",
+                tag=constants.WORKFLOW_ERROR_TAG,
+                count=len(self.failed_note_ids_to_tag),
             )
         )
         self.failed_note_ids_to_tag = []

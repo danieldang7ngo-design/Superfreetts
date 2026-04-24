@@ -286,17 +286,12 @@ class BatchPreview(component_common.ComponentBase):
         if len(self.failed_note_ids_to_tag) == 0:
             return
         self.hypertts.anki_utils.tooltip_message(
-            self._t(
-                f'Added tag {constants.WORKFLOW_ERROR_TAG} to {len(self.failed_note_ids_to_tag)} notes.',
-                f'Đã thêm tag {constants.WORKFLOW_ERROR_TAG} vào {len(self.failed_note_ids_to_tag)} notes.',
+            i18n.get_text("workflow_error_tag_added", self.hypertts.get_ui_language()).format(
+                tag=constants.WORKFLOW_ERROR_TAG,
+                count=len(self.failed_note_ids_to_tag),
             )
         )
         self.failed_note_ids_to_tag = []
-
-    def _t(self, en_text: str, vi_text: str) -> str:
-        if self.hypertts.get_ui_language() == 'vi':
-            return vi_text
-        return en_text
 
     def batch_start(self):
         self.hypertts.anki_utils.run_on_main(self.show_running_stack)

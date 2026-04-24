@@ -42,9 +42,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.shortcuts.load_model(self.model.keyboard_shortcuts)
         self.troubleshooting.load_model(self.model.error_handling)
 
-        current_lang = getattr(self.model, "ui_language", "en") or "en"
-        language_values = ["en", "vi"]
-        self.language_combobox.setCurrentIndex(language_values.index(current_lang) if current_lang in language_values else 0)
+        self._sync_language_combobox_value()
 
         self.cache_retention_checkbox.setChecked(self.model.cache_enabled)
         self.cache_retention_spinbox.setValue(self.model.cache_retention_days)
@@ -115,7 +113,9 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.language_combobox.clear()
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_en", lang), "en")
         self.language_combobox.addItem(i18n.get_text("preferences_option_language_vi", lang), "vi")
+        self.language_combobox.addItem(i18n.get_text("preferences_option_language_ko", lang), "ko")
         self.language_combobox.setMinimumHeight(34)
+        self._sync_language_combobox_value()
         general_layout.addWidget(self.language_combobox)
 
         self.format_label = aqt.qt.QLabel(i18n.get_text("pref_audio_format_desc", lang))
@@ -203,7 +203,9 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.language_combobox.blockSignals(True)
         self.language_combobox.setItemText(0, i18n.get_text("preferences_option_language_en", lang))
         self.language_combobox.setItemText(1, i18n.get_text("preferences_option_language_vi", lang))
+        self.language_combobox.setItemText(2, i18n.get_text("preferences_option_language_ko", lang))
         self.language_combobox.blockSignals(False)
+        self._sync_language_combobox_value()
 
         self.format_label.setText(i18n.get_text("pref_audio_format_desc", lang))
         self.audio_helper_label.setText(i18n.get_text("preferences_audio_format_helper", lang))
@@ -224,6 +226,16 @@ class PreferencesPage(component_common.ConfigComponentBase):
 
         self.save_button.setText(i18n.get_text("button_apply", lang))
         self.cancel_button.setText(i18n.get_text("button_cancel", lang))
+
+    def _sync_language_combobox_value(self) -> None:
+        current_lang = getattr(self.model, "ui_language", "en") or "en"
+        language_values = ["en", "vi", "ko"]
+        target_index = language_values.index(current_lang) if current_lang in language_values else 0
+        if self.language_combobox.count() <= target_index:
+            return
+        self.language_combobox.blockSignals(True)
+        self.language_combobox.setCurrentIndex(target_index)
+        self.language_combobox.blockSignals(False)
 
     def cache_enabled_changed(self, state: int) -> None:
         enabled = (state == aqt.qt.Qt.CheckState.Checked.value)

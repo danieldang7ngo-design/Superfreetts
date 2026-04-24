@@ -502,10 +502,9 @@ class ComponentBatch(component_common.ConfigComponentBase):
             
         # advanced toggle button (show/hide Text Processing tab)
         lang = self.hypertts.get_ui_language()
-        if lang == 'vi':
-            self.advanced_toggle_button = aqt.qt.QPushButton(f'Nâng cao: TẮT')
-        else:
-            self.advanced_toggle_button = aqt.qt.QPushButton(f'Advanced: OFF')
+        self.advanced_toggle_button = aqt.qt.QPushButton(
+            i18n.get_text("batch_advanced_toggle_off", lang)
+        )
             
         self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
         self.advanced_toggle_button.setProperty("cssClass", "secondaryButton")
@@ -650,19 +649,13 @@ class ComponentBatch(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
         
         if self.advanced_visible:
-            if lang == 'vi':
-                self.advanced_toggle_button.setText('Nâng cao: BẬT')
-            else:
-                self.advanced_toggle_button.setText('Advanced: ON')
+            self.advanced_toggle_button.setText(i18n.get_text("batch_advanced_toggle_on", lang))
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_hide_advanced", lang))
             self.advanced_toggle_button.setProperty("cssClass", "primaryButton")
             self.advanced_toggle_button.style().unpolish(self.advanced_toggle_button)
             self.advanced_toggle_button.style().polish(self.advanced_toggle_button)
         else:
-            if lang == 'vi':
-                self.advanced_toggle_button.setText('Nâng cao: TẮT')
-            else:
-                self.advanced_toggle_button.setText('Advanced: OFF')
+            self.advanced_toggle_button.setText(i18n.get_text("batch_advanced_toggle_off", lang))
             self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
             self.advanced_toggle_button.setProperty("cssClass", "secondaryButton")
             self.advanced_toggle_button.style().unpolish(self.advanced_toggle_button)

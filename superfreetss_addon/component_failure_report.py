@@ -5,6 +5,7 @@ from typing import Any, List
 from . import batch_status
 from . import constants
 from . import gui_utils
+from . import i18n
 
 
 class FailureReportDialog(aqt.qt.QDialog):
@@ -14,16 +15,17 @@ class FailureReportDialog(aqt.qt.QDialog):
         self.failure_records = failure_records
         self.add_tag_requested = False
 
-        self.setWindowTitle(self._t('Super Free TTS: Failure Report', 'Super Free TTS: Báo cáo lỗi'))
+        self.setWindowTitle(self._text("failure_report_title"))
         self.setMinimumSize(860, 420)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
 
         self._build_ui()
 
-    def _t(self, en_text: str, vi_text: str) -> str:
-        if self.hypertts.get_ui_language() == 'vi':
-            return vi_text
-        return en_text
+    def _text(self, key: str, **kwargs: Any) -> str:
+        text = i18n.get_text(key, self.hypertts.get_ui_language())
+        if kwargs:
+            return text.format(**kwargs)
+        return text
 
     def _build_ui(self) -> None:
         layout = aqt.qt.QVBoxLayout(self)
@@ -31,14 +33,17 @@ class FailureReportDialog(aqt.qt.QDialog):
         unique_note_ids = {record.note_id for record in self.failure_records}
         preset_names = {record.preset_name for record in self.failure_records if record.preset_name}
         if len(preset_names) > 0:
-            summary_text = self._t(
-                f'{len(self.failure_records)} failures across {len(unique_note_ids)} notes in {len(preset_names)} workflow steps.',
-                f'{len(self.failure_records)} lỗi trên {len(unique_note_ids)} notes qua {len(preset_names)} bước workflow.',
+            summary_text = self._text(
+                "failure_report_summary_with_presets",
+                failures=len(self.failure_records),
+                notes=len(unique_note_ids),
+                presets=len(preset_names),
             )
         else:
-            summary_text = self._t(
-                f'{len(self.failure_records)} failures across {len(unique_note_ids)} notes.',
-                f'{len(self.failure_records)} lỗi trên {len(unique_note_ids)} notes.',
+            summary_text = self._text(
+                "failure_report_summary_without_presets",
+                failures=len(self.failure_records),
+                notes=len(unique_note_ids),
             )
 
         summary_label = aqt.qt.QLabel(summary_text)
@@ -49,11 +54,11 @@ class FailureReportDialog(aqt.qt.QDialog):
         has_preset_column = any(record.preset_name for record in self.failure_records)
         headers = []
         if has_preset_column:
-            headers.append(self._t('Preset', 'Preset'))
+            headers.append(self._text("failure_report_header_preset"))
         headers.extend([
-            self._t('Note ID', 'Note ID'),
-            self._t('Failed Text', 'Text lỗi'),
-            self._t('Error', 'Lỗi'),
+            self._text('failure_report_header_note_id'),
+            self._text('failure_report_header_failed_text'),
+            self._text('failure_report_header_error'),
         ])
 
         self.table.setColumnCount(len(headers))
@@ -97,12 +102,9 @@ class FailureReportDialog(aqt.qt.QDialog):
         button_layout = aqt.qt.QHBoxLayout()
         button_layout.addStretch()
         self.add_tag_button = aqt.qt.QPushButton(
-            self._t(
-                f'Add Tag {constants.WORKFLOW_ERROR_TAG}',
-                f'Thêm tag {constants.WORKFLOW_ERROR_TAG}',
-            )
+            self._text("failure_report_add_tag", tag=constants.WORKFLOW_ERROR_TAG)
         )
-        self.ignore_button = aqt.qt.QPushButton(self._t('Ignore and Close', 'Bỏ qua và đóng'))
+        self.ignore_button = aqt.qt.QPushButton(self._text("failure_report_ignore_close"))
         gui_utils.configure_pastel_button(self.add_tag_button, style_name='rose', is_primary=True, font_size=11)
         gui_utils.configure_secondary_button(self.ignore_button, min_width=130)
         self.add_tag_button.clicked.connect(self.add_tag_button_pressed)

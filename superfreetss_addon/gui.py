@@ -274,14 +274,14 @@ def init(hypertts):
                 action.triggered.connect(get_launch_dialog_browser_existing_fn(hypertts, browser, preset_info.id))
                 quick_apply_menu.addAction(action)
 
-        workflow_action_title = 'Workflow...' if lang == 'en' else 'Workflow...'
+        workflow_action_title = i18n.get_text("menu_workflow", lang)
         action = aqt.qt.QAction(workflow_action_title, browser)
         action.triggered.connect(get_launch_workflow_browser_fn(hypertts, browser))
         menu.addAction(action)
 
         workflow_list = hypertts.get_workflow_list()
         if workflow_list:
-            workflow_menu_title = 'Quick Run Workflow' if lang == 'en' else 'Chạy nhanh Workflow'
+            workflow_menu_title = i18n.get_text("menu_workflow_quick_run", lang)
             quick_workflow_menu = menu.addMenu(workflow_menu_title)
             for workflow_info in workflow_list:
                 action = aqt.qt.QAction(workflow_info.name, browser)
