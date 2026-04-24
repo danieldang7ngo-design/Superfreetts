@@ -114,7 +114,7 @@ class AboutPage(component_common.ConfigComponentBase):
             f"""
             background-color: {palette['badge_bg']};
             color: {palette['badge_text']};
-            border-radius: 999px;
+            border-radius: 10px;
             padding: 7px 12px;
             font-weight: bold;
             """
