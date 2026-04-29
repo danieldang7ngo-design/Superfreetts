@@ -1,10 +1,30 @@
 {
     "configuration": {
+        "service_enabled": {
+            "EdgeTTS": true,
+            "PiperTTS": false,
+            "KokoroTTS": false,
+            "MmsTTS": false,
+            "GoogleTranslate": false,
+            "NaverTTS": false,
+            "Sapi5TTS": false,
+            "EspeakNgTTS": false
+        },
+        "service_config": {
+            "EdgeTTS": {
+                "concurrency_workers": 3
+            }
+        },
         "display_introduction_message": true
     },
-    "preferences": {},
+    "preferences": {
+        "ui_language": "vi",
+        "cache_enabled": true
+    },
     "presets": {},
-    "mapping_rules": {},
+    "mapping_rules": {
+        "rules": []
+    },
     "batch_config": {},
     "realtime_config": {},
     "default_presets": {}

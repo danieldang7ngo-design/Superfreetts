@@ -7,6 +7,7 @@
 - Improved EdgeTTS stability with retry, empty-audio detection, Unicode text cleanup, and clearer no-audio/rate-limit logging.
 - Reworked EdgeTTS generation to run in ordered waves of up to three requests, keeping progress easier to follow from top to bottom.
 - Added Advanced EdgeTTS controls for retry attempts, request jitter, wave start stagger, retry backoff, and concurrency.
+- Fixed Priority voice selection so it now falls back to a second voice if the first voice fails, and similarly if more voices are configured.
 - Added the new `Sequence` voice selection mode, which cycles through selected voices in order and loops back to the first voice.
 - Added direct EdgeTTS verification scripts, including `tests/verify_edgetts.py`.
 - Added a local `async_timeout` compatibility shim so the bundled `aiohttp` imports correctly under the integrated Python 3.10 runtime.

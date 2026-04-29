@@ -272,10 +272,6 @@ class SuperFreeTTS():
                         # Priority mode voice list state
                         priority_voice_list = None
                         if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-                            # We should initialize this outside the loop if we want it to persist,
-                            # but priority mode with unified batch executor is tricky since we group tasks.
-                            # Best effort: use the original list every time, or we can't fall back easily.
-                            # For now, let's just let it act like single/random if priority.
                             priority_voice_list = copy.copy(batch.voice_selection.voice_list)
 
                         chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
@@ -287,8 +283,11 @@ class SuperFreeTTS():
                             'processed_text': processed_text,
                             'batch': batch,
                             'audio_request_context': audio_request_context,
-                            'chosen_voice': chosen_voice
+                            'chosen_voice': chosen_voice,
                         }
+
+                        if priority_voice_list is not None:
+                            task['priority_voice_list'] = priority_voice_list
                         tasks.append(task)
                     except Exception as e:
                         with batch_status.get_note_action_context(note_id, False) as note_action_context:
@@ -653,9 +652,9 @@ class SuperFreeTTS():
             source_text, processed_text, sound_file, full_filename = res
 
             # Apply to all tasks using this combination
-        for task_idx in task_indices:
-            note_id = tasks[task_idx]['note_id']
-            results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
+            for task_idx in task_indices:
+                note_id = tasks[task_idx]['note_id']
+                results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
 
         return results
 
@@ -749,8 +748,8 @@ class SuperFreeTTS():
                 
                 for i, idx in enumerate(missing_indices):
                     audio_data = audio_datas[i] if i < len(audio_datas) else None
+                    task_data = chunk[idx][1]
                     if audio_data:
-                        task_data = chunk[idx][1]
                         proc_text = task_data['processed_text']
                         
                         # Re-calculate filename for writing
@@ -769,22 +768,60 @@ class SuperFreeTTS():
                         self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_fn, full_fn)
                         results[idx] = ((task_data['source_text'], proc_text, audio_fn, full_fn), None)
                     else:
-                        results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
+                        if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                            results[idx] = self._generate_audio_with_priority_fallback(task_data)
+                        else:
+                            results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
             except Exception as e:
                 logger.error(f"[BATCH] Service batch call failed: {e}")
                 service_error = e
             
-            # If service call failed, mark all missing items with that error
+            # If service call failed, try fallback for priority mode or mark missing items with that error
             if service_error:
                 for idx in missing_indices:
-                    results[idx] = (None, service_error)
-        
-        # Ensure no None in results (fallback for any unhandled indices)
+                    task_data = chunk[idx][1]
+                    if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                        results[idx] = self._generate_audio_with_priority_fallback(task_data)
+                    else:
+                        results[idx] = (None, service_error)
         for i in range(len(results)):
             if results[i] is None:
                 results[i] = (None, Exception("Audio generation was skipped or interrupted"))
                 
         return results
+
+    def _generate_audio_with_priority_fallback(self, task_data):
+        """Try remaining priority voices one by one for a single batch task."""
+        batch_cfg = task_data['batch']
+        voice_selection = batch_cfg.voice_selection
+        if voice_selection.selection_mode != constants.VoiceSelectionMode.priority:
+            return (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
+
+        priority_voice_list = task_data.get('priority_voice_list')
+        if priority_voice_list is None:
+            priority_voice_list = copy.copy(voice_selection.voice_list)
+        else:
+            priority_voice_list = copy.copy(priority_voice_list)
+
+        source_text = task_data['source_text']
+        processed_text = task_data['processed_text']
+        while len(priority_voice_list) > 0:
+            voice_with_options = self.choose_voice(voice_selection, priority_voice_list)
+            try:
+                full_filename, audio_filename = self.generate_audio_write_file(
+                    processed_text,
+                    voice_with_options.voice_id,
+                    voice_with_options.options,
+                    task_data['audio_request_context'],
+                )
+                self.executor.cache_result(processed_text, str(voice_with_options.voice_id), source_text, audio_filename, full_filename)
+                return ((source_text, processed_text, audio_filename, full_filename), None)
+            except errors.AudioNotFoundError:
+                continue
+            except Exception as exc:
+                return (None, exc)
+
+        return (None, errors.AudioNotFoundAnyVoiceError(processed_text))
 
     def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection):
         # Helper to update the note object

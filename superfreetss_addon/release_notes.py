@@ -16,7 +16,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
         title={
             "en": "EdgeTTS stability, ordered concurrency, and Sequence voices",
             "vi": "EdgeTTS on dinh hon, chay dung thu tu va them che do Sequence",
-            "ko": "EdgeTTS stability and Sequence voice mode",
+            "ko": "EdgeTTS 안정성, 순차 실행, Sequence 음성 모드",
         },
         bullets={
             "en": [
@@ -24,6 +24,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Changed EdgeTTS batch scheduling to run ordered waves of up to three requests so progress follows the note order more predictably.",
                 "Added Advanced EdgeTTS controls for retry attempts, request jitter, wave start stagger, and retry backoff.",
                 "Added the Sequence voice selection mode, which cycles through selected voices in order and loops back to the first voice.",
+                "Fixed Priority voice selection so it now falls back to a second voice if the first voice fails, and similarly if more voices are configured.",
                 "Added runnable EdgeTTS verification scripts, including a combined verify_edgetts smoke test.",
             ],
             "vi": [
@@ -31,14 +32,16 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Doi batch EdgeTTS sang wave toi da 3 request theo thu tu note de tien trinh de theo doi hon.",
                 "Them cac tuy chon Advanced cho EdgeTTS: so lan retry, request jitter, wave start stagger va retry backoff.",
                 "Them che do chon giong Sequence, tu dong xoay vong cac giong theo thu tu da chon.",
+                "Sua Priority voice selection de bay gio se fallback sang giong thu hai neu giong dau loi, va tuong tu neu co nhieu giong hon.",
                 "Them bo kiem tra EdgeTTS co the chay truc tiep, gom smoke test verify_edgetts.",
             ],
             "ko": [
-                "Improved EdgeTTS retry behavior, empty-audio handling, Unicode cleanup, and clearer rate-limit logging.",
-                "Changed EdgeTTS generation to ordered waves of up to three requests for easier progress tracking.",
-                "Added Advanced EdgeTTS controls for retry attempts, jitter, wave start stagger, and retry backoff.",
-                "Added Sequence voice selection mode to cycle through selected voices in order.",
-                "Added runnable EdgeTTS smoke verification scripts.",
+                "EdgeTTS 재시도 동작, 빈 오디오 처리, 유니코드 정리, 그리고 더 명확한 rate-limit 로그를 개선했습니다.",
+                "EdgeTTS 생성을 최대 3개의 요청으로 구성된 순차적 웨이브로 변경하여 진행 상황을 더 쉽게 추적할 수 있게 했습니다.",
+                "재시도 횟수, 지터, 웨이브 시작 간격, 재시도 백오프를 위한 고급 EdgeTTS 제어 기능을 추가했습니다.",
+                "선택된 음성을 순서대로 순환하는 Sequence 음성 선택 모드를 추가했습니다.",
+                "Priority 음성 선택을 수정하여 첫 번째 음성이 실패할 경우 두 번째 음성으로 자동으로 대체되며, 더 많은 음성이 구성되어 있으면 동일하게 동작합니다.",
+                "실행 가능한 EdgeTTS 스모크 검증 스크립트를 추가했습니다.",
             ],
         },
     ),
@@ -145,4 +148,4 @@ def get_release_notes_since(
         if version_key(entry.version) <= current_key
         and (not last_seen_key or version_key(entry.version) > last_seen_key)
     ]
-    return sorted(entries, key=lambda entry: version_key(entry.version))
+    return sorted(entries, key=lambda entry: version_key(entry.version), reverse=True)
