@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2 - 2026-04-29
+
+### English
+
+- Improved EdgeTTS stability with retry, empty-audio detection, Unicode text cleanup, and clearer no-audio/rate-limit logging.
+- Reworked EdgeTTS generation to run in ordered waves of up to three requests, keeping progress easier to follow from top to bottom.
+- Added Advanced EdgeTTS controls for retry attempts, request jitter, wave start stagger, retry backoff, and concurrency.
+- Added the new `Sequence` voice selection mode, which cycles through selected voices in order and loops back to the first voice.
+- Added direct EdgeTTS verification scripts, including `tests/verify_edgetts.py`.
+- Added a local `async_timeout` compatibility shim so the bundled `aiohttp` imports correctly under the integrated Python 3.10 runtime.
+
+### Tieng Viet
+
+- Cai thien do on dinh cua EdgeTTS voi retry, kiem tra audio rong, lam sach Unicode va log ro hon khi bi no-audio/rate-limit.
+- Doi EdgeTTS sang co che wave toi da 3 request theo thu tu tu tren xuong, giup tien trinh de theo doi hon.
+- Them cac tuy chon Advanced cho EdgeTTS: retry attempts, request jitter, wave start stagger, retry backoff va concurrency.
+- Them mode chon giong moi `Sequence`, dung giong theo thu tu da chon va quay lai giong dau khi het danh sach.
+- Them script kiem tra EdgeTTS truc tiep, gom `tests/verify_edgetts.py`.
+- Them shim `async_timeout` cuc bo de `aiohttp` bundled import duoc voi Python 3.10 tich hop.
+
 ## 1.1.2 - 2026-04-24
 
 ### English

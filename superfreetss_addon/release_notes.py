@@ -12,6 +12,37 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.2",
+        title={
+            "en": "EdgeTTS stability, ordered concurrency, and Sequence voices",
+            "vi": "EdgeTTS on dinh hon, chay dung thu tu va them che do Sequence",
+            "ko": "EdgeTTS stability and Sequence voice mode",
+        },
+        bullets={
+            "en": [
+                "Improved EdgeTTS generation with retry, empty-audio detection, Unicode cleanup, and clearer no-audio/rate-limit logging.",
+                "Changed EdgeTTS batch scheduling to run ordered waves of up to three requests so progress follows the note order more predictably.",
+                "Added Advanced EdgeTTS controls for retry attempts, request jitter, wave start stagger, and retry backoff.",
+                "Added the Sequence voice selection mode, which cycles through selected voices in order and loops back to the first voice.",
+                "Added runnable EdgeTTS verification scripts, including a combined verify_edgetts smoke test.",
+            ],
+            "vi": [
+                "Cai thien EdgeTTS voi retry, kiem tra audio rong, lam sach Unicode va log ro hon khi bi no-audio/rate-limit.",
+                "Doi batch EdgeTTS sang wave toi da 3 request theo thu tu note de tien trinh de theo doi hon.",
+                "Them cac tuy chon Advanced cho EdgeTTS: so lan retry, request jitter, wave start stagger va retry backoff.",
+                "Them che do chon giong Sequence, tu dong xoay vong cac giong theo thu tu da chon.",
+                "Them bo kiem tra EdgeTTS co the chay truc tiep, gom smoke test verify_edgetts.",
+            ],
+            "ko": [
+                "Improved EdgeTTS retry behavior, empty-audio handling, Unicode cleanup, and clearer rate-limit logging.",
+                "Changed EdgeTTS generation to ordered waves of up to three requests for easier progress tracking.",
+                "Added Advanced EdgeTTS controls for retry attempts, jitter, wave start stagger, and retry backoff.",
+                "Added Sequence voice selection mode to cycle through selected voices in order.",
+                "Added runnable EdgeTTS smoke verification scripts.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.1.2",
         title={
             "en": "Korean UI language and release note coverage",

@@ -101,7 +101,9 @@ class SuperFreeTTS():
                 if concurrency > max_workers:
                     logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
-                engine_config[pool_name] = max(1, concurrency)
+                # EdgeTTS handles request concurrency internally in ordered waves.
+                # Keep the outer executor serial so chunks progress top-to-bottom.
+                engine_config[pool_name] = 1 if service_name == 'EdgeTTS' else max(1, concurrency)
                 
                 # Auto-scale internal process pools for Sherpa-based services
                 try:
@@ -265,6 +267,8 @@ class SuperFreeTTS():
                             processed_text = self.text_processing_cache[cache_key]
                             logger.debug(f"[BATCH] Text cache hit")
                         
+                        sequence_index = len(tasks)
+
                         # Priority mode voice list state
                         priority_voice_list = None
                         if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
@@ -274,7 +278,7 @@ class SuperFreeTTS():
                             # For now, let's just let it act like single/random if priority.
                             priority_voice_list = copy.copy(batch.voice_selection.voice_list)
 
-                        chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list)
+                        chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
 
                         # Create simple task dict (no MemoryPool)
                         task = {
@@ -465,52 +469,66 @@ class SuperFreeTTS():
         audio_cache = {}
         completed_count = 0
         unique_count = len(dedup_map)
+        sequence_mode = (
+            len(tasks) > 0
+            and tasks[0].get('batch')
+            and tasks[0]['batch'].voice_selection.selection_mode == constants.VoiceSelectionMode.sequence
+        )
         
         # 1. Group tasks by (service, voice_id) for batching compatibility
         engine_groups = {} # (service_name, voice_id) -> list of (dedup_key, task_data, task_indices)
-        
-        for dedup_key, task_indices in dedup_map.items():
-            task_idx = task_indices[0]
-            task_data = tasks[task_idx]
-            service_name = self.executor.detect_service(task_data)
-            
-            # Extract voice_id safely
-            chosen_voice = task_data.get('chosen_voice')
-            # Voice ID can be complex, stringify for dictionary key
-            voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
-            
-            group_key = (service_name, voice_id_str)
-            if group_key not in engine_groups:
-                engine_groups[group_key] = []
-            engine_groups[group_key].append((dedup_key, task_data, task_indices))
-            
+
+        if not sequence_mode:
+            for dedup_key, task_indices in dedup_map.items():
+                task_idx = task_indices[0]
+                task_data = tasks[task_idx]
+                service_name = self.executor.detect_service(task_data)
+
+                # Extract voice_id safely
+                chosen_voice = task_data.get('chosen_voice')
+                # Voice ID can be complex, stringify for dictionary key
+                voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
+
+                group_key = (service_name, voice_id_str)
+                if group_key not in engine_groups:
+                    engine_groups[group_key] = []
+                engine_groups[group_key].append((dedup_key, task_data, task_indices))
+
         # 2. Chunk groups into batches — prepared upfront
-        # Per-engine batch size: EdgeTTS uses 1 (no batching) so workers
-        # directly control concurrency (1 worker = 1 request). Other engines use 10.
-        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 1}
+        # EdgeTTS runs in small waves to keep progress responsive and avoid the
+        # strict per-future timeout for long text.
+        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 3}
         DEFAULT_BATCH_SIZE = 10
         all_chunks = []  # list of (service_name, chunk_items)
-        
-        for (service_name, _), group_tasks in engine_groups.items():
-            max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
-            chunk = []
-            chunk_chars = 0
-            for item in group_tasks:
-                dedup_key, task_data, task_indices = item
-                text = task_data['source_text']
-                text_len = len(text)
-                
-                if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
+
+        if sequence_mode:
+            ordered_items = []
+            for dedup_key, task_indices in dedup_map.items():
+                task_idx = task_indices[0]
+                ordered_items.append((dedup_key, tasks[task_idx], task_indices))
+            for offset in range(0, len(ordered_items), 3):
+                all_chunks.append(('__sequence__', ordered_items[offset:offset + 3]))
+        else:
+            for (service_name, _), group_tasks in engine_groups.items():
+                max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
+                chunk = []
+                chunk_chars = 0
+                for item in group_tasks:
+                    dedup_key, task_data, task_indices = item
+                    text = task_data['source_text']
+                    text_len = len(text)
+
+                    if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
+                        all_chunks.append((service_name, list(chunk)))
+                        chunk = []
+                        chunk_chars = 0
+
+                    chunk.append(item)
+                    chunk_chars += text_len
+
+                if chunk:
                     all_chunks.append((service_name, list(chunk)))
-                    chunk = []
-                    chunk_chars = 0
-                
-                chunk.append(item)
-                chunk_chars += text_len
-            
-            if chunk:
-                all_chunks.append((service_name, list(chunk)))
-        
+
         # 3. Submit chunks in a background thread (producer) while main thread
         #    collects results immediately (consumer). This avoids the blocking delay
         #    caused by submitting ALL chunks before starting result collection.
@@ -525,7 +543,10 @@ class SuperFreeTTS():
                     if not batch_status.must_continue:
                         break
                     executor_pool = self.executor.get_executor(service_name)
-                    future = executor_pool.submit(self._generate_audio_batch_task, list(chunk_items))
+                    if service_name == '__sequence__':
+                        future = executor_pool.submit(self._generate_audio_sequence_task, list(chunk_items))
+                    else:
+                        future = executor_pool.submit(self._generate_audio_batch_task, list(chunk_items))
                     with future_lock:
                         future_to_chunk[future] = list(chunk_items)
             except Exception as e:
@@ -632,9 +653,56 @@ class SuperFreeTTS():
             source_text, processed_text, sound_file, full_filename = res
 
             # Apply to all tasks using this combination
-            for task_idx in task_indices:
-                note_id = tasks[task_idx]['note_id']
-                results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
+        for task_idx in task_indices:
+            note_id = tasks[task_idx]['note_id']
+            results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
+
+        return results
+
+    def _generate_audio_sequence_task(self, chunk):
+        results = [None] * len(chunk)
+
+        def generate_one(idx, item):
+            _, task_data, _ = item
+            chosen_voice = task_data.get('chosen_voice')
+            if chosen_voice is None:
+                return idx, (None, errors.NoVoiceSet())
+
+            proc_text = task_data['processed_text']
+            voice_id = chosen_voice.voice_id
+            voice_options = chosen_voice.options
+            format = options.AudioFormat.mp3
+            if options.AUDIO_FORMAT_PARAMETER in voice_options:
+                format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
+
+            hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
+            full_filename = self.get_full_audio_file_name(hash_str, format)
+            audio_filename = self.get_audio_filename(hash_str, format)
+
+            if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
+                return idx, ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
+
+            try:
+                full_filename, audio_filename = self.generate_audio_write_file(
+                    proc_text,
+                    voice_id,
+                    voice_options,
+                    task_data['audio_request_context'],
+                )
+                self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_filename, full_filename)
+                return idx, ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
+            except Exception as e:
+                return idx, (None, e)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(3, len(chunk))) as pool:
+            futures = [pool.submit(generate_one, idx, item) for idx, item in enumerate(chunk)]
+            for future in concurrent.futures.as_completed(futures):
+                idx, result = future.result()
+                results[idx] = result
+
+        for i in range(len(results)):
+            if results[i] is None:
+                results[i] = (None, Exception("Sequence audio generation was skipped or interrupted"))
 
         return results
 
@@ -792,7 +860,11 @@ class SuperFreeTTS():
 
     def get_audio_file(self, processed_text, voice_selection, audio_request_context):
         # sanity checks
-        if voice_selection.selection_mode in [constants.VoiceSelectionMode.priority, constants.VoiceSelectionMode.random]:
+        if voice_selection.selection_mode in [
+            constants.VoiceSelectionMode.priority,
+            constants.VoiceSelectionMode.random,
+            constants.VoiceSelectionMode.sequence,
+        ]:
             if len(voice_selection.voice_list) == 0:
                 raise errors.NoVoicesAdded()
 
@@ -825,7 +897,7 @@ class SuperFreeTTS():
             loop_condition = priority_mode and sound_found == False and len(voice_list) > 0
         raise errors.AudioNotFoundAnyVoiceError(processed_text)
 
-    def choose_voice(self, voice_selection, voice_list) -> config_models.VoiceWithOptions:
+    def choose_voice(self, voice_selection, voice_list, sequence_index=None) -> config_models.VoiceWithOptions:
         if voice_selection.selection_mode == constants.VoiceSelectionMode.single:
             return voice_selection.voice
         elif voice_selection.selection_mode == constants.VoiceSelectionMode.random:
@@ -836,6 +908,14 @@ class SuperFreeTTS():
             # remove that voice from possible list
             voice = voice_list.pop(0)
             return voice
+        elif voice_selection.selection_mode == constants.VoiceSelectionMode.sequence:
+            voice_count = len(voice_selection.voice_list)
+            if voice_count == 0:
+                raise errors.NoVoicesAdded()
+            if sequence_index is None:
+                sequence_index = getattr(voice_selection, '_sequence_runtime_index', 0)
+                voice_selection._sequence_runtime_index = sequence_index + 1
+            return voice_selection.voice_list[sequence_index % voice_count]
 
     def editor_note_add_audio(self, 
             batch: config_models.BatchConfig, 
@@ -1622,7 +1702,9 @@ class SuperFreeTTS():
                 if concurrency > max_workers:
                     logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
-                engine_config[pool_name] = max(1, concurrency)
+                # EdgeTTS handles request concurrency internally in ordered waves.
+                # Keep the outer executor serial so chunks progress top-to-bottom.
+                engine_config[pool_name] = 1 if service_name == 'EdgeTTS' else max(1, concurrency)
 
                 # Auto-scale internal process pools for Sherpa-based services
                 try:
@@ -1804,6 +1886,17 @@ class SuperFreeTTS():
                 except errors.VoiceIdNotFound as exc:
                     logger.warning(f'voice_id not found: {voice_id}, omitting from priority selection')
             return priority
+        elif voice_selection_mode == constants.VoiceSelectionMode.sequence:
+            sequence = config_models.VoiceSelectionSequence()
+            for voice_data in voice_selection_config['voice_list']:
+                voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
+                try:
+                    # try to locate the voice
+                    voice = self.service_manager.locate_voice(voice_id)
+                    sequence.add_voice(config_models.VoiceWithOptionsSequence(voice_id, voice_data['options']))
+                except errors.VoiceIdNotFound as exc:
+                    logger.warning(f'voice_id not found: {voice_id}, omitting from sequence selection')
+            return sequence
 
     def deserialize_text_processing(self, text_processing_config):
         text_processing = config_models.TextProcessing()

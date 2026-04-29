@@ -199,6 +199,10 @@ class VoiceWithOptionsPriority(VoiceWithOptions):
     def __init__(self, voice_id: voice.TtsVoiceId_v3, options):
         VoiceWithOptions.__init__(self, voice_id, options)
 
+class VoiceWithOptionsSequence(VoiceWithOptions):
+    def __init__(self, voice_id: voice.TtsVoiceId_v3, options):
+        VoiceWithOptions.__init__(self, voice_id, options)
+
 
 class VoiceSelectionBase(ConfigModelBase):
     def __init__(self):
@@ -303,6 +307,11 @@ class VoiceSelectionPriority(VoiceSelectionMultipleBase):
     def __init__(self):
         VoiceSelectionMultipleBase.__init__(self)
         self._selection_mode = constants.VoiceSelectionMode.priority
+
+class VoiceSelectionSequence(VoiceSelectionMultipleBase):
+    def __init__(self):
+        VoiceSelectionMultipleBase.__init__(self)
+        self._selection_mode = constants.VoiceSelectionMode.sequence
 
 # text processing
 # ===============
@@ -829,7 +838,7 @@ def migrate_configuration(anki_utils, config):
                     'voice_id': voice_to_voice_id_conversion(voice)
                 }
             
-            elif voice_selection.get('voice_selection_mode') in ['priority', 'random']:
+            elif voice_selection.get('voice_selection_mode') in ['priority', 'random', 'sequence']:
                 for voice_entry in voice_selection.get('voice_list', []):
                     voice = voice_entry.get('voice', {})
                     voice_entry['voice_id'] = voice_to_voice_id_conversion(voice)
@@ -847,7 +856,7 @@ def migrate_configuration(anki_utils, config):
                             'options': voice_selection['voice'].get('options', {}),
                             'voice_id': voice_to_voice_id_conversion(voice)
                         }
-                    elif voice_selection.get('voice_selection_mode') in ['priority', 'random']:
+                    elif voice_selection.get('voice_selection_mode') in ['priority', 'random', 'sequence']:
                         for voice_entry in voice_selection.get('voice_list', []):
                             voice = voice_entry.get('voice', {})
                             voice_entry['voice_id'] = voice_to_voice_id_conversion(voice)

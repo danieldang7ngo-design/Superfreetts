@@ -1,16 +1,14 @@
 import sys
 import os
 import traceback
-import types
-from unittest.mock import MagicMock
 
-# Mock anki environment
-for mod in ['anki', 'anki.hooks', 'aqt', 'aqt.qt', 'aqt.utils', 'aqt.editor', 'aqt.gui_hooks', 'anki.sound']:
-    sys.modules[mod] = MagicMock()
-
-addon_dir = r'c:\Users\Administrator\AppData\Roaming\Anki2\addons21\Superfreetts'
+addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(addon_dir, 'external'))
 sys.path.insert(0, addon_dir)
+
+from tests import mock_anki
+
+mock_anki.mock_all()
 
 try:
     from superfreetss_addon.services import service_edgetts

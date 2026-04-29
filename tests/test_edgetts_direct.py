@@ -5,7 +5,9 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
-from tests import conftest
+from tests import mock_anki
+
+mock_anki.mock_all()
 
 try:
     from superfreetss_addon.services.service_edgetts import EdgeTTS

@@ -203,6 +203,10 @@ class VoiceSelection(component_common.ConfigComponentBase):
             self.radio_button_priority.setChecked(True)
             self.voice_selection_model = model
             self.redraw_selected_voices()
+        elif model.selection_mode == constants.VoiceSelectionMode.sequence:
+            self.radio_button_sequence.setChecked(True)
+            self.voice_selection_model = model
+            self.redraw_selected_voices()
 
         self.enable_model_change_callback = True
 
@@ -329,13 +333,16 @@ class VoiceSelection(component_common.ConfigComponentBase):
         self.radio_button_single = aqt.qt.QRadioButton(i18n.get_text("voice_radio_single", lang))
         self.radio_button_random = aqt.qt.QRadioButton(i18n.get_text("voice_radio_random", lang))
         self.radio_button_priority = aqt.qt.QRadioButton(i18n.get_text("voice_radio_priority", lang))
+        self.radio_button_sequence = aqt.qt.QRadioButton(i18n.get_text("voice_radio_sequence", lang))
         mode_group.addButton(self.radio_button_single)
         mode_group.addButton(self.radio_button_random)
         mode_group.addButton(self.radio_button_priority)
+        mode_group.addButton(self.radio_button_sequence)
         #self.voices_layout.addWidget(mode_group)
         vlayout.addWidget(self.radio_button_single)
         vlayout.addWidget(self.radio_button_random)
         vlayout.addWidget(self.radio_button_priority)
+        vlayout.addWidget(self.radio_button_sequence)
 
         groupbox.setLayout(vlayout)
         self.voices_layout.addWidget(groupbox)   
@@ -398,6 +405,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
         self.radio_button_single.toggled.connect(self.voice_selection_mode_change)
         self.radio_button_random.toggled.connect(self.voice_selection_mode_change)
         self.radio_button_priority.toggled.connect(self.voice_selection_mode_change)
+        self.radio_button_sequence.toggled.connect(self.voice_selection_mode_change)
 
         self.add_voice_button.pressed.connect(self.add_voice)
         gui_utils.configure_pastel_button(self.add_voice_button, style_name="purple")
@@ -417,6 +425,9 @@ class VoiceSelection(component_common.ConfigComponentBase):
         elif self.radio_button_priority.isChecked():
             self.voice_list_display_stack.setCurrentIndex(1)
             self.voice_selection_model = config_models.VoiceSelectionPriority()
+        elif self.radio_button_sequence.isChecked():
+            self.voice_list_display_stack.setCurrentIndex(1)
+            self.voice_selection_model = config_models.VoiceSelectionSequence()
         self.redraw_selected_voices()
         self.notify_model_update()
 
@@ -458,6 +469,8 @@ class VoiceSelection(component_common.ConfigComponentBase):
                 self.voice_selection_model.add_voice(config_models.VoiceWithOptionsRandom(selected_voice.voice_id, options))
             elif self.radio_button_priority.isChecked():
                 self.voice_selection_model.add_voice(config_models.VoiceWithOptionsPriority(selected_voice.voice_id, options))
+            elif self.radio_button_sequence.isChecked():
+                self.voice_selection_model.add_voice(config_models.VoiceWithOptionsSequence(selected_voice.voice_id, options))
 
             self.redraw_selected_voices()
             
@@ -762,7 +775,7 @@ class VoiceSelection(component_common.ConfigComponentBase):
             column_index += 1
             remove_button.pressed.connect(get_remove_lambda(self.voice_selection_model, voice_entry, self.redraw_selected_voices, self.notify_model_update))
             # add up/down buttons
-            if isinstance(self.voice_selection_model, config_models.VoiceSelectionPriority):
+            if isinstance(self.voice_selection_model, (config_models.VoiceSelectionPriority, config_models.VoiceSelectionSequence)):
                 # add weight widget
                 up_button = aqt.qt.QPushButton(i18n.get_text("voice_button_move_up", lang))
                 down_button = aqt.qt.QPushButton(i18n.get_text("voice_button_move_down", lang))

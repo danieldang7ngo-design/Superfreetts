@@ -54,6 +54,7 @@ class VoiceSelectionMode(enum.Enum):
     single = enum.auto() # a single voice is selected
     random = enum.auto() # a random voice is selected, with optional weights
     priority = enum.auto() # the first voice is selected, and if audio is not found, move to the second one
+    sequence = enum.auto() # cycle through the configured voices in order
 
 class BatchNoteStatus(enum.Enum):
     Waiting = enum.auto()
