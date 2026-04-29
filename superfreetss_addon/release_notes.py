@@ -26,6 +26,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Added the Sequence voice selection mode, which cycles through selected voices in order and loops back to the first voice.",
                 "Fixed Priority voice selection so it now falls back to a second voice if the first voice fails, and similarly if more voices are configured.",
                 "Added runnable EdgeTTS verification scripts, including a combined verify_edgetts smoke test.",
+                "Added workflow function so you can now generate with multiple presets at the same time ",
             ],
             "vi": [
                 "Cai thien EdgeTTS voi retry, kiem tra audio rong, lam sach Unicode va log ro hon khi bi no-audio/rate-limit.",
@@ -34,6 +35,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Them che do chon giong Sequence, tu dong xoay vong cac giong theo thu tu da chon.",
                 "Sua Priority voice selection de bay gio se fallback sang giong thu hai neu giong dau loi, va tuong tu neu co nhieu giong hon.",
                 "Them bo kiem tra EdgeTTS co the chay truc tiep, gom smoke test verify_edgetts.",
+                "Them co che workflow nen bay gio ban co the tao am thanh voi nhieu presets cung luc ",
             ],
             "ko": [
                 "EdgeTTS 재시도 동작, 빈 오디오 처리, 유니코드 정리, 그리고 더 명확한 rate-limit 로그를 개선했습니다.",
@@ -42,6 +44,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "선택된 음성을 순서대로 순환하는 Sequence 음성 선택 모드를 추가했습니다.",
                 "Priority 음성 선택을 수정하여 첫 번째 음성이 실패할 경우 두 번째 음성으로 자동으로 대체되며, 더 많은 음성이 구성되어 있으면 동일하게 동작합니다.",
                 "실행 가능한 EdgeTTS 스모크 검증 스크립트를 추가했습니다.",
+                "워크플로우 기능이 추가되어 이제 여러 프리셋을 동시에 사용해 생성할 수 있습니다.",
             ],
         },
     ),
