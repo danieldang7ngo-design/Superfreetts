@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1 - 2026-05-11
+
+### English
+
+- Changed newly generated audio filenames to use the `superfreetts-<hash>` prefix.
+- Kept existing `superfreetss-*` cached audio files valid and unchanged.
+
+### Tieng Viet
+
+- Doi file audio tao moi sang prefix `superfreetts-<hash>`.
+- Giu nguyen cac file audio cache cu `superfreetss-*`; chung van hop le.
+
 ## 1.2 - 2026-04-29
 
 ### English

@@ -1,4 +1,4 @@
-# Super Free TTS Project Analysis & AI Context
+﻿# Super Free TTS Project Analysis & AI Context
 
 > **Note to AI Agents and Contributors:** This file provides a concise, high-level overview of the Super Free TTS Anki Add-on project. Read this first to quickly understand the architecture, data flow, and development guidelines before diving into the codebase.
 
@@ -28,7 +28,7 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 1. The user triggers generation (via Easy Mode or Collection Mode).
 2. `get_source_text()` extracts content.
 3. `get_audio_file()` processes the extracted text and delegates generation to the `ServiceManager` or the new batch executor.
-4. The generation utilizes a hashing mechanism for the `(source_text, voice_id, options)` tuple. If a file like `superfreetss-{hash}.mp3` already exists in `user_files/`, it uses the cache; otherwise, it hits the TTS engine asynchronously in the background. EdgeTTS is hard-capped at 3 concurrent workers to ensure stability.
+4. The generation utilizes a hashing mechanism for the `(source_text, voice_id, options)` tuple. If a file like `superfreetts-{hash}.mp3` already exists in `user_files/`, it uses the cache; otherwise, it hits the TTS engine asynchronously in the background. EdgeTTS is hard-capped at 3 concurrent workers to ensure stability.
 
 ## 3. Key Features & Functionality
 - **Flexible UI Modes:** Easy Mode for single notes, Collection Mode for batch processing.

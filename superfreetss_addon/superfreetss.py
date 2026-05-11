@@ -1267,7 +1267,7 @@ class SuperFreeTTS():
             options.AudioFormat.ogg_opus: 'ogg',
         }
         extension = extension_map[format]
-        filename = f'superfreetss-{hash_str}.{extension}'
+        filename = f'superfreetts-{hash_str}.{extension}'
         return filename
 
     def get_hash_for_audio_request(self, source_text, voice_id: voice_module.TtsVoiceId_v3, options):

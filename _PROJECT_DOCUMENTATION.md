@@ -1,4 +1,4 @@
-# Super Free TTS by Paul from AnkiVN - Tài Liệu Dự Án
+﻿# Super Free TTS by Paul from AnkiVN - Tài Liệu Dự Án
 
 > Tài liệu này mô tả chi tiết dự án Super Free TTS. Để xem nhanh tóm tắt kiến trúc và định hướng dành riêng cho AI Agents, vui lòng đọc [AI_SUMMARY.md](./AI_SUMMARY.md).
 
@@ -180,7 +180,7 @@ Superfreetts/                       # Thư mục gốc addon (hoặc ID số tro
 ├── external/                       # Thư viện bên thứ 3 (có thể ở ngoài superfreetss_addon)
 │   ├── aiohttp/, edge_tts/, gtts/, requests/, comtypes/, ...
 │
-├── user_files/                     # Cache âm thanh (hash-based: superfreetss-{hash}.mp3)
+├── user_files/                     # Cache âm thanh (hash-based: superfreetts-{hash}.mp3)
 ├── UPGRADE_IDEAS.md                # Gợi ý nâng cấp (hiện tại: tối ưu load add-on)
 └── PROJECT_DOCUMENTATION.md        # Tài liệu này
 ```
@@ -229,7 +229,7 @@ HyperTTS.editor_note_add_audio()
     │   └─→ generate_audio_write_file()
     │       ├─→ servicemanager.get_tts_audio()
     │       │   └─→ service_edgetts.py (hoặc service khác)
-    │       └─→ Write to user_files/superfreetss-{hash}.mp3
+    │       └─→ Write to user_files/superfreetts-{hash}.mp3
     ├─→ get_collection_sound_tag() - Tạo [sound:filename.mp3]
     └─→ Update note field với sound tag
 ```
@@ -351,7 +351,7 @@ Mỗi engine kế thừa **`ServiceBase`** (`service.py`), khai báo `service_ty
 ### Voice & Options
 
 - **voice.py**: `TtsVoice_v3` (name, voice_key, service, gender, audio_languages, options, service_fee), `TtsVoiceId_v3` (voice_key, service), `build_voice_v3(name, gender, language, service, voice_key, options)`, `voice_str(voice)` dùng trong combobox.
-- **options.py**: `AudioFormat` (mp3, ogg_vorbis, ogg_opus) – dùng khi ghi file cache (`superfreetss-{hash}.mp3`/`.ogg`).
+- **options.py**: `AudioFormat` (mp3, ogg_vorbis, ogg_opus) – dùng khi ghi file cache (`superfreetts-{hash}.mp3`/`.ogg`).
 
 ### Error Handling (`errors.py`)
 
@@ -671,7 +671,7 @@ Trước khi commit code:
     - **EdgeTTS**: Được giới hạn cứng ở **3 workers** để tránh bị Microsoft rate-limit.
     - **Offline Engines**: Sử dụng `BoundedThreadPoolExecutor` để giới hạn hàng chờ và quản lý tài nguyên (RAM/CPU). Đề xuất 4-8 workers cho CPU Ryzen 7.
 - **Interleaved Batching:** Áp dụng mô hình producer-consumer để bắt đầu tạo audio ngay khi có yêu cầu, không đợi nạp xong toàn bộ danh sách, giúp giảm đáng kể độ trễ khởi động (startup latency).
-- **Cache audio files:** `generate_audio_write_file()` dùng hash `(source_text, voice_id, options)` → file `superfreetss-{hash}.mp3`; nếu đã tồn tại thì không gọi TTS lại.
+- **Cache audio files:** `generate_audio_write_file()` dùng hash `(source_text, voice_id, options)` → file `superfreetts-{hash}.mp3`; nếu đã tồn tại thì không gọi TTS lại.
 - **Voice list cache:** `get_service_voice_list()` và `locate_voice()` dùng `functools.lru_cache`.
 
 #### 4. UI/UX

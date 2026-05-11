@@ -12,6 +12,28 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.2.1",
+        title={
+            "en": "Audio filename prefix cleanup",
+            "vi": "Sua prefix ten file audio",
+            "ko": "오디오 파일 이름 접두사 정리",
+        },
+        bullets={
+            "en": [
+                "Newly generated audio files now use the superfreetts-<hash> filename prefix.",
+                "Existing superfreetss-* cached audio files remain valid and are not renamed.",
+            ],
+            "vi": [
+                "File audio tao moi bay gio dung prefix ten file superfreetts-<hash>.",
+                "Cac file audio cache cu superfreetss-* van giu nguyen va van hop le.",
+            ],
+            "ko": [
+                "새로 생성되는 오디오 파일은 이제 superfreetts-<hash> 파일 이름 접두사를 사용합니다.",
+                "기존 superfreetss-* 캐시 오디오 파일은 이름을 바꾸지 않으며 계속 유효합니다.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.2",
         title={
             "en": "EdgeTTS stability, ordered concurrency, and Sequence voices",

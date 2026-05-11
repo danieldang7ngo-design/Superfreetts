@@ -320,8 +320,8 @@ class Windows(service.ServiceBase):
         # python/windows somehow doesn't handle temporary files. create files in %TEMP% instead, 
         # the user should have write access to that location.
         temp_dir = os.environ['TEMP']
-        filename_wav = f'superfreetss-{file_hash}.wav'
-        filename_mp3 = f'superfreetss-{file_hash}.mp3'
+        filename_wav = f'superfreetts-{file_hash}.wav'
+        filename_mp3 = f'superfreetts-{file_hash}.mp3'
         
         full_path_wav = os.path.join(temp_dir, filename_wav)
         full_path_mp3 = os.path.join(temp_dir, filename_mp3)
