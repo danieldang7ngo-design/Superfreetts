@@ -34,6 +34,7 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 
 ### Phase 2 - UX & Configuration
 
+- ✅ Field Mapping và Voice Selection đã tách riêng; option chính nằm đầu từng tab.
 - Giữ Settings nhanh, gọn, dễ quét.
 - Polish các luồng speed/pitch/preview và trạng thái generate.
 - Cải thiện copy lỗi để người dùng biết nên kiểm tra config, mạng, hoặc engine nào.
