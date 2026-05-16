@@ -3,6 +3,7 @@ import aqt.qt
 import time
 import html
 import aqt.operations
+import copy
 from typing import Callable, Optional, List, Any
 from datetime import timedelta, datetime
 
@@ -111,12 +112,22 @@ class BatchPreview(component_common.ComponentBase):
 
         self.apply_to_notes_batch_started = False
         self.failed_note_ids_to_tag: List[int] = []
+        self.generated_batch_results = None
+        self.prepared_batch_audio = None
+        self.generated_batch_model = None
+        self.backup_folder = None
+        self.batch_run_mode = 'idle'
 
         self.table_repaint_timer = TableRepaintTimer(500)
 
     def load_model(self, model):
         self.batch_model = model
         self.apply_to_notes_batch_started = False
+        self.generated_batch_results = None
+        self.prepared_batch_audio = None
+        self.generated_batch_model = None
+        self.backup_folder = None
+        self.batch_run_mode = 'idle'
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
         self.hypertts.anki_utils.run_in_background(self.update_batch_status_task, self.update_batch_status_task_done)
@@ -262,19 +273,107 @@ class BatchPreview(component_common.ComponentBase):
             return self.batch_status[self.selected_row]
         return None
 
-    def apply_audio_to_notes(self):
+    def has_pending_generated_audio(self):
+        return self.generated_batch_results is not None
+
+    def is_applying_generated_audio(self):
+        return self.batch_run_mode == 'applying'
+
+    def generate_audio_to_cache(self):
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
-        self.hypertts.anki_utils.run_in_background_collection_op(self.dialog, self.apply_audio_fn, self.finished_apply_audio_fn)
+        self.generated_batch_results = None
+        self.prepared_batch_audio = None
+        self.generated_batch_model = copy.deepcopy(self.batch_model)
+        self.batch_run_mode = 'generating'
+        self.batch_status.begin()
+        aqt.operations.QueryOp(
+            parent=self.dialog,
+            op=self.prepare_audio_fn,
+            success=self.finished_prepare_audio_fn,
+        ).failure(self.batch_operation_failed).run_in_background()
+
+    def apply_audio_to_notes(self):
+        self.generate_audio_to_cache()
+
+    def apply_generated_audio_to_notes(self):
+        if not self.has_pending_generated_audio():
+            return
+        self.apply_to_notes_batch_started = True
+        self.failed_note_ids_to_tag = []
+        self.backup_folder = aqt.mw.pm.backupFolder()
+        self.batch_run_mode = 'backup'
+        aqt.operations.QueryOp(
+            parent=self.dialog,
+            op=self.create_backup_fn,
+            success=self.finished_create_backup_fn,
+        ).failure(self.batch_operation_failed).with_progress("Creating Backup...").run_in_background()
 
     def stop_button_pressed(self):
         self.batch_status.stop()
 
-    def apply_audio_fn(self, anki_collection):
-        self.hypertts.process_batch_audio(self.note_id_list, self.batch_model, self.batch_status, anki_collection)
+    def prepare_audio_fn(self, anki_collection):
+        return self.hypertts.prepare_batch_audio_generation(self.note_id_list, self.generated_batch_model, self.batch_status)
+
+    def finished_prepare_audio_fn(self, prepared_batch):
+        self.prepared_batch_audio = prepared_batch
+        if not self.batch_status.must_continue:
+            self.batch_status.end(False)
+            return
+        self.hypertts.anki_utils.run_in_background(self.generate_audio_fn, self.finished_generate_audio_fn)
+
+    def generate_audio_fn(self):
+        return self.hypertts.generate_prepared_batch_audio(self.prepared_batch_audio, self.batch_status)
+
+    def finished_generate_audio_fn(self, result):
+        try:
+            generated_results = result.result()
+            self.prepared_batch_audio = None
+            if self.batch_status.must_continue:
+                self.generated_batch_results = generated_results
+                self.batch_run_mode = 'ready'
+                self.batch_status.end(True)
+            else:
+                self.generated_batch_results = None
+                self.generated_batch_model = None
+                self.backup_folder = None
+                self.batch_run_mode = 'idle'
+                self.batch_status.end(False)
+        except Exception as e:
+            self.batch_operation_failed(e)
+
+    def create_backup_fn(self, anki_collection):
+        return anki_collection.create_backup(
+            backup_folder=self.backup_folder,
+            force=True,
+            wait_for_completion=True,
+        )
+
+    def finished_create_backup_fn(self, result):
+        self.batch_run_mode = 'applying'
+        self.batch_status.begin()
+        aqt.operations.QueryOp(
+            parent=self.dialog,
+            op=self.apply_generated_audio_with_undo_fn,
+            success=self.finished_apply_audio_fn,
+        ).failure(self.batch_operation_failed).run_in_background()
+
+    def apply_generated_audio_with_undo_fn(self, anki_collection):
+        undo_id = aqt.mw.col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
+        self.hypertts.apply_generated_batch_audio(self.generated_batch_results, self.generated_batch_model, self.batch_status, anki_collection)
+        try:
+            return aqt.mw.col.merge_undo_entries(undo_id)
+        except Exception as e:
+            logger.warning(f'exception in undo_end_fn: {str(e)}, undo_id: {undo_id}')
+            return False
 
     def finished_apply_audio_fn(self, result):
         logger.debug(f'finished_apply_audio_fn, result: {result}')
+        self.generated_batch_results = None
+        self.generated_batch_model = None
+        self.backup_folder = None
+        self.batch_run_mode = 'idle'
+        self.batch_status.end(True)
         failure_records = self.batch_status.get_failure_records()
         if len(failure_records) == 0:
             return
@@ -300,6 +399,16 @@ class BatchPreview(component_common.ComponentBase):
             )
         )
         self.failed_note_ids_to_tag = []
+
+    def batch_operation_failed(self, exception):
+        logger.error(f'batch operation failed: {exception}')
+        self.batch_run_mode = 'idle'
+        self.prepared_batch_audio = None
+        self.generated_batch_results = None
+        self.generated_batch_model = None
+        self.backup_folder = None
+        self.batch_status.end(False)
+        self.hypertts.anki_utils.report_unknown_exception_background(exception)
 
     def batch_start(self):
         if not self.apply_to_notes_batch_started:
@@ -371,5 +480,6 @@ class BatchPreview(component_common.ComponentBase):
                 start_datetime = datetime.now() - (current_time - start_time)
                 self.enhanced_progress_widget.update_progress(completed_count, total_count, start_datetime)
                 self.enhanced_progress_widget.set_phase(self.batch_status.phase)
+                self.enhanced_progress_widget.set_status_text(self.batch_status.status_message)
             except Exception as e:
                 logger.warning(f"Error updating enhanced progress widget: {e}")

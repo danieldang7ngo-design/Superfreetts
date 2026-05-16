@@ -694,8 +694,12 @@ class ComponentBatch(component_common.ConfigComponentBase):
                 self.hypertts.anki_utils.run_in_background(self.apply_note_editor_task, self.apply_note_editor_task_done)
             else:
                 self.disable_bottom_buttons()
-                self.apply_button.setText(i18n.get_text("batch_button_generating_audio", self.hypertts.get_ui_language()))
-                self.preview.apply_audio_to_notes()
+                if self.preview.has_pending_generated_audio():
+                    self.apply_button.setText(i18n.get_text("batch_button_creating_backup", self.hypertts.get_ui_language()))
+                    self.preview.apply_generated_audio_to_notes()
+                else:
+                    self.apply_button.setText(i18n.get_text("batch_button_generating_audio", self.hypertts.get_ui_language()))
+                    self.preview.generate_audio_to_cache()
 
     @sc.event(Event.click_cancel)
     def cancel_button_pressed(self):
@@ -746,7 +750,10 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     def apply_notes_batch_start(self):
         lang = self.hypertts.get_ui_language()
-        self.apply_button.setText(i18n.get_text("batch_button_generating_audio", lang))
+        if self.preview.is_applying_generated_audio():
+            self.apply_button.setText(i18n.get_text("batch_button_applying_audio", lang))
+        else:
+            self.apply_button.setText(i18n.get_text("batch_button_generating_audio", lang))
         self.apply_button.setEnabled(False)
         self.preview_sound_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
@@ -765,9 +772,21 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.apply_button.setStyleSheet(None)
         self.apply_button.setText(i18n.get_text("batch_button_done", lang))
 
+    def batch_ready_to_apply_button_setup(self):
+        lang = self.hypertts.get_ui_language()
+        self.cancel_button.setText(i18n.get_text("button_close", lang))
+        self.cancel_button.setEnabled(True)
+        self.preview_sound_button.setEnabled(True)
+        self.apply_button.setEnabled(True)
+        self.apply_button.setStyleSheet(None)
+        self.apply_button.setText(i18n.get_text("batch_button_apply_generated_audio", lang))
+
     def apply_notes_batch_end(self, completed):
         if completed:
-            self.hypertts.anki_utils.run_on_main(self.batch_completed_button_setup)
+            if self.preview.has_pending_generated_audio():
+                self.hypertts.anki_utils.run_on_main(self.batch_ready_to_apply_button_setup)
+            else:
+                self.hypertts.anki_utils.run_on_main(self.batch_completed_button_setup)
         else:
             self.hypertts.anki_utils.run_on_main(self.batch_interrupted_button_setup)
 

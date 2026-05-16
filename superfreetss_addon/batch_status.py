@@ -151,6 +151,17 @@ class BatchStatus():
         """Get context manager for batch running operation."""
         return BatchRunningActionContext(self)
 
+    def begin(self) -> None:
+        """Mark a multi-step batch operation as running."""
+        self.task_running = True
+        self.must_continue = True
+        self.notify_start()
+
+    def end(self, completed: bool) -> None:
+        """Mark a multi-step batch operation as finished."""
+        self.task_running = False
+        self.notify_end(completed and self.must_continue)
+
     def get_note_action_context(self, note_id: int, blank_fields: bool) -> BatchNoteActionContext:
         """
         Get context manager for note action.

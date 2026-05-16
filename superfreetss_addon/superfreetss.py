@@ -179,6 +179,180 @@ class SuperFreeTTS():
             batch_status.set_phase(phase)
         batch_status.set_status_message(message)
 
+    def prepare_batch_audio_generation(self, note_id_list, batch: config_models.BatchConfig, batch_status):
+        """Prepare note/text/voice tasks without generating audio or updating notes."""
+        tasks = []
+        audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
+        lang = self.get_ui_language()
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_loading_voices", lang),
+            batch_progress_ui.BatchProgressPhase.LOADING,
+        )
+        logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
+        pre_load_start = time.time()
+        try:
+            _ = self.service_manager.full_voice_list()
+            pre_load_time = time.time() - pre_load_start
+            logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
+        except Exception as e:
+            logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
+            batch_progress_ui.BatchProgressPhase.PREPARING,
+        )
+        logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
+        extract_start = time.time()
+
+        for note_id in note_id_list:
+            if not batch_status.must_continue:
+                break
+
+            note = self.anki_utils.get_note_by_id(note_id)
+            try:
+                source_text = self.get_source_text(note, batch.source, None)
+
+                cache_key = f"{source_text}_{id(batch.text_processing)}"
+                if cache_key not in self.text_processing_cache:
+                    processed_text = self.process_text(source_text, batch.text_processing)
+                    self.text_processing_cache[cache_key] = processed_text
+                else:
+                    processed_text = self.text_processing_cache[cache_key]
+                    logger.debug(f"[BATCH] Text cache hit")
+
+                sequence_index = len(tasks)
+                priority_voice_list = None
+                if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                    priority_voice_list = copy.copy(batch.voice_selection.voice_list)
+
+                chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
+
+                task = {
+                    'note_id': note_id,
+                    'source_text': source_text,
+                    'processed_text': processed_text,
+                    'batch': batch,
+                    'audio_request_context': audio_request_context,
+                    'chosen_voice': chosen_voice,
+                }
+
+                if priority_voice_list is not None:
+                    task['priority_voice_list'] = priority_voice_list
+                tasks.append(task)
+            except Exception as e:
+                with batch_status.get_note_action_context(note_id, False) as note_action_context:
+                    note_action_context.set_error(e)
+
+        extract_time = time.time() - extract_start
+        logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_analyzing_duplicates", lang),
+            batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
+        )
+        logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
+        dedup_start = time.time()
+        dedup_map = self._collect_batch_duplicates(tasks)
+        dedup_time = time.time() - dedup_start
+
+        unique_count = len(dedup_map)
+        total_count = len(tasks)
+        if unique_count < total_count and total_count > 0:
+            logger.info(f'[BATCH] Deduplication found: {total_count} tasks, {unique_count} unique, {total_count - unique_count} duplicates (saving {((total_count - unique_count) / total_count) * 100:.1f}% TTS calls) - analyzed in {dedup_time:.2f}s')
+        else:
+            logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
+
+        return {
+            'tasks': tasks,
+            'dedup_map': dedup_map,
+        }
+
+    def generate_prepared_batch_audio(self, prepared_batch, batch_status):
+        """Generate audio files for prepared tasks without touching Anki media or notes."""
+        start_time = time.time()
+        lang = self.get_ui_language()
+        tasks = prepared_batch.get('tasks', [])
+        dedup_map = prepared_batch.get('dedup_map', {})
+
+        if not batch_status.must_continue:
+            return []
+
+        max_workers = cpu_utils.CPUInfo.get_max_workers()
+        unique_count = len(dedup_map)
+        batch_status.total_unique_tasks = unique_count
+        batch_status.unique_tasks_completed = 0
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_generating_audio", lang).format(unique_count),
+            batch_progress_ui.BatchProgressPhase.GENERATING,
+        )
+        logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
+
+        audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
+        logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {time.time() - start_time:.2f}s')
+
+        batch_status.futures_to_cancel.clear()
+        batch_status.total_unique_tasks = 0
+        batch_status.unique_tasks_completed = 0
+
+        results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
+        audio_cache.clear()
+        self.text_processing_cache.clear()
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_ready_to_apply", lang).format(len(results)),
+            batch_progress_ui.BatchProgressPhase.COMPLETED,
+        )
+        logger.info(f'[BATCH] Audio generation ready to apply: {len(results)} note results')
+        return results
+
+    def apply_generated_batch_audio(self, generated_results, batch: config_models.BatchConfig, batch_status, anki_collection):
+        """Apply generated audio results to Anki media and notes."""
+        lang = self.get_ui_language()
+        batch_status.total_unique_tasks = len(generated_results)
+        batch_status.unique_tasks_completed = 0
+
+        self._set_batch_status_with_ui_refresh(
+            batch_status,
+            i18n.get_text("status_applying_notes", lang).format(len(generated_results)),
+            batch_progress_ui.BatchProgressPhase.SAVING,
+        )
+        logger.info(f'[BATCH] Applying generated audio to {len(generated_results)} notes...')
+        update_start = time.time()
+
+        for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(generated_results):
+            if not batch_status.must_continue:
+                break
+
+            with batch_status.get_note_action_context(note_id, False) as note_action_context:
+                try:
+                    if is_error:
+                        note_action_context.set_error(is_error)
+                    else:
+                        note = self.anki_utils.get_note_by_id(note_id)
+                        self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection)
+                        note_action_context.set_source_text(source_text)
+                        note_action_context.set_processed_text(processed_text)
+                        note_action_context.set_sound(sound_file)
+                        note_action_context.set_status(constants.BatchNoteStatus.Done)
+                except Exception as e:
+                    logger.error(f"Error updating note {note_id}: {e}")
+                    note_action_context.set_error(e)
+
+            batch_status.unique_tasks_completed = idx + 1
+            batch_status.notify_change(note_id)
+
+        batch_status.total_unique_tasks = 0
+        batch_status.unique_tasks_completed = 0
+        batch_status.set_status_message(None)
+        logger.info(f'[BATCH] Applied generated audio in {time.time() - update_start:.2f}s')
+
     def process_batch_audio(self, note_id_list, batch: config_models.BatchConfig, batch_status, anki_collection):
         import time
         start_time = time.time()
@@ -509,7 +683,7 @@ class SuperFreeTTS():
                 engine_groups[group_key].append((dedup_key, task_data, task_indices))
 
         # 2. Chunk groups into batches — prepared upfront
-        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': batch_constants.MAX_WORKER_THREADS}
+        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 1}
         DEFAULT_BATCH_SIZE = 10
         all_chunks = []  # list of (service_name, chunk_items)
 
@@ -547,6 +721,8 @@ class SuperFreeTTS():
         future_to_chunk = {}  # future -> chunk items
         future_lock = threading.Lock()  # protects future_to_chunk during concurrent access
         submit_error = [None]  # capture any submit-thread exception
+        last_heartbeat_time = 0
+        heartbeat_interval_seconds = 2.0
         
         def _submit_all():
             """Background thread: submit chunks to per-engine executors."""
@@ -591,6 +767,18 @@ class SuperFreeTTS():
                             pass
             
             if not done_futures:
+                current_time = time.time()
+                if current_time - last_heartbeat_time >= heartbeat_interval_seconds:
+                    with future_lock:
+                        active_count = sum(1 for pending_future in future_to_chunk if not pending_future.done())
+                    batch_status.set_status_message(
+                        i18n.get_text("status_generating_audio_active", lang).format(
+                            completed_count,
+                            unique_count,
+                            active_count,
+                        )
+                    )
+                    last_heartbeat_time = current_time
                 # Brief sleep to avoid busy-waiting, then re-check
                 time.sleep(0.05)
                 continue
@@ -619,7 +807,7 @@ class SuperFreeTTS():
                                     ctx.set_source_text(src)
                                     ctx.set_processed_text(proc)
                                     ctx.set_sound(audio_fn)
-                                    ctx.set_status(constants.BatchNoteStatus.Done)
+                                    ctx.set_status(constants.BatchNoteStatus.Generated)
                                 else:
                                     ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
                             batch_status.notify_change(note_id)

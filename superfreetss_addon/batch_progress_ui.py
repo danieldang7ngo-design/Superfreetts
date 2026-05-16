@@ -265,6 +265,10 @@ class BatchProgressWidget(aqt.qt.QWidget):
                     speed = (completed / elapsed.total_seconds()) * 60
                     self.speed_label.setText(f"Speed: {speed:.1f} notes/min")
 
+    def set_status_text(self, status_text: Optional[str]) -> None:
+        """Show a translated status message under the progress stats."""
+        self.current_phase_label.setText(status_text or self.current_phase)
+
     def reset(self) -> None:
         """Reset progress UI to its initial idle state."""
         self.current_phase = BatchProgressPhase.LOADING

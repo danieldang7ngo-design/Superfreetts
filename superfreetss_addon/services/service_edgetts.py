@@ -234,10 +234,18 @@ class EdgeTTS(service.ServiceBase):
                             text, voice.voice_key,
                             rate=rate_str, pitch=pitch_str, volume=volume_str
                         )
-                        data = b""
-                        async for chunk in communicate.stream():
-                            if chunk["type"] == "audio":
-                                data += chunk["data"]
+
+                        async def _collect_audio():
+                            data = b""
+                            async for chunk in communicate.stream():
+                                if chunk["type"] == "audio":
+                                    data += chunk["data"]
+                            return data
+
+                        data = await asyncio.wait_for(
+                            _collect_audio(),
+                            timeout=batch_constants.TASK_TIMEOUT_SECONDS,
+                        )
 
                         if data:
                             return data
