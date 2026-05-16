@@ -12,6 +12,34 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.2.2",
+        title={
+            "en": "Generate first, apply when ready",
+            "vi": "Tao am thanh truoc, san sang thi ap dung",
+            "ko": "먼저 생성하고 준비되면 적용",
+        },
+        bullets={
+            "en": [
+                "Generate Audio now creates audio files first and does not update notes immediately.",
+                "After generation finishes, use Apply Generated Audio to write sound tags to notes.",
+                "Anki backup is triggered before applying generated audio to the collection.",
+                "Large EdgeTTS batches now show active progress updates and use safer per-request timeouts.",
+            ],
+            "vi": [
+                "Generate Audio bay gio chi tao file audio truoc va chua cap nhat note ngay.",
+                "Sau khi tao xong, bam Apply Generated Audio de ghi sound tag vao note.",
+                "Addon se goi backup cua Anki truoc khi ap dung audio da tao vao collection.",
+                "Batch EdgeTTS lon bay gio hien tien trinh dang chay va co timeout an toan hon cho tung request.",
+            ],
+            "ko": [
+                "Generate Audio는 이제 먼저 오디오 파일만 생성하고 노트를 즉시 업데이트하지 않습니다.",
+                "생성이 끝난 뒤 Apply Generated Audio로 노트에 sound tag를 기록합니다.",
+                "생성된 오디오를 컬렉션에 적용하기 전에 Anki 백업을 먼저 실행합니다.",
+                "큰 EdgeTTS 배치에서 실행 중인 진행 상황을 표시하고 요청별 timeout을 더 안전하게 적용합니다.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.2.1",
         title={
             "en": "Audio filename prefix cleanup",

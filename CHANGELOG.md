@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.2 - 2026-05-16
+
+### English
+
+- Changed Generate Audio so it generates audio files first and waits for the user to click `Apply Generated Audio` before updating notes.
+- Added a forced Anki backup step before applying generated audio to the collection.
+- Added `Generated` row status so preview results are distinct from notes that have actually been updated.
+- Improved large EdgeTTS batch progress with active heartbeat text, safer per-request timeout handling, and one-request EdgeTTS chunking.
+
+### Tieng Viet
+
+- Doi Generate Audio de chi tao file audio truoc; note chi duoc cap nhat sau khi nguoi dung bam `Apply Generated Audio`.
+- Them buoc goi backup cua Anki truoc khi ap dung audio da tao vao collection.
+- Them trang thai dong `Generated` de phan biet ket qua preview voi note da duoc update that su.
+- Cai thien tien trinh batch EdgeTTS lon voi heartbeat dang chay, timeout an toan hon cho tung request, va chunk EdgeTTS moi chunk mot request.
+
+### Korean
+
+- Generate Audio now creates audio files first; notes are updated only after clicking `Apply Generated Audio`.
+- Anki backup is triggered before generated audio is applied to the collection.
+- Added `Generated` row status so generated preview results are separate from fully updated notes.
+- Improved large EdgeTTS batch progress with active status text, safer per-request timeout handling, and one-request EdgeTTS chunking.
+
 ## 1.2.1 - 2026-05-11
 
 ### English
