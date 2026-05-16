@@ -12,45 +12,45 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
-        version="1.3.1",
+        version="1.3.2",
         title={
-            "en": "Settings Changes tab",
-            "vi": "Tab Thay đổi trong Cài đặt",
-            "ko": "설정의 변경 사항 탭",
+            "en": "Settings cleanup",
+            "vi": "Dọn dẹp Cài đặt",
+            "ko": "설정 정리",
         },
         bullets={
             "en": [
-                "Added a new Changes tab inside Settings so you can browse release history in one place.",
-                "The tab reuses the addon release notes and stays read-only.",
+                "Streamlined the Settings layout and cleaned up the release-note wording shown to users.",
+                "The Generate then Apply workflow remains unchanged: audio is generated first, then notes are updated only after Apply Generated Audio.",
             ],
             "vi": [
-                "Thêm tab Thay đổi mới trong Cài đặt để bạn xem lịch sử phát hành ở một nơi.",
-                "Tab này dùng lại release notes của addon và chỉ để xem, không chỉnh sửa.",
+                "Tinh gọn bố cục Cài đặt và làm sạch cách diễn đạt của phần ghi chú phát hành hiển thị cho người dùng.",
+                "Workflow Tạo rồi Áp dụng vẫn giữ nguyên: âm thanh được tạo trước, sau đó note chỉ được cập nhật khi bấm Áp dụng âm thanh đã tạo.",
             ],
             "ko": [
-                "Settings 안에 새 Changes 탭을 추가해 릴리스 기록을 한곳에서 볼 수 있게 했습니다.",
-                "이 탭은 애드온 release notes를 재사용하며 읽기 전용입니다.",
+                "설정 레이아웃을 정리하고 사용자에게 보이는 릴리스 노트 문구를 다듬었습니다.",
+                "Generate 후 Apply 흐름은 그대로 유지됩니다. 오디오는 먼저 생성되고, Apply Generated Audio를 누른 뒤에만 노트가 업데이트됩니다.",
             ],
         },
     ),
     ReleaseNoteEntry(
         version="1.3.0",
         title={
-            "en": "Safe EdgeTTS worker limit",
-            "vi": "Giới hạn worker EdgeTTS an toàn",
-            "ko": "안전한 EdgeTTS worker 제한",
+            "en": "EdgeTTS stability update",
+            "vi": "Cập nhật ổn định EdgeTTS",
+            "ko": "EdgeTTS 안정성 업데이트",
         },
         bullets={
             "en": [
-                "Public addon builds now cap EdgeTTS generation at 3 concurrent workers.",
+                "Public addon builds now use a safer EdgeTTS concurrency cap.",
                 "The Generate then Apply workflow remains unchanged: audio is generated first, then notes are updated only after Apply Generated Audio.",
             ],
             "vi": [
-                "Bản addon phát hành cho người dùng hiện giới hạn EdgeTTS tối đa 3 worker chạy đồng thời.",
+                "Bản addon phát hành cho người dùng hiện dùng mức giới hạn EdgeTTS an toàn hơn.",
                 "Workflow Tạo rồi Áp dụng vẫn giữ nguyên: âm thanh được tạo trước, sau đó note chỉ được cập nhật khi bấm Áp dụng âm thanh đã tạo.",
             ],
             "ko": [
-                "공개 배포용 애드온은 EdgeTTS 생성을 최대 3개의 동시 worker로 제한합니다.",
+                "공개 배포용 애드온은 EdgeTTS 동시 실행 수를 더 안전한 값으로 제한합니다.",
                 "Generate 후 Apply 흐름은 그대로 유지됩니다. 오디오는 먼저 생성되고, Apply Generated Audio를 누른 뒤에만 노트가 업데이트됩니다.",
             ],
         },

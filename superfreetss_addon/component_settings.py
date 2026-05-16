@@ -2,14 +2,13 @@
 Settings dialog for Super Free TTS.
 
 Layout:
-  - Sidebar navigation: Services, Preferences, Changes, Donation, About
+  - Sidebar navigation: Services, Preferences, Donation, About
   - Shared Save/Cancel buttons
 """
 
 import aqt.qt
 
 from . import component_about
-from . import component_changes
 from . import component_donation
 from . import component_preferences
 from . import component_services
@@ -25,7 +24,7 @@ class SettingsDialog(aqt.qt.QDialog):
     def __init__(self, hypertts, initial_tab=0, parent=None):
         super().__init__(parent)
         self.hypertts = hypertts
-        self.initial_tab = 0 if initial_tab not in (0, 1, 2, 3, 4) else initial_tab
+        self.initial_tab = 0 if initial_tab not in (0, 1, 2, 3) else initial_tab
         self._saved_once = False
         self._initial_snapshot = None
 
@@ -38,7 +37,6 @@ class SettingsDialog(aqt.qt.QDialog):
         self.preferences_page = component_preferences.PreferencesPage(hypertts, self)
         self.preferences_page.load_model(hypertts.get_preferences())
 
-        self.changes_page = component_changes.ChangesPage(hypertts)
         self.donation_page = component_donation.DonationPage(hypertts)
         self.about_page = component_about.AboutPage(hypertts)
 
@@ -79,13 +77,11 @@ class SettingsDialog(aqt.qt.QDialog):
 
         self.btn_services = self._create_sidebar_button(i18n.get_text("tab_services", lang))
         self.btn_preferences = self._create_sidebar_button(i18n.get_text("tab_preferences", lang))
-        self.btn_changes = self._create_sidebar_button(i18n.get_text("tab_changes", lang))
         self.btn_donation = self._create_sidebar_button(i18n.get_text("tab_donation", lang))
         self.btn_about = self._create_sidebar_button(i18n.get_text("tab_about", lang))
         self._page_buttons = [
             self.btn_services,
             self.btn_preferences,
-            self.btn_changes,
             self.btn_donation,
             self.btn_about,
         ]
@@ -107,12 +103,10 @@ class SettingsDialog(aqt.qt.QDialog):
         self.pages = aqt.qt.QStackedWidget()
         self.services_container = self._build_page_container()
         self.preferences_container = self._build_page_container()
-        self.changes_container = self._build_page_container()
         self.donation_container = self._build_page_container()
         self.about_container = self._build_page_container()
         self.pages.addWidget(self.services_container)
         self.pages.addWidget(self.preferences_container)
-        self.pages.addWidget(self.changes_container)
         self.pages.addWidget(self.donation_container)
         self.pages.addWidget(self.about_container)
         body_layout.addWidget(self.pages, 1)
@@ -136,9 +130,8 @@ class SettingsDialog(aqt.qt.QDialog):
 
         self.btn_services.clicked.connect(lambda: self.switch_page(0))
         self.btn_preferences.clicked.connect(lambda: self.switch_page(1))
-        self.btn_changes.clicked.connect(lambda: self.switch_page(2))
-        self.btn_donation.clicked.connect(lambda: self.switch_page(3))
-        self.btn_about.clicked.connect(lambda: self.switch_page(4))
+        self.btn_donation.clicked.connect(lambda: self.switch_page(2))
+        self.btn_about.clicked.connect(lambda: self.switch_page(3))
 
         self.switch_page(self.initial_tab)
 
@@ -170,10 +163,8 @@ class SettingsDialog(aqt.qt.QDialog):
         elif index == 1:
             self.preferences_page.draw(self.preferences_container.layout(), show_action_buttons=False)
         elif index == 2:
-            self.changes_page.draw(self.changes_container.layout())
-        elif index == 3:
             self.donation_page.draw(self.donation_container.layout())
-        elif index == 4:
+        elif index == 3:
             self.about_page.draw(self.about_container.layout())
         self._page_built.add(index)
 

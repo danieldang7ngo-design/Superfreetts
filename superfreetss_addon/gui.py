@@ -145,7 +145,7 @@ def launch_unified_dialog(hypertts, initial_tab=0):
     
     Args:
         hypertts: SuperFreeTTS instance
-        initial_tab: Which tab to open initially (0=Services, 1=Preferences, 2=Changes, 3=Donation, 4=About)
+        initial_tab: Which tab to open initially (0=Services, 1=Preferences, 2=Donation, 3=About)
     """
     with hypertts.error_manager.get_single_action_context('Launching Unified Settings Dialog'):
         logger.info(f'launch_unified_dialog, initial_tab={initial_tab}')

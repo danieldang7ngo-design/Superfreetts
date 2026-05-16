@@ -1,37 +1,37 @@
 # Changelog
 
-## 1.3.1 - 2026-05-16
+## 1.3.2 - 2026-05-16
 
 ### English
 
-- Added a new Changes tab inside Settings so release history is available in one place.
-- Reused the addon release notes for the tab content and kept it read-only.
+- Streamlined the Settings layout and cleaned up the release-note wording shown to users.
+- Kept the Generate then Apply workflow unchanged.
 
 ### Tiếng Việt
 
-- Thêm tab Thay đổi mới trong Cài đặt để xem lịch sử phát hành ở một nơi.
-- Tái sử dụng release notes của addon cho nội dung tab và giữ tab ở chế độ chỉ xem.
+- Tinh gọn bố cục Cài đặt và làm sạch cách diễn đạt của phần ghi chú phát hành hiển thị cho người dùng.
+- Giữ nguyên workflow Tạo rồi Áp dụng.
 
 ### Korean
 
-- Settings 안에 새 Changes 탭을 추가해 릴리스 기록을 한곳에서 볼 수 있게 했습니다.
-- 탭 내용은 애드온 release notes를 재사용하며 읽기 전용으로 유지합니다.
+- 설정 레이아웃을 정리하고 사용자에게 보이는 릴리스 노트 문구를 다듬었습니다.
+- Generate 후 Apply 흐름은 그대로 유지됩니다.
 
 ## 1.3.0 - 2026-05-16
 
 ### English
 
-- Capped public EdgeTTS generation at 3 concurrent workers.
+- Adjusted public EdgeTTS concurrency for stability.
 - Kept the Generate then Apply workflow: audio is generated first, then notes are updated only after `Apply Generated Audio`.
 
 ### Tiếng Việt
 
-- Giới hạn bản addon phát hành cho người dùng ở tối đa 3 worker EdgeTTS chạy đồng thời.
+- Điều chỉnh mức đồng thời của EdgeTTS bản phát hành để ổn định hơn.
 - Giữ workflow Tạo rồi Áp dụng: âm thanh được tạo trước, sau đó note chỉ được cập nhật khi bấm `Apply Generated Audio`.
 
 ### Korean
 
-- Public addon builds now cap EdgeTTS generation at 3 concurrent workers.
+- Public addon builds now use a safer EdgeTTS concurrency cap.
 - The Generate then Apply workflow remains unchanged: audio is generated first, then notes are updated only after `Apply Generated Audio`.
 
 ## 1.2.2 - 2026-05-16
