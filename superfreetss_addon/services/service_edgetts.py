@@ -13,6 +13,7 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from .. import batch_constants
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -74,9 +75,8 @@ class EdgeTTS(service.ServiceBase):
 
     def advanced_configuration_options(self):
         """Advanced settings for EdgeTTS (hidden in dropdown)"""
-        # Hard cap: EdgeTTS max 3 workers to prevent API rate-limiting and ensure stability
         return {
-            'concurrency_workers': ('number', 'Concurrency Workers (1-3)', 1, 1, 3),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-20)', 20, 1, batch_constants.MAX_WORKER_THREADS),
             'max_retries': ('number', 'Retry Attempts', DEFAULT_MAX_RETRIES, 0, 5),
             'initial_delay_min_ms': ('number', 'Minimum Request Jitter (ms)', DEFAULT_INITIAL_DELAY_MIN_MS, 0, 10000),
             'initial_delay_max_ms': ('number', 'Maximum Request Jitter (ms)', DEFAULT_INITIAL_DELAY_MAX_MS, 0, 15000),
@@ -198,7 +198,8 @@ class EdgeTTS(service.ServiceBase):
         initial_delay_max_ms = self._get_int_config('initial_delay_max_ms', DEFAULT_INITIAL_DELAY_MAX_MS)
         wave_start_stagger_ms = self._get_int_config('wave_start_stagger_ms', DEFAULT_WAVE_START_STAGGER_MS)
         retry_backoff_seconds = self._get_int_config('retry_backoff_seconds', DEFAULT_RETRY_BACKOFF_SECONDS)
-        concurrency_workers = min(3, max(1, self._get_int_config('concurrency_workers', DEFAULT_BATCH_WAVE_SIZE)))
+        requested_workers = self._get_int_config('concurrency_workers', DEFAULT_BATCH_WAVE_SIZE)
+        concurrency_workers = min(batch_constants.MAX_WORKER_THREADS, max(1, requested_workers))
 
         if initial_delay_max_ms < initial_delay_min_ms:
             initial_delay_min_ms, initial_delay_max_ms = initial_delay_max_ms, initial_delay_min_ms

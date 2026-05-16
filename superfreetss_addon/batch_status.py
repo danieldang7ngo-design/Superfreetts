@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Any
 
 from . import constants
 from . import errors
+from . import batch_progress_ui
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
@@ -117,6 +118,7 @@ class BatchStatus():
         self.task_running: bool = False
         self.must_continue: bool = False
         self.status_message: Optional[str] = None
+        self.phase: str = batch_progress_ui.BatchProgressPhase.LOADING
         self.unique_tasks_completed: int = 0
         self.total_unique_tasks: int = 0
         self.futures_to_cancel: List[Any] = []
@@ -202,12 +204,25 @@ class BatchStatus():
         self.note_status_map[note_id].status = status
         self.notify_change(note_id)
 
+    def notify_progress(self) -> None:
+        """Trigger a UI refresh even when no specific note changed."""
+        if len(self.note_id_list) > 0:
+            self.notify_change(self.note_id_list[0])
+
+    def set_phase(self, phase: str) -> None:
+        """Set stable batch phase independent of translated status text."""
+        self.phase = phase
+        self.notify_progress()
+
     def set_status_message(self, message):
         """Set a global status message (e.g., 'Loading voices...', 'Generating audio...')"""
         self.status_message = message
-        if len(self.note_id_list) > 0:
-            # Update first note to trigger UI refresh with status message
-            self.notify_change(self.note_id_list[0])
+        self.notify_progress()
+
+    def get_progress_counts(self):
+        if self.total_unique_tasks > 0:
+            return self.unique_tasks_completed, self.total_unique_tasks
+        return self.get_completed_count(), len(self.note_id_list)
 
     def get_completed_count(self):
         """
@@ -237,9 +252,8 @@ class BatchStatus():
 
     def notify_change(self, note_id):
         row = self.note_id_map[note_id]
-        completed_count = self.get_completed_count()
-        # Call batch_change directly from worker thread - let batch_change handle scheduling to main thread
-        self.change_listener.batch_change(note_id, row, len(self.note_id_list), completed_count, self.start_time, self.anki_utils.get_current_time())
+        completed_count, total_count = self.get_progress_counts()
+        self.change_listener.batch_change(note_id, row, total_count, completed_count, self.start_time, self.anki_utils.get_current_time())
 
     def notify_end(self, completed):
         self.change_listener.batch_end(completed)

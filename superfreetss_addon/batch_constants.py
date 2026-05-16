@@ -27,7 +27,7 @@ QT_EVENT_FREQUENCY: Final[int] = 3          # Process Qt events frequently (ever
 # ============================================================================
 
 # Maximum number of CPU cores to use for batch processing (cap to prevent resource exhaustion)
-MAX_WORKER_THREADS: Final[int] = 16
+MAX_WORKER_THREADS: Final[int] = 20
 
 # Default number of worker threads (4 = auto-detect CPU cores)
 DEFAULT_BATCH_CONCURRENCY: Final[int] = 4

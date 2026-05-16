@@ -12,7 +12,7 @@
         },
         "service_config": {
             "EdgeTTS": {
-                "concurrency_workers": 3
+                "concurrency_workers": 20
             }
         },
         "display_introduction_message": true

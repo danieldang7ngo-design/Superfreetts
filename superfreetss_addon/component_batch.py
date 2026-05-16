@@ -212,6 +212,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.voice_selection.load_model(model.voice_selection)
         self.text_processing.load_model(model.text_processing)
         self.preview.load_model(self.batch_model)
+        self.reset_apply_button_idle()
         
 
 
@@ -219,6 +220,14 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.update_save_profile_button_state()
 
         logger.debug('load_model')
+
+    def reset_apply_button_idle(self):
+        lang = self.hypertts.get_ui_language()
+        if self.editor_mode:
+            self.apply_button.setText(i18n.get_text("batch_button_apply_to_note", lang))
+        else:
+            self.apply_button.setText(i18n.get_text("batch_button_generate_audio", lang))
+        self.apply_button.setEnabled(True)
 
     def get_model(self):
         return self.batch_model
@@ -526,6 +535,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         else:
             apply_text = i18n.get_text("batch_button_generate_audio", lang)
         self.apply_button.setText(apply_text)
+        self.apply_button.setEnabled(True)
         if self.editor_mode == False:
             gui_utils.configure_pastel_button(self.apply_button, style_name="emerald", is_primary=True, font_size=11)
         hlayout.addWidget(self.apply_button)
@@ -680,11 +690,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
             logger.info('apply_button_pressed')
             if self.editor_mode:
                 self.disable_bottom_buttons()
-                self.apply_button.setText(i18n.get_text("status_loading", self.hypertts.get_ui_language()))
+                self.apply_button.setText(i18n.get_text("easy_button_adding_audio", self.hypertts.get_ui_language()))
                 self.hypertts.anki_utils.run_in_background(self.apply_note_editor_task, self.apply_note_editor_task_done)
             else:
                 self.disable_bottom_buttons()
-                self.apply_button.setText(i18n.get_text("status_loading", self.hypertts.get_ui_language()))
+                self.apply_button.setText(i18n.get_text("batch_button_generating_audio", self.hypertts.get_ui_language()))
                 self.preview.apply_audio_to_notes()
 
     @sc.event(Event.click_cancel)
@@ -735,7 +745,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.cancel_button.setEnabled(True)
 
     def apply_notes_batch_start(self):
-        pass
+        lang = self.hypertts.get_ui_language()
+        self.apply_button.setText(i18n.get_text("batch_button_generating_audio", lang))
+        self.apply_button.setEnabled(False)
+        self.preview_sound_button.setEnabled(False)
+        self.cancel_button.setEnabled(False)
 
     def batch_interrupted_button_setup(self):
         self.enable_bottom_buttons()

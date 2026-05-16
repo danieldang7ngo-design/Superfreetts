@@ -264,6 +264,23 @@ class BatchProgressWidget(aqt.qt.QWidget):
                 if elapsed.total_seconds() > 0:
                     speed = (completed / elapsed.total_seconds()) * 60
                     self.speed_label.setText(f"Speed: {speed:.1f} notes/min")
+
+    def reset(self) -> None:
+        """Reset progress UI to its initial idle state."""
+        self.current_phase = BatchProgressPhase.LOADING
+        self.start_time = None
+        self.completed_count = 0
+        self.total_count = 0
+        self.phase_start_times.clear()
+        for phase, label in self.phase_labels.items():
+            label.setStyleSheet(self._get_phase_label_style(phase, is_current=False))
+        self.progress_bar.setValue(0)
+        self.progress_bar.setStyleSheet(self._get_progress_bar_style())
+        self.progress_label.setText("0%")
+        self.elapsed_label.setText("Elapsed: 0s")
+        self.eta_label.setText("ETA: --:--")
+        self.speed_label.setText("Speed: -- notes/min")
+        self.current_phase_label.setText(self.current_phase)
     
     def _format_time_delta(self, prefix: str, delta: timedelta) -> str:
         """Format a timedelta as human-readable time."""

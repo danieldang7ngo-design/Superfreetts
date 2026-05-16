@@ -50,7 +50,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
     def notifyChange(self, row):
         # logger.info(f'notifyChange, row: {row}')
         start_index = self.createIndex(row, 0)
-        end_index = self.createIndex(row, 2)
+        end_index = self.createIndex(row, self.columnCount(None) - 1)
         self.dataChanged.emit(start_index, end_index)
 
     def data(self, index, role):
@@ -116,6 +116,9 @@ class BatchPreview(component_common.ComponentBase):
 
     def load_model(self, model):
         self.batch_model = model
+        self.apply_to_notes_batch_started = False
+        if self.stack is not None:
+            self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
         self.hypertts.anki_utils.run_in_background(self.update_batch_status_task, self.update_batch_status_task_done)
 
     def update_batch_status_task(self):
@@ -227,6 +230,11 @@ class BatchPreview(component_common.ComponentBase):
     def show_completed_stack(self):
         self.stack.setCurrentIndex(2)
 
+    def reset_progress_ui(self):
+        if hasattr(self, 'enhanced_progress_widget'):
+            self.enhanced_progress_widget.reset()
+        self.show_not_running_stack()
+
     def selection_changed(self):
         logger.info('selection_changed')
         self.report_sample_text()
@@ -294,20 +302,36 @@ class BatchPreview(component_common.ComponentBase):
         self.failed_note_ids_to_tag = []
 
     def batch_start(self):
+        if not self.apply_to_notes_batch_started:
+            return
         self.hypertts.anki_utils.run_on_main(self.show_running_stack)
         self.hypertts.anki_utils.run_on_main(self.batch_start_fn)
 
     def batch_end(self, completed):
-        if completed and self.apply_to_notes_batch_started == True:
-            self.hypertts.anki_utils.run_on_main(self.show_completed_stack)
-        else:
-            self.hypertts.anki_utils.run_on_main(self.show_not_running_stack)
+        if not self.apply_to_notes_batch_started:
+            self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
+            return
+
+        def finish_progress_ui():
+            if hasattr(self, 'enhanced_progress_widget'):
+                if completed:
+                    completed_count, total_count = self.batch_status.get_progress_counts()
+                    if total_count > 0:
+                        self.enhanced_progress_widget.update_progress(total_count, total_count, self.enhanced_progress_widget.start_time)
+                    self.enhanced_progress_widget.set_completed()
+                    self.show_running_stack()
+                else:
+                    self.enhanced_progress_widget.set_cancelled()
+                    self.show_not_running_stack()
+
+        self.hypertts.anki_utils.run_on_main(finish_progress_ui)
         if self.apply_to_notes_batch_started:
             self.batch_end_fn(completed)
+        self.apply_to_notes_batch_started = False
 
     def update_progress_bar(self, row: int, total_count: int, completed_count: int, start_time: timedelta, current_time: timedelta) -> None:
-        """Progress updates are handled by the enhanced_progress_widget via _update_enhanced_progress."""
-        pass
+        """Single path for progress updates."""
+        self._update_enhanced_progress(completed_count, total_count, start_time, current_time)
 
 
     def table_viewport_repaint_refresh_timer(self):
@@ -334,7 +358,6 @@ class BatchPreview(component_common.ComponentBase):
         # Update table row and progress bar separately on main thread
         self.hypertts.anki_utils.run_on_main(lambda: self.batch_preview_table_model.notifyChange(row))
         self.hypertts.anki_utils.run_on_main(lambda: self.update_progress_bar(row, total_count, completed_count, start_time, current_time))
-        self.hypertts.anki_utils.run_on_main(lambda: self._update_enhanced_progress(completed_count, total_count, start_time, current_time))
         self.hypertts.anki_utils.run_on_main(lambda: self.table_viewport_repaint_refresh_timer())
         if row == self.selected_row:
             self.hypertts.anki_utils.run_on_main(self.update_error_label_for_selected)
@@ -347,19 +370,6 @@ class BatchPreview(component_common.ComponentBase):
                 # Convert timedelta to datetime for the widget
                 start_datetime = datetime.now() - (current_time - start_time)
                 self.enhanced_progress_widget.update_progress(completed_count, total_count, start_datetime)
-                
-                # Update phase based on status message
-                if self.batch_status.status_message:
-                    msg = self.batch_status.status_message.lower()
-                    if 'loading' in msg:
-                        self.enhanced_progress_widget.set_phase(batch_progress_ui.BatchProgressPhase.LOADING)
-                    elif 'preparing' in msg:
-                        self.enhanced_progress_widget.set_phase(batch_progress_ui.BatchProgressPhase.PREPARING)
-                    elif 'analyzing' in msg or 'dedup' in msg:
-                        self.enhanced_progress_widget.set_phase(batch_progress_ui.BatchProgressPhase.DEDUPLICATING)
-                    elif 'generating' in msg:
-                        self.enhanced_progress_widget.set_phase(batch_progress_ui.BatchProgressPhase.GENERATING)
-                    elif 'saving' in msg:
-                        self.enhanced_progress_widget.set_phase(batch_progress_ui.BatchProgressPhase.SAVING)
+                self.enhanced_progress_widget.set_phase(self.batch_status.phase)
             except Exception as e:
                 logger.warning(f"Error updating enhanced progress widget: {e}")

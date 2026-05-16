@@ -38,6 +38,7 @@ from . import i18n
 from . import batch_constants
 from . import performance_tracker
 from . import cpu_utils
+from . import batch_progress_ui
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -72,7 +73,7 @@ class SuperFreeTTS():
             defaults = {
                 'PiperTTS': 1,
                 'KokoroTTS': 1,
-                'EdgeTTS': 1,
+                'EdgeTTS': batch_constants.MAX_WORKER_THREADS,
                 'MmsTTS': 1,
             }
             
@@ -91,19 +92,12 @@ class SuperFreeTTS():
                 # Try service config first, then default to 1
                 concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
                 
-                # EdgeTTS: hard cap at 3 workers regardless of CPU cores
-                if service_name == 'EdgeTTS' and concurrency > 3:
-                    logger.info(f'EdgeTTS concurrency capped to 3 (requested {concurrency})')
-                    concurrency = 3
-                
-                # Validate against physical CPU cores
-                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                # Validate against physical CPU cores for local engines; EdgeTTS is I/O-bound.
+                max_workers = batch_constants.MAX_WORKER_THREADS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
                 if concurrency > max_workers:
-                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
+                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max workers ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
-                # EdgeTTS handles request concurrency internally in ordered waves.
-                # Keep the outer executor serial so chunks progress top-to-bottom.
-                engine_config[pool_name] = 1 if service_name == 'EdgeTTS' else max(1, concurrency)
+                engine_config[pool_name] = max(1, concurrency)
                 
                 # Auto-scale internal process pools for Sherpa-based services
                 try:
@@ -179,14 +173,11 @@ class SuperFreeTTS():
         except Exception as e:
             logger.error(f'{batch_constants.ERROR_CACHE_CLEANUP_EXCEPTION}: {e}')
 
-    def _set_batch_status_with_ui_refresh(self, batch_status, message):
-        """Set batch status message and allow UI to refresh by processing Qt events."""
+    def _set_batch_status_with_ui_refresh(self, batch_status, message, phase=None):
+        """Set stable batch phase/status; UI refresh is scheduled by BatchStatus."""
+        if phase is not None:
+            batch_status.set_phase(phase)
         batch_status.set_status_message(message)
-        # Process Qt events to allow UI to update with the status message
-        try:
-            aqt.qt.QApplication.instance().processEvents()
-        except Exception as e:
-            logger.debug(f'Error processing Qt events: {e}')
 
     def process_batch_audio(self, note_id_list, batch: config_models.BatchConfig, batch_status, anki_collection):
         import time
@@ -236,7 +227,11 @@ class SuperFreeTTS():
             try:
                 # 0. Pre-load voice list
                 lang = self.get_ui_language()
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_loading_voices", lang))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_loading_voices", lang),
+                    batch_progress_ui.BatchProgressPhase.LOADING,
+                )
                 logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
                 pre_load_start = time.time()
                 try:
@@ -247,7 +242,11 @@ class SuperFreeTTS():
                     logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
 
                 # 1. Prepare requests
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
+                    batch_progress_ui.BatchProgressPhase.PREPARING,
+                )
                 logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
                 extract_start = time.time()
 
@@ -299,7 +298,11 @@ class SuperFreeTTS():
                 if not batch_status.must_continue: return
 
                 # 2. Deduplication
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_analyzing_duplicates", lang))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_analyzing_duplicates", lang),
+                    batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
+                )
                 logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
                 dedup_start = time.time()
                 dedup_map = self._collect_batch_duplicates(tasks)
@@ -321,7 +324,11 @@ class SuperFreeTTS():
                 batch_status.total_unique_tasks = unique_count
                 batch_status.unique_tasks_completed = 0
 
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_generating_audio", lang).format(unique_count))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_generating_audio", lang).format(unique_count),
+                    batch_progress_ui.BatchProgressPhase.GENERATING,
+                )
                 logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
                 gen_start = time.time()
 
@@ -336,7 +343,11 @@ class SuperFreeTTS():
                 batch_status.total_unique_tasks = 0
                 batch_status.unique_tasks_completed = 0
                 
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_applying_notes", lang).format(len(tasks)))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_applying_notes", lang).format(len(tasks)),
+                    batch_progress_ui.BatchProgressPhase.SAVING,
+                )
 
                 logger.info(f'[BATCH] Applying audio to {len(tasks)} notes...')
                 apply_start = time.time()
@@ -353,7 +364,11 @@ class SuperFreeTTS():
                 del tasks
 
                 # 5. Update Notes
-                self._set_batch_status_with_ui_refresh(batch_status, i18n.get_text("status_saving_collection", lang))
+                self._set_batch_status_with_ui_refresh(
+                    batch_status,
+                    i18n.get_text("status_saving_collection", lang),
+                    batch_progress_ui.BatchProgressPhase.SAVING,
+                )
                 logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
                 update_start = time.time()
 
@@ -494,9 +509,7 @@ class SuperFreeTTS():
                 engine_groups[group_key].append((dedup_key, task_data, task_indices))
 
         # 2. Chunk groups into batches — prepared upfront
-        # EdgeTTS runs in small waves to keep progress responsive and avoid the
-        # strict per-future timeout for long text.
-        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 3}
+        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': batch_constants.MAX_WORKER_THREADS}
         DEFAULT_BATCH_SIZE = 10
         all_chunks = []  # list of (service_name, chunk_items)
 
@@ -505,8 +518,8 @@ class SuperFreeTTS():
             for dedup_key, task_indices in dedup_map.items():
                 task_idx = task_indices[0]
                 ordered_items.append((dedup_key, tasks[task_idx], task_indices))
-            for offset in range(0, len(ordered_items), 3):
-                all_chunks.append(('__sequence__', ordered_items[offset:offset + 3]))
+            for offset in range(0, len(ordered_items), batch_constants.MAX_WORKER_THREADS):
+                all_chunks.append(('__sequence__', ordered_items[offset:offset + batch_constants.MAX_WORKER_THREADS]))
         else:
             for (service_name, _), group_tasks in engine_groups.items():
                 max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
@@ -548,6 +561,7 @@ class SuperFreeTTS():
                         future = executor_pool.submit(self._generate_audio_batch_task, list(chunk_items))
                     with future_lock:
                         future_to_chunk[future] = list(chunk_items)
+                        batch_status.futures_to_cancel.append(future)
             except Exception as e:
                 logger.error(f"[BATCH] Submit thread error: {e}")
                 submit_error[0] = e
@@ -571,6 +585,10 @@ class SuperFreeTTS():
                 for future in list(future_to_chunk):
                     if future.done():
                         done_futures.append((future, future_to_chunk.pop(future)))
+                        try:
+                            batch_status.futures_to_cancel.remove(future)
+                        except ValueError:
+                            pass
             
             if not done_futures:
                 # Brief sleep to avoid busy-waiting, then re-check
@@ -606,7 +624,7 @@ class SuperFreeTTS():
                                     ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
                             batch_status.notify_change(note_id)
                     
-                    batch_status.set_status_message(f"Generating... ({completed_count}/{unique_count})")
+                    batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
                     
                 except Exception as e:
                     logger.error(f"[BATCH] Batch execution failed: {e}")
@@ -693,7 +711,7 @@ class SuperFreeTTS():
             except Exception as e:
                 return idx, (None, e)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=min(3, len(chunk))) as pool:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(batch_constants.MAX_WORKER_THREADS, len(chunk))) as pool:
             futures = [pool.submit(generate_one, idx, item) for idx, item in enumerate(chunk)]
             for future in concurrent.futures.as_completed(futures):
                 idx, result = future.result()
@@ -1714,7 +1732,7 @@ class SuperFreeTTS():
             defaults = {
                 'PiperTTS': 1,
                 'KokoroTTS': 1,
-                'EdgeTTS': 1,
+                'EdgeTTS': batch_constants.MAX_WORKER_THREADS,
                 'MmsTTS': 1,
             }
             pref_fallback = {}
@@ -1730,18 +1748,11 @@ class SuperFreeTTS():
                 service_config = service_config_map.get(service_name, {})
                 concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
                 
-                # EdgeTTS: hard cap at 3 workers regardless of CPU cores
-                if service_name == 'EdgeTTS' and concurrency > 3:
-                    logger.info(f'EdgeTTS concurrency capped to 3 (requested {concurrency})')
-                    concurrency = 3
-                
-                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                max_workers = batch_constants.MAX_WORKER_THREADS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
                 if concurrency > max_workers:
-                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds physical CPU cores ({max_workers}), capping to {max_workers}')
+                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max workers ({max_workers}), capping to {max_workers}')
                     concurrency = max_workers
-                # EdgeTTS handles request concurrency internally in ordered waves.
-                # Keep the outer executor serial so chunks progress top-to-bottom.
-                engine_config[pool_name] = 1 if service_name == 'EdgeTTS' else max(1, concurrency)
+                engine_config[pool_name] = max(1, concurrency)
 
                 # Auto-scale internal process pools for Sherpa-based services
                 try:

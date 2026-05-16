@@ -405,7 +405,7 @@ class MultiEngineExecutor:
         self.engine_config = engine_config or {
             'Piper': 1,
             'Kokoro': 1,
-            'EdgeTTS': 1,
+            'EdgeTTS': 20,
             'default': 1
         }
         
