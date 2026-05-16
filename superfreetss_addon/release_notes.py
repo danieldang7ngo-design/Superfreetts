@@ -12,7 +12,7 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
-        version="1.2.3",
+        version="1.3.0",
         title={
             "en": "Safe EdgeTTS worker limit",
             "vi": "Giới hạn worker EdgeTTS an toàn",
