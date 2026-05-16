@@ -12,6 +12,28 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.3.1",
+        title={
+            "en": "Settings Changes tab",
+            "vi": "Tab Thay đổi trong Cài đặt",
+            "ko": "설정의 변경 사항 탭",
+        },
+        bullets={
+            "en": [
+                "Added a new Changes tab inside Settings so you can browse release history in one place.",
+                "The tab reuses the addon release notes and stays read-only.",
+            ],
+            "vi": [
+                "Thêm tab Thay đổi mới trong Cài đặt để bạn xem lịch sử phát hành ở một nơi.",
+                "Tab này dùng lại release notes của addon và chỉ để xem, không chỉnh sửa.",
+            ],
+            "ko": [
+                "Settings 안에 새 Changes 탭을 추가해 릴리스 기록을 한곳에서 볼 수 있게 했습니다.",
+                "이 탭은 애드온 release notes를 재사용하며 읽기 전용입니다.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.3.0",
         title={
             "en": "Safe EdgeTTS worker limit",

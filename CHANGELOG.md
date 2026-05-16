@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.1 - 2026-05-16
+
+### English
+
+- Added a new Changes tab inside Settings so release history is available in one place.
+- Reused the addon release notes for the tab content and kept it read-only.
+
+### Tiếng Việt
+
+- Thêm tab Thay đổi mới trong Cài đặt để xem lịch sử phát hành ở một nơi.
+- Tái sử dụng release notes của addon cho nội dung tab và giữ tab ở chế độ chỉ xem.
+
+### Korean
+
+- Settings 안에 새 Changes 탭을 추가해 릴리스 기록을 한곳에서 볼 수 있게 했습니다.
+- 탭 내용은 애드온 release notes를 재사용하며 읽기 전용으로 유지합니다.
+
 ## 1.3.0 - 2026-05-16
 
 ### English
