@@ -12,10 +12,32 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.2.3",
+        title={
+            "en": "Safe EdgeTTS worker limit",
+            "vi": "Giới hạn worker EdgeTTS an toàn",
+            "ko": "안전한 EdgeTTS worker 제한",
+        },
+        bullets={
+            "en": [
+                "Public addon builds now cap EdgeTTS generation at 3 concurrent workers.",
+                "The Generate then Apply workflow remains unchanged: audio is generated first, then notes are updated only after Apply Generated Audio.",
+            ],
+            "vi": [
+                "Bản addon phát hành cho người dùng hiện giới hạn EdgeTTS tối đa 3 worker chạy đồng thời.",
+                "Workflow Tạo rồi Áp dụng vẫn giữ nguyên: âm thanh được tạo trước, sau đó note chỉ được cập nhật khi bấm Áp dụng âm thanh đã tạo.",
+            ],
+            "ko": [
+                "공개 배포용 애드온은 EdgeTTS 생성을 최대 3개의 동시 worker로 제한합니다.",
+                "Generate 후 Apply 흐름은 그대로 유지됩니다. 오디오는 먼저 생성되고, Apply Generated Audio를 누른 뒤에만 노트가 업데이트됩니다.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.2.2",
         title={
             "en": "Generate first, apply when ready",
-            "vi": "Tao am thanh truoc, san sang thi ap dung",
+            "vi": "Tạo âm thanh trước, sẵn sàng thì áp dụng",
             "ko": "먼저 생성하고 준비되면 적용",
         },
         bullets={
@@ -26,10 +48,10 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Large EdgeTTS batches now show active progress updates and use safer per-request timeouts.",
             ],
             "vi": [
-                "Generate Audio bay gio chi tao file audio truoc va chua cap nhat note ngay.",
-                "Sau khi tao xong, bam Apply Generated Audio de ghi sound tag vao note.",
-                "Addon se goi backup cua Anki truoc khi ap dung audio da tao vao collection.",
-                "Batch EdgeTTS lon bay gio hien tien trinh dang chay va co timeout an toan hon cho tung request.",
+                "Generate Audio bây giờ chỉ tạo file âm thanh trước và chưa cập nhật note ngay.",
+                "Sau khi tạo xong, bấm Apply Generated Audio để ghi sound tag vào note.",
+                "Addon sẽ gọi backup của Anki trước khi áp dụng âm thanh đã tạo vào collection.",
+                "Batch EdgeTTS lớn bây giờ hiển thị tiến trình đang chạy và có timeout an toàn hơn cho từng request.",
             ],
             "ko": [
                 "Generate Audio는 이제 먼저 오디오 파일만 생성하고 노트를 즉시 업데이트하지 않습니다.",

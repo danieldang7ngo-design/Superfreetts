@@ -76,7 +76,7 @@ class EdgeTTS(service.ServiceBase):
     def advanced_configuration_options(self):
         """Advanced settings for EdgeTTS (hidden in dropdown)"""
         return {
-            'concurrency_workers': ('number', 'Concurrency Workers (1-20)', 20, 1, batch_constants.MAX_WORKER_THREADS),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-3)', 3, 1, batch_constants.MAX_WORKER_THREADS),
             'max_retries': ('number', 'Retry Attempts', DEFAULT_MAX_RETRIES, 0, 5),
             'initial_delay_min_ms': ('number', 'Minimum Request Jitter (ms)', DEFAULT_INITIAL_DELAY_MIN_MS, 0, 10000),
             'initial_delay_max_ms': ('number', 'Maximum Request Jitter (ms)', DEFAULT_INITIAL_DELAY_MAX_MS, 0, 15000),

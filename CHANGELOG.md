@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.3 - 2026-05-16
+
+### English
+
+- Capped public EdgeTTS generation at 3 concurrent workers.
+- Kept the Generate then Apply workflow: audio is generated first, then notes are updated only after `Apply Generated Audio`.
+
+### Tiếng Việt
+
+- Giới hạn bản addon phát hành cho người dùng ở tối đa 3 worker EdgeTTS chạy đồng thời.
+- Giữ workflow Tạo rồi Áp dụng: âm thanh được tạo trước, sau đó note chỉ được cập nhật khi bấm `Apply Generated Audio`.
+
+### Korean
+
+- Public addon builds now cap EdgeTTS generation at 3 concurrent workers.
+- The Generate then Apply workflow remains unchanged: audio is generated first, then notes are updated only after `Apply Generated Audio`.
+
 ## 1.2.2 - 2026-05-16
 
 ### English
@@ -9,12 +26,12 @@
 - Added `Generated` row status so preview results are distinct from notes that have actually been updated.
 - Improved large EdgeTTS batch progress with active heartbeat text, safer per-request timeout handling, and one-request EdgeTTS chunking.
 
-### Tieng Viet
+### Tiếng Việt
 
-- Doi Generate Audio de chi tao file audio truoc; note chi duoc cap nhat sau khi nguoi dung bam `Apply Generated Audio`.
-- Them buoc goi backup cua Anki truoc khi ap dung audio da tao vao collection.
-- Them trang thai dong `Generated` de phan biet ket qua preview voi note da duoc update that su.
-- Cai thien tien trinh batch EdgeTTS lon voi heartbeat dang chay, timeout an toan hon cho tung request, va chunk EdgeTTS moi chunk mot request.
+- Đổi Generate Audio để chỉ tạo file âm thanh trước; note chỉ được cập nhật sau khi người dùng bấm `Apply Generated Audio`.
+- Thêm bước gọi backup của Anki trước khi áp dụng âm thanh đã tạo vào collection.
+- Thêm trạng thái dòng `Generated` để phân biệt kết quả preview với note đã được update thật sự.
+- Cải thiện tiến trình batch EdgeTTS lớn với heartbeat đang chạy, timeout an toàn hơn cho từng request, và chunk EdgeTTS mỗi chunk một request.
 
 ### Korean
 
