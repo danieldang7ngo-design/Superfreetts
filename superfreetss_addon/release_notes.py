@@ -87,7 +87,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
         version="1.2.1",
         title={
             "en": "Audio filename prefix cleanup",
-            "vi": "Sua prefix ten file audio",
+            "vi": "Sửa tiền tố tên file audio",
             "ko": "오디오 파일 이름 접두사 정리",
         },
         bullets={
@@ -96,8 +96,8 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Existing superfreetss-* cached audio files remain valid and are not renamed.",
             ],
             "vi": [
-                "File audio tao moi bay gio dung prefix ten file superfreetts-<hash>.",
-                "Cac file audio cache cu superfreetss-* van giu nguyen va van hop le.",
+                "File audio tạo mới bây giờ dùng tiền tố tên file `superfreetts-<hash>`.",
+                "Các file audio cache cũ `superfreetss-*` vẫn giữ nguyên và vẫn hợp lệ.",
             ],
             "ko": [
                 "새로 생성되는 오디오 파일은 이제 superfreetts-<hash> 파일 이름 접두사를 사용합니다.",
@@ -109,7 +109,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
         version="1.2",
         title={
             "en": "EdgeTTS stability, ordered concurrency, and Sequence voices",
-            "vi": "EdgeTTS on dinh hon, chay dung thu tu va them che do Sequence",
+            "vi": "EdgeTTS ổn định hơn, chạy đúng thứ tự và thêm chế độ Sequence",
             "ko": "EdgeTTS 안정성, 순차 실행, Sequence 음성 모드",
         },
         bullets={
@@ -123,13 +123,13 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Added workflow function so you can now generate with multiple presets at the same time ",
             ],
             "vi": [
-                "Cai thien EdgeTTS voi retry, kiem tra audio rong, lam sach Unicode va log ro hon khi bi no-audio/rate-limit.",
-                "Doi batch EdgeTTS sang wave toi da 3 request theo thu tu note de tien trinh de theo doi hon.",
-                "Them cac tuy chon Advanced cho EdgeTTS: so lan retry, request jitter, wave start stagger va retry backoff.",
-                "Them che do chon giong Sequence, tu dong xoay vong cac giong theo thu tu da chon.",
-                "Sua Priority voice selection de bay gio se fallback sang giong thu hai neu giong dau loi, va tuong tu neu co nhieu giong hon.",
-                "Them bo kiem tra EdgeTTS co the chay truc tiep, gom smoke test verify_edgetts.",
-                "Them co che workflow nen bay gio ban co the tao am thanh voi nhieu presets cung luc ",
+                "Cải thiện EdgeTTS với retry, kiểm tra audio rỗng, làm sạch Unicode và log rõ hơn khi bị no-audio/rate-limit.",
+                "Đổi batch EdgeTTS sang wave tối đa 3 request theo thứ tự note để tiến trình dễ theo dõi hơn.",
+                "Thêm các tùy chọn Advanced cho EdgeTTS: số lần retry, request jitter, wave start stagger và retry backoff.",
+                "Thêm chế độ chọn giọng Sequence, tự động xoay vòng các giọng theo thứ tự đã chọn.",
+                "Sửa Priority voice selection để bây giờ sẽ fallback sang giọng thứ hai nếu giọng đầu lỗi, và tương tự nếu có nhiều giọng hơn.",
+                "Thêm bộ kiểm tra EdgeTTS có thể chạy trực tiếp, gồm smoke test verify_edgetts.",
+                "Thêm cơ chế workflow nên bây giờ bạn có thể tạo âm thanh với nhiều presets cùng lúc.",
             ],
             "ko": [
                 "EdgeTTS 재시도 동작, 빈 오디오 처리, 유니코드 정리, 그리고 더 명확한 rate-limit 로그를 개선했습니다.",

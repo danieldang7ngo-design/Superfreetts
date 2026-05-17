@@ -5,6 +5,9 @@ __pycache__/
 # Anki user audio cache (can be huge, not needed in Git)
 user_files/**
 
+# Anki addon runtime metadata (per-user state, not source)
+meta.json
+
 # Virtual environments
 env/
 .venv/
@@ -33,3 +36,10 @@ superfreetss_addon/cache/
 superfreetss_addon/user_files/
 user_files/
 
+# Build artifacts
+dist/
+*.ankiaddon
+
+# Local-only notes
+EDGE_TTS_WORKER_20_REPORT.md
+superfreetts-work.index
