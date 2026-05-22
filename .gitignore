@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+!external/psutil/_psutil_windows.pyd
 *$py.class
 
 # Anki user audio cache (can be huge, not needed in Git)

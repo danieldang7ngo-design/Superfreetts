@@ -39,6 +39,9 @@ from . import batch_constants
 from . import performance_tracker
 from . import cpu_utils
 from . import batch_progress_ui
+from . import audio_file_store
+from . import note_audio_updater
+from . import source_text_resolver
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -59,6 +62,7 @@ class SuperFreeTTS():
         self.config = self.anki_utils.get_config()
         self.latest_saved_batch_name: Optional[str] = None
         self.text_processing_cache = {}  # Simple dict for processed text caching
+        self.audio_store = audio_file_store.AudioFileStore(self.anki_utils, self.get_preferences)
         
         # Initialize multi-engine executor with settings from service configurations
         try:
@@ -215,7 +219,7 @@ class SuperFreeTTS():
             try:
                 source_text = self.get_source_text(note, batch.source, None)
 
-                cache_key = f"{source_text}_{id(batch.text_processing)}"
+                cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
                 if cache_key not in self.text_processing_cache:
                     processed_text = self.process_text(source_text, batch.text_processing)
                     self.text_processing_cache[cache_key] = processed_text
@@ -432,7 +436,7 @@ class SuperFreeTTS():
                         source_text = self.get_source_text(note, batch.source, None)
                         
                         # Simple text cache for processing efficiency
-                        cache_key = f"{source_text}_{id(batch.text_processing)}"
+                        cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
                         if cache_key not in self.text_processing_cache:
                             processed_text = self.process_text(source_text, batch.text_processing)
                             self.text_processing_cache[cache_key] = processed_text
@@ -632,11 +636,12 @@ class SuperFreeTTS():
             voice_with_options = task_data.get('chosen_voice')
             voice_id = voice_with_options.voice_id if voice_with_options else None
 
+            voice_options = voice_with_options.options if voice_with_options else {}
+
             if voice_id is None:
                 dedup_key = (f'no_voice_{task_idx}',)
             else:
-                # Direct tuple key - simple and efficient
-                dedup_key = (processed_text, voice_id)
+                dedup_key = self.audio_store.build_request_key(processed_text, voice_id, voice_options)
 
             if dedup_key not in dedup_map:
                 dedup_map[dedup_key] = []
@@ -868,7 +873,7 @@ class SuperFreeTTS():
         results = [None] * len(chunk)
 
         def generate_one(idx, item):
-            _, task_data, _ = item
+            dedup_key, task_data, _ = item
             chosen_voice = task_data.get('chosen_voice')
             if chosen_voice is None:
                 return idx, (None, errors.NoVoiceSet())
@@ -876,16 +881,11 @@ class SuperFreeTTS():
             proc_text = task_data['processed_text']
             voice_id = chosen_voice.voice_id
             voice_options = chosen_voice.options
-            format = options.AudioFormat.mp3
-            if options.AUDIO_FORMAT_PARAMETER in voice_options:
-                format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
+            request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
+            cached_file = self.audio_store.get_cached_file(request_key)
 
-            hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
-            full_filename = self.get_full_audio_file_name(hash_str, format)
-            audio_filename = self.get_audio_filename(hash_str, format)
-
-            if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
-                return idx, ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
+            if cached_file is not None:
+                return idx, ((task_data['source_text'], proc_text, cached_file.audio_filename, cached_file.full_filename), None)
 
             try:
                 full_filename, audio_filename = self.generate_audio_write_file(
@@ -894,7 +894,7 @@ class SuperFreeTTS():
                     voice_options,
                     task_data['audio_request_context'],
                 )
-                self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_filename, full_filename)
+                self.executor.cache_result(proc_text, str(request_key), task_data['source_text'], audio_filename, full_filename)
                 return idx, ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
             except Exception as e:
                 return idx, (None, e)
@@ -929,17 +929,11 @@ class SuperFreeTTS():
         
         for i, (dedup_key, task_data, _) in enumerate(chunk):
             proc_text = task_data['processed_text']
-            
-            hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
-            format = options.AudioFormat.mp3
-            if options.AUDIO_FORMAT_PARAMETER in voice_options:
-                format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
-            
-            full_filename = self.get_full_audio_file_name(hash_str, format)
-            audio_filename = self.get_audio_filename(hash_str, format)
-            
-            if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
-                results[i] = ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
+            request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
+            cached_file = self.audio_store.get_cached_file(request_key)
+
+            if cached_file is not None:
+                results[i] = ((task_data['source_text'], proc_text, cached_file.audio_filename, cached_file.full_filename), None)
             else:
                 missing_indices.append(i)
                 missing_texts.append(proc_text)
@@ -957,22 +951,13 @@ class SuperFreeTTS():
                     task_data = chunk[idx][1]
                     if audio_data:
                         proc_text = task_data['processed_text']
-                        
-                        # Re-calculate filename for writing
-                        hash_str = self.get_hash_for_audio_request(proc_text, voice_id, voice_options)
-                        format = options.AudioFormat.mp3
-                        if options.AUDIO_FORMAT_PARAMETER in voice_options:
-                             format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
-                        
-                        full_fn = self.get_full_audio_file_name(hash_str, format)
-                        audio_fn = self.get_audio_filename(hash_str, format)
-                        
-                        with open(full_fn, 'wb') as f:
-                            f.write(audio_data)
+                        dedup_key = chunk[idx][0]
+                        request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
+                        file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
                         
                         # Cache in memory
-                        self.executor.cache_result(proc_text, str(voice_id), task_data['source_text'], audio_fn, full_fn)
-                        results[idx] = ((task_data['source_text'], proc_text, audio_fn, full_fn), None)
+                        self.executor.cache_result(proc_text, str(request_key), task_data['source_text'], file_result.audio_filename, file_result.full_filename)
+                        results[idx] = ((task_data['source_text'], proc_text, file_result.audio_filename, file_result.full_filename), None)
                     else:
                         if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
                             results[idx] = self._generate_audio_with_priority_fallback(task_data)
@@ -1014,13 +999,14 @@ class SuperFreeTTS():
         while len(priority_voice_list) > 0:
             voice_with_options = self.choose_voice(voice_selection, priority_voice_list)
             try:
+                request_key = self.audio_store.build_request_key(processed_text, voice_with_options.voice_id, voice_with_options.options)
                 full_filename, audio_filename = self.generate_audio_write_file(
                     processed_text,
                     voice_with_options.voice_id,
                     voice_with_options.options,
                     task_data['audio_request_context'],
                 )
-                self.executor.cache_result(processed_text, str(voice_with_options.voice_id), source_text, audio_filename, full_filename)
+                self.executor.cache_result(processed_text, str(request_key), source_text, audio_filename, full_filename)
                 return ((source_text, processed_text, audio_filename, full_filename), None)
             except errors.AudioNotFoundError:
                 continue
@@ -1030,27 +1016,15 @@ class SuperFreeTTS():
         return (None, errors.AudioNotFoundAnyVoiceError(processed_text))
 
     def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection):
-        # Helper to update the note object
-        target_field = batch.target.target_field
-        if target_field not in note:
-            # Should have been caught earlier but check again
-            return
-
-        sound_tag, _ = self.get_collection_sound_tag(full_filename, sound_file)
-        
-        target_field_content = note[target_field]
-        
-        if batch.target.remove_sound_tag:
-            target_field_content = text_utils.strip_sound_tag(target_field_content)
-        
-        if batch.target.text_and_sound_tag:
-            target_field_content = f'{target_field_content} {sound_tag}'
-        else:
-            target_field_content = self.keep_only_sound_tags(target_field_content)
-            target_field_content = f'{target_field_content} {sound_tag}'
-
-        note[target_field] = target_field_content.strip()
-        anki_collection.update_note(note)
+        note_audio_updater.update_note_with_audio(
+            self.anki_utils,
+            note,
+            batch,
+            source_text,
+            sound_file,
+            full_filename,
+            anki_collection,
+        )
 
     def process_note_audio(self, batch: config_models.BatchConfig, note, add_mode, audio_request_context, text_override, anki_collection):
         target_field = batch.target.target_field
@@ -1062,28 +1036,18 @@ class SuperFreeTTS():
         processed_text = self.process_text(source_text, batch.text_processing)
 
         full_filename, audio_filename = self.get_audio_file(processed_text, batch.voice_selection, audio_request_context)
-        sound_tag, sound_file = self.get_collection_sound_tag(full_filename, audio_filename)
-
-        target_field_content = note[target_field]
-        
-        # do we need to remove existing sound tags ?
-        if batch.target.remove_sound_tag == True:
-            target_field_content = text_utils.strip_sound_tag(target_field_content)
-        
-        if batch.target.text_and_sound_tag == True:
-            # user wants text and sound tag together, append the sound tag
-            target_field_content = f'{target_field_content} {sound_tag}'
-        else:
-            # user only wants sound tags
-            target_field_content = self.keep_only_sound_tags(target_field_content)
-            target_field_content = f'{target_field_content} {sound_tag}'
-
-        target_field_content = target_field_content.strip()
-
-        logger.debug(f'setting note[{target_field}] to {target_field_content}')
-        note[target_field] = target_field_content
-        if not add_mode:
-            anki_collection.update_note(note)
+        sound_file = audio_filename
+        logger.debug(f'setting note[{target_field}] to audio file {sound_file}')
+        note_audio_updater.update_note_with_audio(
+            self.anki_utils,
+            note,
+            batch,
+            source_text,
+            sound_file,
+            full_filename,
+            anki_collection,
+            update_collection=not add_mode,
+        )
 
         return source_text, processed_text, sound_file, full_filename
 
@@ -1262,43 +1226,19 @@ class SuperFreeTTS():
     # ===============
 
     def get_source_text(self, note, batch_source, text_override):
-        if text_override != None:
-            return text_override
-
-        if batch_source.mode == constants.BatchMode.simple:
-            if batch_source.source_field not in note:
-                raise errors.SourceFieldNotFoundError(batch_source.source_field)
-            source_text = note[batch_source.source_field]
-        elif batch_source.mode == constants.BatchMode.template:
-            source_text = self.expand_simple_template(note, batch_source.source_template)
-        elif batch_source.mode == constants.BatchMode.advanced_template:
-            source_text = self.expand_advanced_template(note, batch_source.source_template)
-        return source_text
+        return source_text_resolver.get_source_text(note, batch_source, text_override, self.get_ui_language())
 
     def expand_simple_template(self, note, source_template):
-        field_values = self.get_field_values(note)
-        # logger.info(f'field_values: {field_values}')
-        try:
-            return source_template.format_map(field_values)
-        except Exception as e:
-            raise errors.TemplateExpansionError(e)
+        return source_text_resolver.expand_simple_template(note, source_template)
 
     def expand_advanced_template(self, note, source_template):
-        lang = self.get_ui_language()
-        raise errors.SuperFreeTTSError(i18n.get_text("error_advanced_template_lite", lang))
+        return source_text_resolver.expand_advanced_template(note, source_template, self.get_ui_language())
 
     def get_field_values(self, note):
-        field_values = {}
-        for field_name in list(note.keys()):
-            field_values[field_name] = note[field_name]
-        return field_values
+        return source_text_resolver.get_field_values(note)
 
     def process_text(self, source_text, batch_text_processing):
-        processed_text = text_utils.process_text(source_text, batch_text_processing)
-        # logger.info(f'before text processing: [{source_text}], after text processing: [{processed_text}]')
-        if len(processed_text) == 0:
-            raise errors.SourceTextEmpty()
-        return processed_text
+        return source_text_resolver.process_text(source_text, batch_text_processing)
 
     # sound generation
     # ================
@@ -1393,22 +1333,10 @@ class SuperFreeTTS():
 
     def generate_audio_write_file(self, source_text, voice_id: voice_module.TtsVoiceId_v3, voice_options, audio_request_context):
         assert isinstance(voice_id, voice_module.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
-        format = options.AudioFormat.mp3 # default to mp3
-        # Use user preference if available
-        prefs = self.get_preferences()
-        if prefs.audio_format == "wav":
-            format = options.AudioFormat.wav
-        elif prefs.audio_format == "ogg":
-            format = options.AudioFormat.ogg_opus
-        
-        if options.AUDIO_FORMAT_PARAMETER in voice_options:
-            format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
-
-        # write to user files directory
-        hash_str = self.get_hash_for_audio_request(source_text, voice_id, voice_options)
-        audio_filename = self.get_audio_filename(hash_str, format)
-        full_filename = self.get_full_audio_file_name(hash_str, format)
-        logger.info(f'requesting audio for hash {hash_str}, full filename {full_filename}')
+        request_key = self.audio_store.build_request_key(source_text, voice_id, voice_options)
+        cached_file = self.audio_store.get_cached_file(request_key)
+        file_result = cached_file or self.audio_store.get_file_result(request_key, cache_hit=False)
+        logger.info(f'requesting audio for hash {request_key.hash()}, full filename {file_result.full_filename}')
         
         # Start performance tracking (only active in debug mode)
         tracker = performance_tracker.get_performance_tracker()
@@ -1429,7 +1357,7 @@ class SuperFreeTTS():
         tracker.start_generation(source_text, voice_name)
         
         try:
-            if not os.path.exists(full_filename) or os.path.getsize(full_filename) == 0:
+            if cached_file is None:
 
                 # get the voice which corresponds to the voice_id
                 voice = self.service_manager.locate_voice(voice_id)
@@ -1437,56 +1365,31 @@ class SuperFreeTTS():
 
                 audio_data = self.service_manager.get_tts_audio(source_text, voice, voice_options, audio_request_context)
                 logger.info(f'not found in cache, requesting')
-                logger.debug(f'opening {full_filename}')
-                f = open(full_filename, 'wb')
-                logger.debug(f'done opening {full_filename}')
-                f.write(audio_data)
+                logger.debug(f'writing {file_result.full_filename}')
+                file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
                 logger.debug(f'wrote audio data')
-                f.close()
             else:
                 logger.info(f'file exists in cache')
         finally:
             # End performance tracking (only active in debug mode)
             duration = tracker.end_generation()
         
-        return full_filename, audio_filename
+        return file_result.full_filename, file_result.audio_filename
 
     def get_collection_sound_tag(self, full_filename, audio_filename):
-        self.anki_utils.media_add_file(full_filename)
-        return f'[sound:{audio_filename}]', audio_filename
+        return note_audio_updater.get_collection_sound_tag(self.anki_utils, full_filename, audio_filename)
 
     def get_full_audio_file_name(self, hash_str, format: options.AudioFormat):
-        # return the absolute path of the audio file in the user_files directory
-        user_files_dir = self.anki_utils.get_user_files_dir()
-        # Ensure the directory exists
-        if not os.path.isdir(user_files_dir):
-            logger.info(f"Creating missing user_files directory at {user_files_dir}")
-            os.makedirs(user_files_dir, exist_ok=True)
-        filename = self.get_audio_filename(hash_str, format)
-        return os.path.join(user_files_dir, filename)
+        return self.audio_store.get_full_audio_file_name(hash_str, format)
     
     def get_audio_filename(self, hash_str, format: options.AudioFormat):
-        extension_map = {
-            options.AudioFormat.mp3: 'mp3',
-            options.AudioFormat.wav: 'wav',
-            options.AudioFormat.ogg_vorbis: 'ogg',
-            options.AudioFormat.ogg_opus: 'ogg',
-        }
-        extension = extension_map[format]
-        filename = f'superfreetts-{hash_str}.{extension}'
-        return filename
+        return self.audio_store.get_audio_filename(hash_str, format)
 
     def get_hash_for_audio_request(self, source_text, voice_id: voice_module.TtsVoiceId_v3, options):
-        combined_data = {
-            'source_text': source_text,
-            'voice_id': voice_id,
-            'options': options
-        }
-        return hashlib.sha224(str(combined_data).encode('utf-8')).hexdigest()
+        return self.audio_store.build_request_key(source_text, voice_id, options).hash()
 
     def keep_only_sound_tags(self, field_value):
-        matches = re.findall(r'\[sound:[^\]]+\]', field_value)
-        return ' '.join(matches)
+        return note_audio_updater.keep_only_sound_tags(field_value)
 
 
     # processing of Anki TTS tags
@@ -2136,6 +2039,7 @@ class SuperFreeTTS():
 
     def deserialize_text_processing(self, text_processing_config):
         text_processing = config_models.TextProcessing()
+        text_processing.enabled = text_processing_config.get('enabled', constants.TEXT_PROCESSING_DEFAULT_ENABLED)
         text_processing.html_to_text_line = text_processing_config.get('html_to_text_line', constants.TEXT_PROCESSING_DEFAULT_HTMLTOTEXTLINE)
         text_processing.strip_brackets = text_processing_config.get('strip_brackets', constants.TEXT_PROCESSING_DEFAULT_STRIP_BRACKETS)
         text_processing.strip_cloze = text_processing_config.get('strip_cloze', constants.TEXT_PROCESSING_DEFAULT_STRIP_CLOZE)

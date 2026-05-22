@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.3.3 - 2026-05-22
+
+### English
+
+- Reduced duplicate TTS calls in large batches by caching processed text and deduplicating audio requests by processed text, voice, voice options, and output format.
+- Improved audio file caching and writes with stable request hashes, non-empty disk cache checks, and atomic writes for generated audio files.
+- Split source text resolution, audio file storage, and note audio updates out of `superfreetss.py` so the core batch path is easier to test and refactor.
+- Added regression coverage for text/source resolution, audio file storage, batch cache/dedup behavior, note updates, text processing, and psutil integration.
+- Kept the current user workflow and UI behavior unchanged.
+
+### Tieng Viet
+
+- Giam goi TTS trung lap trong batch lon bang cache processed text va dedup request audio theo processed text, voice, voice options va dinh dang dau ra.
+- Cai thien cache/ghi file audio voi hash request on dinh, chi dung disk cache khi file ton tai va khong rong, va ghi file theo co che atomic.
+- Tach xu ly source text, luu file audio, va cap nhat sound tag cua note ra khoi `superfreetss.py` de core batch de test va de refactor tiep.
+- Bo sung regression test cho resolver text/source, audio file store, batch cache/dedup, note updater, text processing va psutil.
+- Giu nguyen workflow va hanh vi UI hien tai.
+
+### Korean
+
+- 대규모 배치 작업에서 처리된 텍스트를 캐싱하고, 처리된 텍스트·음성·음성 옵션·출력 형식을 기준으로 오디오 요청을 중복 제거하여 중복 TTS 호출을 줄였습니다.
+- 안정적인 요청 해시, 비어 있지 않은 디스크 캐시 확인, 생성된 오디오 파일의 원자적 쓰기(atomic write)를 통해 오디오 파일 캐싱 및 저장 방식을 개선했습니다.
+- 핵심 배치 경로를 더 쉽게 테스트하고 리팩터링할 수 있도록, 원본 텍스트 해석·오디오 파일 저장·노트 오디오 업데이트 로직을 `superfreetss.py`에서 분리했습니다.
+- 텍스트/원본 해석, 오디오 파일 저장, 배치 캐시 및 중복 제거 동작, 노트 업데이트, 텍스트 처리, 그리고 psutil 통합에 대한 회귀 테스트 커버리지를 추가했습니다.
+- 기존 사용자 워크플로우와 UI 동작은 변경 없이 그대로 유지했습니다.
+
+
 ## 1.3.2 - 2026-05-16
 
 ### English

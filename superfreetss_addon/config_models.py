@@ -354,6 +354,7 @@ class TextReplacementRule(ConfigModelBase):
 class TextProcessing(ConfigModelBase):
     def __init__(self):
         self._text_replacement_rules = []
+        self.enabled = constants.TEXT_PROCESSING_DEFAULT_ENABLED
         self.html_to_text_line = constants.TEXT_PROCESSING_DEFAULT_HTMLTOTEXTLINE
         self.strip_brackets = constants.TEXT_PROCESSING_DEFAULT_STRIP_BRACKETS
         self.strip_cloze = constants.TEXT_PROCESSING_DEFAULT_STRIP_CLOZE
@@ -380,6 +381,7 @@ class TextProcessing(ConfigModelBase):
 
     def serialize(self):
         return {
+            'enabled': self.enabled,
             'html_to_text_line': self.html_to_text_line,
             'strip_brackets': self.strip_brackets,
             'strip_cloze': self.strip_cloze,

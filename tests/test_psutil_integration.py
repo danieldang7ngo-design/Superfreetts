@@ -22,11 +22,12 @@ sys.path.insert(0, os.path.join(addon_dir, 'external'))
 from superfreetss_addon import resource_manager
 
 def test_psutil_integration():
-    """Verify that psutil is detected and working"""
-    assert resource_manager.HAS_PSUTIL is True
-    
+    """Verify that process RAM monitoring works with psutil or fallback."""
     monitor = resource_manager.ResourceMonitor()
-    assert monitor.process is not None
+    if resource_manager.HAS_PSUTIL:
+        assert monitor.process is not None
+    else:
+        assert monitor.process is None
     
     ram_usage = monitor._get_ram_usage()
     print(f"\nDetected RAM Usage: {ram_usage}MB")

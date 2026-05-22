@@ -168,14 +168,17 @@ class TextProcessing(component_common.ConfigComponentBase):
         self.textReplacementTableModel.load_model(self.model)
         self.set_text_processing_rules_widget_state()
 
-    def draw(self): # return scrollarea
+    def draw(self, embedded=False): # return scrollarea or content widget
         lang = self.hypertts.get_ui_language()
-        self.scroll_area = aqt.qt.QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
+        if not embedded:
+            self.scroll_area = aqt.qt.QScrollArea()
+            self.scroll_area.setWidgetResizable(True)
         self.layout_widget = aqt.qt.QWidget()        
 
         global_vlayout = aqt.qt.QVBoxLayout(self.layout_widget)
 
+        self.enabled_checkbox = aqt.qt.QCheckBox(i18n.get_text('tp_check_enabled', lang))
+        global_vlayout.addWidget(self.enabled_checkbox)
 
         # setup test input box
         # ====================
@@ -252,8 +255,23 @@ class TextProcessing(component_common.ConfigComponentBase):
         groupbox.setLayout(vlayout)
         global_vlayout.addWidget(groupbox)        
 
+        self.processing_controls = [
+            self.sample_text_input,
+            self.html_to_text_line_checkbox,
+            self.strip_brackets_checkbox,
+            self.strip_cloze_checkbox,
+            self.ssml_convert_characters_checkbox,
+            self.run_replace_rules_after_checkbox,
+            self.ignore_case_checkbox,
+            self.table_view,
+            self.add_replace_simple_button,
+            self.add_replace_regex_button,
+            self.remove_replace_button,
+        ]
+
         # wire events
         # ===========
+        self.enabled_checkbox.stateChanged.connect(self.enabled_checkbox_change)
         self.html_to_text_line_checkbox.stateChanged.connect(self.html_to_text_line_checkbox_change)
         self.strip_brackets_checkbox.stateChanged.connect(self.strip_brackets_change)
         self.strip_cloze_checkbox.stateChanged.connect(self.strip_cloze_change)
@@ -270,15 +288,35 @@ class TextProcessing(component_common.ConfigComponentBase):
 
         self.model_change()
 
+        if embedded:
+            return self.layout_widget
         self.scroll_area.setWidget(self.layout_widget)
         return self.scroll_area
 
     def set_text_processing_rules_widget_state(self):
+        if not hasattr(self, 'html_to_text_line_checkbox'):
+            return
+        self.enabled_checkbox.setChecked(getattr(self.model, 'enabled', True))
         self.html_to_text_line_checkbox.setChecked(self.model.html_to_text_line)
         self.strip_brackets_checkbox.setChecked(self.model.strip_brackets)
         self.strip_cloze_checkbox.setChecked(self.model.strip_cloze)
         self.ssml_convert_characters_checkbox.setChecked(self.model.ssml_convert_characters)
         self.run_replace_rules_after_checkbox.setChecked(self.model.run_replace_rules_after)
+        self.ignore_case_checkbox.setChecked(self.model.ignore_case)
+        self.update_controls_enabled()
+
+    def update_controls_enabled(self):
+        if not hasattr(self, 'processing_controls'):
+            return
+        enabled = getattr(self.model, 'enabled', True)
+        for widget in self.processing_controls:
+            widget.setEnabled(enabled)
+
+    def enabled_checkbox_change(self, value):
+        enabled = value == 2
+        self.model.enabled = enabled
+        self.update_controls_enabled()
+        self.model_change()
 
     def html_to_text_line_checkbox_change(self, value):
         enabled = value == 2

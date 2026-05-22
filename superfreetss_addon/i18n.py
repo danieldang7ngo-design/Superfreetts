@@ -162,6 +162,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "tab_target": "Target",
         "tab_voice_selection": "Voice Selection",
         "tab_text_processing": "Text Processing",
+        "tp_section_title": "Text Processing",
         "tab_field_mapping": "Field Mapping",
 
         "batch_group_source_field": "Source Field",
@@ -180,6 +181,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "tp_header_pattern": "Pattern",
         "tp_header_replacement": "Replacement",
         "tp_blank_text": "<i>Enter sample text to verify text processing settings.</i>",
+        "tp_check_enabled": "Enable text processing",
         "tp_group_preview": "Preview Text Processing Settings",
         "tp_label_verify": "You may verify your settings by entering sample text below:",
         "tp_label_enter_sample": "Enter sample text:",
@@ -736,7 +738,8 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "tab_source": "Nguồn",
         "tab_target": "Trường nhận âm thanh",
         "tab_voice_selection": "Chọn giọng",
-        "tab_text_processing": "Xử lý text",
+        "tab_text_processing": "Xử lý văn bản",
+        "tp_section_title": "Xử lý văn bản",
         "tab_field_mapping": "Ánh xạ trường",
 
         "batch_group_source_field": "Nguồn văn bản",
@@ -755,6 +758,7 @@ STRINGS: Dict[str, Dict[str, str]] = {
         "tp_header_pattern": "Mẫu Regex",
         "tp_header_replacement": "Thay thế",
         "tp_blank_text": "<i>Nhập văn bản mẫu để kiểm tra cài đặt xử lý văn bản.</i>",
+        "tp_check_enabled": "Bật xử lý văn bản",
         "tp_group_preview": "Kiểm tra Xử lý Văn bản",
         "tp_label_verify": "Kiểm tra cài đặt bằng cách nhập văn bản mẫu bên dưới:",
         "tp_label_enter_sample": "Nhập văn bản mẫu:",

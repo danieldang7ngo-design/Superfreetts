@@ -3,6 +3,7 @@ Resource management for batch processing - RAM, CPU, memory pooling, intelligent
 """
 import gc
 import os
+import platform
 import threading
 from functools import lru_cache
 from collections import OrderedDict
@@ -12,12 +13,65 @@ from typing import Any, Callable, Dict, Optional
 try:
     import psutil
     HAS_PSUTIL = True
-except ImportError:
+except Exception:
     HAS_PSUTIL = False
     import multiprocessing  # Fallback for CPU count only
 
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
+
+
+def _get_process_ram_usage_without_psutil() -> int:
+    """Best-effort current process RSS in MB when psutil is unavailable."""
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+                _fields_ = [
+                    ("cb", wintypes.DWORD),
+                    ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t),
+                    ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t),
+                    ("PeakPagefileUsage", ctypes.c_size_t),
+                ]
+
+            counters = PROCESS_MEMORY_COUNTERS()
+            counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
+            handle = ctypes.windll.kernel32.GetCurrentProcess()
+            get_process_memory_info = ctypes.windll.psapi.GetProcessMemoryInfo
+            get_process_memory_info.argtypes = [
+                wintypes.HANDLE,
+                ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+                wintypes.DWORD,
+            ]
+            get_process_memory_info.restype = wintypes.BOOL
+            ok = get_process_memory_info(
+                handle,
+                ctypes.byref(counters),
+                counters.cb,
+            )
+            if ok:
+                return int(counters.WorkingSetSize / 1024 / 1024)
+        except Exception as e:
+            logger.warning(f"Failed to get RAM usage via Windows API: {e}")
+
+    try:
+        import resource
+
+        usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if platform.system() == "Darwin":
+            return int(usage / 1024 / 1024)
+        return int(usage / 1024)
+    except Exception as e:
+        logger.warning(f"Failed to get RAM usage via resource module: {e}")
+        return 0
 
 class ResourceMonitor:
     """Monitor and manage system resources during batch processing"""
@@ -32,7 +86,7 @@ class ResourceMonitor:
     def _get_ram_usage(self) -> int:
         """Get current process RAM usage in MB"""
         if not HAS_PSUTIL:
-            return 0  # Cannot monitor without psutil
+            return _get_process_ram_usage_without_psutil()
         
         try:
             return int(self.process.memory_info().rss / 1024 / 1024)

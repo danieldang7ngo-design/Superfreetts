@@ -530,6 +530,19 @@ def get_dynamic_stylesheet() -> str:
             background: {tab_bg_selected}!important; 
             color: {tab_text_selected}!important;
         }}
+        QToolButton[cssClass="collapsibleToggle"] {{
+            text-align: left;
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: {btn_bg_secondary};
+            border: none;
+            color: {btn_text_sec};
+            font-weight: bold;
+            margin-top: 6px;
+        }}
+        QToolButton[cssClass="collapsibleToggle"]:hover {{
+            background: {btn_hover_sec};
+        }}
         /* Inputs */
         QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
             padding: 10px 14px;

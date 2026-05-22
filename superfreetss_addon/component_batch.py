@@ -303,6 +303,19 @@ class ComponentBatch(component_common.ConfigComponentBase):
         lang = self.hypertts.get_ui_language()
         self.preview_sound_button.setText(i18n.get_text("batch_button_preview_sound", lang))
 
+    def _create_collapsible_toggle(self, text):
+        button = aqt.qt.QToolButton()
+        button.setText(text)
+        button.setArrowType(aqt.qt.Qt.ArrowType.RightArrow)
+        button.setToolButtonStyle(aqt.qt.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        button.setProperty("cssClass", "collapsibleToggle")
+        button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
+        return button
+
+    def _set_collapsible_toggle_open(self, button, visible):
+        arrow_type = aqt.qt.Qt.ArrowType.DownArrow if visible else aqt.qt.Qt.ArrowType.RightArrow
+        button.setArrowType(arrow_type)
+
     def _build_field_mapping_tab(self):
         """Build a merged Source + Target tab with collapsible advanced sections."""
         lang = self.hypertts.get_ui_language()
@@ -338,9 +351,24 @@ class ComponentBatch(component_common.ConfigComponentBase):
         target_group.setLayout(target_vlayout)
         main_layout.addWidget(target_group)
 
+        self.text_processing_toggle = self._create_collapsible_toggle(i18n.get_text("tp_section_title", lang))
+        main_layout.addWidget(self.text_processing_toggle)
+
+        self.text_processing_section = aqt.qt.QWidget()
+        text_processing_layout = aqt.qt.QVBoxLayout(self.text_processing_section)
+        text_processing_layout.setContentsMargins(10, 5, 10, 5)
+        text_processing_layout.addWidget(self.text_processing.draw(embedded=True))
+        self.text_processing_section.setVisible(False)
+        main_layout.addWidget(self.text_processing_section)
+
+        def toggle_text_processing():
+            visible = not self.text_processing_section.isVisible()
+            self.text_processing_section.setVisible(visible)
+            self._set_collapsible_toggle_open(self.text_processing_toggle, visible)
+        self.text_processing_toggle.pressed.connect(toggle_text_processing)
+
         # === Sound Tag Options (collapsible) ===
-        self.sound_tag_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_sound_tag", lang)}')
-        self.sound_tag_toggle.setProperty("cssClass", "secondaryButton")
+        self.sound_tag_toggle = self._create_collapsible_toggle(i18n.get_text("batch_toggle_sound_tag", lang))
         main_layout.addWidget(self.sound_tag_toggle)
 
         self.sound_tag_section = aqt.qt.QWidget()
@@ -375,13 +403,11 @@ class ComponentBatch(component_common.ConfigComponentBase):
         def toggle_sound_tag():
             visible = not self.sound_tag_section.isVisible()
             self.sound_tag_section.setVisible(visible)
-            prefix = '▼' if visible else '▶'
-            self.sound_tag_toggle.setText(f'{prefix} {i18n.get_text("batch_toggle_sound_tag", lang)}')
+            self._set_collapsible_toggle_open(self.sound_tag_toggle, visible)
         self.sound_tag_toggle.pressed.connect(toggle_sound_tag)
 
         # === Advanced Source Mode (collapsible) ===
-        self.source_mode_toggle = aqt.qt.QPushButton(f'▶ {i18n.get_text("batch_toggle_advanced_source", lang)}')
-        self.source_mode_toggle.setProperty("cssClass", "secondaryButton")
+        self.source_mode_toggle = self._create_collapsible_toggle(i18n.get_text("batch_toggle_advanced_source", lang))
         main_layout.addWidget(self.source_mode_toggle)
 
         self.source_mode_section = aqt.qt.QWidget()
@@ -411,7 +437,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         def toggle_source_mode():
             visible = not self.source_mode_section.isVisible()
             self.source_mode_section.setVisible(visible)
-            self.source_mode_toggle.setText('▼ Advanced Source Mode' if visible else '▶ Advanced Source Mode')
+            self._set_collapsible_toggle_open(self.source_mode_toggle, visible)
         self.source_mode_toggle.pressed.connect(toggle_source_mode)
 
         main_layout.addStretch()
@@ -464,12 +490,6 @@ class ComponentBatch(component_common.ConfigComponentBase):
         # Tab 2: Voice Selection (right)
         self.tabs.addTab(self.voice_selection.draw(), i18n.get_text("tab_voice_selection", lang))
 
-        # Text Processing tab - hidden by default for simplicity
-        self.text_processing_widget = self.text_processing.draw()
-        self.text_processing_tab_index = self.tabs.addTab(self.text_processing_widget, i18n.get_text("tab_text_processing", lang))
-        self.tabs.setTabVisible(self.text_processing_tab_index, False)
-        self.advanced_visible = False
-
         if self.editor_mode == False:
             self.splitter = aqt.qt.QSplitter(aqt.qt.Qt.Orientation.Horizontal)
             self.splitter.addWidget(self.tabs)
@@ -509,17 +529,6 @@ class ComponentBatch(component_common.ConfigComponentBase):
             gui_utils.configure_secondary_button(self.show_settings_button)
             hlayout.addWidget(self.show_settings_button)
             
-        # advanced toggle button (show/hide Text Processing tab)
-        lang = self.hypertts.get_ui_language()
-        self.advanced_toggle_button = aqt.qt.QPushButton(
-            i18n.get_text("batch_advanced_toggle_off", lang)
-        )
-            
-        self.advanced_toggle_button.setToolTip(i18n.get_text("batch_tooltip_show_advanced", lang))
-        self.advanced_toggle_button.setProperty("cssClass", "secondaryButton")
-        self.advanced_toggle_button.pressed.connect(self.toggle_advanced)
-        hlayout.addWidget(self.advanced_toggle_button)
-        
         # preview button
         if not self.editor_mode:
             self.preview_sound_button.setText(i18n.get_text("batch_button_select_note_to_preview", lang))
@@ -654,6 +663,8 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.display_settings()
 
     def toggle_advanced(self):
+        if not hasattr(self, 'text_processing_tab_index'):
+            return
         self.advanced_visible = not self.advanced_visible
         self.tabs.setTabVisible(self.text_processing_tab_index, self.advanced_visible)
         lang = self.hypertts.get_ui_language()
