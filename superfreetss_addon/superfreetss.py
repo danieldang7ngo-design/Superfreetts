@@ -64,59 +64,14 @@ class SuperFreeTTS():
         self.text_processing_cache = {}  # Simple dict for processed text caching
         self.audio_store = audio_file_store.AudioFileStore(self.anki_utils, self.get_preferences)
         
+        # Apply logging preferences based on stored debug mode
+        self.apply_logging_preferences()
+        
         # Initialize multi-engine executor with settings from service configurations
         try:
             config = self.anki_utils.get_config()
             service_config_map = config.get('service_config', {})
-            prefs = self.get_preferences()  # For backward compatibility fallback
-            
-            # Apply logging preferences based on stored debug mode
-            self.apply_logging_preferences()
-            
-            # Default concurrency workers for each service
-            defaults = {
-                'PiperTTS': 1,
-                'KokoroTTS': 1,
-                'EdgeTTS': batch_constants.MAX_WORKER_THREADS,
-                'MmsTTS': 1,
-            }
-            
-            # Service name mappings for executor pool naming
-            service_pool_map = {
-                'PiperTTS': 'Piper',
-                'KokoroTTS': 'Kokoro',
-                'EdgeTTS': 'EdgeTTS',
-                'MmsTTS': 'MMS',
-            }
-            
-            # Build engine config from service configurations
-            engine_config = {}
-            for service_name, pool_name in service_pool_map.items():
-                service_config = service_config_map.get(service_name, {})
-                # Try service config first, then default to 1
-                concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
-                
-                # Validate against physical CPU cores for local engines; EdgeTTS is I/O-bound.
-                max_workers = batch_constants.MAX_WORKER_THREADS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
-                if concurrency > max_workers:
-                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max workers ({max_workers}), capping to {max_workers}')
-                    concurrency = max_workers
-                engine_config[pool_name] = max(1, concurrency)
-                
-                # Auto-scale internal process pools for Sherpa-based services
-                try:
-                    if pool_name == 'Piper':
-                        from .services import service_piper
-                        service_piper._piper_pool.update_max_processes(engine_config[pool_name])
-                    elif pool_name == 'Kokoro':
-                        from .services import service_kokoro
-                        service_kokoro._kokoro_pool.update_max_processes(engine_config[pool_name])
-                    elif pool_name == 'MMS':
-                        from .services import service_mms
-                        service_mms._sherpa_pool.update_max_processes(engine_config[pool_name])
-                except Exception as pool_err:
-                    logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
-            
+            engine_config = self._build_engine_config(service_config_map)
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
         except Exception as e:
@@ -130,6 +85,59 @@ class SuperFreeTTS():
         
         # Cleanup cache
         self.cleanup_user_files()
+
+    # =========================================================================
+    # Engine configuration helpers (single source of truth)
+    # =========================================================================
+
+    def _build_engine_config(self, service_config_map: dict) -> dict:
+        """Build engine_config dict from service configurations.
+        
+        Single source of truth for concurrency defaults, validation, and
+        pool scaling.  Called by both __init__ and reconfigure_service_manager.
+        """
+        defaults = {
+            'PiperTTS': 1,
+            'KokoroTTS': 1,
+            'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
+            'MmsTTS': 1,
+        }
+        service_pool_map = {
+            'PiperTTS': 'Piper',
+            'KokoroTTS': 'Kokoro',
+            'EdgeTTS': 'EdgeTTS',
+            'MmsTTS': 'MMS',
+        }
+        engine_config = {}
+        for service_name, pool_name in service_pool_map.items():
+            service_config = service_config_map.get(service_name, {})
+            concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
+            
+            # EdgeTTS is I/O-bound → capped by EDGETTS_MAX_WORKERS.
+            # Local engines are CPU-bound → capped by physical cores.
+            max_cap = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
+            if concurrency > max_cap:
+                logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max ({max_cap}), capping')
+                concurrency = max_cap
+            engine_config[pool_name] = max(1, concurrency)
+            
+            self._auto_scale_pool(pool_name, engine_config[pool_name])
+        return engine_config
+
+    def _auto_scale_pool(self, pool_name: str, concurrency: int) -> None:
+        """Auto-scale internal process pools for Sherpa-based services."""
+        try:
+            if pool_name == 'Piper':
+                from .services import service_piper
+                service_piper._piper_pool.update_max_processes(concurrency)
+            elif pool_name == 'Kokoro':
+                from .services import service_kokoro
+                service_kokoro._kokoro_pool.update_max_processes(concurrency)
+            elif pool_name == 'MMS':
+                from .services import service_mms
+                service_mms._sherpa_pool.update_max_processes(concurrency)
+        except Exception as pool_err:
+            logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
 
     def cleanup_user_files(self) -> None:
         """
@@ -1819,46 +1827,7 @@ class SuperFreeTTS():
         # Recreate batch executor with updated worker configuration
         try:
             service_config_map = configuration.get_service_config()
-            
-            defaults = {
-                'PiperTTS': 1,
-                'KokoroTTS': 1,
-                'EdgeTTS': batch_constants.MAX_WORKER_THREADS,
-                'MmsTTS': 1,
-            }
-            pref_fallback = {}
-            service_pool_map = {
-                'PiperTTS': 'Piper',
-                'KokoroTTS': 'Kokoro',
-                'EdgeTTS': 'EdgeTTS',
-                'MmsTTS': 'MMS',
-            }
-            
-            engine_config = {}
-            for service_name, pool_name in service_pool_map.items():
-                service_config = service_config_map.get(service_name, {})
-                concurrency = service_config.get('concurrency_workers') or pref_fallback.get(service_name) or defaults.get(service_name, 1)
-                
-                max_workers = batch_constants.MAX_WORKER_THREADS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
-                if concurrency > max_workers:
-                    logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max workers ({max_workers}), capping to {max_workers}')
-                    concurrency = max_workers
-                engine_config[pool_name] = max(1, concurrency)
-
-                # Auto-scale internal process pools for Sherpa-based services
-                try:
-                    if pool_name == 'Piper':
-                        from .services import service_piper
-                        service_piper._piper_pool.update_max_processes(engine_config[pool_name])
-                    elif pool_name == 'Kokoro':
-                        from .services import service_kokoro
-                        service_kokoro._kokoro_pool.update_max_processes(engine_config[pool_name])
-                    elif pool_name == 'MMS':
-                        from .services import service_mms
-                        service_mms._sherpa_pool.update_max_processes(engine_config[pool_name])
-                except Exception as pool_err:
-                    logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
-            
+            engine_config = self._build_engine_config(service_config_map)
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
         except Exception as e:

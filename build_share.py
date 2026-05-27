@@ -1,10 +1,10 @@
 """
-Build a shareable .ankiaddon for Super Free TTS with EdgeTTS capped at 3 workers.
+Build a shareable .ankiaddon for Super Free TTS.
 
 What this does:
 - Copies the addon source into a clean staging folder.
 - Strips local-only stuff (caches, mp3s, dev mirrors, __pycache__, meta.json, etc.).
-- Patches the EdgeTTS worker cap to 3 (your local copy stays at 20).
+- Keeps the EdgeTTS worker cap at 3 (default from batch_constants.py).
 - Zips staging into SuperFreeTTS.ankiaddon at the workspace root.
 
 Run from the addon root:
@@ -54,6 +54,8 @@ EXCLUDE_FILE_NAMES = {
     "superfreetts-work.index",
     "EDGE_TTS_WORKER_20_REPORT.md",
     "build_share.py",
+    "set_edge_workers_20.py",
+    "set_edge_workers_3.py",
 }
 
 
@@ -118,56 +120,8 @@ def patch_file(path: Path, replacements: list[tuple[str, str]], *, regex: bool =
     path.write_text(text, encoding="utf-8")
 
 
-def patch_batch_constants(stage: Path) -> None:
-    """Add EDGETTS_MAX_WORKERS = 3 next to MAX_WORKER_THREADS."""
-    target = stage / "superfreetss_addon" / "batch_constants.py"
-    patch_file(
-        target,
-        [(
-            "MAX_WORKER_THREADS: Final[int] = 20\n",
-            "MAX_WORKER_THREADS: Final[int] = 20\n\n"
-            "# Per-engine ceiling for EdgeTTS in the public release.\n"
-            "# Microsoft Edge TTS rate-limits aggressive concurrency,\n"
-            "# so the shared build keeps this conservative.\n"
-            "EDGETTS_MAX_WORKERS: Final[int] = 3\n",
-        )],
-    )
-
-
-def patch_service_edgetts(stage: Path) -> None:
-    target = stage / "superfreetss_addon" / "services" / "service_edgetts.py"
-    patch_file(
-        target,
-        [
-            (
-                "'concurrency_workers': ('number', 'Concurrency Workers (1-20)', 20, 1, batch_constants.MAX_WORKER_THREADS),",
-                "'concurrency_workers': ('number', 'Concurrency Workers (1-3)', 3, 1, batch_constants.EDGETTS_MAX_WORKERS),",
-            ),
-            (
-                "concurrency_workers = min(batch_constants.MAX_WORKER_THREADS, max(1, requested_workers))",
-                "concurrency_workers = min(batch_constants.EDGETTS_MAX_WORKERS, max(1, requested_workers))",
-            ),
-        ],
-    )
-
-
-def patch_superfreetss(stage: Path) -> None:
-    target = stage / "superfreetss_addon" / "superfreetss.py"
-    # There are two engine_config blocks (init + reconfigure). Both reference
-    # MAX_WORKER_THREADS in two ways. We patch all four occurrences.
-    patch_file(
-        target,
-        [
-            (
-                "'EdgeTTS': batch_constants.MAX_WORKER_THREADS,",
-                "'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,",
-            ),
-            (
-                "max_workers = batch_constants.MAX_WORKER_THREADS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()",
-                "max_workers = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()",
-            ),
-        ],
-    )
+# No longer patching code since the source files now use EDGETTS_MAX_WORKERS = 3 by default.
+# The user can toggle to 20 locally via set_edge_workers_20.py which is gitignored.
 
 
 def patch_config_json(stage: Path) -> None:
@@ -226,10 +180,7 @@ def stage_sources() -> None:
     patch_config_json(STAGING)
 
 
-def patch_stage() -> None:
-    patch_batch_constants(STAGING)
-    patch_service_edgetts(STAGING)
-    patch_superfreetss(STAGING)
+# Staging patching is no longer required because the base code already uses EDGETTS_MAX_WORKERS = 3.
 
 
 def zip_stage() -> Path:
@@ -247,9 +198,6 @@ def zip_stage() -> Path:
 def main() -> int:
     log("staging sources...")
     stage_sources()
-
-    log("patching EdgeTTS worker cap to 3...")
-    patch_stage()
 
     log(f"zipping -> {OUTPUT.name}")
     out = zip_stage()

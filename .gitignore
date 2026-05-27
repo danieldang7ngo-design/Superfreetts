@@ -1,20 +1,36 @@
+# --- Python ---
 __pycache__/
 *.py[cod]
 !external/psutil/_psutil_windows.pyd
 *$py.class
 
-# Anki user audio cache (can be huge, not needed in Git)
-user_files/**
-
-# Anki addon runtime metadata (per-user state, not source)
+# --- Anki addon runtime data (per-user, must never be tracked) ---
 meta.json
+user_files/
+superfreetss_addon/user_files/
+superfreetss_addon/cache/
+superfreetts-work.index
 
-# Virtual environments
-env/
-.venv/
-venv/
+# --- TTS engines/models downloaded at runtime ---
+superfreetss_addon/data/kokoro_engine/
+superfreetss_addon/data/piper_engine/
+superfreetss_addon/data/piper_models/
 
-# OS / editor junk
+# --- Build artifacts ---
+dist/
+*.ankiaddon
+
+# --- Local-only mirrors / scratch ---
+superfreetts-mirror.git/
+git-objects-tmp/
+
+# --- Local-only notes ---
+EDGE_TTS_WORKER_20_REPORT.md
+
+# --- Local-only worker toggle scripts ---
+set_edge_workers_*.py
+
+# --- Editor / OS junk ---
 .DS_Store
 Thumbs.db
 .idea/
@@ -22,25 +38,10 @@ Thumbs.db
 *.swp
 *.swo
 
-# Logs
+# --- Logs ---
 *.log
 
-# TTS Engines and Models (Downloaded at runtime)
-superfreetss_addon/data/kokoro_engine/
-superfreetss_addon/data/piper_engine/
-superfreetss_addon/data/piper_models/
-
-# Generation Cache
-superfreetss_addon/cache/
-
-# User Audio Cache (Hash-based)
-superfreetss_addon/user_files/
-user_files/
-
-# Build artifacts
-dist/
-*.ankiaddon
-
-# Local-only notes
-EDGE_TTS_WORKER_20_REPORT.md
-superfreetts-work.index
+# --- Virtual envs ---
+env/
+.venv/
+venv/

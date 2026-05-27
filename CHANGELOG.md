@@ -10,13 +10,13 @@
 - Added regression coverage for text/source resolution, audio file storage, batch cache/dedup behavior, note updates, text processing, and psutil integration.
 - Kept the current user workflow and UI behavior unchanged.
 
-### Tieng Viet
+### Tiếng Việt
 
-- Giam goi TTS trung lap trong batch lon bang cache processed text va dedup request audio theo processed text, voice, voice options va dinh dang dau ra.
-- Cai thien cache/ghi file audio voi hash request on dinh, chi dung disk cache khi file ton tai va khong rong, va ghi file theo co che atomic.
-- Tach xu ly source text, luu file audio, va cap nhat sound tag cua note ra khoi `superfreetss.py` de core batch de test va de refactor tiep.
-- Bo sung regression test cho resolver text/source, audio file store, batch cache/dedup, note updater, text processing va psutil.
-- Giu nguyen workflow va hanh vi UI hien tai.
+- Giảm gọi TTS trùng lặp trong batch lớn bằng cache processed text và dedup request audio theo processed text, voice, voice options và định dạng đầu ra.
+- Cải thiện cache/ghi file audio với hash request ổn định, chỉ dùng disk cache khi file tồn tại và không rỗng, và ghi file theo cơ chế atomic.
+- Tách xử lý source text, lưu file audio, và cập nhật sound tag của note ra khỏi `superfreetss.py` để core batch dễ test và dễ refactor tiếp.
+- Bổ sung regression test cho resolver text/source, audio file store, batch cache/dedup, note updater, text processing và psutil.
+- Giữ nguyên workflow và hành vi UI hiện tại.
 
 ### Korean
 
@@ -91,10 +91,10 @@
 - Changed newly generated audio filenames to use the `superfreetts-<hash>` prefix.
 - Kept existing `superfreetss-*` cached audio files valid and unchanged.
 
-### Tieng Viet
+### Tiếng Việt
 
-- Doi file audio tao moi sang prefix `superfreetts-<hash>`.
-- Giu nguyen cac file audio cache cu `superfreetss-*`; chung van hop le.
+- Đổi file audio tạo mới sang prefix `superfreetts-<hash>`.
+- Giữ nguyên các file audio cache cũ `superfreetss-*`; chúng vẫn hợp lệ.
 
 ## 1.2 - 2026-04-29
 
@@ -108,14 +108,14 @@
 - Added direct EdgeTTS verification scripts, including `tests/verify_edgetts.py`.
 - Added a local `async_timeout` compatibility shim so the bundled `aiohttp` imports correctly under the integrated Python 3.10 runtime.
 
-### Tieng Viet
+### Tiếng Việt
 
-- Cai thien do on dinh cua EdgeTTS voi retry, kiem tra audio rong, lam sach Unicode va log ro hon khi bi no-audio/rate-limit.
-- Doi EdgeTTS sang co che wave toi da 3 request theo thu tu tu tren xuong, giup tien trinh de theo doi hon.
-- Them cac tuy chon Advanced cho EdgeTTS: retry attempts, request jitter, wave start stagger, retry backoff va concurrency.
-- Them mode chon giong moi `Sequence`, dung giong theo thu tu da chon va quay lai giong dau khi het danh sach.
-- Them script kiem tra EdgeTTS truc tiep, gom `tests/verify_edgetts.py`.
-- Them shim `async_timeout` cuc bo de `aiohttp` bundled import duoc voi Python 3.10 tich hop.
+- Cải thiện độ ổn định của EdgeTTS với retry, kiểm tra audio rỗng, làm sạch Unicode và log rõ hơn khi bị no-audio/rate-limit.
+- Đổi EdgeTTS sang cơ chế wave tối đa 3 request theo thứ tự từ trên xuống, giúp tiến trình dễ theo dõi hơn.
+- Thêm các tùy chọn Advanced cho EdgeTTS: retry attempts, request jitter, wave start stagger, retry backoff và concurrency.
+- Thêm mode chọn giọng mới `Sequence`, dùng giọng theo thứ tự đã chọn và quay lại giọng đầu khi hết danh sách.
+- Thêm script kiểm tra EdgeTTS trực tiếp, gồm `tests/verify_edgetts.py`.
+- Thêm shim `async_timeout` cục bộ để `aiohttp` bundled import được với Python 3.10 tích hợp.
 
 ## 1.1.2 - 2026-04-24
 
@@ -154,9 +154,9 @@
 - Sửa lỗi bản dịch trong `Preferences` khiến giao diện tiếng Anh có thể hiển thị tiếng Việt hoặc chuỗi lỗi mã hóa.
 - Bổ sung các bản dịch tiếng Việt còn thiếu cho các section mới trong `Preferences` và các helper text liên quan.
 
-- Thiáº¿t káº¿ láº¡i tab `About` vá»›i hero layout má»›i, cÃ¡c info card dá»… quÃ©t vÃ  khu vá»±c liÃªn káº¿t ngoÃ i riÃªng biá»‡t.
-- ThÃªm liÃªn káº¿t GitHub vÃ o tab `About` vÃ  chuyá»ƒn footer sang dÃ¹ng text tá»« i18n.
-- Cáº­p nháº­t style badge phiÃªn báº£n trong `About` vÃ  bá» viá»n á»Ÿ khu `Open Links` Ä‘á»ƒ bÃ´ cá»¥c gá»n hÆ¡n.
+- Thiết kế lại tab `About` với hero layout mới, các info card dễ quét và khu vực liên kết ngoài riêng biệt.
+- Thêm liên kết GitHub vào tab `About` và chuyển footer sang dùng text từ i18n.
+- Cập nhật style badge phiên bản trong `About` và bỏ viền ở khu `Open Links` để bố cục gọn hơn.
 
 ## 1.1.0 - 2026-04-22
 
