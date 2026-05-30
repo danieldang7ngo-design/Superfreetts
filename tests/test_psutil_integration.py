@@ -19,7 +19,7 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
-from superfreetss_addon import resource_manager
+from superfreetts_addon import resource_manager
 
 def test_psutil_integration():
     """Verify that process RAM monitoring works with psutil or fallback."""

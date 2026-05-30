@@ -12,11 +12,11 @@ from tests import mock_anki
 
 mock_anki.mock_all()
 
-from superfreetss_addon.servicemanager import ServiceManager
+from superfreetts_addon.servicemanager import ServiceManager
 
 def test_edgetts_discovery():
-    services_dir = os.path.join(addon_dir, 'superfreetss_addon', 'services')
-    sm = ServiceManager(services_dir, 'superfreetss_addon.services', False)
+    services_dir = os.path.join(addon_dir, 'superfreetts_addon', 'services')
+    sm = ServiceManager(services_dir, 'superfreetts_addon.services', False)
     sm.init_services()
     sm.instantiate_all_services(instantiate_expensive=True)
     

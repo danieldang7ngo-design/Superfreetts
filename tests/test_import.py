@@ -11,7 +11,7 @@ from tests import mock_anki
 mock_anki.mock_all()
 
 try:
-    from superfreetss_addon.services import service_edgetts
+    from superfreetts_addon.services import service_edgetts
     print("SUCCESS: imported service_edgetts")
 except Exception as e:
     print("FAILED TO IMPORT service_edgetts")

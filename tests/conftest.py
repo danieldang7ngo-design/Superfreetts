@@ -38,7 +38,7 @@ class MockAnkiUtils:
         pass
         
     def get_preferences(self):
-        from superfreetss_addon import config_models
+        from superfreetts_addon import config_models
         return config_models.Preferences()
     
     def get_media_folder(self):

@@ -60,7 +60,7 @@ class EventMode(enum.Enum):
     advanced_mode = enum.auto()
 
 class StatsGlobal:
-    def __init__(self, anki_utils, user_uuid, user_properties, first_install, superfreetss_pro: bool):
+    def __init__(self, anki_utils, user_uuid, user_properties, first_install, superfreetts_pro: bool):
         self.init_done = True
 
     def publish(self, context, event, event_mode, event_properties):

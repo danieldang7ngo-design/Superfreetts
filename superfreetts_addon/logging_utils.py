@@ -14,7 +14,7 @@ SILENT_LOGGING_MODE = True
 # Easy debug mode: Set this to True to enable logging for diagnostics
 FORCE_DEBUG_MODE = False
 # Local log file
-DEFAULT_LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'user_files', 'superfreetss.log')
+DEFAULT_LOG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'user_files', 'superfreetts.log')
 
 class NullLogger():
     def __init__(self):

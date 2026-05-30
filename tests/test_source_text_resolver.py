@@ -11,7 +11,7 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, "external"))
 
-from superfreetss_addon import config_models, constants, errors, source_text_resolver
+from superfreetts_addon import config_models, constants, errors, source_text_resolver
 
 
 def test_get_source_text_simple_field():

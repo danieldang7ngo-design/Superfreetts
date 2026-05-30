@@ -1071,7 +1071,7 @@ class Configuration(component_common.ConfigComponentBase):
         self.about_container = aqt.qt.QWidget()
         self.about_layout = aqt.qt.QVBoxLayout(self.about_container)
         about_logo_widget = aqt.qt.QWidget()
-        about_logo_widget.setLayout(gui_utils.get_superfreetss_label_header(False))
+        about_logo_widget.setLayout(gui_utils.get_superfreetts_label_header(False))
         self.about_layout.addWidget(about_logo_widget)
         self.about_component.draw(self.about_layout)
         self.about_container.setVisible(False) # We'll swap visibility
@@ -1081,7 +1081,7 @@ class Configuration(component_common.ConfigComponentBase):
         self.donation_container = aqt.qt.QWidget()
         self.donation_layout = aqt.qt.QVBoxLayout(self.donation_container)
         donation_logo_widget = aqt.qt.QWidget()
-        donation_logo_widget.setLayout(gui_utils.get_superfreetss_label_header(False))
+        donation_logo_widget.setLayout(gui_utils.get_superfreetts_label_header(False))
         self.donation_layout.addWidget(donation_logo_widget)
         self.donation_component.draw(self.donation_layout)
         self.donation_container.setVisible(False)

@@ -120,7 +120,7 @@ class ESpeakNg(service.ServiceBase):
     def get_tts_audio(self, source_text, voice: voice.TtsVoice_v3, options):
 
         # Create a temporary wav file
-        fh, wav_temp_file_name = tempfile.mkstemp(prefix='superfreetss_espeakng', suffix='.wav')
+        fh, wav_temp_file_name = tempfile.mkstemp(prefix='superfreetts_espeakng', suffix='.wav')
         os.close(fh)  # Close the file handle
 
         # Use espeak-ng directly with subprocess
@@ -146,7 +146,7 @@ class ESpeakNg(service.ServiceBase):
             raise errors.RequestError(f"espeak-ng did not create output file")
 
         # Convert wav to mp3
-        fh, mp3_temp_file_name = tempfile.mkstemp(prefix='superfreetss_espeakng', suffix='.mp3') 
+        fh, mp3_temp_file_name = tempfile.mkstemp(prefix='superfreetts_espeakng', suffix='.mp3') 
         os.close(fh)
         
         try:

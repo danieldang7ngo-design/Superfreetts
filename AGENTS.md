@@ -6,7 +6,7 @@ push.
 
 ## 1. Bối cảnh repo
 
-- Đây là addon Anki (Python), package name `superfreetss`, hiển thị là
+- Đây là addon Anki (Python), package name `superfreetts`, hiển thị là
   "Super Free TTS".
 - Folder làm việc đồng thời là **chỗ Anki cài addon**:
   `C:\Users\ADMIN\AppData\Roaming\Anki2\addons21\351217314\`.
@@ -30,10 +30,10 @@ không bao giờ ảnh hưởng commit.
 
 Các điểm code liên quan tới cap (đụng vào thì phải nhớ cả 4):
 
-- `superfreetss_addon/batch_constants.py` — định nghĩa hằng số worker.
-- `superfreetss_addon/services/service_edgetts.py` — UI advanced, runtime
+- `superfreetts_addon/batch_constants.py` — định nghĩa hằng số worker.
+- `superfreetts_addon/services/service_edgetts.py` — UI advanced, runtime
   clamp.
-- `superfreetss_addon/superfreetss.py` — `__init__` và
+- `superfreetts_addon/superfreetts.py` — `__init__` và
   `reconfigure_service_manager` đều có `engine_config` cho EdgeTTS.
 - `config.json` — `service_config.EdgeTTS.concurrency_workers` (default).
 
@@ -48,8 +48,8 @@ User data và artifact runtime tuyệt đối không được lên git:
 ```
 meta.json                          # uuid, install_time, presets cá nhân
 user_files/                        # cache mp3, hàng nghìn file
-superfreetss_addon/user_files/
-superfreetss_addon/cache/          # generation cache
+superfreetts_addon/user_files/
+superfreetts_addon/cache/          # generation cache
 superfreetts-work.index            # Anki search index
 __pycache__/  *.pyc  *.pyo
 dist/                              # staging build
@@ -77,7 +77,7 @@ Script: `build_share.py` (chạy ở addon root: `python build_share.py`).
 
 Nó sẽ:
 1. Copy whitelist (`__init__.py`, `manifest.json`, `LICENSE`, `config.json`,
-   `superfreetss_addon/`, `external/`, `graphics/`) sang `dist/staging/`.
+   `superfreetts_addon/`, `external/`, `graphics/`) sang `dist/staging/`.
 2. Patch EdgeTTS cap từ 20 → 3 trong staging (giữ source local nguyên 20 nếu
    chưa migrate sang cơ chế `_local_override.py`).
 3. Reset `config.json` về clean default (không kèm presets/uuid của user).
@@ -143,7 +143,7 @@ Khi có conflict 20-vs-3 worker:
 - [ ] Update `CHANGELOG.md` nếu có thay đổi user-facing.
 - [ ] Chạy `python build_share.py`, verify `SuperFreeTTS.ankiaddon` được tạo.
 - [ ] Mở zip kiểm tra: không có `meta.json`, `user_files/`, `__pycache__/`,
-      `cache/`. Có `manifest.json`, `__init__.py`, `superfreetss_addon/`,
+      `cache/`. Có `manifest.json`, `__init__.py`, `superfreetts_addon/`,
       `external/`.
 - [ ] Verify `service_edgetts.py` trong zip cap 3 (không phải 20).
 - [ ] Verify `config.json` trong zip là default sạch (không có
@@ -163,10 +163,10 @@ Khi có conflict 20-vs-3 worker:
 ├── meta.json                       (gitignored — Anki ghi user state)
 ├── LICENSE
 ├── build_share.py                  (build .ankiaddon)
-├── superfreetss_addon/             (code chính)
+├── superfreetts_addon/             (code chính)
 │   ├── batch_constants.py
 │   ├── batch_executor.py
-│   ├── superfreetss.py
+│   ├── superfreetts.py
 │   ├── services/
 │   │   └── service_edgetts.py      (logic cap worker)
 │   └── ...

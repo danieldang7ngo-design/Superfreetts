@@ -110,12 +110,12 @@ else:
 
     from . import anki_utils
     from . import servicemanager
-    from . import superfreetss
+    from . import superfreetts
     from . import gui
     from . import release_notes
     from . import version
 
-    # initialize superfreetss
+    # initialize superfreetts
     # =======================
     #
     # Important: To keep Anki startup fast, we avoid instantiating all
@@ -131,7 +131,7 @@ else:
         return os.path.join(current_script_dir, 'services')
 
     # Derive the package name for services dynamically
-    # This ensures that if the addon is renamed or loaded as a sub-package (e.g. Superfreetts.superfreetss_addon),
+    # This ensures that if the addon is renamed or loaded as a sub-package (e.g. Superfreetts.superfreetts_addon),
     # discovery still works correctly.
     if __package__:
         services_package = f"{__package__}.{constants.DIR_SERVICES}"
@@ -145,7 +145,7 @@ else:
         False
     )
 
-    hyper_tts = superfreetss.SuperFreeTTS(ankiutils, service_manager)
+    hyper_tts = superfreetts.SuperFreeTTS(ankiutils, service_manager)
     aqt.mw.hyper_tts = hyper_tts
 
     # Configure services based on current configuration.
@@ -168,12 +168,12 @@ else:
     if not hasattr(sys, '_pytest_mode') and enable_stats_error_reporting:
         if configuration.enable_stats():
             # initialize stats global object
-            sys._superfreetss_stats_global = stats.StatsGlobal(ankiutils, 
+            sys._superfreetts_stats_global = stats.StatsGlobal(ankiutils, 
                                                         configuration.user_uuid,
                                                         {
-                                                            'superfreetss_days_since_install': configuration.days_since_install(),
-                                                            'superfreetss_trial_registration_step': configuration.trial_registration_step.name,
-                                                            'superfreetss_pro': False
+                                                            'superfreetts_days_since_install': configuration.days_since_install(),
+                                                            'superfreetts_trial_registration_step': configuration.trial_registration_step.name,
+                                                            'superfreetts_pro': False
                                                         },
                                                         first_install,
                                                         False

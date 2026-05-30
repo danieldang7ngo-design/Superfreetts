@@ -9,11 +9,11 @@ from tests import mock_anki
 
 mock_anki.mock_all()
 
-import superfreetss_addon.servicemanager as servicemanager
+import superfreetts_addon.servicemanager as servicemanager
 
 def main():
-    services_dir = os.path.join(addon_dir, 'superfreetss_addon', 'services')
-    sm = servicemanager.ServiceManager(services_dir, 'superfreetss_addon.services', False)
+    services_dir = os.path.join(addon_dir, 'superfreetts_addon', 'services')
+    sm = servicemanager.ServiceManager(services_dir, 'superfreetts_addon.services', False)
     sm.init_services()
     sm.instantiate_service_lazy('EdgeTTS')
     

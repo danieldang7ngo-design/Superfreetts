@@ -10,9 +10,9 @@ from unittest.mock import Mock
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 
-from superfreetss_addon import voice
-from superfreetss_addon import constants
-from superfreetss_addon import languages
+from superfreetts_addon import voice
+from superfreetts_addon import constants
+from superfreetts_addon import languages
 
 
 @pytest.mark.unit

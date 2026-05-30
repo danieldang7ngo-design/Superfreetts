@@ -34,7 +34,7 @@ Super Free TTS is a fork of HyperTTS with a focus on providing high-quality Text
 
 ## Main Structure
 
-- `superfreetss_addon/`: Core add-on source code (Python, UI, processing logic).
+- `superfreetts_addon/`: Core add-on source code (Python, UI, processing logic).
 - `_PROJECT_DOCUMENTATION.md`: Detailed design and internal function documentation.
 - `README.md`: Brief description for GitHub and users.
 
@@ -49,7 +49,7 @@ Standard temporary files (like `__pycache__`, `*.pyc`, `*.log`, `*.tmp`) are exc
 
 ## Development / Contributing
 
-- Modify source code in the `superfreetss_addon/` directory.
+- Modify source code in the `superfreetts_addon/` directory.
 - Before committing or packaging, ensure logs and temporary files are removed to keep the repository clean.
 - Unit tests are located in the `tests/` directory.
 

@@ -115,7 +115,6 @@ class BatchPreview(component_common.ComponentBase):
         self.generated_batch_results = None
         self.prepared_batch_audio = None
         self.generated_batch_model = None
-        self.backup_folder = None
         self.batch_run_mode = 'idle'
 
         self.table_repaint_timer = TableRepaintTimer(500)
@@ -126,7 +125,6 @@ class BatchPreview(component_common.ComponentBase):
         self.generated_batch_results = None
         self.prepared_batch_audio = None
         self.generated_batch_model = None
-        self.backup_folder = None
         self.batch_run_mode = 'idle'
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
@@ -301,13 +299,13 @@ class BatchPreview(component_common.ComponentBase):
             return
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
-        self.backup_folder = aqt.mw.pm.backupFolder()
-        self.batch_run_mode = 'backup'
+        self.batch_run_mode = 'applying'
+        self.batch_status.begin()
         aqt.operations.QueryOp(
             parent=self.dialog,
-            op=self.create_backup_fn,
-            success=self.finished_create_backup_fn,
-        ).failure(self.batch_operation_failed).with_progress("Creating Backup...").run_in_background()
+            op=self.apply_generated_audio_with_undo_fn,
+            success=self.finished_apply_audio_fn,
+        ).failure(self.batch_operation_failed).run_in_background()
 
     def stop_button_pressed(self):
         self.batch_status.stop()
@@ -336,27 +334,10 @@ class BatchPreview(component_common.ComponentBase):
             else:
                 self.generated_batch_results = None
                 self.generated_batch_model = None
-                self.backup_folder = None
                 self.batch_run_mode = 'idle'
                 self.batch_status.end(False)
         except Exception as e:
             self.batch_operation_failed(e)
-
-    def create_backup_fn(self, anki_collection):
-        return anki_collection.create_backup(
-            backup_folder=self.backup_folder,
-            force=True,
-            wait_for_completion=True,
-        )
-
-    def finished_create_backup_fn(self, result):
-        self.batch_run_mode = 'applying'
-        self.batch_status.begin()
-        aqt.operations.QueryOp(
-            parent=self.dialog,
-            op=self.apply_generated_audio_with_undo_fn,
-            success=self.finished_apply_audio_fn,
-        ).failure(self.batch_operation_failed).run_in_background()
 
     def apply_generated_audio_with_undo_fn(self, anki_collection):
         undo_id = aqt.mw.col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
@@ -371,7 +352,6 @@ class BatchPreview(component_common.ComponentBase):
         logger.debug(f'finished_apply_audio_fn, result: {result}')
         self.generated_batch_results = None
         self.generated_batch_model = None
-        self.backup_folder = None
         self.batch_run_mode = 'idle'
         self.batch_status.end(True)
         failure_records = self.batch_status.get_failure_records()
@@ -406,7 +386,6 @@ class BatchPreview(component_common.ComponentBase):
         self.prepared_batch_audio = None
         self.generated_batch_results = None
         self.generated_batch_model = None
-        self.backup_folder = None
         self.batch_status.end(False)
         self.hypertts.anki_utils.report_unknown_exception_background(exception)
 

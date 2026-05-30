@@ -161,10 +161,10 @@ class SherpaProcessPool:
             try:
                 from .. import constants
                 data_dir = constants.DATA_DIR
-                env['SUPERFREETSS_DATA_DIR'] = data_dir
-                logger.info(f"SherpaPool[{self.name}]: Set SUPERFREETSS_DATA_DIR={data_dir}")
+                env['superfreetts_DATA_DIR'] = data_dir
+                logger.info(f"SherpaPool[{self.name}]: Set superfreetts_DATA_DIR={data_dir}")
             except Exception as e:
-                logger.warning(f"SherpaPool[{self.name}]: Failed to set SUPERFREETSS_DATA_DIR: {e}")
+                logger.warning(f"SherpaPool[{self.name}]: Failed to set superfreetts_DATA_DIR: {e}")
         
         logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)} (debug_enabled={debug_enabled})")
 

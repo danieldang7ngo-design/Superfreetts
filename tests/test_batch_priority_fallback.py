@@ -7,12 +7,12 @@ import pytest
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 
-from superfreetss_addon import superfreetss
-from superfreetss_addon import config_models
-from superfreetss_addon import voice
-from superfreetss_addon import context
-from superfreetss_addon import constants
-from superfreetss_addon import errors
+from superfreetts_addon import superfreetts
+from superfreetts_addon import config_models
+from superfreetts_addon import voice
+from superfreetts_addon import context
+from superfreetts_addon import constants
+from superfreetts_addon import errors
 from tests.conftest import MockAnkiUtils
 
 
@@ -62,7 +62,7 @@ class DummyAnkiUtils(MockAnkiUtils):
 def test_batch_priority_fallback_uses_next_voice_if_first_voice_fails(tmp_path):
     anki_utils = DummyAnkiUtils(tmp_path)
     service_manager = DummyServiceManager()
-    hypertts = superfreetss.SuperFreeTTS(anki_utils, service_manager)
+    hypertts = superfreetts.SuperFreeTTS(anki_utils, service_manager)
 
     batch = config_models.BatchConfig(anki_utils)
     batch.name = 'priority-fallback-test'

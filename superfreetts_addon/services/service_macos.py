@@ -531,12 +531,12 @@ class MacOS(service.ServiceBase):
 
         try:
             voice_name = voice.voice_key['name']
-            temp_audio_file = tempfile.NamedTemporaryFile(suffix='.aiff', prefix='superfreetss_macos', delete=False)
+            temp_audio_file = tempfile.NamedTemporaryFile(suffix='.aiff', prefix='superfreetts_macos', delete=False)
             arg_list = ['say', '-v', voice_name, '-r', str(rate), '-o', temp_audio_file.name, '--', source_text]
             logger.debug(f"calling 'say' with {arg_list}")
             subprocess.check_call(arg_list)
 
-            mp3_temp_audio_file = tempfile.NamedTemporaryFile(suffix='.mp3', prefix='superfreetss_macos')
+            mp3_temp_audio_file = tempfile.NamedTemporaryFile(suffix='.mp3', prefix='superfreetts_macos')
             aqt.sound._encode_mp3(temp_audio_file.name, mp3_temp_audio_file.name)
 
             logger.debug(f'opening {mp3_temp_audio_file.name} to read in contents')

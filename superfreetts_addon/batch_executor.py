@@ -4,7 +4,7 @@ Unified Batch Executor - Simplified threading, resource management, and caching.
 Replaces:
   - resource_manager.py (ResourceMonitor, MemoryPool, SmartLRUCache)
   - batch_state_manager.py (complex checkpoint logic)
-  - Complex threading in superfreetss.py
+  - Complex threading in superfreetts.py
 
 Design:
   - Single ThreadPoolExecutor for all batch tasks
@@ -347,8 +347,8 @@ class UnifiedBatchExecutor:
             return (note_id, source_text, processed_text, audio_filename, full_filename, False)
         
         # Cache miss - generate audio (this is the expensive part - passed to caller)
-        # Caller (superfreetss.py) will call get_audio_file() 
-        # We just return placeholder; actual implementation in superfreetss
+        # Caller (superfreetts.py) will call get_audio_file() 
+        # We just return placeholder; actual implementation in superfreetts
         return None  # Caller handles generation
     
     def cache_result(self, processed_text: str, voice_id: str, source_text: str, audio_filename: str, full_filename: str):
@@ -601,7 +601,7 @@ class MultiEngineExecutor:
     
     def _execute_single_task(self, task: Dict) -> Tuple:
         """Execute single task - implemented by caller via callback"""
-        # This is just placeholder - actual implementation is in superfreetss.py
+        # This is just placeholder - actual implementation is in superfreetts.py
         # For now return None to indicate generation needed
         return None
     

@@ -2,7 +2,7 @@
 Centralized Service Logger for TTS services.
 Provides per-service install and runtime log files with consistent formatting.
 
-Log files are stored in: superfreetss_addon/user_files/log/
+Log files are stored in: superfreetts_addon/user_files/log/
 Each service gets two files:
     - {service}_install.log  (always writes — installation events)
     - {service}_runtime.log  (controlled by debug_logging config — TTS events)

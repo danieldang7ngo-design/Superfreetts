@@ -18,9 +18,9 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
 for module_name in ["performance", "streaming", "audio_optimization", "benchmarking"]:
-    if importlib.util.find_spec(f"superfreetss_addon.{module_name}") is None:
+    if importlib.util.find_spec(f"superfreetts_addon.{module_name}") is None:
         pytest.skip(
-            f"Legacy performance integration tests require missing module superfreetss_addon.{module_name}",
+            f"Legacy performance integration tests require missing module superfreetts_addon.{module_name}",
             allow_module_level=True,
         )
 
@@ -28,11 +28,11 @@ for module_name in ["performance", "streaming", "audio_optimization", "benchmark
 from tests.conftest import MockAnkiUtils, MockServiceManager
 
 # Import optimization modules
-from superfreetss_addon import performance
-from superfreetss_addon import voice_cache
-from superfreetss_addon import streaming
-from superfreetss_addon import audio_optimization
-from superfreetss_addon import benchmarking
+from superfreetts_addon import performance
+from superfreetts_addon import voice_cache
+from superfreetts_addon import streaming
+from superfreetts_addon import audio_optimization
+from superfreetts_addon import benchmarking
 
 
 class TestPerformanceModuleCaching:

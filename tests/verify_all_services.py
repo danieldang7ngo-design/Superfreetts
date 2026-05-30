@@ -5,11 +5,11 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(addon_dir)
 
 from tests.conftest import MockAnkiUtils
-import superfreetss_addon.servicemanager as servicemanager
+import superfreetts_addon.servicemanager as servicemanager
 
 def main():
-    services_dir = os.path.join(addon_dir, 'superfreetss_addon', 'services')
-    sm = servicemanager.ServiceManager(services_dir, 'superfreetss_addon.services', False)
+    services_dir = os.path.join(addon_dir, 'superfreetts_addon', 'services')
+    sm = servicemanager.ServiceManager(services_dir, 'superfreetts_addon.services', False)
     
     # Simulate full startup
     sm.init_services()

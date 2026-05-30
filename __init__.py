@@ -14,6 +14,6 @@ if 'pytest' in sys.modules or (len(sys.argv) > 0 and 'pytest' in sys.argv[0]):
     sys._pytest_mode = True
 
 # Chỉ import package con; mọi gui_hooks (vd. profile_did_open cho welcome) phải đăng ký
-# trong superfreetss_addon/__init__.py — không thêm append ở đây để tránh đăng ký hook hai lần.
+# trong superfreetts_addon/__init__.py — không thêm append ở đây để tránh đăng ký hook hai lần.
 if not hasattr(sys, '_pytest_mode'):
-    from . import superfreetss_addon
+    from . import superfreetts_addon

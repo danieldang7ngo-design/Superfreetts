@@ -165,7 +165,7 @@ def get_vocab_ai_url(url_path, utm_campaign, distinct_id=None):
         Complete URL with UTM parameters
     """
     base_url = f"https://www.vocab.ai/{url_path}"
-    utm_params = "utm_source=superfreetss&utm_medium=addon"
+    utm_params = "utm_source=superfreetts&utm_medium=addon"
     utm_params += f"&utm_campaign={utm_campaign}"
     
     if distinct_id is not None:
@@ -194,7 +194,7 @@ def get_status_badge(text, bg_color=None, text_color=None):
     label.setAlignment(aqt.qt.Qt.AlignmentFlag.AlignCenter)
     return label
 
-def get_superfreetss_label_header(superfreetss_pro_enabled, variant='adaptive'):
+def get_superfreetts_label_header(superfreetts_pro_enabled, variant='adaptive'):
     hlayout = aqt.qt.QHBoxLayout()
 
     # Determine text color based on variant
@@ -217,7 +217,7 @@ def get_superfreetss_label_header(superfreetss_pro_enabled, variant='adaptive'):
     return hlayout
 
 
-def get_superfreetss_label_sidebar_compact(max_logo_width=120):
+def get_superfreetts_label_sidebar_compact(max_logo_width=120):
     """Return a compact logo row sized for narrow sidebars."""
     hlayout = aqt.qt.QHBoxLayout()
     hlayout.setContentsMargins(0, 0, 0, 0)

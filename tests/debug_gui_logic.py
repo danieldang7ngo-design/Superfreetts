@@ -27,15 +27,15 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter('%(levelname)s:%(name)s:%(message)s'))
 root_logger.addHandler(handler)
 
-from superfreetss_addon import superfreetss
-from superfreetss_addon import component_configuration
-from superfreetss_addon import constants
+from superfreetts_addon import superfreetts
+from superfreetts_addon import component_configuration
+from superfreetts_addon import constants
 
 # Initialize SuperFreeTTS
-from superfreetss_addon import servicemanager
-services_dir = os.path.join(addon_path, "superfreetss_addon", "services")
-sm = servicemanager.ServiceManager(services_dir, "superfreetss_addon.services", False)
-sf = superfreetss.SuperFreeTTS(anki_utils, sm)
+from superfreetts_addon import servicemanager
+services_dir = os.path.join(addon_path, "superfreetts_addon", "services")
+sm = servicemanager.ServiceManager(services_dir, "superfreetts_addon.services", False)
+sf = superfreetts.SuperFreeTTS(anki_utils, sm)
 sf.service_manager.init_services()
 sf.service_manager.instantiate_all_services(instantiate_expensive=True)
 

@@ -362,8 +362,8 @@ class PiperTTS(service.ServiceBase):
                             audio_data = base64.b64decode(audio_b64)
                             
                             # Convert to MP3 if requested
-                            # Use the global preferences from superfreetss.
-                            # Better: use the global preferences from superfreetss or similar.
+                            # Use the global preferences from superfreetts.
+                            # Better: use the global preferences from superfreetts or similar.
                             # In this context, we don't have direct access to the Preferences object unless we pass it.
                             # However, we can use aqt.mw.pm.meta to get the raw config or use the existing service config.
                             

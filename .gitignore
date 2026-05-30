@@ -7,14 +7,14 @@ __pycache__/
 # --- Anki addon runtime data (per-user, must never be tracked) ---
 meta.json
 user_files/
-superfreetss_addon/user_files/
-superfreetss_addon/cache/
+superfreetts_addon/user_files/
+superfreetts_addon/cache/
 superfreetts-work.index
 
 # --- TTS engines/models downloaded at runtime ---
-superfreetss_addon/data/kokoro_engine/
-superfreetss_addon/data/piper_engine/
-superfreetss_addon/data/piper_models/
+superfreetts_addon/data/kokoro_engine/
+superfreetts_addon/data/piper_engine/
+superfreetts_addon/data/piper_models/
 
 # --- Build artifacts ---
 dist/

@@ -31,8 +31,8 @@ MAX_WORKER_THREADS: Final[int] = 20
 
 # EdgeTTS concurrency cap (separate from CPU-bound engines).
 # Default 3 to avoid Microsoft rate-limiting for most users.
-# Power users: run set_edge_workers_30.py at the addon root to raise this locally.
-EDGETTS_MAX_WORKERS: Final[int] = 3
+# Power users: run set_edge_workers_20.py at the addon root to raise this locally.
+EDGETTS_MAX_WORKERS: Final[int] = 20
 
 # Default number of worker threads (4 = auto-detect CPU cores)
 DEFAULT_BATCH_CONCURRENCY: Final[int] = 4

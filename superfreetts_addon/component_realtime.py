@@ -83,7 +83,7 @@ class ComponentRealtime(component_common.ConfigComponentBase):
         hlayout = aqt.qt.QHBoxLayout()
 
         # logo header
-        hlayout.addLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
+        hlayout.addLayout(gui_utils.get_superfreetts_label_header(self.hypertts.superfreetts_pro_enabled()))
         self.vlayout.addLayout(hlayout)
 
         # sides tabs

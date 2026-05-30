@@ -178,7 +178,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         if show_action_buttons:
             footer = aqt.qt.QHBoxLayout()
             logo_footer = aqt.qt.QWidget()
-            logo_footer.setLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
+            logo_footer.setLayout(gui_utils.get_superfreetts_label_header(self.hypertts.superfreetts_pro_enabled()))
             footer.addWidget(logo_footer)
             footer.addStretch()
             footer.addWidget(self.save_button)

@@ -30,7 +30,7 @@ TOP_LEVEL_INCLUDES = [
     "__init__.py",
     "manifest.json",
     "LICENSE",
-    "superfreetss_addon",
+    "superfreetts_addon",
     "external",
     "graphics",
 ]
@@ -42,10 +42,10 @@ EXCLUDE_DIR_NAMES = {
     ".github",
     ".pytest_cache",
     ".mypy_cache",
-    "cache",          # superfreetss_addon/cache/
+    "cache",          # superfreetts_addon/cache/
     "user_files",     # mp3 cache, batch state, etc.
     "git-objects-tmp",
-    "superfreetss-mirror.git",
+    "superfreetts-mirror.git",
 }
 
 EXCLUDE_FILE_SUFFIXES = (".pyc", ".pyo", ".ankiaddon")
@@ -54,7 +54,7 @@ EXCLUDE_FILE_NAMES = {
     "superfreetts-work.index",
     "EDGE_TTS_WORKER_20_REPORT.md",
     "build_share.py",
-    "set_edge_workers_30.py",
+    "set_edge_workers_20.py",
     "set_edge_workers_3.py",
 }
 
@@ -121,7 +121,7 @@ def patch_file(path: Path, replacements: list[tuple[str, str]], *, regex: bool =
 
 
 # No longer patching code since the source files now use EDGETTS_MAX_WORKERS = 3 by default.
-# The user can toggle to 30 locally via set_edge_workers_30.py which is gitignored.
+# The user can toggle to 20 locally via set_edge_workers_20.py which is gitignored.
 
 
 def patch_config_json(stage: Path) -> None:

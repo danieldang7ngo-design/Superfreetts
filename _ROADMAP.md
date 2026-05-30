@@ -64,7 +64,7 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 
 ### Phase 6 - Refactor + Performance Audit
 
-- Tách `superfreetss.py` ở các phần đang ôm quá nhiều trách nhiệm: batch orchestration, audio IO/naming, note update, template/text parsing.
+- Tách `superfreetts.py` ở các phần đang ôm quá nhiều trách nhiệm: batch orchestration, audio IO/naming, note update, template/text parsing.
 - Thay hardcoded batch timeout (`future.result(timeout=25.0)`) bằng per-engine timeout config.
 - Giảm gánh nặng `voicelist.py` bằng dữ liệu ngoài source hoặc lazy-load/compress rõ ràng.
 - Dọn legacy fallback, broad `except Exception`, và module-level singleton ở nơi chúng làm test/lifecycle khó kiểm soát.

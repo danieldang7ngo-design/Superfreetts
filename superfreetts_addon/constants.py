@@ -6,8 +6,8 @@ import os.path
 
 ENABLE_SENTRY_CRASH_REPORTING = False
 
-LOGGER_NAME = 'superfreetss'
-LOGGER_NAME_TEST = 'test_superfreetss'
+LOGGER_NAME = 'superfreetts'
+LOGGER_NAME_TEST = 'test_superfreetts'
 
 CLIENT_NAME='anki-super-free-tts'
 
@@ -84,14 +84,14 @@ class MappingRuleType(enum.Enum):
     NoteType = enum.auto()
     DeckNoteType = enum.auto()
 
-DIR_HYPERTTS_ADDON = 'superfreetss_addon'
+DIR_HYPERTTS_ADDON = 'superfreetts_addon'
 DIR_SERVICES = 'services'
 
 ANKIWEB_ADDON_ID = '111623432'
 
 def _get_addon_name():
-    # specifically for Super Free TTS, the core logic is in superfreetss_addon subfolder.
-    # The parent of superfreetss_addon is the actual addon directory name used by Anki.
+    # specifically for Super Free TTS, the core logic is in superfreetts_addon subfolder.
+    # The parent of superfreetts_addon is the actual addon directory name used by Anki.
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
     addon_folder = os.path.basename(parent_dir)
@@ -170,14 +170,17 @@ DIALOG_ID_SERVICES_CONFIGURATION = 'services_configuration'
 DIALOG_ID_WORKFLOW = 'workflow'
 
 TTS_TAG_VOICE = 'SuperFreeTTS'
-TTS_TAG_HYPERTTS_PRESET = 'superfreetss_preset'
+# Tag nhúng trong card template. Ghi bằng chính tả mới (superfreetts_preset),
+# nhưng vẫn đọc được template cũ (superfreetss_preset) để không phá thẻ user đã cài.
+TTS_TAG_HYPERTTS_PRESET = 'superfreetts_preset'
+TTS_TAG_HYPERTTS_PRESET_LEGACY = 'superfreetss_preset'
 WORKFLOW_ERROR_TAG = 'superfreetts_error'
 
 PYCMD_ADD_AUDIO = 'addaudio'
 PYCMD_PREVIEW_AUDIO = 'previewaudio'
 
-PYCMD_ADD_AUDIO_PREFIX = f'superfreetss:{PYCMD_ADD_AUDIO}:'
-PYCMD_PREVIEW_AUDIO_PREFIX = f'superfreetss:{PYCMD_PREVIEW_AUDIO}:'
+PYCMD_ADD_AUDIO_PREFIX = f'superfreetts:{PYCMD_ADD_AUDIO}:'
+PYCMD_PREVIEW_AUDIO_PREFIX = f'superfreetts:{PYCMD_PREVIEW_AUDIO}:'
 
 UNDO_ENTRY_NAME = ADDON_NAME + ': Add Audio to Notes'
 UNDO_ENTRY_ADD_TTS_TAG = ADDON_NAME + ': Configure Realtime TTS Tag'
@@ -453,10 +456,10 @@ GUI_TEXT_SERVICES_CONFIG_ENHANCED_MANUAL_TITLE = """Manual Setup (For Advanced U
 GUI_TEXT_SERVICES_CONFIG_ENHANCED_MANUAL_RECOMMENDED = """Choose this if you prefer to configure everything yourself."""
 GUI_TEXT_SERVICES_CONFIG_ENHANCED_MANUAL_DESCRIPTION = """<ul><li>Free services (Google Translate, Windows SAPI, MacOS)</li><li>Use your own API keys with cloud services</li><li>Full control over configuration</li><li><em>Note: Requires technical setup and may have limited voice options</em></li></ul>"""
 
-GRAPHICS_PRO_BANNER = 'superfreetss_banner.svg'
-GRAPHICS_LITE_BANNER = 'superfreetss_banner.svg'
-GRAPHICS_SERVICE_COMPATIBLE = 'superfreetss_service_compatible_banner.svg'
-GRAPHICS_SERVICE_ENABLED = 'superfreetss_service_enabled_banner.svg'
+GRAPHICS_PRO_BANNER = 'superfreetts_banner.svg'
+GRAPHICS_LITE_BANNER = 'superfreetts_banner.svg'
+GRAPHICS_SERVICE_COMPATIBLE = 'superfreetts_service_compatible_banner.svg'
+GRAPHICS_SERVICE_ENABLED = 'superfreetts_service_enabled_banner.svg'
 
 GRAPHICS_ICON_SPEAKER = 'icon_speaker.svg'
 GRAPHICS_ICON_PLAY = 'icon_play.svg'

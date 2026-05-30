@@ -24,7 +24,7 @@ from aqt.qt import QApplication
 aqt.mw = MagicMock()
 
 # Setup local mocks for the addon
-from superfreetss_addon import component_welcome
+from superfreetts_addon import component_welcome
 
 class MockHyperTTS:
     def get_ui_language(self):

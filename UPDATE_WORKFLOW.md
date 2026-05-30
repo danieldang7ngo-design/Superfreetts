@@ -6,7 +6,7 @@ Use this checklist when preparing any addon update. It keeps code changes, versi
 
 - Identify the changes included in the update: UI, behavior, bug fixes, docs, translations, dependency changes, or release-only metadata.
 - Decide whether the update is user-facing. User-facing changes should usually update version, release notes, and changelog.
-- Decide the next version in `superfreetss_addon/version.py` when preparing a release-style update.
+- Decide the next version in `superfreetts_addon/version.py` when preparing a release-style update.
 - Keep local state files such as `meta.json` unchanged unless the task explicitly requires it.
 
 ## 2. Implement the Change
@@ -15,11 +15,11 @@ Edit only the files needed for the requested update.
 
 Common areas:
 
-- UI components: `superfreetss_addon/component_*.py`
-- Main menu and hooks: `superfreetss_addon/gui.py`, `__init__.py`
-- Text resources: `superfreetss_addon/i18n.py`
-- Addon update popup: `superfreetss_addon/release_notes.py`
-- Version: `superfreetss_addon/version.py`
+- UI components: `superfreetts_addon/component_*.py`
+- Main menu and hooks: `superfreetts_addon/gui.py`, `__init__.py`
+- Text resources: `superfreetts_addon/i18n.py`
+- Addon update popup: `superfreetts_addon/release_notes.py`
+- Version: `superfreetts_addon/version.py`
 - Public changelog: `CHANGELOG.md`
 
 Follow existing code patterns and keep unrelated refactors out of the update.
@@ -28,7 +28,7 @@ Follow existing code patterns and keep unrelated refactors out of the update.
 
 Edit:
 
-- `superfreetss_addon/version.py`
+- `superfreetts_addon/version.py`
 
 Set:
 
@@ -42,7 +42,7 @@ Skip this step only when the change is internal and should not trigger an addon 
 
 Edit:
 
-- `superfreetss_addon/release_notes.py`
+- `superfreetts_addon/release_notes.py`
 
 Add a new `ReleaseNoteEntry` at the top of `RELEASE_NOTES`.
 
@@ -85,7 +85,7 @@ Add Korean too when the update affects Korean UI behavior or Korean users:
 
 When the update adds or changes UI text, edit:
 
-- `superfreetss_addon/i18n.py`
+- `superfreetts_addon/i18n.py`
 
 Make sure all new keys exist for:
 
@@ -106,7 +106,7 @@ If the update does not touch UI text, this step can be skipped.
 Run compile checks for changed Python files. Start with the files touched by the update:
 
 ```powershell
-python -m py_compile .\superfreetss_addon\version.py .\superfreetss_addon\release_notes.py .\superfreetss_addon\i18n.py
+python -m py_compile .\superfreetts_addon\version.py .\superfreetts_addon\release_notes.py .\superfreetts_addon\i18n.py
 ```
 
 Add any other changed Python files to the command.
@@ -134,7 +134,7 @@ git status --short
 Stage the intended files. If sparse checkout blocks `CHANGELOG.md`, use `--sparse`:
 
 ```powershell
-git add --sparse -- CHANGELOG.md superfreetss_addon/version.py superfreetss_addon/release_notes.py
+git add --sparse -- CHANGELOG.md superfreetts_addon/version.py superfreetts_addon/release_notes.py
 ```
 
 Include any related source files changed for the update.

@@ -155,6 +155,10 @@ class AnkiUtils():
         ensure_anki_collection_open()
         aqt.mw.col.update_note(note)
 
+    def update_notes(self, notes):
+        ensure_anki_collection_open()
+        aqt.mw.col.update_notes(notes)
+
     def create_card_from_note(self, note, card_ord, model, template):
         return note.ephemeral_card(
             card_ord,

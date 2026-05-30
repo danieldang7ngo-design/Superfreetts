@@ -11,7 +11,7 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, "external"))
 
-from superfreetss_addon import config_models, constants, context, superfreetss, voice
+from superfreetts_addon import config_models, constants, context, superfreetts, voice
 
 
 class DummyAnkiUtils(MockAnkiUtils):
@@ -62,7 +62,7 @@ class DummyExecutor:
 def make_app(tmp_path):
     anki_utils = DummyAnkiUtils(tmp_path)
     service_manager = DummyServiceManager()
-    app = superfreetss.SuperFreeTTS(anki_utils, service_manager)
+    app = superfreetts.SuperFreeTTS(anki_utils, service_manager)
     app.executor = DummyExecutor()
     return app, service_manager
 

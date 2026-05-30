@@ -19,8 +19,8 @@ import pytest
 plugin_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, plugin_dir)
 
-from superfreetss_addon import logging_utils
-from superfreetss_addon import performance_tracker
+from superfreetts_addon import logging_utils
+from superfreetts_addon import performance_tracker
 
 
 @pytest.fixture(autouse=True)

@@ -21,7 +21,7 @@ def print_result(name, ok, detail=""):
 
 def check_import_module():
     try:
-        from superfreetss_addon.services import service_edgetts  # noqa: F401
+        from superfreetts_addon.services import service_edgetts  # noqa: F401
         print_result("Import service_edgetts", True)
         return True
     except Exception:
@@ -32,7 +32,7 @@ def check_import_module():
 
 def check_import_class():
     try:
-        from superfreetss_addon.services.service_edgetts import EdgeTTS  # noqa: F401
+        from superfreetts_addon.services.service_edgetts import EdgeTTS  # noqa: F401
         print_result("Import EdgeTTS class", True)
         return True
     except Exception:
@@ -42,10 +42,10 @@ def check_import_class():
 
 
 def build_service_manager():
-    import superfreetss_addon.servicemanager as servicemanager
+    import superfreetts_addon.servicemanager as servicemanager
 
-    services_dir = os.path.join(addon_dir, "superfreetss_addon", "services")
-    sm = servicemanager.ServiceManager(services_dir, "superfreetss_addon.services", False)
+    services_dir = os.path.join(addon_dir, "superfreetts_addon", "services")
+    sm = servicemanager.ServiceManager(services_dir, "superfreetts_addon.services", False)
     sm.init_services()
     return sm
 
@@ -85,10 +85,10 @@ def check_voice_list():
 
 def check_audio_generation():
     try:
-        from superfreetss_addon import constants
-        from superfreetss_addon import languages
-        from superfreetss_addon import voice
-        from superfreetss_addon.services.service_edgetts import EdgeTTS
+        from superfreetts_addon import constants
+        from superfreetts_addon import languages
+        from superfreetts_addon import voice
+        from superfreetts_addon.services.service_edgetts import EdgeTTS
 
         svc = EdgeTTS()
         svc.configure({
@@ -122,10 +122,10 @@ def check_audio_generation():
 
 def check_sequence_selection():
     try:
-        from superfreetss_addon import config_models
-        from superfreetss_addon import constants
-        from superfreetss_addon import voice
-        from superfreetss_addon.superfreetss import SuperFreeTTS
+        from superfreetts_addon import config_models
+        from superfreetts_addon import constants
+        from superfreetts_addon import voice
+        from superfreetts_addon.superfreetts import SuperFreeTTS
 
         selection = config_models.VoiceSelectionSequence()
         expected_keys = ["voice-1", "voice-2", "voice-3", "voice-1", "voice-2"]

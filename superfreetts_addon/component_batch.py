@@ -469,7 +469,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         hlayout.addStretch()
         # logo header
-        hlayout.addLayout(gui_utils.get_superfreetss_label_header(self.hypertts.superfreetss_pro_enabled()))
+        hlayout.addLayout(gui_utils.get_superfreetts_label_header(self.hypertts.superfreetts_pro_enabled()))
         self.vlayout.addLayout(hlayout)
 
         self.profile_new_button.pressed.connect(self.new_profile_button_pressed)
@@ -706,7 +706,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
             else:
                 self.disable_bottom_buttons()
                 if self.preview.has_pending_generated_audio():
-                    self.apply_button.setText(i18n.get_text("batch_button_creating_backup", self.hypertts.get_ui_language()))
+                    self.apply_button.setText(i18n.get_text("batch_button_applying_audio", self.hypertts.get_ui_language()))
                     self.preview.apply_generated_audio_to_notes()
                 else:
                     self.apply_button.setText(i18n.get_text("batch_button_generating_audio", self.hypertts.get_ui_language()))

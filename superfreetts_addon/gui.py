@@ -298,19 +298,19 @@ def init(hypertts):
         action.triggered.connect(get_remove_realtime_tts_tag_fn(hypertts, browser))
         menu.addAction(action)
 
-    def run_superfreetss_settings(editor):
+    def run_superfreetts_settings(editor):
         with hypertts.error_manager.get_single_action_context('Opening Preset Mapping Rules'):
-            logger.info(f'clicked superfreetss settings, editor: {editor}')
+            logger.info(f'clicked superfreetts settings, editor: {editor}')
             editor_context = hypertts.get_editor_context(editor)
             deck_note_type = hypertts.get_editor_deck_note_type(editor)
             component_presetmappingrules.create_dialog(hypertts, deck_note_type, editor_context)
 
-    def run_superfreetss_preview(editor):
+    def run_superfreetts_preview(editor):
         with hypertts.error_manager.get_single_action_context('Previewing Audio'):
             editor_context = hypertts.get_editor_context(editor)
             hypertts.preview_all_mapping_rules(editor_context)
 
-    def run_superfreetss_apply(editor):
+    def run_superfreetts_apply(editor):
         with hypertts.error_manager.get_single_action_context('Generating Audio'):
             editor_context = hypertts.get_editor_context(editor)
             hypertts.apply_all_mapping_rules(editor_context)
@@ -327,24 +327,24 @@ def init(hypertts):
                 preview_audio_shortcut = str(preferences.keyboard_shortcuts.shortcut_editor_preview_audio)
 
             new_button = editor.addButton(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_SPEAKER),
-                'superfreetss_add_audio',
-                run_superfreetss_apply,
+                'superfreetts_add_audio',
+                run_superfreetts_apply,
                 tip = i18n.get_text("editor_button_add_audio_tip", hypertts.get_ui_language()).format(add_audio_shortcut),
                 keys = preferences.keyboard_shortcuts.shortcut_editor_add_audio,
                 disables=False)
             buttons.append(new_button)
 
             new_button = editor.addButton(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_PLAY),
-                'superfreetss_preview_audio',
-                run_superfreetss_preview,
+                'superfreetts_preview_audio',
+                run_superfreetts_preview,
                 tip = i18n.get_text("editor_button_preview_audio_tip", hypertts.get_ui_language()).format(preview_audio_shortcut),
                 keys = preferences.keyboard_shortcuts.shortcut_editor_preview_audio,
                 disables=False)
             buttons.append(new_button)
 
             new_button = editor.addButton(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_SETTINGS),
-                'superfreetss_settings',
-                run_superfreetss_settings,
+                'superfreetts_settings',
+                run_superfreetts_settings,
                 tip = i18n.get_text("editor_button_settings_tip", hypertts.get_ui_language()),
                 disables=False)
             buttons.append(new_button)        

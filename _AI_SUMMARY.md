@@ -1,4 +1,4 @@
-﻿# Super Free TTS Project Analysis & AI Context
+# Super Free TTS Project Analysis & AI Context
 
 > **Note to AI Agents and Contributors:** This file provides a concise, high-level overview of the Super Free TTS Anki Add-on project. Read this first to quickly understand the architecture, data flow, and development guidelines before diving into the codebase.
 
@@ -14,7 +14,7 @@
 The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external requirements within the `external/` directory. 
 
 ### Key Components:
-- **`superfreetss.py` (Core Logic):** Contains the `SuperFreeTTS` class handling text extraction, text processing (stripping HTML/cloze), audio generation with cache checks, and dynamic batch execution logic.
+- **`superfreetts.py` (Core Logic):** Contains the `SuperFreeTTS` class handling text extraction, text processing (stripping HTML/cloze), audio generation with cache checks, and dynamic batch execution logic.
 - **`batch_executor.py` (Async Execution):** Implements `UnifiedBatchExecutor` and `MultiEngineExecutor`. Uses a producer-consumer pattern with background threads to ensure non-blocking UI and interleaved audio generation.
 - **`servicemanager.py` (Service Manager):** Handles runtime discovery and lazy-loading of TTS services. It ensures that TTS engines are only initialized when actually needed, preventing slow Anki startup times.
 - **`gui.py` & `component_*.py` (UI Components):** Modular UI split into distinct components:
@@ -35,7 +35,7 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 - **Preset Mapping Rules:** Automatically pre-selecting voices or presets based on Anki Deck or Note Type.
 - **Realtime TTS:** Dynamically inserts an Anki tag `{{tts ...}}` to stream audio on the fly during review via `ttsplayer.py` instead of saving files.
 - **Text Processing:** Tools to automatically clean text (e.g., HTML tags, brackets, cloze deletions) prior to TTS.
-- **Localization (i18n):** User interface comes in both English and Tiếng Việt (Vietnamese).
+- **Localization (i18n):** User interface comes in both English and Ti?ng Vi?t (Vietnamese).
 
 ## 4. Development Roadmap Summary
 - **Phase P0 & 1 (Completed):** Unified Settings UI & AnkiVN Menu integration. Multi-threading issues fixed, UI freezing reduced, and logging optimized.
@@ -46,6 +46,6 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 If you wish to debug or expand the project, follow these technical guidelines:
 - **Debugging:** You can force verbose logging via environment variables (`HYPER_TTS_DEBUG_LOGGING="enable"`).
 - **Adding a new TTS Engine:** Create a `services/service_yourservice.py` file inheriting from `ServiceBase`. It must define `service_fee = constants.ServiceFee.free`. The `ServiceManager` will auto-discover and load it.
-- **UI Modifications:** Modifying or adding UI windows should follow the component-based architecture inside `superfreetss_addon/`. Visual strings must leverage the localization file `i18n.py`.
+- **UI Modifications:** Modifying or adding UI windows should follow the component-based architecture inside `superfreetts_addon/`. Visual strings must leverage the localization file `i18n.py`.
 - **Layout Bugs:** Be careful with PyQt layouts. Use `setMinimumHeight()` for `QLabel` widgets with `wordWrap=True` inside `QVBoxLayout` to prevent overlapping due to layout height squishing.
 - **Performance Constraints:** Ensure no blocking operations persist on the main thread. Always wrap UI actions via `error_manager.get_single_action_context()`.

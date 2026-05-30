@@ -7,13 +7,13 @@ from unittest.mock import MagicMock
 addon_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(addon_path)
 
-# Mock Anki stuff BEFORE importing superfreetss
+# Mock Anki stuff BEFORE importing superfreetts
 import tests.mock_anki as mock_anki
 mock_anki.mock_all()
 
-from superfreetss_addon import superfreetss
-from superfreetss_addon import constants
-from superfreetss_addon import component_configuration
+from superfreetts_addon import superfreetts
+from superfreetts_addon import constants
+from superfreetts_addon import component_configuration
 
 # Setup logging to stdout
 logger = logging.getLogger()
@@ -32,7 +32,7 @@ class FakeAnkiUtils:
     def get_uuid(self): return "1234"
 
 anki_utils = FakeAnkiUtils()
-sf = superfreetss.SuperFreeTTS(anki_utils)
+sf = superfreetts.SuperFreeTTS(anki_utils)
 
 print("\n--- Testing Service Discovery ---")
 sf.service_manager.init_services()

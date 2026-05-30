@@ -338,6 +338,8 @@ class SuperFreeTTS():
         logger.info(f'[BATCH] Applying generated audio to {len(generated_results)} notes...')
         update_start = time.time()
 
+        # Phase 1: Update notes in memory (add media + modify field, but don't save to collection yet)
+        notes_to_update = []
         for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(generated_results):
             if not batch_status.must_continue:
                 break
@@ -348,7 +350,8 @@ class SuperFreeTTS():
                         note_action_context.set_error(is_error)
                     else:
                         note = self.anki_utils.get_note_by_id(note_id)
-                        self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection)
+                        self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
+                        notes_to_update.append(note)
                         note_action_context.set_source_text(source_text)
                         note_action_context.set_processed_text(processed_text)
                         note_action_context.set_sound(sound_file)
@@ -359,6 +362,12 @@ class SuperFreeTTS():
 
             batch_status.unique_tasks_completed = idx + 1
             batch_status.notify_change(note_id)
+
+        # Phase 2: Save all notes in a single transaction
+        if notes_to_update and batch_status.must_continue:
+            logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
+            anki_collection.update_notes(notes_to_update)
+            logger.info(f'[BATCH] Notes saved successfully')
 
         batch_status.total_unique_tasks = 0
         batch_status.unique_tasks_completed = 0
@@ -558,6 +567,8 @@ class SuperFreeTTS():
                 logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
                 update_start = time.time()
 
+                # Phase 1: Update notes in memory (add media + modify field, but don't save to collection yet)
+                notes_to_update = []
                 for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(results):
                     if not batch_status.must_continue:
                         break
@@ -574,7 +585,8 @@ class SuperFreeTTS():
                                     checkpoint['errors'][str(idx)] = str(is_error)
                             else:
                                 note = self.anki_utils.get_note_by_id(note_id)
-                                self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection)
+                                self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
+                                notes_to_update.append(note)
 
                                 if not already_done:
                                     note_action_context.set_source_text(source_text)
@@ -586,12 +598,20 @@ class SuperFreeTTS():
                             note_action_context.set_error(e)
                             if checkpoint:
                                 checkpoint['errors'][str(idx)] = str(e)
+
+                # Phase 2: Save all notes in a single transaction
+                if notes_to_update and batch_status.must_continue:
+                    logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
+                    anki_collection.update_notes(notes_to_update)
+                    logger.info(f'[BATCH] Notes saved successfully')
                     
+                    # Update checkpoint with all completed indices
                     if checkpoint and checkpoint_enabled:
                         try:
                             completed_list = checkpoint.get('completed_indices', [])
-                            if idx not in completed_list:
-                                completed_list.append(idx)
+                            for idx in range(len(results)):
+                                if idx not in completed_list:
+                                    completed_list.append(idx)
                             self.executor.checkpoint.save(batch_name, completed_list, checkpoint.get('note_id_list', []), checkpoint.get('errors', {}))
                         except Exception as e:
                             logger.warning(f'[BATCH] Failed to save checkpoint: {e}')
@@ -1023,7 +1043,7 @@ class SuperFreeTTS():
 
         return (None, errors.AudioNotFoundAnyVoiceError(processed_text))
 
-    def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection):
+    def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True):
         note_audio_updater.update_note_with_audio(
             self.anki_utils,
             note,
@@ -1032,6 +1052,7 @@ class SuperFreeTTS():
             sound_file,
             full_filename,
             anki_collection,
+            update_collection=update_collection,
         )
 
     def process_note_audio(self, batch: config_models.BatchConfig, note, add_mode, audio_request_context, text_override, anki_collection):
@@ -1437,7 +1458,8 @@ class SuperFreeTTS():
             raise Exception(f'unsupported RealtimeSourceType: {realtime_side_model.source.mode}')
 
     def extract_preset(self, extra_args_array):
-        subset = [x for x in extra_args_array if constants.TTS_TAG_HYPERTTS_PRESET in x]
+        subset = [x for x in extra_args_array
+                  if constants.TTS_TAG_HYPERTTS_PRESET in x or constants.TTS_TAG_HYPERTTS_PRESET_LEGACY in x]
         if len(subset) != 1:
             logger.error(f'could not process TTS tag extra args: {extra_args_array}')
             raise errors.TTSTagProcessingError()
@@ -1466,7 +1488,7 @@ class SuperFreeTTS():
             side_template_key = 'afmt'
         side_template = card_template[side_template_key]
         side_template = side_template.replace('\n', ' ')
-        m = re.match(r'.*{{tts.*superfreetss_preset=([^\s]+).*}}.*', side_template)
+        m = re.match(r'.*{{tts.*superfreet(?:t|s)s_preset=([^\s]+).*}}.*', side_template)
         if m != None:
             preset_name = m.groups()[0]
             preset_name = preset_name.replace(side.name + '_', '')
@@ -1811,7 +1833,7 @@ class SuperFreeTTS():
     def get_configuration(self) -> config_models.Configuration:
         return self.deserialize_configuration(self.config.get(constants.CONFIG_CONFIGURATION, {}))
 
-    def save_superfreetss_pro_api_key(self, api_key: str):
+    def save_superfreetts_pro_api_key(self, api_key: str):
         """Super Free TTS: Pro mode disabled, no-op."""
         pass
 
@@ -1846,7 +1868,7 @@ class SuperFreeTTS():
             self.save_configuration(configuration)
             self.anki_utils.run_on_main(self.anki_utils.broadcast_audio_added)
 
-    def superfreetss_pro_enabled(self):
+    def superfreetts_pro_enabled(self):
         # Super Free TTS: Pro always disabled
         return False
 
@@ -1869,7 +1891,7 @@ class SuperFreeTTS():
                 log_dir = self.anki_utils.get_user_files_dir()
                 if not os.path.isdir(log_dir):
                     os.makedirs(log_dir, exist_ok=True)
-                log_path = os.path.join(log_dir, 'superfreetss.log')
+                log_path = os.path.join(log_dir, 'superfreetts.log')
                 logging_utils.configure_file_logging(log_path)
                 logger.info(f"Debug logging enabled. Log file: {log_path}")
             else:

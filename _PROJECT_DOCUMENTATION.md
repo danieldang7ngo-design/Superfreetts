@@ -1,472 +1,472 @@
-﻿# Super Free TTS by Paul from AnkiVN - Tài Liệu Dự Án
+# Super Free TTS by Paul from AnkiVN - T�i Li?u D? �n
 
-> Tài liệu này mô tả chi tiết dự án Super Free TTS. Để xem nhanh tóm tắt kiến trúc và định hướng dành riêng cho AI Agents, vui lòng đọc [AI_SUMMARY.md](./AI_SUMMARY.md).
+> T�i li?u n�y m� t? chi ti?t d? �n Super Free TTS. �? xem nhanh t�m t?t ki?n tr�c v� d?nh hu?ng d�nh ri�ng cho AI Agents, vui l�ng d?c [AI_SUMMARY.md](./AI_SUMMARY.md).
 
-## 📋 Mục Lục
+## ?? M?c L?c
 
-- [Tổng Quan](#-tổng-quan)
-- [Công Nghệ Sử Dụng](#-công-nghệ-sử-dụng)
-- [Kiến Trúc Dự Án](#-kiến-trúc-dự-án)
-- [Hướng Dẫn Sử Dụng](#-hướng-dẫn-sử-dụng)
-- [Hướng Dẫn Phát Triển](#-hướng-dẫn-phát-triển)
+- [T?ng Quan](#-t?ng-quan)
+- [C�ng Ngh? S? D?ng](#-c�ng-ngh?-s?-d?ng)
+- [Ki?n Tr�c D? �n](#-ki?n-tr�c-d?-�n)
+- [Hu?ng D?n S? D?ng](#-hu?ng-d?n-s?-d?ng)
+- [Hu?ng D?n Ph�t Tri?n](#-hu?ng-d?n-ph�t-tri?n)
 
 ---
 
-## 🎯 Tổng Quan
+## ?? T?ng Quan
 
-### Dự án là gì?
+### D? �n l� g�?
 
-**Super Free TTS** là một addon (tiện ích mở rộng) **100% MIỄN PHÍ** cho [Anki](https://apps.ankiweb.net/) - ứng dụng học flashcard phổ biến. Addon này được **fork từ dự án HyperTTS** và tiếp tục phát triển để phục vụ cộng đồng.
+**Super Free TTS** l� m?t addon (ti?n �ch m? r?ng) **100% MI?N PH�** cho [Anki](https://apps.ankiweb.net/) - ?ng d?ng h?c flashcard ph? bi?n. Addon n�y du?c **fork t? d? �n HyperTTS** v� ti?p t?c ph�t tri?n d? ph?c v? c?ng d?ng.
 
-**Tác giả**: Paul from AnkiVN
+**T�c gi?**: Paul from AnkiVN
 
-### Giải quyết vấn đề gì?
+### Gi?i quy?t v?n d? g�?
 
-Khi học ngôn ngữ hoặc bất kỳ môn học nào cần phát âm, việc có âm thanh trên thẻ học rất quan trọng. Tuy nhiên, việc thu âm hoặc tìm file âm thanh cho từng thẻ rất tốn thời gian. Super Free TTS giải quyết vấn đề này bằng cách:
+Khi h?c ng�n ng? ho?c b?t k? m�n h?c n�o c?n ph�t �m, vi?c c� �m thanh tr�n th? h?c r?t quan tr?ng. Tuy nhi�n, vi?c thu �m ho?c t�m file �m thanh cho t?ng th? r?t t?n th?i gian. Super Free TTS gi?i quy?t v?n d? n�y b?ng c�ch:
 
-- **Tự động tạo âm thanh** từ văn bản trên thẻ học
-- **Hỗ trợ nhiều engine TTS MIỄN PHÍ**: EdgeTTS, Piper (offline), Kokoro (offline), MMS (offline, 1100+ ngôn ngữ), Google Translate, Windows SAPI, macOS TTS, eSpeak-ng
-- **Linh hoạt**: Thêm âm thanh từng thẻ hoặc hàng loạt; preset mapping rules; realtime TTS
-- **100% Miễn phí**: Chỉ load engine free, không cần API key
+- **T? d?ng t?o �m thanh** t? van b?n tr�n th? h?c
+- **H? tr? nhi?u engine TTS MI?N PH�**: EdgeTTS, Piper (offline), Kokoro (offline), MMS (offline, 1100+ ng�n ng?), Google Translate, Windows SAPI, macOS TTS, eSpeak-ng
+- **Linh ho?t**: Th�m �m thanh t?ng th? ho?c h�ng lo?t; preset mapping rules; realtime TTS
+- **100% Mi?n ph�**: Ch? load engine free, kh�ng c?n API key
 
-### Thông tin
+### Th�ng tin
 
-- **Tên addon**: Super Free TTS
-- **Tác giả**: Paul from AnkiVN
-- **Phiên bản hiện tại**: 1.0 (trong `version.py`)
+- **T�n addon**: Super Free TTS
+- **T�c gi?**: Paul from AnkiVN
+- **Phi�n b?n hi?n t?i**: 1.0 (trong `version.py`)
 - **Website**: ankivn.com
-- **Tương thích Anki**: `min_point_version: 5`, `max_point_version: 241100` (meta.json)
+- **Tuong th�ch Anki**: `min_point_version: 5`, `max_point_version: 241100` (meta.json)
 
 ---
 
-## 🛠 Công Nghệ Sử Dụng
+## ?? C�ng Ngh? S? D?ng
 
-### Ngôn ngữ lập trình
+### Ng�n ng? l?p tr�nh
 
-- **Python 3.x**: Ngôn ngữ chính của dự án
-- **PyQt5/PyQt6**: Framework để tạo giao diện người dùng (UI)
-- **HTML/CSS/JavaScript**: Tạo giao diện web trong các dialog của Anki
+- **Python 3.x**: Ng�n ng? ch�nh c?a d? �n
+- **PyQt5/PyQt6**: Framework d? t?o giao di?n ngu?i d�ng (UI)
+- **HTML/CSS/JavaScript**: T?o giao di?n web trong c�c dialog c?a Anki
 
-### Thư viện chính
+### Thu vi?n ch�nh
 
-#### Core Dependencies (trong thư mục `external/`)
+#### Core Dependencies (trong thu m?c `external/`)
 
-1. **aiohttp (3.13.3)**: HTTP client/server bất đồng bộ cho Python
-   - Dùng để gọi API các dịch vụ TTS
+1. **aiohttp (3.13.3)**: HTTP client/server b?t d?ng b? cho Python
+   - D�ng d? g?i API c�c d?ch v? TTS
 
-2. **edge-tts (7.2.7)**: Thư viện Python để sử dụng Microsoft Edge TTS
-   - Dịch vụ TTS miễn phí chất lượng cao
+2. **edge-tts (7.2.7)**: Thu vi?n Python d? s? d?ng Microsoft Edge TTS
+   - D?ch v? TTS mi?n ph� ch?t lu?ng cao
 
 3. **gtts**: Google Text-to-Speech
-   - Dịch vụ TTS miễn phí từ Google
+   - D?ch v? TTS mi?n ph� t? Google
 
-4. **requests**: HTTP library đơn giản
-   - Gọi API các dịch vụ TTS miễn phí
+4. **requests**: HTTP library don gi?n
+   - G?i API c�c d?ch v? TTS mi?n ph�
 
-5. **tabulate (0.9.0)**: Tạo bảng dữ liệu đẹp
-   - Hiển thị danh sách voices
+5. **tabulate (0.9.0)**: T?o b?ng d? li?u d?p
+   - Hi?n th? danh s�ch voices
 
 6. **comtypes** (Windows only): COM interface
-   - Tích hợp với Windows SAPI TTS
+   - T�ch h?p v?i Windows SAPI TTS
 
-### Dịch vụ TTS được hỗ trợ (TẤT CẢ MIỄN PHÍ)
+### D?ch v? TTS du?c h? tr? (T?T C? MI?N PH�)
 
-Dự án chỉ load **các dịch vụ TTS có `service_fee = free`** (service trả phí như Naver bị bỏ qua khi khởi tạo).
+D? �n ch? load **c�c d?ch v? TTS c� `service_fee = free`** (service tr? ph� nhu Naver b? b? qua khi kh?i t?o).
 
-#### Engine TTS chính (thứ tự ưu tiên trong UI)
-| Engine | Mô tả | Online/Offline |
+#### Engine TTS ch�nh (th? t? uu ti�n trong UI)
+| Engine | M� t? | Online/Offline |
 |--------|--------|-----------------|
-| **EdgeTTS** | Microsoft Edge TTS (⭐ chất lượng cao) | Online |
-| **PiperTTS** | Piper (Rhasspy) – giọng đa ngôn ngữ, model .onnx | Offline |
-| **KokoroTTS** | Kokoro – giọng tự nhiên, chạy qua engine riêng | Offline |
-| **MmsTTS** | MMS (Massively Multilingual Speech) – 1100+ ngôn ngữ | Offline |
+| **EdgeTTS** | Microsoft Edge TTS (? ch?t lu?ng cao) | Online |
+| **PiperTTS** | Piper (Rhasspy) � gi?ng da ng�n ng?, model .onnx | Offline |
+| **KokoroTTS** | Kokoro � gi?ng t? nhi�n, ch?y qua engine ri�ng | Offline |
+| **MmsTTS** | MMS (Massively Multilingual Speech) � 1100+ ng�n ng? | Offline |
 | **GoogleTranslate** | Google Translate TTS | Online |
-| **Windows** | Windows SAPI (chỉ Windows) | Offline |
-| **MacOS** | macOS built-in TTS (chỉ macOS) | Offline |
+| **Windows** | Windows SAPI (ch? Windows) | Offline |
+| **MacOS** | macOS built-in TTS (ch? macOS) | Offline |
 | **ESpeakNg** | eSpeak-ng, open-source | Offline |
 
-#### Dịch vụ từ điển (pronunciation, `service_type = dictionary`)
-- **Cambridge**, **Oxford**, **Duden**, **DWDS**, **Youdao**, **SpanishDict** – tất cả miễn phí.
-- **Naver**: trong code là `service_fee = paid` nên **không được load** trong Super Free TTS.
+#### D?ch v? t? di?n (pronunciation, `service_type = dictionary`)
+- **Cambridge**, **Oxford**, **Duden**, **DWDS**, **Youdao**, **SpanishDict** � t?t c? mi?n ph�.
+- **Naver**: trong code l� `service_fee = paid` n�n **kh�ng du?c load** trong Super Free TTS.
 
-#### File service tương ứng (trong `services/`)
+#### File service tuong ?ng (trong `services/`)
 - `service_edgetts.py`, `service_piper.py`, `service_kokoro.py`, `service_mms.py`, `service_googletranslate.py`, `service_windows.py`, `service_macos.py`, `service_espeakng.py`
-- Từ điển: `service_cambridge.py`, `service_oxford.py`, `service_duden.py`, `service_dwds.py`, `service_youdao.py`, `service_spanishdict.py`
-- `service_naver.py` (paid – bị bỏ qua). `service_onnx_general.py` (OnnxGeneralTTS) hiện bị comment/disabled.
+- T? di?n: `service_cambridge.py`, `service_oxford.py`, `service_duden.py`, `service_dwds.py`, `service_youdao.py`, `service_spanishdict.py`
+- `service_naver.py` (paid � b? b? qua). `service_onnx_general.py` (OnnxGeneralTTS) hi?n b? comment/disabled.
 
-**Runner / helper (không phải ServiceBase):** `piper_runner.py` (Piper qua sherpa_onnx, JSON stdin/stdout), `kokoro_runner.py`, `sherpa_runner.py`/`sherpa_runner_v2.py` – dùng cho inference offline (MMS/Kokoro). Engine Piper chính trong add-on hiện dùng `piper.exe` subprocess trong `service_piper.py`.
+**Runner / helper (kh�ng ph?i ServiceBase):** `piper_runner.py` (Piper qua sherpa_onnx, JSON stdin/stdout), `kokoro_runner.py`, `sherpa_runner.py`/`sherpa_runner_v2.py` � d�ng cho inference offline (MMS/Kokoro). Engine Piper ch�nh trong add-on hi?n d�ng `piper.exe` subprocess trong `service_piper.py`.
 
 ---
 
-## 🏗 Kiến Trúc Dự Án
+## ?? Ki?n Tr�c D? �n
 
-### Cấu trúc thư mục
+### C?u tr�c thu m?c
 
 ```
-Superfreetts/                       # Thư mục gốc addon (hoặc ID số trong addons21/)
-├── __init__.py                     # Entry point, thêm path và import superfreetss_addon
-├── meta.json                       # Cấu hình Anki, min/max version, config addon
-│
-├── superfreetss_addon/             # Code chính
-│   ├── __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init
-│   ├── superfreetss.py             # ⭐ CORE – SuperFreeTTS class: text extraction, process_batch_audio, presets
-│   ├── batch_executor.py           # ⭐ ASYNC – UnifiedBatchExecutor & MultiEngineExecutor (Producer-Consumer pattern)
-│   ├── cpu_utils.py                # CPU info & concurrency validation
-│   ├── performance_tracker.py      # Tracking batch performance & latency
-│   ├── batch_progress_ui.py        # UI for batch progress and status
-│   ├── servicemanager.py           # TTS Service Management (lazy loading)
-│   ├── anki_utils.py               # Anki API interaction
-│   ├── gui.py                      # Menu and main UI actions
-│   ├── ...
-│   ├── cloudlanguagetools.py       # CloudLanguageTools (Super Free TTS: disabled)
-│   ├── constants_events.py         # Event names cho stats
-│   ├── sentry_utils.py             # Sentry filter (crash reporting)
-│   │
-│   ├── services/                   # Engine TTS & từ điển
-│   │   ├── service_edgetts.py      # EdgeTTS (online)
-│   │   ├── service_piper.py        # Piper (offline, .onnx + .onnx.json, data/piper_models)
-│   │   ├── service_kokoro.py       # Kokoro (offline, data/kokoro_engine)
-│   │   ├── service_mms.py          # MMS (offline, 1100+ ngôn ngữ)
-│   │   ├── service_googletranslate.py
-│   │   ├── service_windows.py      # Windows SAPI
-│   │   ├── service_macos.py
-│   │   ├── service_espeakng.py
-│   │   ├── service_cambridge.py, service_oxford.py, service_duden.py, service_dwds.py
-│   │   ├── service_youdao.py, service_spanishdict.py
-│   │   ├── service_naver.py        # Paid – không load trong Super Free TTS
-│   │   ├── service_onnx_general.py # OnnxGeneralTTS (hiện disabled)
-│   │   ├── voicelist.py            # VOICE_LIST (paid voices, reference)
-│   │   ├── piper_runner.py         # Optional Piper runner (sherpa_onnx, stdin JSON)
-│   │   ├── kokoro_runner.py        # Kokoro inference
-│   │   ├── sherpa_runner.py / sherpa_runner_v2.py  # Sherpa-ONNX (MMS/Kokoro)
-│   │   └── __init__.py
-│   │
-│   ├── data/                       # Dữ liệu add-on (tạo tại runtime nếu cần)
-│   │   ├── piper_models/           # Model Piper (.onnx + .onnx.json) – mặc định hoặc config
-│   │   ├── piper_engine/           # Piper binary (sau Setup Piper)
-│   │   └── kokoro_engine/           # Kokoro Python/env (nếu dùng)
-│   │
-│   ├── component_*.py              # UI components (nhiều file)
-│   │   ├── component_batch.py      # Add Audio (Collection), batch preview
-│   │   ├── component_batch_preview.py
-│   │   ├── component_easy.py       # Easy mode
-│   │   ├── component_unified_settings.py  # ⭐ NEW (P0) – Unified Settings dialog (Services + Preferences in QTabWidget)
-│   │   ├── component_configuration.py  # Services Configuration (enable/disable, path Piper/Kokoro/MMS)
-│   │   ├── component_services_configuration.py
-│   │   ├── component_piper_setup.py    # Setup Piper engine + Manage Voices
-│   │   ├── component_piper_manager.py  # Piper: tải giọng từ HuggingFace (voices.json)
-│   │   ├── component_kokoro_manager.py # Kokoro: quản lý engine/giọng
-│   │   ├── component_mms_manager.py    # MMS: cài đặt ngôn ngữ (1100+)
-│   │   ├── component_onnx_manager.py   # ONNX models (nếu bật)
-│   │   ├── component_voiceselection.py # Chọn voice (single/random/priority)
-│   │   ├── component_voiceselection_easy.py
-│   │   ├── component_realtime.py   # Realtime TTS config
-│   │   ├── component_realtime_source.py, component_realtime_side.py
-│   │   ├── component_presetmappingrules.py, component_mappingrule.py
-│   │   ├── component_choosepreset.py, component_choose_easy_advanced.py
-│   │   ├── component_source.py, component_source_easy.py
-│   │   ├── component_target.py, component_target_easy.py
-│   │   ├── component_text_processing.py
-│   │   ├── component_label_preview.py
-│   │   ├── component_preferences.py   # Preferences (batch_concurrency, cache, UI language)
-│   │   ├── component_errorhandling.py
-│   │   ├── component_about.py, component_shortcuts.py
-│   │   ├── component_common.py
-│   │   ├── component_trialsignup.py, component_superfreettpro.py
-│   │   └── ...
-│   │
-│   └── external/                   # (nếu nằm trong addon) Thư viện: aiohttp, edge_tts, requests, ...
-│
-├── external/                       # Thư viện bên thứ 3 (có thể ở ngoài superfreetss_addon)
-│   ├── aiohttp/, edge_tts/, gtts/, requests/, comtypes/, ...
-│
-├── user_files/                     # Cache âm thanh (hash-based: superfreetts-{hash}.mp3)
-├── UPGRADE_IDEAS.md                # Gợi ý nâng cấp (hiện tại: tối ưu load add-on)
-└── PROJECT_DOCUMENTATION.md        # Tài liệu này
+Superfreetts/                       # Thu m?c g?c addon (ho?c ID s? trong addons21/)
++-- __init__.py                     # Entry point, th�m path v� import superfreetts_addon
++-- meta.json                       # C?u h�nh Anki, min/max version, config addon
+�
++-- superfreetts_addon/             # Code ch�nh
+�   +-- __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init
+�   +-- superfreetts.py             # ? CORE � SuperFreeTTS class: text extraction, process_batch_audio, presets
+�   +-- batch_executor.py           # ? ASYNC � UnifiedBatchExecutor & MultiEngineExecutor (Producer-Consumer pattern)
+�   +-- cpu_utils.py                # CPU info & concurrency validation
+�   +-- performance_tracker.py      # Tracking batch performance & latency
+�   +-- batch_progress_ui.py        # UI for batch progress and status
+�   +-- servicemanager.py           # TTS Service Management (lazy loading)
+�   +-- anki_utils.py               # Anki API interaction
+�   +-- gui.py                      # Menu and main UI actions
+�   +-- ...
+�   +-- cloudlanguagetools.py       # CloudLanguageTools (Super Free TTS: disabled)
+�   +-- constants_events.py         # Event names cho stats
+�   +-- sentry_utils.py             # Sentry filter (crash reporting)
+�   �
+�   +-- services/                   # Engine TTS & t? di?n
+�   �   +-- service_edgetts.py      # EdgeTTS (online)
+�   �   +-- service_piper.py        # Piper (offline, .onnx + .onnx.json, data/piper_models)
+�   �   +-- service_kokoro.py       # Kokoro (offline, data/kokoro_engine)
+�   �   +-- service_mms.py          # MMS (offline, 1100+ ng�n ng?)
+�   �   +-- service_googletranslate.py
+�   �   +-- service_windows.py      # Windows SAPI
+�   �   +-- service_macos.py
+�   �   +-- service_espeakng.py
+�   �   +-- service_cambridge.py, service_oxford.py, service_duden.py, service_dwds.py
+�   �   +-- service_youdao.py, service_spanishdict.py
+�   �   +-- service_naver.py        # Paid � kh�ng load trong Super Free TTS
+�   �   +-- service_onnx_general.py # OnnxGeneralTTS (hi?n disabled)
+�   �   +-- voicelist.py            # VOICE_LIST (paid voices, reference)
+�   �   +-- piper_runner.py         # Optional Piper runner (sherpa_onnx, stdin JSON)
+�   �   +-- kokoro_runner.py        # Kokoro inference
+�   �   +-- sherpa_runner.py / sherpa_runner_v2.py  # Sherpa-ONNX (MMS/Kokoro)
+�   �   +-- __init__.py
+�   �
+�   +-- data/                       # D? li?u add-on (t?o t?i runtime n?u c?n)
+�   �   +-- piper_models/           # Model Piper (.onnx + .onnx.json) � m?c d?nh ho?c config
+�   �   +-- piper_engine/           # Piper binary (sau Setup Piper)
+�   �   +-- kokoro_engine/           # Kokoro Python/env (n?u d�ng)
+�   �
+�   +-- component_*.py              # UI components (nhi?u file)
+�   �   +-- component_batch.py      # Add Audio (Collection), batch preview
+�   �   +-- component_batch_preview.py
+�   �   +-- component_easy.py       # Easy mode
+�   �   +-- component_unified_settings.py  # ? NEW (P0) � Unified Settings dialog (Services + Preferences in QTabWidget)
+�   �   +-- component_configuration.py  # Services Configuration (enable/disable, path Piper/Kokoro/MMS)
+�   �   +-- component_services_configuration.py
+�   �   +-- component_piper_setup.py    # Setup Piper engine + Manage Voices
+�   �   +-- component_piper_manager.py  # Piper: t?i gi?ng t? HuggingFace (voices.json)
+�   �   +-- component_kokoro_manager.py # Kokoro: qu?n l� engine/gi?ng
+�   �   +-- component_mms_manager.py    # MMS: c�i d?t ng�n ng? (1100+)
+�   �   +-- component_onnx_manager.py   # ONNX models (n?u b?t)
+�   �   +-- component_voiceselection.py # Ch?n voice (single/random/priority)
+�   �   +-- component_voiceselection_easy.py
+�   �   +-- component_realtime.py   # Realtime TTS config
+�   �   +-- component_realtime_source.py, component_realtime_side.py
+�   �   +-- component_presetmappingrules.py, component_mappingrule.py
+�   �   +-- component_choosepreset.py, component_choose_easy_advanced.py
+�   �   +-- component_source.py, component_source_easy.py
+�   �   +-- component_target.py, component_target_easy.py
+�   �   +-- component_text_processing.py
+�   �   +-- component_label_preview.py
+�   �   +-- component_preferences.py   # Preferences (batch_concurrency, cache, UI language)
+�   �   +-- component_errorhandling.py
+�   �   +-- component_about.py, component_shortcuts.py
+�   �   +-- component_common.py
+�   �   +-- component_trialsignup.py, component_superfreettpro.py
+�   �   +-- ...
+�   �
+�   +-- external/                   # (n?u n?m trong addon) Thu vi?n: aiohttp, edge_tts, requests, ...
+�
++-- external/                       # Thu vi?n b�n th? 3 (c� th? ? ngo�i superfreetts_addon)
+�   +-- aiohttp/, edge_tts/, gtts/, requests/, comtypes/, ...
+�
++-- user_files/                     # Cache �m thanh (hash-based: superfreetts-{hash}.mp3)
++-- UPGRADE_IDEAS.md                # G?i � n�ng c?p (hi?n t?i: t?i uu load add-on)
++-- PROJECT_DOCUMENTATION.md        # T�i li?u n�y
 ```
 
-### Luồng hoạt động chính
+### Lu?ng ho?t d?ng ch�nh
 
-#### 1. Khởi động Addon (đã tối ưu lazy load)
+#### 1. Kh?i d?ng Addon (d� t?i uu lazy load)
 
 ```
 Anki starts
-    ↓
-__init__.py (root) → sys.path, import superfreetss_addon
-    ↓
-superfreetss_addon/__init__.py
-    ├─→ Setup logging (logging_utils)
-    ├─→ get_configuration() / save_configuration() (user_uuid, config)
-    ├─→ (Optional) Sentry crash reporting (disabled trong Lite)
-    ├─→ Import anki_utils, servicemanager, superfreetss, gui
-    ├─→ ServiceManager(services_dir, package_name, allow_test_services=False)
-    ├─→ SuperFreeTTS(ankiutils, service_manager)
-    ├─→ service_manager.set_config_provider(hyper_tts)
-    │   ⚠️ Không gọi init_services() hay configure() tại đây – lazy load
-    └─→ gui.init(hyper_tts)  → menus, actions
+    ?
+__init__.py (root) ? sys.path, import superfreetts_addon
+    ?
+superfreetts_addon/__init__.py
+    +-? Setup logging (logging_utils)
+    +-? get_configuration() / save_configuration() (user_uuid, config)
+    +-? (Optional) Sentry crash reporting (disabled trong Lite)
+    +-? Import anki_utils, servicemanager, superfreetts, gui
+    +-? ServiceManager(services_dir, package_name, allow_test_services=False)
+    +-? SuperFreeTTS(ankiutils, service_manager)
+    +-? service_manager.set_config_provider(hyper_tts)
+    �   ?? Kh�ng g?i init_services() hay configure() t?i d�y � lazy load
+    +-? gui.init(hyper_tts)  ? menus, actions
 
-Lần đầu cần dùng TTS (mở Configuration, Generate, hoặc gọi get_tts_audio / full_voice_list):
-    └─→ service_manager.ensure_initialized()
-        ├─→ init_services()  → import toàn bộ service_*.py, instantiate (chỉ free)
-        ├─→ _initialized = True
-        └─→ configure(config_provider.get_configuration())
+L?n d?u c?n d�ng TTS (m? Configuration, Generate, ho?c g?i get_tts_audio / full_voice_list):
+    +-? service_manager.ensure_initialized()
+        +-? init_services()  ? import to�n b? service_*.py, instantiate (ch? free)
+        +-? _initialized = True
+        +-? configure(config_provider.get_configuration())
 ```
 
-#### 2. Thêm Audio (Collection Mode)
+#### 2. Th�m Audio (Collection Mode)
 
 ```
 User clicks "Add Audio" button in editor
-    ↓
+    ?
 gui.py: run_hypertts_apply()
-    ↓
-component_easy.py hoặc component_batch.py
-    ↓
+    ?
+component_easy.py ho?c component_batch.py
+    ?
 HyperTTS.editor_note_add_audio()
-    ├─→ get_source_text() - Lấy text từ note
-    ├─→ process_text() - Xử lý text (strip HTML, etc.)
-    ├─→ get_audio_file()
-    │   ├─→ choose_voice() - Chọn voice
-    │   └─→ generate_audio_write_file()
-    │       ├─→ servicemanager.get_tts_audio()
-    │       │   └─→ service_edgetts.py (hoặc service khác)
-    │       └─→ Write to user_files/superfreetts-{hash}.mp3
-    ├─→ get_collection_sound_tag() - Tạo [sound:filename.mp3]
-    └─→ Update note field với sound tag
+    +-? get_source_text() - L?y text t? note
+    +-? process_text() - X? l� text (strip HTML, etc.)
+    +-? get_audio_file()
+    �   +-? choose_voice() - Ch?n voice
+    �   +-? generate_audio_write_file()
+    �       +-? servicemanager.get_tts_audio()
+    �       �   +-? service_edgetts.py (ho?c service kh�c)
+    �       +-? Write to user_files/superfreetts-{hash}.mp3
+    +-? get_collection_sound_tag() - T?o [sound:filename.mp3]
+    +-? Update note field v?i sound tag
 ```
 
-#### 3. Thêm Audio (Realtime Mode)
+#### 3. Th�m Audio (Realtime Mode)
 
 ```
 User configures Realtime TTS
-    ↓
+    ?
 component_realtime.py
-    ↓
+    ?
 HyperTTS.persist_realtime_config_update_note_type()
-    ├─→ Save realtime config
-    ├─→ Build TTS tag: {{tts en voices=HyperTTS:Field}}
-    └─→ Insert vào card template (qfmt/afmt)
-        ↓
+    +-? Save realtime config
+    +-? Build TTS tag: {{tts en voices=HyperTTS:Field}}
+    +-? Insert v�o card template (qfmt/afmt)
+        ?
 When reviewing card
-    ↓
+    ?
 Anki calls tts_player
-    ↓
+    ?
 ttsplayer.py: AnkiHyperTTSPlayer
-    ├─→ Extract TTS tag info
-    ├─→ HyperTTS.get_audio_filename_tts_tag()
-    └─→ Generate & play audio
+    +-? Extract TTS tag info
+    +-? HyperTTS.get_audio_filename_tts_tag()
+    +-? Generate & play audio
 ```
 
-### Các thành phần chính
+### C�c th�nh ph?n ch�nh
 
-#### 1. **HyperTTS Class** (`superfreetss.py`)
+#### 1. **HyperTTS Class** (`superfreetts.py`)
 
-Core business logic, xử lý:
-- Lấy text từ note (simple/template/advanced template)
-- Xử lý text (HTML to text, strip brackets, cloze)
-- Tạo audio file (với caching dựa trên hash)
-- Quản lý presets, mapping rules
-- Cấu hình realtime TTS
+Core business logic, x? l�:
+- L?y text t? note (simple/template/advanced template)
+- X? l� text (HTML to text, strip brackets, cloze)
+- T?o audio file (v?i caching d?a tr�n hash)
+- Qu?n l� presets, mapping rules
+- C?u h�nh realtime TTS
 
 **Key methods:**
-- `process_note_audio()`: Xử lý 1 note, tạo audio
-- `get_audio_file()`: Tạo audio file từ text + voice
-- `editor_note_add_audio()`: Thêm audio vào note trong editor
-- `save_preset()`, `load_preset()`: Quản lý presets
+- `process_note_audio()`: X? l� 1 note, t?o audio
+- `get_audio_file()`: T?o audio file t? text + voice
+- `editor_note_add_audio()`: Th�m audio v�o note trong editor
+- `save_preset()`, `load_preset()`: Qu?n l� presets
 
 #### 2. **ServiceManager** (`servicemanager.py`)
 
-Quản lý các dịch vụ TTS, **lazy init** để add-on load nhanh:
-- **Lazy load:** Không gọi `init_services()`/`configure()` lúc add-on load; chỉ chạy khi lần đầu cần (mở Configuration/Generate, hoặc `get_tts_audio`/`full_voice_list`).
-- Discovery: quét `services/service_*.py`, import module, instantiate class kế thừa `ServiceBase` (bỏ qua `service_fee == paid` và test_service).
-- Thứ tự hiển thị: EdgeTTS → PiperTTS → KokoroTTS → MmsTTS → Others.
+Qu?n l� c�c d?ch v? TTS, **lazy init** d? add-on load nhanh:
+- **Lazy load:** Kh�ng g?i `init_services()`/`configure()` l�c add-on load; ch? ch?y khi l?n d?u c?n (m? Configuration/Generate, ho?c `get_tts_audio`/`full_voice_list`).
+- Discovery: qu�t `services/service_*.py`, import module, instantiate class k? th?a `ServiceBase` (b? qua `service_fee == paid` v� test_service).
+- Th? t? hi?n th?: EdgeTTS ? PiperTTS ? KokoroTTS ? MmsTTS ? Others.
 
 **Key methods:**
-- `set_config_provider(hyper_tts)`: Gán provider để lazy init gọi `get_configuration()` khi cần.
-- `ensure_initialized()`: Gọi một lần khi cần; chạy `init_services()` rồi `configure(config)`.
-- `init_services()`: `import_services()` + `instantiate_services()` (chỉ free).
-- `configure(configuration_model)`: Gán enabled và service_config cho từng service.
-- `get_tts_audio()`, `full_voice_list()`, `get_service_voice_list()`, `locate_voice()`, `deserialize_voice()`: Đều gọi `ensure_initialized()` trước khi dùng `self.services`.
-- `clear_voice_list_cache()`: Xóa cache `get_service_voice_list` và `locate_voice` (sau khi tải Piper/Kokoro hoặc đổi config).
-- `service_exists()`, `get_service()`, `get_all_services()`, `service_configuration_options()`: Cũng đảm bảo đã init.
+- `set_config_provider(hyper_tts)`: G�n provider d? lazy init g?i `get_configuration()` khi c?n.
+- `ensure_initialized()`: G?i m?t l?n khi c?n; ch?y `init_services()` r?i `configure(config)`.
+- `init_services()`: `import_services()` + `instantiate_services()` (ch? free).
+- `configure(configuration_model)`: G�n enabled v� service_config cho t?ng service.
+- `get_tts_audio()`, `full_voice_list()`, `get_service_voice_list()`, `locate_voice()`, `deserialize_voice()`: �?u g?i `ensure_initialized()` tru?c khi d�ng `self.services`.
+- `clear_voice_list_cache()`: X�a cache `get_service_voice_list` v� `locate_voice` (sau khi t?i Piper/Kokoro ho?c d?i config).
+- `service_exists()`, `get_service()`, `get_all_services()`, `service_configuration_options()`: Cung d?m b?o d� init.
 
 #### 3. **GUI Components** (`component_*.py`)
 
-Mỗi component là 1 phần UI riêng biệt:
+M?i component l� 1 ph?n UI ri�ng bi?t:
 
 - **component_batch.py**: Dialog "Add Audio (Collection)"
-  - Chọn source field, template
-  - Chọn target field
-  - Chọn voice(s)
-  - Preview và apply cho nhiều notes
+  - Ch?n source field, template
+  - Ch?n target field
+  - Ch?n voice(s)
+  - Preview v� apply cho nhi?u notes
 
 - **component_easy.py**: Easy mode dialog
-  - UI đơn giản hơn cho người dùng mới
-  - Tự động chọn field hiện tại
-  - Chỉ cần chọn voice và click OK
+  - UI don gi?n hon cho ngu?i d�ng m?i
+  - T? d?ng ch?n field hi?n t?i
+  - Ch? c?n ch?n voice v� click OK
 
 - **component_realtime.py**: Realtime TTS configuration
-  - Cấu hình TTS tag trong card template
-  - Chọn field để phát âm
-  - Cấu hình cho front/back của card
+  - C?u h�nh TTS tag trong card template
+  - Ch?n field d? ph�t �m
+  - C?u h�nh cho front/back c?a card
 
 - **component_presetmappingrules.py**: Preset mapping rules
-  - Liên kết preset với Note Type hoặc Deck+Note Type
-  - Cho phép auto-apply preset dựa trên rule
+  - Li�n k?t preset v?i Note Type ho?c Deck+Note Type
+  - Cho ph�p auto-apply preset d?a tr�n rule
 
 - **component_voiceselection.py**: Voice selection UI
-  - Chọn voice từ danh sách (filter by language/service)
-  - Chọn voice mode: single, random, priority
+  - Ch?n voice t? danh s�ch (filter by language/service)
+  - Ch?n voice mode: single, random, priority
 
 #### 4. **Services** (`services/service_*.py`)
 
-Mỗi engine kế thừa **`ServiceBase`** (`service.py`), khai báo `service_type` (tts/dictionary), `service_fee` (free/paid), và implement:
+M?i engine k? th?a **`ServiceBase`** (`service.py`), khai b�o `service_type` (tts/dictionary), `service_fee` (free/paid), v� implement:
 
-- `voice_list() -> List[TtsVoice_v3]`: Trả về danh sách giọng (dùng `voice.build_voice_v3(name, gender, language, service, voice_key, options)`).
-- `get_tts_audio(source_text, voice: TtsVoice_v3, options) -> bytes`: Sinh audio từ text.
-- `configuration_options() -> dict`: Key → (type, label [, default]) cho UI config (directory, bool, int, …).
+- `voice_list() -> List[TtsVoice_v3]`: Tr? v? danh s�ch gi?ng (d�ng `voice.build_voice_v3(name, gender, language, service, voice_key, options)`).
+- `get_tts_audio(source_text, voice: TtsVoice_v3, options) -> bytes`: Sinh audio t? text.
+- `configuration_options() -> dict`: Key ? (type, label [, default]) cho UI config (directory, bool, int, �).
 
-**Engine TTS chính:**
-- **service_edgetts.py**: Edge TTS (async, `edge_tts`), nhiều giọng/ngôn ngữ.
-- **service_piper.py**: Piper (offline). Config: `models_path` (thư mục .onnx + .onnx.json), `debug_logging`. Mặc định: `data/piper_models`, engine từ Setup Piper. Voice list đọc từ file JSON, map `AudioLanguage`, suy giới tính từ dataset/filename.
-- **service_kokoro.py**: Kokoro (offline). Config: `engine_path` (python/engine), `num_threads`, `use_gpu`, `debug_logging`. Giọng từ engine.
-- **service_mms.py**: MMS (offline). Config: `python_path`, `num_threads`, `use_gpu`, `debug_logging`. Hỗ trợ 1100+ ngôn ngữ, cài qua component_mms_manager.
+**Engine TTS ch�nh:**
+- **service_edgetts.py**: Edge TTS (async, `edge_tts`), nhi?u gi?ng/ng�n ng?.
+- **service_piper.py**: Piper (offline). Config: `models_path` (thu m?c .onnx + .onnx.json), `debug_logging`. M?c d?nh: `data/piper_models`, engine t? Setup Piper. Voice list d?c t? file JSON, map `AudioLanguage`, suy gi?i t�nh t? dataset/filename.
+- **service_kokoro.py**: Kokoro (offline). Config: `engine_path` (python/engine), `num_threads`, `use_gpu`, `debug_logging`. Gi?ng t? engine.
+- **service_mms.py**: MMS (offline). Config: `python_path`, `num_threads`, `use_gpu`, `debug_logging`. H? tr? 1100+ ng�n ng?, c�i qua component_mms_manager.
 - **service_googletranslate.py**: Google Translate TTS.
-- **service_windows.py** / **service_macos.py** / **service_espeakng.py**: Hệ thống / eSpeak-ng.
+- **service_windows.py** / **service_macos.py** / **service_espeakng.py**: H? th?ng / eSpeak-ng.
 
-**Từ điển:** Cambridge, Oxford, Duden, DWDS, Youdao, SpanishDict (free). Naver (paid – không load).
+**T? di?n:** Cambridge, Oxford, Duden, DWDS, Youdao, SpanishDict (free). Naver (paid � kh�ng load).
 
 ### Config Models (`config_models.py`)
 
-Định nghĩa cấu trúc dữ liệu cho:
+�?nh nghia c?u tr�c d? li?u cho:
 
-- **Configuration**: Cấu hình chung (user_uuid, service_enabled, service_config, presets, mapping_rules, realtime_config, …).
-- **Preferences**: `ui_language` (en/vi), `cache_retention_days`, `cache_enabled`, `batch_concurrency` (số thread batch), `error_handling` (disable_ssl_verification, realtime_tts_errors_dialog_type), keyboard_shortcuts.
+- **Configuration**: C?u h�nh chung (user_uuid, service_enabled, service_config, presets, mapping_rules, realtime_config, �).
+- **Preferences**: `ui_language` (en/vi), `cache_retention_days`, `cache_enabled`, `batch_concurrency` (s? thread batch), `error_handling` (disable_ssl_verification, realtime_tts_errors_dialog_type), keyboard_shortcuts.
 - **BatchConfig** (Preset): Source (simple/template/advanced_template), Target (target_field, remove_sound_tag, text_and_sound_tag, insert_location), VoiceSelection, Text processing.
-- **VoiceSelection**: Chế độ single / random / priority; danh sách voice (voice_id + options + weight).
+- **VoiceSelection**: Ch? d? single / random / priority; danh s�ch voice (voice_id + options + weight).
 - **VoiceWithOptions**: voice + options (vd. format mp3/ogg).
-- **MappingRule**: Liên kết preset với deck/note type.
-- **RealtimeConfig**: Cấu hình realtime TTS (front/back, source, voice).
-- **AudioLanguage / Language**: Enum ngôn ngữ (dùng trong `voice.py` và `languages.py`).
+- **MappingRule**: Li�n k?t preset v?i deck/note type.
+- **RealtimeConfig**: C?u h�nh realtime TTS (front/back, source, voice).
+- **AudioLanguage / Language**: Enum ng�n ng? (d�ng trong `voice.py` v� `languages.py`).
 
 ### Voice & Options
 
-- **voice.py**: `TtsVoice_v3` (name, voice_key, service, gender, audio_languages, options, service_fee), `TtsVoiceId_v3` (voice_key, service), `build_voice_v3(name, gender, language, service, voice_key, options)`, `voice_str(voice)` dùng trong combobox.
-- **options.py**: `AudioFormat` (mp3, ogg_vorbis, ogg_opus) – dùng khi ghi file cache (`superfreetts-{hash}.mp3`/`.ogg`).
+- **voice.py**: `TtsVoice_v3` (name, voice_key, service, gender, audio_languages, options, service_fee), `TtsVoiceId_v3` (voice_key, service), `build_voice_v3(name, gender, language, service, voice_key, options)`, `voice_str(voice)` d�ng trong combobox.
+- **options.py**: `AudioFormat` (mp3, ogg_vorbis, ogg_opus) � d�ng khi ghi file cache (`superfreetts-{hash}.mp3`/`.ogg`).
 
 ### Error Handling (`errors.py`)
 
-Custom exceptions: `SourceFieldNotFoundError`, `TargetFieldNotFoundError`, `SourceTextEmpty`, `NoVoicesAdded`, `AudioNotFoundError`, `PresetNotFound`, `VoiceNotFound`, `VoiceIdNotFound`, `MissingServiceConfiguration`, `RequestError` (TTS lỗi), …  
-**ErrorManager** dùng để wrap action và hiển thị lỗi qua dialog/tooltip.
+Custom exceptions: `SourceFieldNotFoundError`, `TargetFieldNotFoundError`, `SourceTextEmpty`, `NoVoicesAdded`, `AudioNotFoundError`, `PresetNotFound`, `VoiceNotFound`, `VoiceIdNotFound`, `MissingServiceConfiguration`, `RequestError` (TTS l?i), �  
+**ErrorManager** d�ng d? wrap action v� hi?n th? l?i qua dialog/tooltip.
 
 ---
 
-## 📖 Hướng Dẫn Sử Dụng
+## ?? Hu?ng D?n S? D?ng
 
-### Cài đặt
+### C�i d?t
 
-1. **Tải addon**:
-   - Copy thư mục này vào `Anki2/addons21/`
-   - Hoặc từ AnkiVN (xem hướng dẫn tại ankivn.com)
+1. **T?i addon**:
+   - Copy thu m?c n�y v�o `Anki2/addons21/`
+   - Ho?c t? AnkiVN (xem hu?ng d?n t?i ankivn.com)
 
 2. **Restart Anki**
 
-3. **Cấu hình dịch vụ TTS** (lần đầu):
-   - Menu: `AnkiVN` → `Super Free TTS Settings` → Click tab "Services"
-   - Bật engine cần dùng: EdgeTTS (online, ⭐ khuyên dùng), Piper/Kokoro/MMS (offline cần setup đường dẫn hoặc Setup/Manage), Google Translate, Windows/macOS/eSpeak-ng.
-   - **Piper:** Có thể để trống "Piper Models Directory" (dùng mặc định `data/piper_models`) hoặc chọn thư mục chứa file `.onnx` + `.onnx.json`. Dùng "Setup Piper" để cài engine, "Manage Voices" để tải giọng từ HuggingFace.
-   - **Kokoro / MMS:** Chỉ định đường dẫn Python/engine nếu cần (xem component_kokoro_manager, component_mms_manager).
+3. **C?u h�nh d?ch v? TTS** (l?n d?u):
+   - Menu: `AnkiVN` ? `Super Free TTS Settings` ? Click tab "Services"
+   - B?t engine c?n d�ng: EdgeTTS (online, ? khuy�n d�ng), Piper/Kokoro/MMS (offline c?n setup du?ng d?n ho?c Setup/Manage), Google Translate, Windows/macOS/eSpeak-ng.
+   - **Piper:** C� th? d? tr?ng "Piper Models Directory" (d�ng m?c d?nh `data/piper_models`) ho?c ch?n thu m?c ch?a file `.onnx` + `.onnx.json`. D�ng "Setup Piper" d? c�i engine, "Manage Voices" d? t?i gi?ng t? HuggingFace.
+   - **Kokoro / MMS:** Ch? d?nh du?ng d?n Python/engine n?u c?n (xem component_kokoro_manager, component_mms_manager).
 
-### Sử dụng cơ bản
+### S? d?ng co b?n
 
-#### 1. Easy Mode (Đơn giản)
+#### 1. Easy Mode (�on gi?n)
 
-Dùng cho người mới, thêm audio vào từng note riêng lẻ:
+D�ng cho ngu?i m?i, th�m audio v�o t?ng note ri�ng l?:
 
-1. Mở note editor (Add card hoặc Browser)
-2. Click nút **speaker icon** (Add Audio)
-3. Chọn voice từ dropdown
+1. M? note editor (Add card ho?c Browser)
+2. Click n�t **speaker icon** (Add Audio)
+3. Ch?n voice t? dropdown
 4. Click "Add Audio"
-5. Audio được thêm vào field hiện tại
+5. Audio du?c th�m v�o field hi?n t?i
 
-#### 2. Collection Mode (Nâng cao)
+#### 2. Collection Mode (N�ng cao)
 
-Thêm audio cho nhiều notes cùng lúc:
+Th�m audio cho nhi?u notes c�ng l�c:
 
-1. Mở Browser, chọn các notes
-2. Menu: `Super Free TTS` → `Add Audio (Collection)...`
+1. M? Browser, ch?n c�c notes
+2. Menu: `Super Free TTS` ? `Add Audio (Collection)...`
 3. Configure:
-   - **Source**: Field chứa text cần tạo audio
-   - **Voice**: Chọn voice TTS
-   - **Target**: Field để chèn sound tag
-   - **Text Processing**: Tùy chọn xử lý text
-4. Preview (nghe thử)
-5. Click "Apply" để thêm audio cho tất cả notes
+   - **Source**: Field ch?a text c?n t?o audio
+   - **Voice**: Ch?n voice TTS
+   - **Target**: Field d? ch�n sound tag
+   - **Text Processing**: T�y ch?n x? l� text
+4. Preview (nghe th?)
+5. Click "Apply" d? th�m audio cho t?t c? notes
 
 #### 3. Preset Mapping Rules
 
-Tự động apply preset dựa trên Note Type hoặc Deck:
+T? d?ng apply preset d?a tr�n Note Type ho?c Deck:
 
-1. Click nút **gear icon** (Settings) trong editor
+1. Click n�t **gear icon** (Settings) trong editor
 2. Add rule:
-   - Chọn Note Type (hoặc Deck + Note Type)
-   - Chọn/tạo preset
+   - Ch?n Note Type (ho?c Deck + Note Type)
+   - Ch?n/t?o preset
 3. Save rule
-4. Từ giờ, khi click "Add Audio" button, preset sẽ tự động apply
+4. T? gi?, khi click "Add Audio" button, preset s? t? d?ng apply
 
 #### 4. Realtime TTS
 
-Audio tự động phát khi review card (không cần thêm vào note):
+Audio t? d?ng ph�t khi review card (kh�ng c?n th�m v�o note):
 
-1. Chọn 1 note trong Browser
-2. Menu: `Super Free TTS` → `Add Audio (Realtime)...`
+1. Ch?n 1 note trong Browser
+2. Menu: `Super Free TTS` ? `Add Audio (Realtime)...`
 3. Configure:
-   - Front side: Field nào sẽ đọc, voice nào
-   - Back side: Field nào sẽ đọc, voice nào
+   - Front side: Field n�o s? d?c, voice n�o
+   - Back side: Field n�o s? d?c, voice n�o
 4. Apply
-5. TTS tag `{{tts ...}}` được thêm vào card template
-6. Khi review, audio tự động phát
+5. TTS tag `{{tts ...}}` du?c th�m v�o card template
+6. Khi review, audio t? d?ng ph�t
 
-### Các tính năng nâng cao
+### C�c t�nh nang n�ng cao
 
 #### Text Processing
 
-- **HTML to Text**: Loại bỏ HTML tags
-- **Strip Brackets**: Loại bỏ [...]
-- **Strip Cloze**: Loại bỏ cloze {{c1::...}}
-- **SSML Characters**: Escape ký tự đặc biệt cho SSML
-- **Text Replacement**: Thay thế text trước khi tạo audio
+- **HTML to Text**: Lo?i b? HTML tags
+- **Strip Brackets**: Lo?i b? [...]
+- **Strip Cloze**: Lo?i b? cloze {{c1::...}}
+- **SSML Characters**: Escape k� t? d?c bi?t cho SSML
+- **Text Replacement**: Thay th? text tru?c khi t?o audio
 
 #### Voice Selection Modes
 
-- **Single**: Chọn 1 voice cố định
-- **Random**: Chọn ngẫu nhiên từ danh sách voices (có thể set weight)
-- **Priority**: Thử voice theo thứ tự, fallback nếu không tạo được audio
+- **Single**: Ch?n 1 voice c? d?nh
+- **Random**: Ch?n ng?u nhi�n t? danh s�ch voices (c� th? set weight)
+- **Priority**: Th? voice theo th? t?, fallback n?u kh�ng t?o du?c audio
 
 #### Template Source
 
-Combine nhiều fields:
+Combine nhi?u fields:
 - **Simple Template**: `{Field1} {Field2}`
-- **Advanced Template**: Python code (disabled trong bản Lite vì lý do bảo mật)
+- **Advanced Template**: Python code (disabled trong b?n Lite v� l� do b?o m?t)
 
 ---
 
-## 👨‍💻 Hướng Dẫn Phát Triển
+## ????? Hu?ng D?n Ph�t Tri?n
 
-### Setup môi trường phát triển
+### Setup m�i tru?ng ph�t tri?n
 
-#### 1. Clone/Copy dự án
+#### 1. Clone/Copy d? �n
 
 ```bash
-# Thư mục addon thường ở đây (Windows):
+# Thu m?c addon thu?ng ? d�y (Windows):
 cd %APPDATA%\Anki2\addons21\655806401
 
-# Hoặc (macOS/Linux):
+# Ho?c (macOS/Linux):
 cd ~/Library/Application Support/Anki2/addons21/655806401
 ```
 
 #### 2. Dependency management
 
-Dependencies đã được bundle trong thư mục `external/`. Nếu cần thêm dependency:
+Dependencies d� du?c bundle trong thu m?c `external/`. N?u c?n th�m dependency:
 
 ```bash
 pip install <package> -t external/
@@ -484,33 +484,33 @@ $env:HYPER_TTS_DEBUG_LOGGING="enable"
 export HYPER_TTS_DEBUG_LOGGING="enable"
 ```
 
-Hoặc log to file:
+Ho?c log to file:
 
 ```bash
 $env:HYPER_TTS_DEBUG_LOGGING="file"
-$env:HYPER_TTS_DEBUG_LOGFILE="C:\path\to\superfreetss.log"
+$env:HYPER_TTS_DEBUG_LOGFILE="C:\path\to\superfreetts.log"
 ```
 
-#### 4. Restart Anki và test
+#### 4. Restart Anki v� test
 
 ```bash
-# Anki sẽ load addon từ thư mục này
-# Mọi thay đổi code cần restart Anki
+# Anki s? load addon t? thu m?c n�y
+# M?i thay d?i code c?n restart Anki
 ```
 
-### Cấu trúc code guidelines
+### C?u tr�c code guidelines
 
-#### 1. Tổ chức code
+#### 1. T? ch?c code
 
-- **Business logic**: Nên ở `superfreetss.py` hoặc `servicemanager.py`
-- **UI logic**: Nên ở các `component_*.py`
-- **Utilities**: Nên ở các `*_utils.py`
-- **Models**: Nên ở `config_models.py`
-- **Constants**: Nên ở `constants.py`
+- **Business logic**: N�n ? `superfreetts.py` ho?c `servicemanager.py`
+- **UI logic**: N�n ? c�c `component_*.py`
+- **Utilities**: N�n ? c�c `*_utils.py`
+- **Models**: N�n ? `config_models.py`
+- **Constants**: N�n ? `constants.py`
 
 #### 2. Error handling
 
-Luôn sử dụng custom exceptions từ `errors.py`:
+Lu�n s? d?ng custom exceptions t? `errors.py`:
 
 ```python
 # Good
@@ -522,19 +522,19 @@ if field not in note:
     raise Exception(f"Field {field} not found")
 ```
 
-Wrap user-facing actions với `ErrorManager`:
+Wrap user-facing actions v?i `ErrorManager`:
 
 ```python
-with superfreetss.error_manager.get_single_action_context('Action Name'):
+with superfreetts.error_manager.get_single_action_context('Action Name'):
     # Your code here
 ```
 
 #### 3. Configuration
 
-Mọi cấu hình cần:
-- Định nghĩa model trong `config_models.py`
-- Implement `serialize()` và `deserialize()`
-- Lưu vào config qua `anki_utils.write_config()`
+M?i c?u h�nh c?n:
+- �?nh nghia model trong `config_models.py`
+- Implement `serialize()` v� `deserialize()`
+- Luu v�o config qua `anki_utils.write_config()`
 
 #### 4. Logging
 
@@ -547,15 +547,15 @@ logger.info('Info message')
 logger.error('Error message')
 ```
 
-### Thêm dịch vụ TTS mới
+### Th�m d?ch v? TTS m?i
 
-#### Bước 1: Tạo file service
+#### Bu?c 1: T?o file service
 
-Tạo `superfreetss_addon/services/service_yourservice.py`. Class **kế thừa `ServiceBase`** và khai báo **`service_fee = constants.ServiceFee.free`** (nếu paid thì add-on sẽ không load).
+T?o `superfreetts_addon/services/service_yourservice.py`. Class **k? th?a `ServiceBase`** v� khai b�o **`service_fee = constants.ServiceFee.free`** (n?u paid th� add-on s? kh�ng load).
 
 ```python
 from typing import List
-from superfreetss_addon import service, voice as voice_module, constants, languages
+from superfreetts_addon import service, voice as voice_module, constants, languages
 
 class YourServiceTTS(service.ServiceBase):
     def __init__(self):
@@ -571,7 +571,7 @@ class YourServiceTTS(service.ServiceBase):
 
     @property
     def service_fee(self):
-        return constants.ServiceFee.free  # bắt buộc free để được load
+        return constants.ServiceFee.free  # b?t bu?c free d? du?c load
 
     def configuration_options(self):
         return {
@@ -580,7 +580,7 @@ class YourServiceTTS(service.ServiceBase):
         }
 
     def voice_list(self) -> List[voice_module.TtsVoice_v3]:
-        # Lấy danh sách từ API hoặc file; mỗi giọng tạo bằng build_voice_v3
+        # L?y danh s�ch t? API ho?c file; m?i gi?ng t?o b?ng build_voice_v3
         voices = []
         # ... fetch list ...
         voices.append(voice_module.build_voice_v3(
@@ -594,28 +594,28 @@ class YourServiceTTS(service.ServiceBase):
         return voices
 
     def get_tts_audio(self, source_text, voice: voice_module.TtsVoice_v3, options):
-        # Gọi API / engine, trả về bytes (audio)
+        # G?i API / engine, tr? v? bytes (audio)
         # voice.voice_key, voice.service
         return response_content  # bytes
 ```
 
-- **`build_voice_v3`** (trong `voice.py`): Tham số `name`, `gender`, `language`, `service`, `voice_key`, `options`. Thiếu `gender` sẽ gây lỗi.
-- **Config:** Key trong `configuration_options()` dùng trong UI; giá trị đọc bằng `self.get_configuration_value_optional(key, default)` / `get_configuration_value_mandatory(key)`.
+- **`build_voice_v3`** (trong `voice.py`): Tham s? `name`, `gender`, `language`, `service`, `voice_key`, `options`. Thi?u `gender` s? g�y l?i.
+- **Config:** Key trong `configuration_options()` d�ng trong UI; gi� tr? d?c b?ng `self.get_configuration_value_optional(key, default)` / `get_configuration_value_mandatory(key)`.
 
-#### Bước 2: Register service
+#### Bu?c 2: Register service
 
-Service **tự động được discovery** nếu file đặt tên `service_*.py` trong `services/`. Không cần đăng ký tay. Nếu muốn thứ tự hiển thị: thêm tên class vào `priority_order` trong `servicemanager.instantiate_services()` (vd. `["EdgeTTS", "PiperTTS", "KokoroTTS", "MmsTTS", "YourServiceTTS"]`).
+Service **t? d?ng du?c discovery** n?u file d?t t�n `service_*.py` trong `services/`. Kh�ng c?n dang k� tay. N?u mu?n th? t? hi?n th?: th�m t�n class v�o `priority_order` trong `servicemanager.instantiate_services()` (vd. `["EdgeTTS", "PiperTTS", "KokoroTTS", "MmsTTS", "YourServiceTTS"]`).
 
 Test:
 
 ```python
 # Anki Debug Console (Tools > Debug Console)
-from superfreetss_addon.servicemanager import ServiceManager
-from superfreetss_addon import constants
+from superfreetts_addon.servicemanager import ServiceManager
+from superfreetts_addon import constants
 import os
-path = os.path.join(os.path.dirname(__file__), 'services')  # điều chỉnh path
-sm = ServiceManager(path, 'superfreetss_addon.services', False)
-sm.set_config_provider(hyper_tts)  # nếu có
+path = os.path.join(os.path.dirname(__file__), 'services')  # di?u ch?nh path
+sm = ServiceManager(path, 'superfreetts_addon.services', False)
+sm.set_config_provider(hyper_tts)  # n?u c�
 sm.ensure_initialized()
 voices = sm.full_voice_list()
 print([v for v in voices if v.service == 'YourServiceTTS'])
@@ -625,82 +625,82 @@ print([v for v in voices if v.service == 'YourServiceTTS'])
 
 #### Manual testing
 
-1. Tạo test deck với vài notes
+1. T?o test deck v?i v�i notes
 2. Configure service trong UI
-3. Test từng workflow:
+3. Test t?ng workflow:
    - Easy mode
    - Collection mode
    - Realtime mode
    - Preset mapping rules
 
-#### Unit testing (hiện tại chưa có)
+#### Unit testing (hi?n t?i chua c�)
 
-Dự án không còn thư mục `test_services/` (đã xóa). Có thể thêm test bằng pytest hoặc unittest; khi chạy test cần set `sys._pytest_mode = True` để add-on không chạy block Anki (vd. Sentry). Test service: instantiate class service, gọi `voice_list()` và `get_tts_audio(source_text, voice, {})` với voice lấy từ `voice_list()[0]`.
+D? �n kh�ng c�n thu m?c `test_services/` (d� x�a). C� th? th�m test b?ng pytest ho?c unittest; khi ch?y test c?n set `sys._pytest_mode = True` d? add-on kh�ng ch?y block Anki (vd. Sentry). Test service: instantiate class service, g?i `voice_list()` v� `get_tts_audio(source_text, voice, {})` v?i voice l?y t? `voice_list()[0]`.
 
 ### Code review checklist
 
-Trước khi commit code:
+Tru?c khi commit code:
 
-- [ ] Code có follow cấu trúc hiện tại không?
-- [ ] Có thêm logging phù hợp không?
-- [ ] Error handling đúng cách (dùng custom exceptions)?
-- [ ] Config được save/load đúng không?
-- [ ] UI có responsive và user-friendly không?
-- [ ] Code có comments cho phần phức tạp không?
-- [ ] Đã test manually các workflow chính chưa?
+- [ ] Code c� follow c?u tr�c hi?n t?i kh�ng?
+- [ ] C� th�m logging ph� h?p kh�ng?
+- [ ] Error handling d�ng c�ch (d�ng custom exceptions)?
+- [ ] Config du?c save/load d�ng kh�ng?
+- [ ] UI c� responsive v� user-friendly kh�ng?
+- [ ] Code c� comments cho ph?n ph?c t?p kh�ng?
+- [ ] �� test manually c�c workflow ch�nh chua?
 
-### Quy tắc cần tuân theo
+### Quy t?c c?n tu�n theo
 
-#### 1. Bảo mật
+#### 1. B?o m?t
 
-- **KHÔNG bao giờ** execute Python code do user nhập (Advanced Template đã bị disable)
-- **KHÔNG log** API keys hoặc sensitive data
-- **Validate** tất cả user input
+- **KH�NG bao gi?** execute Python code do user nh?p (Advanced Template d� b? disable)
+- **KH�NG log** API keys ho?c sensitive data
+- **Validate** t?t c? user input
 
-#### 2. Tương thích Anki
+#### 2. Tuong th�ch Anki
 
-- Addon phải tương thích với:
+- Addon ph?i tuong th�ch v?i:
   - Anki 2.1.50 - 2.1.x (check `meta.json`: `min_point_version: 5, max_point_version: 241100`)
-- Sử dụng Anki API đúng cách (qua `anki_utils.py`)
+- S? d?ng Anki API d�ng c�ch (qua `anki_utils.py`)
 
 #### 3. Performance
 
-- **Lazy load add-on:** Services **không** được load lúc Anki khởi động. Chỉ khi lần đầu cần (mở Configuration/Generate, hoặc gọi `get_tts_audio`/`full_voice_list`), `ServiceManager.ensure_initialized()` mới chạy `init_services()` và `configure()`.
-- **New Executor Architecture:** Sử dụng `MultiEngineExecutor` (`batch_executor.py`) với các pool riêng biệt cho từng engine.
+- **Lazy load add-on:** Services **kh�ng** du?c load l�c Anki kh?i d?ng. Ch? khi l?n d?u c?n (m? Configuration/Generate, ho?c g?i `get_tts_audio`/`full_voice_list`), `ServiceManager.ensure_initialized()` m?i ch?y `init_services()` v� `configure()`.
+- **New Executor Architecture:** S? d?ng `MultiEngineExecutor` (`batch_executor.py`) v?i c�c pool ri�ng bi?t cho t?ng engine.
 - **Concurrency Capping:** 
-    - **EdgeTTS**: Được giới hạn cứng ở **3 workers** để tránh bị Microsoft rate-limit.
-    - **Offline Engines**: Sử dụng `BoundedThreadPoolExecutor` để giới hạn hàng chờ và quản lý tài nguyên (RAM/CPU). Đề xuất 4-8 workers cho CPU Ryzen 7.
-- **Interleaved Batching:** Áp dụng mô hình producer-consumer để bắt đầu tạo audio ngay khi có yêu cầu, không đợi nạp xong toàn bộ danh sách, giúp giảm đáng kể độ trễ khởi động (startup latency).
-- **Cache audio files:** `generate_audio_write_file()` dùng hash `(source_text, voice_id, options)` → file `superfreetts-{hash}.mp3`; nếu đã tồn tại thì không gọi TTS lại.
-- **Voice list cache:** `get_service_voice_list()` và `locate_voice()` dùng `functools.lru_cache`.
+    - **EdgeTTS**: �u?c gi?i h?n c?ng ? **3 workers** d? tr�nh b? Microsoft rate-limit.
+    - **Offline Engines**: S? d?ng `BoundedThreadPoolExecutor` d? gi?i h?n h�ng ch? v� qu?n l� t�i nguy�n (RAM/CPU). �? xu?t 4-8 workers cho CPU Ryzen 7.
+- **Interleaved Batching:** �p d?ng m� h�nh producer-consumer d? b?t d?u t?o audio ngay khi c� y�u c?u, kh�ng d?i n?p xong to�n b? danh s�ch, gi�p gi?m d�ng k? d? tr? kh?i d?ng (startup latency).
+- **Cache audio files:** `generate_audio_write_file()` d�ng hash `(source_text, voice_id, options)` ? file `superfreetts-{hash}.mp3`; n?u d� t?n t?i th� kh�ng g?i TTS l?i.
+- **Voice list cache:** `get_service_voice_list()` v� `locate_voice()` d�ng `functools.lru_cache`.
 
 #### 4. UI/UX
 
-- **Consistent với Anki**: Dùng PyQt components chuẩn
-- **Error messages rõ ràng**: User phải hiểu được lỗi gì
-- **Progress indicators**: Cho operations lâu (batch processing)
+- **Consistent v?i Anki**: D�ng PyQt components chu?n
+- **Error messages r� r�ng**: User ph?i hi?u du?c l?i g�
+- **Progress indicators**: Cho operations l�u (batch processing)
 
 #### 5. HyperTTS Lite vs Pro
 
-Bản Lite cần disable một số features:
+B?n Lite c?n disable m?t s? features:
 
 ```python
 # constants.py
 ENABLE_SENTRY_CRASH_REPORTING = True  # Set to False for Lite
 
-# superfreetss.py
+# superfreetts.py
 def expand_advanced_template(self, note, source_template):
-    raise errors.HyperTTSError("Advanced Template (Python) không hỗ trợ trong bản Lite")
+    raise errors.HyperTTSError("Advanced Template (Python) kh�ng h? tr? trong b?n Lite")
 ```
 
 ---
 
-## 📚 Tài Liệu & Tham Khảo
+## ?? T�i Li?u & Tham Kh?o
 
-### Tài liệu trong repo
+### T�i li?u trong repo
 
-- **UPGRADE_IDEAS.md**: Gợi ý nâng cấp (hiện tại chỉ tối ưu tốc độ load add-on – lazy load services).
-- **PROJECT_DOCUMENTATION.md**: Tài liệu này.
+- **UPGRADE_IDEAS.md**: G?i � n�ng c?p (hi?n t?i ch? t?i uu t?c d? load add-on � lazy load services).
+- **PROJECT_DOCUMENTATION.md**: T�i li?u n�y.
 
 ### API Documentation
 
@@ -708,7 +708,7 @@ def expand_advanced_template(self, note, source_template):
 - **PyQt5**: https://www.riverbankcomputing.com/static/Docs/PyQt5/
 - **Edge TTS**: https://github.com/rany2/edge-tts
 
-### Service APIs (Miễn phí)
+### Service APIs (Mi?n ph�)
 
 - **Edge TTS**: https://github.com/rany2/edge-tts
 - **gTTS (Google Translate)**: https://github.com/pndurette/gTTS
@@ -721,63 +721,63 @@ def expand_advanced_template(self, note, source_template):
 
 ---
 
-## 🤝 Đóng Góp
+## ?? ��ng G�p
 
-Nếu bạn muốn đóng góp vào dự án:
+N?u b?n mu?n d�ng g�p v�o d? �n:
 
-1. Fork dự án (nếu có repository)
-2. Tạo branch mới: `git checkout -b feature/your-feature`
-3. Làm theo [Hướng Dẫn Phát Triển](#-hướng-dẫn-phát-triển)
-4. Test kỹ các thay đổi
-5. Commit với message rõ ràng
-6. Tạo Pull Request
+1. Fork d? �n (n?u c� repository)
+2. T?o branch m?i: `git checkout -b feature/your-feature`
+3. L�m theo [Hu?ng D?n Ph�t Tri?n](#-hu?ng-d?n-ph�t-tri?n)
+4. Test k? c�c thay d?i
+5. Commit v?i message r� r�ng
+6. T?o Pull Request
 
-### Ý tưởng đóng góp
+### � tu?ng d�ng g�p
 
-- Thêm dịch vụ TTS mới
+- Th�m d?ch v? TTS m?i
 - Improve UI/UX
-- Thêm text processing features
-- Viết tests
+- Th�m text processing features
+- Vi?t tests
 - Improve documentation
 - Bug fixes
 
 ---
 
-## 🌐 Đa ngôn ngữ giao diện (UI)
+## ?? �a ng�n ng? giao di?n (UI)
 
-Super Free TTS hiện hỗ trợ **2 ngôn ngữ giao diện**: **English** và **Tiếng Việt**.
+Super Free TTS hi?n h? tr? **2 ng�n ng? giao di?n**: **English** v� **Ti?ng Vi?t**.
 
-- **Cách đổi ngôn ngữ giao diện**:
-  1. Vào menu `Tools → Super Free TTS: Preferences`  
-  2. Ở nhóm **Language / Ngôn ngữ**, chọn:
-     - `English` để dùng giao diện tiếng Anh
-     - `Tiếng Việt` để dùng giao diện tiếng Việt
-  3. Nhấn **Apply** và mở lại các hộp thoại của Super Free TTS (Easy, Collection, Configuration, Realtime, Preset Rules, Voice Selection) để thấy thay đổi.
+- **C�ch d?i ng�n ng? giao di?n**:
+  1. V�o menu `Tools ? Super Free TTS: Preferences`  
+  2. ? nh�m **Language / Ng�n ng?**, ch?n:
+     - `English` d? d�ng giao di?n ti?ng Anh
+     - `Ti?ng Vi?t` d? d�ng giao di?n ti?ng Vi?t
+  3. Nh?n **Apply** v� m? l?i c�c h?p tho?i c?a Super Free TTS (Easy, Collection, Configuration, Realtime, Preset Rules, Voice Selection) d? th?y thay d?i.
 
-- **Lưu ý cho developer**:
-  - Bảng dịch nằm trong file `[superfreetss_addon/i18n.py](superfreetss_addon/i18n.py)`.
-  - Khi thêm text mới ra UI, hãy dùng `i18n.get_text("some_key", lang)` thay vì hard-code chuỗi.
-  - Quy ước đặt key:
-    - Nút bấm: `button_*` hoặc `easy_button_*`, `batch_button_*`, `voice_button_*`
-    - Tiêu đề dialog: `dialog_*_title`
-    - Nhóm / groupbox / label: `*_group_*`, `label_*`
-
----
-
-## 📝 License
-
-Super Free TTS được phát triển bởi **Paul from AnkiVN**. 100% miễn phí cho cộng đồng Anki Việt Nam.
+- **Luu � cho developer**:
+  - B?ng d?ch n?m trong file `[superfreetts_addon/i18n.py](superfreetts_addon/i18n.py)`.
+  - Khi th�m text m?i ra UI, h�y d�ng `i18n.get_text("some_key", lang)` thay v� hard-code chu?i.
+  - Quy u?c d?t key:
+    - N�t b?m: `button_*` ho?c `easy_button_*`, `batch_button_*`, `voice_button_*`
+    - Ti�u d? dialog: `dialog_*_title`
+    - Nh�m / groupbox / label: `*_group_*`, `label_*`
 
 ---
 
-## 📞 Liên Hệ & Hỗ Trợ
+## ?? License
+
+Super Free TTS du?c ph�t tri?n b?i **Paul from AnkiVN**. 100% mi?n ph� cho c?ng d?ng Anki Vi?t Nam.
+
+---
+
+## ?? Li�n H? & H? Tr?
 
 - **Website**: https://ankivn.com
-- **Tác giả**: Paul from AnkiVN
-- **Issues**: Báo cáo lỗi hoặc đề xuất tính năng qua AnkiVN
+- **T�c gi?**: Paul from AnkiVN
+- **Issues**: B�o c�o l?i ho?c d? xu?t t�nh nang qua AnkiVN
 
 ---
 
-**Tài liệu cập nhật**: 2026-04-11  
-**Phiên bản addon (version.py)**: 1.0  
-**Tác giả**: Paul from AnkiVN  
+**T�i li?u c?p nh?t**: 2026-04-11  
+**Phi�n b?n addon (version.py)**: 1.0  
+**T�c gi?**: Paul from AnkiVN  

@@ -33,7 +33,7 @@ TOP_LEVEL_FILES = [
 # Whole directories synced. Existing repo dir is removed first so deletes
 # in the addon are reflected in the repo.
 SYNCED_DIRS = [
-    "superfreetss_addon",
+    "superfreetts_addon",
     "external",
     "graphics",
 ]
@@ -47,14 +47,14 @@ EXCLUDE_DIR_NAMES = {
     "cache",
     "user_files",
     "git-objects-tmp",
-    "superfreetss-mirror.git",
+    "superfreetts-mirror.git",
     "dist",
 }
 
 EXCLUDE_FILE_SUFFIXES = (".pyc", ".pyo", ".ankiaddon")
 EXCLUDE_FILE_NAMES = {
     "meta.json",
-    "superfreetss-work.index",
+    "superfreetts-work.index",
     "EDGE_TTS_WORKER_20_REPORT.md",
 }
 
