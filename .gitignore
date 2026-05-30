@@ -30,6 +30,10 @@ EDGE_TTS_WORKER_20_REPORT.md
 # --- Local-only worker toggle scripts ---
 set_edge_workers_*.py
 
+# --- AI agent tooling (skills, locks) ---
+.agents/
+skills-lock.json
+
 # --- Editor / OS junk ---
 .DS_Store
 Thumbs.db
