@@ -24,7 +24,9 @@ from typing import Dict, Optional, Any, List, Callable, Tuple
 from datetime import datetime, timedelta
 from collections import OrderedDict
 
+from . import batch_constants
 from . import logging_utils
+from . import resource_manager
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -118,23 +120,25 @@ class SimpleResourceMonitor:
     def __init__(self, max_ram_mb: int = 3000):
         self.max_ram_mb = max_ram_mb
         self.process = None  # Initialize first
+        self._has_psutil = False
         
         try:
             import psutil
             self.process = psutil.Process(os.getpid())
+            self._has_psutil = True
         except (ImportError, Exception):
-            logger.debug("[BATCH] psutil unavailable, memory monitoring disabled")
+            logger.debug("[BATCH] psutil unavailable, using platform memory fallback")
         
         self.initial_ram_mb = self._get_ram_usage()  # Now safe to call
     
     def _get_ram_usage(self) -> int:
         """Get current RAM usage in MB"""
         if not self.process:
-            return 0
+            return resource_manager._get_process_ram_usage_without_psutil()
         try:
             return int(self.process.memory_info().rss / 1024 / 1024)
         except Exception:
-            return 0
+            return resource_manager._get_process_ram_usage_without_psutil()
     
     def should_gc(self, items_processed: int) -> bool:
         """
@@ -405,7 +409,7 @@ class MultiEngineExecutor:
         self.engine_config = engine_config or {
             'Piper': 1,
             'Kokoro': 1,
-            'EdgeTTS': 20,
+            'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
             'default': 1
         }
         

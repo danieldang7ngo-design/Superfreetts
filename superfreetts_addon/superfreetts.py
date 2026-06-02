@@ -725,8 +725,9 @@ class SuperFreeTTS():
             for dedup_key, task_indices in dedup_map.items():
                 task_idx = task_indices[0]
                 ordered_items.append((dedup_key, tasks[task_idx], task_indices))
-            for offset in range(0, len(ordered_items), batch_constants.MAX_WORKER_THREADS):
-                all_chunks.append(('__sequence__', ordered_items[offset:offset + batch_constants.MAX_WORKER_THREADS]))
+            sequence_chunk_size = batch_constants.SEQUENCE_MAX_WORKER_THREADS
+            for offset in range(0, len(ordered_items), sequence_chunk_size):
+                all_chunks.append(('__sequence__', ordered_items[offset:offset + sequence_chunk_size]))
         else:
             for (service_name, _), group_tasks in engine_groups.items():
                 max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
@@ -846,6 +847,8 @@ class SuperFreeTTS():
                             batch_status.notify_change(note_id)
                     
                     batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
+                    self.executor.monitor.maybe_gc(completed_count)
+                    del batch_results
                     
                 except Exception as e:
                     logger.error(f"[BATCH] Batch execution failed: {e}")
@@ -858,6 +861,7 @@ class SuperFreeTTS():
                             with batch_status.get_note_action_context(note_id, False) as ctx:
                                 ctx.set_error(e)
                             batch_status.notify_change(note_id)
+                    self.executor.monitor.maybe_gc(completed_count)
         
         # Wait for submit thread to finish (should be done already)
         submit_thread.join(timeout=5.0)
@@ -927,7 +931,12 @@ class SuperFreeTTS():
             except Exception as e:
                 return idx, (None, e)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=min(batch_constants.MAX_WORKER_THREADS, len(chunk))) as pool:
+        max_sequence_workers = min(
+            batch_constants.SEQUENCE_MAX_WORKER_THREADS,
+            cpu_utils.CPUInfo.get_max_workers(),
+            len(chunk),
+        )
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, max_sequence_workers)) as pool:
             futures = [pool.submit(generate_one, idx, item) for idx, item in enumerate(chunk)]
             for future in concurrent.futures.as_completed(futures):
                 idx, result = future.result()

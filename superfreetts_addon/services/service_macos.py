@@ -528,21 +528,33 @@ class MacOS(service.ServiceBase):
         logger.info(f'getting audio with voice {voice}')
 
         rate = options.get('rate', self.DEFAULT_SPEECH_RATE)
+        temp_audio_path = None
+        mp3_temp_audio_path = None
 
         try:
             voice_name = voice.voice_key['name']
-            temp_audio_file = tempfile.NamedTemporaryFile(suffix='.aiff', prefix='superfreetts_macos', delete=False)
-            arg_list = ['say', '-v', voice_name, '-r', str(rate), '-o', temp_audio_file.name, '--', source_text]
+            fd, temp_audio_path = tempfile.mkstemp(suffix='.aiff', prefix='superfreetts_macos')
+            os.close(fd)
+            fd, mp3_temp_audio_path = tempfile.mkstemp(suffix='.mp3', prefix='superfreetts_macos')
+            os.close(fd)
+
+            arg_list = ['say', '-v', voice_name, '-r', str(rate), '-o', temp_audio_path, '--', source_text]
             logger.debug(f"calling 'say' with {arg_list}")
             subprocess.check_call(arg_list)
 
-            mp3_temp_audio_file = tempfile.NamedTemporaryFile(suffix='.mp3', prefix='superfreetts_macos')
-            aqt.sound._encode_mp3(temp_audio_file.name, mp3_temp_audio_file.name)
+            aqt.sound._encode_mp3(temp_audio_path, mp3_temp_audio_path)
 
-            logger.debug(f'opening {mp3_temp_audio_file.name} to read in contents')
-            with open(mp3_temp_audio_file.name, 'rb') as audio_file:
+            logger.debug(f'opening {mp3_temp_audio_path} to read in contents')
+            with open(mp3_temp_audio_path, 'rb') as audio_file:
                 audio = audio_file.read()
                 return audio
         except:
             logger.exception(f'could not generate audio with service {self.name}')
             raise
+        finally:
+            for path in (temp_audio_path, mp3_temp_audio_path):
+                if path and os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except OSError as cleanup_error:
+                        logger.warning(f'could not remove temporary macOS audio file {path}: {cleanup_error}')
