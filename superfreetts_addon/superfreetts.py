@@ -70,7 +70,8 @@ class SuperFreeTTS():
         # Initialize multi-engine executor with settings from service configurations
         try:
             config = self.anki_utils.get_config()
-            service_config_map = config.get('service_config', {})
+            configuration_config = config.get(constants.CONFIG_CONFIGURATION, {})
+            service_config_map = configuration_config.get(constants.CONFIG_SERVICE_CONFIG, {})
             engine_config = self._build_engine_config(service_config_map)
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
@@ -725,7 +726,11 @@ class SuperFreeTTS():
             for dedup_key, task_indices in dedup_map.items():
                 task_idx = task_indices[0]
                 ordered_items.append((dedup_key, tasks[task_idx], task_indices))
-            sequence_chunk_size = batch_constants.SEQUENCE_MAX_WORKER_THREADS
+            sequence_chunk_size = self._get_sequence_worker_limit(ordered_items)
+            logger.info(
+                f"[BATCH] Sequence mode service limits: "
+                f"{self._get_sequence_service_limits(ordered_items)}; chunk_size={sequence_chunk_size}"
+            )
             for offset in range(0, len(ordered_items), sequence_chunk_size):
                 all_chunks.append(('__sequence__', ordered_items[offset:offset + sequence_chunk_size]))
         else:
@@ -901,8 +906,49 @@ class SuperFreeTTS():
 
         return results
 
+    def _get_sequence_service_limits(self, items):
+        service_limits = {}
+        if not items:
+            return service_limits
+
+        local_limit = max(1, min(
+            batch_constants.SEQUENCE_MAX_WORKER_THREADS,
+            cpu_utils.CPUInfo.get_max_workers(),
+        ))
+
+        for _, task_data, _ in items:
+            service_name = self.executor.detect_service(task_data)
+            if service_name in service_limits:
+                continue
+
+            if service_name == 'EdgeTTS':
+                configured_workers = getattr(self.executor, 'engine_config', {}).get(
+                    'EdgeTTS',
+                    batch_constants.EDGETTS_MAX_WORKERS,
+                )
+                service_limits[service_name] = max(1, min(
+                    int(configured_workers),
+                    batch_constants.EDGETTS_MAX_WORKERS,
+                ))
+            else:
+                service_limits[service_name] = local_limit
+
+        return service_limits
+
+    def _get_sequence_worker_limit(self, items):
+        if not items:
+            return 1
+
+        service_limits = self._get_sequence_service_limits(items)
+        total_limit = sum(service_limits.values()) or 1
+        return max(1, min(total_limit, len(items)))
+
     def _generate_audio_sequence_task(self, chunk):
         results = [None] * len(chunk)
+        service_gates = {
+            service_name: threading.BoundedSemaphore(limit)
+            for service_name, limit in self._get_sequence_service_limits(chunk).items()
+        }
 
         def generate_one(idx, item):
             dedup_key, task_data, _ = item
@@ -913,29 +959,33 @@ class SuperFreeTTS():
             proc_text = task_data['processed_text']
             voice_id = chosen_voice.voice_id
             voice_options = chosen_voice.options
+            service_name = self.executor.detect_service(task_data)
             request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
             cached_file = self.audio_store.get_cached_file(request_key)
 
             if cached_file is not None:
                 return idx, ((task_data['source_text'], proc_text, cached_file.audio_filename, cached_file.full_filename), None)
 
+            gate = service_gates.get(service_name)
             try:
-                full_filename, audio_filename = self.generate_audio_write_file(
-                    proc_text,
-                    voice_id,
-                    voice_options,
-                    task_data['audio_request_context'],
-                )
+                if gate is not None:
+                    gate.acquire()
+                try:
+                    full_filename, audio_filename = self.generate_audio_write_file(
+                        proc_text,
+                        voice_id,
+                        voice_options,
+                        task_data['audio_request_context'],
+                    )
+                finally:
+                    if gate is not None:
+                        gate.release()
                 self.executor.cache_result(proc_text, str(request_key), task_data['source_text'], audio_filename, full_filename)
                 return idx, ((task_data['source_text'], proc_text, audio_filename, full_filename), None)
             except Exception as e:
                 return idx, (None, e)
 
-        max_sequence_workers = min(
-            batch_constants.SEQUENCE_MAX_WORKER_THREADS,
-            cpu_utils.CPUInfo.get_max_workers(),
-            len(chunk),
-        )
+        max_sequence_workers = self._get_sequence_worker_limit(chunk)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, max_sequence_workers)) as pool:
             futures = [pool.submit(generate_one, idx, item) for idx, item in enumerate(chunk)]
             for future in concurrent.futures.as_completed(futures):
