@@ -202,7 +202,7 @@ def update_menu_language(hypertts):
     if ankivn_menu:
         ankivn_menu.setTitle("AnkiVN")
     if action_unified_settings:
-        action_unified_settings.setText(i18n.get_text("unified_settings_title", lang))
+        action_unified_settings.setText(f'🎧 {i18n.get_text("unified_settings_title", lang)}')
 
 def init(hypertts):
 

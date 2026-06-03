@@ -75,6 +75,21 @@ class Configuration(component_common.ConfigComponentBase):
             self.save_button.style().polish(self.save_button)
             self._refresh_service_status_badges()
 
+    def _get_service_option_label(self, service, key, option_type):
+        lang = self.hypertts.get_ui_language()
+        label_key = f"service_option_{service.name}_{key}"
+        translated_label = i18n.get_text(label_key, lang)
+        if translated_label != label_key:
+            if service.name == "EdgeTTS" and key == "concurrency_workers":
+                max_workers = option_type[4] if isinstance(option_type, tuple) and len(option_type) > 4 else ''
+                return translated_label.format(max_workers=max_workers)
+            return translated_label
+
+        if isinstance(option_type, tuple) and len(option_type) > 1:
+            if option_type[0] in ['file', 'directory', 'number', 'bool']:
+                return option_type[1]
+        return key
+
     def _build_service_search_text(self, service, service_description):
         """Build normalized search text including service/options/advanced labels."""
         chunks = [service.name, service_description]
@@ -82,8 +97,7 @@ class Configuration(component_common.ConfigComponentBase):
         try:
             for key, option_type in service.configuration_options().items():
                 chunks.append(str(key))
-                if isinstance(option_type, tuple) and len(option_type) > 1 and option_type[0] in ['file', 'directory', 'number', 'bool']:
-                    chunks.append(str(option_type[1]))
+                chunks.append(str(self._get_service_option_label(service, key, option_type)))
         except Exception:
             pass
 
@@ -91,8 +105,7 @@ class Configuration(component_common.ConfigComponentBase):
             if hasattr(service, 'advanced_configuration_options'):
                 for key, option_type in service.advanced_configuration_options().items():
                     chunks.append(str(key))
-                    if isinstance(option_type, tuple) and len(option_type) > 1 and option_type[0] in ['file', 'directory', 'number', 'bool']:
-                        chunks.append(str(option_type[1]))
+                    chunks.append(str(self._get_service_option_label(service, key, option_type)))
         except Exception:
             pass
 
@@ -339,13 +352,7 @@ class Configuration(component_common.ConfigComponentBase):
         row = 0
         for key, type in configuration_options.items():
             widget_name = f'{service.name}_{key}'
-            
-            # Determine label text
-            label_text = key + ':'
-            if isinstance(type, tuple) and len(type) > 1:
-                # Support custom labels for file, directory, number, bool types
-                if type[0] in ['file', 'directory', 'number', 'bool']:
-                    label_text = type[1] + ':'
+            label_text = self._get_service_option_label(service, key, type) + ':'
             
             options_gridlayout.addWidget(aqt.qt.QLabel(label_text), row, 0, 1, 1)
             if type == str:
@@ -629,12 +636,7 @@ class Configuration(component_common.ConfigComponentBase):
         row = 0
         for key, type in advanced_options.items():
             widget_name = f'{service.name}_{key}_adv'
-            
-            # Determine label text
-            label_text = key + ':'
-            if isinstance(type, tuple) and len(type) > 1:
-                if type[0] in ['file', 'directory', 'number', 'bool']:
-                    label_text = type[1] + ':'
+            label_text = self._get_service_option_label(service, key, type) + ':'
             
             advanced_gridlayout.addWidget(aqt.qt.QLabel(label_text), row, 0, 1, 1)
             

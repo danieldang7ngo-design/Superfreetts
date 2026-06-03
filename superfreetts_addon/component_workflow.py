@@ -41,6 +41,9 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.autorun = autorun
         self.workflow_failure_records: List[batch_status.FailureRecord] = []
         self.failed_note_ids_to_tag: List[int] = []
+        self.pending_generated_audio = {}
+        self.workflow_operation: Optional[str] = None
+        self.apply_workflow_indices: List[int] = []
 
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
@@ -152,16 +155,22 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         buttons_layout = aqt.qt.QHBoxLayout()
         buttons_layout.addStretch()
-        self.run_button = aqt.qt.QPushButton(self._text("workflow_run"))
+        self.run_button = aqt.qt.QPushButton(self._text("workflow_generate_all"))
+        self.apply_selected_button = aqt.qt.QPushButton(self._text("workflow_apply_selected"))
+        self.apply_all_button = aqt.qt.QPushButton(self._text("workflow_apply_all"))
         self.stop_button = aqt.qt.QPushButton(i18n.get_text("button_stop", lang))
         self.close_button = aqt.qt.QPushButton(i18n.get_text('button_close', lang))
         buttons_layout.addWidget(self.run_button)
+        buttons_layout.addWidget(self.apply_selected_button)
+        buttons_layout.addWidget(self.apply_all_button)
         buttons_layout.addWidget(self.stop_button)
         buttons_layout.addWidget(self.close_button)
         self.main_layout.addLayout(buttons_layout)
 
         gui_utils.configure_pastel_button(self.save_button, style_name='emerald', font_size=10)
         gui_utils.configure_pastel_button(self.run_button, style_name='emerald', is_primary=True, font_size=11)
+        gui_utils.configure_pastel_button(self.apply_selected_button, style_name='blue', font_size=10)
+        gui_utils.configure_pastel_button(self.apply_all_button, style_name='emerald', font_size=10)
         gui_utils.configure_pastel_button(self.open_button, style_name='blue', font_size=10)
         gui_utils.configure_pastel_button(self.duplicate_button, style_name='purple', font_size=10)
         gui_utils.configure_pastel_button(self.rename_button, style_name='amber', font_size=10)
@@ -180,6 +189,8 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.down_button.clicked.connect(lambda: self.move_selected_preset(1))
         self.clear_button.clicked.connect(self.clear_workflow)
         self.run_button.clicked.connect(self.run_workflow_button_pressed)
+        self.apply_selected_button.clicked.connect(self.apply_selected_preset_button_pressed)
+        self.apply_all_button.clicked.connect(self.apply_all_presets_button_pressed)
         self.stop_button.clicked.connect(self.stop_workflow)
         self.close_button.clicked.connect(self.close_button_pressed)
         self.available_list.itemSelectionChanged.connect(self.refresh_button_states)
@@ -193,10 +204,24 @@ class WorkflowDialog(aqt.qt.QDialog):
             item.setData(aqt.qt.Qt.ItemDataRole.UserRole, preset.id)
             self.available_list.addItem(item)
 
-    def _workflow_item_text(self, preset_id: str) -> str:
+    def _workflow_item_text(self, preset_id: str, workflow_index: Optional[int] = None) -> str:
         if self.hypertts.preset_exists(preset_id):
-            return self.hypertts.get_preset_name(preset_id)
+            preset_name = self.hypertts.get_preset_name(preset_id)
+            if workflow_index in self.pending_generated_audio:
+                return self._text("workflow_preset_ready_to_apply", preset_name=preset_name)
+            return preset_name
         return self._text("workflow_missing_preset", preset_id=preset_id)
+
+    def refresh_workflow_item_labels(self) -> None:
+        for index in range(self.workflow_list.count()):
+            item = self.workflow_list.item(index)
+            preset_id = item.data(aqt.qt.Qt.ItemDataRole.UserRole)
+            item.setText(self._workflow_item_text(preset_id, index))
+
+    def clear_pending_generated_audio(self) -> None:
+        self.pending_generated_audio.clear()
+        if hasattr(self, 'workflow_list'):
+            self.refresh_workflow_item_labels()
 
     def update_workflow_dropdown(self, current_name: str, current_id: Optional[str]) -> None:
         workflow_list = self.hypertts.get_workflow_list()
@@ -233,8 +258,9 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.workflow_model = workflow_model
         self.workflow_list.clear()
         self.update_workflow_dropdown(workflow_model.name, workflow_model.uuid)
-        for preset_id in workflow_model.preset_ids:
-            item = aqt.qt.QListWidgetItem(self._workflow_item_text(preset_id))
+        self.clear_pending_generated_audio()
+        for index, preset_id in enumerate(workflow_model.preset_ids):
+            item = aqt.qt.QListWidgetItem(self._workflow_item_text(preset_id, index))
             item.setData(aqt.qt.Qt.ItemDataRole.UserRole, preset_id)
             self.workflow_list.addItem(item)
         self.model_changed = False
@@ -295,9 +321,12 @@ class WorkflowDialog(aqt.qt.QDialog):
     def refresh_button_states(self) -> None:
         running = self.workflow_running
         has_available_selection = len(self.available_list.selectedItems()) > 0
-        has_workflow_selection = self.workflow_list.currentRow() >= 0
+        selected_workflow_row = self.workflow_list.currentRow()
+        has_workflow_selection = selected_workflow_row >= 0
         has_workflow_items = self.workflow_list.count() > 0
         has_saved_workflows = len(self.hypertts.get_workflow_list()) > 0
+        has_pending_generated_audio = len(self.pending_generated_audio) > 0
+        has_selected_pending_audio = selected_workflow_row in self.pending_generated_audio
 
         self.add_button.setEnabled((not running) and has_available_selection)
         self.remove_button.setEnabled((not running) and has_workflow_selection)
@@ -309,6 +338,8 @@ class WorkflowDialog(aqt.qt.QDialog):
         )
         self.clear_button.setEnabled((not running) and has_workflow_items)
         self.run_button.setEnabled((not running) and has_workflow_items)
+        self.apply_selected_button.setEnabled((not running) and has_selected_pending_audio)
+        self.apply_all_button.setEnabled((not running) and has_pending_generated_audio)
         self.stop_button.setEnabled(running)
         self.close_button.setEnabled(not running)
         self.new_button.setEnabled(not running)
@@ -322,6 +353,7 @@ class WorkflowDialog(aqt.qt.QDialog):
             self.delete_button.setEnabled(True)
 
     def mark_model_changed(self) -> None:
+        self.clear_pending_generated_audio()
         self.model_changed = True
         self.refresh_button_states()
 
@@ -447,6 +479,8 @@ class WorkflowDialog(aqt.qt.QDialog):
             self.workflow_cancelled = False
             self.current_preset_index = 0
             self.total_presets = len(workflow_model.preset_ids)
+            self.clear_pending_generated_audio()
+            self.workflow_operation = 'generate'
             self.workflow_failure_records = []
             self.failed_note_ids_to_tag = []
             self.preset_progress.setRange(0, self.total_presets)
@@ -462,6 +496,42 @@ class WorkflowDialog(aqt.qt.QDialog):
                 self,
                 self.run_workflow_collection_op,
                 self.run_workflow_done,
+            )
+
+    def apply_selected_preset_button_pressed(self) -> None:
+        row = self.workflow_list.currentRow()
+        if row not in self.pending_generated_audio:
+            return
+        self.apply_generated_workflow_indices([row])
+
+    def apply_all_presets_button_pressed(self) -> None:
+        pending_indices = sorted(self.pending_generated_audio.keys())
+        if len(pending_indices) == 0:
+            return
+        self.apply_generated_workflow_indices(pending_indices)
+
+    def apply_generated_workflow_indices(self, workflow_indices: List[int]) -> None:
+        with self.hypertts.error_manager.get_single_action_context('Applying Workflow Audio'):
+            self.workflow_cancelled = False
+            self.current_preset_index = 0
+            self.total_presets = len(workflow_indices)
+            self.workflow_operation = 'apply'
+            self.apply_workflow_indices = workflow_indices
+            self.workflow_failure_records = []
+            self.failed_note_ids_to_tag = []
+            self.preset_progress.setRange(0, self.total_presets)
+            self.preset_progress.setValue(0)
+            self.note_progress.setRange(0, 100)
+            self.note_progress.setValue(0)
+            self.workflow_status_label.setText(self._text("workflow_applying_starting"))
+            self.current_preset_label.setText(self._text("workflow_current_preset_idle"))
+            self.workflow_running = True
+            self.refresh_button_states()
+
+            self.hypertts.anki_utils.run_in_background_collection_op(
+                self,
+                self.apply_generated_workflow_collection_op,
+                self.apply_generated_workflow_done,
             )
 
     def stop_workflow(self) -> None:
@@ -501,12 +571,74 @@ class WorkflowDialog(aqt.qt.QDialog):
                 )
             )
 
-            self.hypertts.process_batch_audio(
-                self.note_id_list,
-                preset,
-                self.current_batch_status,
-                anki_collection,
+            self.current_batch_status.begin()
+            try:
+                prepared_batch = self.hypertts.prepare_batch_audio_generation(
+                    self.note_id_list,
+                    preset,
+                    self.current_batch_status,
+                )
+                generated_results = self.hypertts.generate_prepared_batch_audio(
+                    prepared_batch,
+                    self.current_batch_status,
+                )
+            except Exception:
+                self.current_batch_status.end(False)
+                raise
+            else:
+                self.pending_generated_audio[preset_index - 1] = {
+                    'preset': preset,
+                    'results': generated_results,
+                    'batch_status': self.current_batch_status,
+                }
+                self.current_batch_status.end(True)
+
+            self.workflow_failure_records.extend(
+                self.current_batch_status.get_failure_records(preset_name=preset.name)
             )
+
+            if not self.current_batch_status.must_continue:
+                self.workflow_cancelled = True
+                break
+
+        self.current_batch_status = None
+
+    def apply_generated_workflow_collection_op(self, anki_collection: Any) -> None:
+        for apply_index, workflow_index in enumerate(self.apply_workflow_indices, start=1):
+            if self.workflow_cancelled:
+                break
+
+            pending_audio = self.pending_generated_audio.get(workflow_index)
+            if pending_audio == None:
+                continue
+
+            preset = pending_audio['preset']
+            generated_results = pending_audio['results']
+            self.current_preset_index = apply_index
+            self.current_preset_name = preset.name
+            self.current_batch_status = pending_audio['batch_status']
+
+            self.hypertts.anki_utils.run_on_main(
+                lambda idx=apply_index, total=self.total_presets, name=preset.name: self.workflow_preset_apply_started(
+                    idx, total, name
+                )
+            )
+
+            self.current_batch_status.begin()
+            try:
+                self.hypertts.apply_generated_batch_audio(
+                    generated_results,
+                    preset,
+                    self.current_batch_status,
+                    anki_collection,
+                )
+            except Exception:
+                self.current_batch_status.end(False)
+                raise
+            else:
+                self.current_batch_status.end(True)
+                del self.pending_generated_audio[workflow_index]
+
             self.workflow_failure_records.extend(
                 self.current_batch_status.get_failure_records(preset_name=preset.name)
             )
@@ -521,10 +653,19 @@ class WorkflowDialog(aqt.qt.QDialog):
         logger.debug(f'workflow finished, result: {result}')
         self.hypertts.anki_utils.run_on_main(self.finish_workflow_ui)
 
+    def apply_generated_workflow_done(self, result: Any) -> None:
+        logger.debug(f'workflow apply finished, result: {result}')
+        self.hypertts.anki_utils.run_on_main(self.finish_workflow_apply_ui)
+
     def finish_workflow_ui(self) -> None:
         completed = not self.workflow_cancelled
         if completed:
-            self.workflow_status_label.setText(self._text("workflow_completed"))
+            if len(self.pending_generated_audio) > 0:
+                self.workflow_status_label.setText(
+                    self._text("workflow_generated_ready", count=len(self.pending_generated_audio))
+                )
+            else:
+                self.workflow_status_label.setText(self._text("workflow_completed"))
             self.current_preset_label.setText(
                 self._text(
                     "workflow_completed_current_preset",
@@ -537,6 +678,34 @@ class WorkflowDialog(aqt.qt.QDialog):
         else:
             self.workflow_status_label.setText(self._text("workflow_stopped"))
         self.workflow_running = False
+        self.workflow_operation = None
+        self.refresh_workflow_item_labels()
+        self.refresh_button_states()
+
+    def finish_workflow_apply_ui(self) -> None:
+        completed = not self.workflow_cancelled
+        if completed:
+            if len(self.pending_generated_audio) > 0:
+                self.workflow_status_label.setText(
+                    self._text("workflow_apply_completed_remaining", count=len(self.pending_generated_audio))
+                )
+            else:
+                self.workflow_status_label.setText(self._text("workflow_apply_completed"))
+            self.current_preset_label.setText(
+                self._text(
+                    "workflow_completed_current_preset",
+                    done=self.total_presets,
+                    total=self.total_presets,
+                )
+            )
+            self.preset_progress.setValue(self.total_presets)
+            self.note_progress.setValue(100)
+        else:
+            self.workflow_status_label.setText(self._text("workflow_stopped"))
+        self.workflow_running = False
+        self.workflow_operation = None
+        self.apply_workflow_indices = []
+        self.refresh_workflow_item_labels()
         self.refresh_button_states()
         self.show_failure_report_if_needed()
 
@@ -553,7 +722,23 @@ class WorkflowDialog(aqt.qt.QDialog):
             )
         )
         self.workflow_status_label.setText(
-            self._text("workflow_running_preset", preset_name=preset_name)
+            self._text("workflow_generating_preset", preset_name=preset_name)
+        )
+
+    def workflow_preset_apply_started(self, preset_index: int, total_presets: int, preset_name: str) -> None:
+        self.preset_progress.setRange(0, total_presets)
+        self.preset_progress.setValue(max(0, preset_index - 1))
+        self.note_progress.setValue(0)
+        self.current_preset_label.setText(
+            self._text(
+                "workflow_current_preset_progress",
+                preset_name=preset_name,
+                index=preset_index,
+                total=total_presets,
+            )
+        )
+        self.workflow_status_label.setText(
+            self._text("workflow_applying_preset", preset_name=preset_name)
         )
 
     def batch_start(self) -> None:
@@ -564,9 +749,14 @@ class WorkflowDialog(aqt.qt.QDialog):
             if completed:
                 self.note_progress.setValue(100)
                 self.preset_progress.setValue(self.current_preset_index)
-                self.workflow_status_label.setText(
-                    self._text("workflow_completed_preset", preset_name=self.current_preset_name)
-                )
+                if self.workflow_operation == 'apply':
+                    self.workflow_status_label.setText(
+                        self._text("workflow_applied_preset", preset_name=self.current_preset_name)
+                    )
+                else:
+                    self.workflow_status_label.setText(
+                        self._text("workflow_generated_preset", preset_name=self.current_preset_name)
+                    )
             else:
                 self.workflow_status_label.setText(
                     self._text("workflow_stopped_preset", preset_name=self.current_preset_name)

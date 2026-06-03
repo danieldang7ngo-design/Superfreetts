@@ -12,10 +12,47 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.3.4",
+        title={
+            "en": "Workflow generate-first apply controls",
+            "vi": "Workflow tạo trước rồi áp dụng",
+            "ko": "워크플로 먼저 생성 후 적용",
+        },
+        bullets={
+            "en": [
+                "Workflow now generates audio for all presets first, then waits before writing sound tags to notes.",
+                "Added Apply Selected Preset so a generated workflow preset can be applied one at a time.",
+                "Added Apply All so all generated workflow preset results can be applied in one pass.",
+                "Generated workflow presets are marked as ready to apply in the Workflow list.",
+                "The AnkiVN menu entry now shows a headphone icon: 🎧 Super Free TTS Settings.",
+                "EdgeTTS Advanced Settings labels are now localized in the Services settings page.",
+                "Locale dictionaries are now split into separate JSON files under superfreetts_addon/locales/.",
+            ],
+            "vi": [
+                "Workflow bây giờ tạo audio cho toàn bộ preset trước, rồi chờ trước khi ghi sound tag vào note.",
+                "Thêm Apply Selected Preset để áp dụng từng preset workflow đã tạo.",
+                "Thêm Apply All để áp dụng toàn bộ kết quả workflow đã tạo trong một lượt.",
+                "Preset workflow đã tạo sẽ được đánh dấu sẵn sàng áp dụng trong danh sách Workflow.",
+                "Menu AnkiVN bây giờ có icon tai nghe: 🎧 Super Free TTS Settings.",
+                "Nhãn Cài đặt nâng cao của EdgeTTS trong trang Services bây giờ đã có bản dịch.",
+                "Dictionary ngôn ngữ bây giờ đã được tách thành từng file JSON riêng trong superfreetts_addon/locales/.",
+            ],
+            "ko": [
+                "워크플로가 모든 프리셋의 오디오를 먼저 생성한 뒤 노트에 sound tag를 쓰기 전에 대기합니다.",
+                "생성된 워크플로 프리셋을 하나씩 적용할 수 있도록 Apply Selected Preset을 추가했습니다.",
+                "생성된 모든 워크플로 프리셋 결과를 한 번에 적용할 수 있도록 Apply All을 추가했습니다.",
+                "생성 완료된 워크플로 프리셋은 워크플로 목록에서 적용 준비 상태로 표시됩니다.",
+                "AnkiVN 메뉴 항목에 헤드폰 아이콘을 추가했습니다: 🎧 Super Free TTS Settings.",
+                "Services 설정 페이지의 EdgeTTS 고급 설정 라벨을 현지화했습니다.",
+                "Locale dictionary를 superfreetts_addon/locales/ 아래의 언어별 JSON 파일로 분리했습니다.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.3.3",
         title={
             "en": "Batch cache, audio IO, and core cleanup",
-            "vi": "Cache batch, ghi audio, va don core",
+            "vi": "Cache batch, ghi audio và dọn core",
             "ko": "배치 캐시, 오디오 입출력 및 핵심 코드 정리"
         },
         bullets={
@@ -27,11 +64,11 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "The current workflow and UI behavior remain unchanged.",
             ],
             "vi": [
-                "Giam goi TTS trung lap trong batch lon bang cache processed text va dedup request audio theo processed text, voice, voice options va dinh dang dau ra.",
-                "Cai thien cache/ghi file audio voi hash request on dinh, chi dung disk cache khi file ton tai va khong rong, va ghi file theo co che atomic.",
-                "Tach xu ly source text, luu file audio, va cap nhat sound tag cua note ra khoi superfreetss.py de core batch de test va de refactor tiep.",
-                "Bo sung regression test cho resolver text/source, audio file store, batch cache/dedup, note updater, text processing va psutil.",
-                "Workflow va hanh vi UI hien tai khong thay doi.",
+                "Giảm gọi TTS trùng lặp trong batch lớn bằng cache processed text và dedup request audio theo processed text, voice, voice options và định dạng đầu ra.",
+                "Cải thiện cache/ghi file audio với hash request ổn định, chỉ dùng disk cache khi file tồn tại và không rỗng, và ghi file theo cơ chế atomic.",
+                "Tách xử lý source text, lưu file audio, và cập nhật sound tag của note ra khỏi superfreetss.py để core batch dễ test và dễ refactor tiếp.",
+                "Bổ sung regression test cho resolver text/source, audio file store, batch cache/dedup, note updater, text processing và psutil.",
+                "Workflow và hành vi UI hiện tại không thay đổi.",
             ],
             "ko": [
                 "처리된 텍스트를 캐싱하고 처리된 텍스트, 음성, 음성 옵션 및 출력 형식을 기준으로 오디오 요청을 중복 제거하여 대규모 배치에서 중복 TTS 호출을 줄였습니다.",
