@@ -3,6 +3,11 @@
 
 from typing import Final
 
+try:
+    from . import _local_override
+except Exception:
+    _local_override = None
+
 # ============================================================================
 # MEMORY MANAGEMENT
 # ============================================================================
@@ -33,6 +38,8 @@ MAX_WORKER_THREADS: Final[int] = 20
 # Default 3 to avoid Microsoft rate-limiting for most users.
 # Power users: run set_edge_workers_20.py at the addon root to raise this locally.
 EDGETTS_MAX_WORKERS: Final[int] = 3
+if _local_override is not None:
+    EDGETTS_MAX_WORKERS = int(getattr(_local_override, "EDGETTS_MAX_WORKERS", EDGETTS_MAX_WORKERS))
 
 # Sequence mode can mix services, so keep its nested pool small enough that
 # service-specific caps and memory pressure are not bypassed.

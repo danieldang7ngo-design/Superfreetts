@@ -29,6 +29,8 @@ EDGE_TTS_WORKER_20_REPORT.md
 
 # --- Local-only worker toggle scripts ---
 set_edge_workers_*.py
+_local_override.py
+superfreetts_addon/_local_override.py
 
 # --- AI agent tooling (skills, locks) ---
 .agents/

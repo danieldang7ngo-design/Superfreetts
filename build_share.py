@@ -53,6 +53,7 @@ EXCLUDE_FILE_NAMES = {
     "meta.json",                       # Anki regenerates this on install
     "superfreetts-work.index",
     "EDGE_TTS_WORKER_20_REPORT.md",
+    "_local_override.py",
     "build_share.py",
     "set_edge_workers_20.py",
     "set_edge_workers_3.py",
