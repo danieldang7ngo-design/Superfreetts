@@ -11,6 +11,7 @@
 - Added a headphone icon to the AnkiVN menu entry: `🎧 Super Free TTS Settings`.
 - Localized EdgeTTS Advanced Settings labels in the Services settings page.
 - Split locale dictionaries into separate JSON files under `superfreetts_addon/locales/` so future translations do not bloat `i18n.py`.
+- Added UI language options for Simplified Chinese, Traditional Chinese (Taiwan), and Japanese.
 
 ### Tiếng Việt
 
@@ -21,6 +22,7 @@
 - Thêm icon tai nghe cho menu AnkiVN: `🎧 Super Free TTS Settings`.
 - Bổ sung bản dịch cho nhãn Cài đặt nâng cao của EdgeTTS trong trang Services.
 - Tách dictionary ngôn ngữ thành từng file JSON riêng trong `superfreetts_addon/locales/` để sau này thêm ngôn ngữ mới không làm `i18n.py` phình to.
+- Bổ sung tùy chọn ngôn ngữ giao diện cho tiếng Trung Giản thể, tiếng Trung Phồn thể (Đài Loan) và tiếng Nhật.
 
 ### Korean
 
@@ -31,6 +33,40 @@
 - AnkiVN 메뉴 항목에 헤드폰 아이콘을 추가했습니다: `🎧 Super Free TTS Settings`.
 - Services 설정 페이지의 EdgeTTS 고급 설정 라벨을 현지화했습니다.
 - 향후 번역이 `i18n.py`를 비대하게 만들지 않도록 locale dictionary를 `superfreetts_addon/locales/`의 언어별 JSON 파일로 분리했습니다.
+- 중국어 간체, 중국어 번체(대만), 일본어 UI 언어 옵션을 추가했습니다.
+
+### 简体中文
+
+- Workflow 现在会先为所有预设生成音频，然后等待写入 sound tag 到笔记。
+- 新增 `Apply Selected Preset`，可逐个应用已生成的 workflow 预设。
+- 新增 `Apply All`，可一次性应用所有已生成的 workflow 预设结果。
+- 已生成的 workflow 预设会在 Workflow 列表中标记为可应用。
+- AnkiVN 菜单项现在显示耳机图标：`🎧 Super Free TTS Settings`。
+- Services 设置页中的 EdgeTTS 高级设置标签已本地化。
+- Locale dictionary 已拆分为 `superfreetts_addon/locales/` 下的独立 JSON 文件，避免 `i18n.py` 后续膨胀。
+- 新增简体中文、繁体中文（台湾）和日语的界面语言选项。
+
+### 繁體中文（台灣）
+
+- Workflow 現在會先為所有預設生成音訊，然後等待將 sound tag 寫入筆記。
+- 新增 `Apply Selected Preset`，可逐個套用已生成的 workflow 預設。
+- 新增 `Apply All`，可一次套用所有已生成的 workflow 預設結果。
+- 已生成的 workflow 預設會在 Workflow 清單中標記為可套用。
+- AnkiVN 選單項目現在顯示耳機圖示：`🎧 Super Free TTS Settings`。
+- Services 設定頁中的 EdgeTTS 進階設定標籤已在地化。
+- Locale dictionary 已拆分為 `superfreetts_addon/locales/` 下的獨立 JSON 檔案，避免 `i18n.py` 之後過度膨脹。
+- 新增簡體中文、繁體中文（台灣）和日文的介面語言選項。
+
+### Japanese
+
+- Workflow はすべてのプリセットの音声を先に生成し、sound tag をノートへ書き込む前に待機するようになりました。
+- 生成済みの workflow プリセットを個別に適用できる `Apply Selected Preset` を追加しました。
+- 生成済みの workflow プリセット結果を一括で適用できる `Apply All` を追加しました。
+- 生成済みの workflow プリセットは Workflow リストで適用準備完了として表示されます。
+- AnkiVN メニュー項目にヘッドホンアイコンを追加しました：`🎧 Super Free TTS Settings`。
+- Services 設定ページの EdgeTTS 詳細設定ラベルをローカライズしました。
+- Locale dictionary を `superfreetts_addon/locales/` 配下の言語別 JSON ファイルに分割し、今後 `i18n.py` が肥大化しないようにしました。
+- 簡体字中国語、繁体字中国語（台湾）、日本語の UI 言語オプションを追加しました。
 
 ## 1.3.3 - 2026-05-22
 

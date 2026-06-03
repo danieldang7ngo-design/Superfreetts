@@ -111,9 +111,8 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.language_label = aqt.qt.QLabel(i18n.get_text("preferences_label_interface_language", lang))
         general_layout.addWidget(self.language_label)
         self.language_combobox.clear()
-        self.language_combobox.addItem(i18n.get_text("preferences_option_language_en", lang), "en")
-        self.language_combobox.addItem(i18n.get_text("preferences_option_language_vi", lang), "vi")
-        self.language_combobox.addItem(i18n.get_text("preferences_option_language_ko", lang), "ko")
+        for language in i18n.SUPPORTED_LANGUAGES:
+            self.language_combobox.addItem(self._get_language_option_text(language, lang), language)
         self.language_combobox.setMinimumHeight(34)
         self._sync_language_combobox_value()
         general_layout.addWidget(self.language_combobox)
@@ -193,6 +192,9 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.update_ui_labels(data_lang)
         self.model_part_updated_common()
 
+    def _get_language_option_text(self, language: str, display_lang: str) -> str:
+        return i18n.get_text(f"preferences_option_language_{language.replace('-', '_')}", display_lang)
+
     def update_ui_labels(self, lang: str):
         self.general_header_label.setText(i18n.get_text("preferences_group_general_title", lang))
         if self.general_description_label is not None:
@@ -201,9 +203,9 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.language_combobox.setToolTip(i18n.get_text("preferences_language_tooltip", lang))
 
         self.language_combobox.blockSignals(True)
-        self.language_combobox.setItemText(0, i18n.get_text("preferences_option_language_en", lang))
-        self.language_combobox.setItemText(1, i18n.get_text("preferences_option_language_vi", lang))
-        self.language_combobox.setItemText(2, i18n.get_text("preferences_option_language_ko", lang))
+        for index, language in enumerate(i18n.SUPPORTED_LANGUAGES):
+            if index < self.language_combobox.count():
+                self.language_combobox.setItemText(index, self._get_language_option_text(language, lang))
         self.language_combobox.blockSignals(False)
         self._sync_language_combobox_value()
 
@@ -229,7 +231,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
 
     def _sync_language_combobox_value(self) -> None:
         current_lang = getattr(self.model, "ui_language", "en") or "en"
-        language_values = ["en", "vi", "ko"]
+        language_values = i18n.SUPPORTED_LANGUAGES
         target_index = language_values.index(current_lang) if current_lang in language_values else 0
         if self.language_combobox.count() <= target_index:
             return

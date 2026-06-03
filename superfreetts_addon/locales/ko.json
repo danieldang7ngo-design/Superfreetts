@@ -401,5 +401,8 @@
   "mms_manager_log_applied_chemist_fix": "chemist 발음 수정 적용됨",
   "status_loading": "불러오는 중...",
   "generic_warning": "경고",
-  "button_previewing": "미리보기 중..."
+  "button_previewing": "미리보기 중...",
+  "preferences_option_language_zh_CN": "중국어 간체(중국)",
+  "preferences_option_language_zh_TW": "중국어 번체(대만)",
+  "preferences_option_language_ja": "일본어"
 }

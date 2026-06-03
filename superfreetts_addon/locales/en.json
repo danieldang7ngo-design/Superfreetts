@@ -530,5 +530,8 @@
   "const_gui_text_shortcuts_anki_restart": "Note: You'll need to restart Anki after modifying these shortcuts.",
   "const_gui_text_shortcuts_editor_add_audio": "Add Audio to note using the selected preset",
   "const_gui_text_shortcuts_editor_preview_audio": "Preview Audio for a note using the selected preset",
-  "const_gui_text_error_handling_realtime_tts": "How to display errors during Realtime TTS"
+  "const_gui_text_error_handling_realtime_tts": "How to display errors during Realtime TTS",
+  "preferences_option_language_zh_CN": "Simplified Chinese (China)",
+  "preferences_option_language_zh_TW": "Traditional Chinese (Taiwan)",
+  "preferences_option_language_ja": "Japanese"
 }

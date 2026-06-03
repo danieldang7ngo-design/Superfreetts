@@ -524,5 +524,8 @@
   "const_gui_text_shortcuts_anki_restart": "Lưu ý: Bạn cần khởi động lại Anki sau khi thay đổi các phím tắt này.",
   "const_gui_text_shortcuts_editor_add_audio": "Thêm âm thanh cho thẻ bằng preset đã chọn",
   "const_gui_text_shortcuts_editor_preview_audio": "Nghe thử âm thanh cho thẻ bằng preset đã chọn",
-  "const_gui_text_error_handling_realtime_tts": "Cách hiển thị lỗi trong khi phát Realtime TTS"
+  "const_gui_text_error_handling_realtime_tts": "Cách hiển thị lỗi trong khi phát Realtime TTS",
+  "preferences_option_language_zh_CN": "Tiếng Trung Giản thể (Trung Quốc)",
+  "preferences_option_language_zh_TW": "Tiếng Trung Phồn thể (Đài Loan)",
+  "preferences_option_language_ja": "Tiếng Nhật"
 }

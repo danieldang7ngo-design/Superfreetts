@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict
 
-SUPPORTED_LANGUAGES = ["en", "vi", "ko"]
+SUPPORTED_LANGUAGES = ["en", "vi", "ko", "zh-CN", "zh-TW", "ja"]
 
 _LOCALE_DIR = Path(__file__).parent / "locales"
 
