@@ -7,6 +7,14 @@ import re
 import pprint
 import json
 
+addon_package_dir = os.path.dirname(os.path.realpath(__file__))
+addon_root_dir = os.path.dirname(addon_package_dir)
+external_dir = os.path.join(addon_root_dir, "external")
+if os.path.isdir(external_dir):
+    if external_dir in sys.path:
+        sys.path.remove(external_dir)
+    sys.path.insert(0, external_dir)
+
 enable_stats_error_reporting = False
 
 if hasattr(sys, '_pytest_mode'):
