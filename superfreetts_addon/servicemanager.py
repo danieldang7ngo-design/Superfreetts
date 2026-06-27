@@ -212,7 +212,7 @@ class ServiceManager():
             self.init_services()
 
         # Expensive services to defer unless explicitly requested (e.g., by config dialog)
-        EXPENSIVE_SERVICES = {'PiperTTS', 'KokoroTTS', 'MmsTTS'}
+        EXPENSIVE_SERVICES = {'PiperTTS', 'KokoroTTS', 'MmsTTS', 'SupertonicTTS'}
 
         # If expensive services are requested but not yet loaded, load them now
         if instantiate_expensive and not self._expensive_services_loaded:
@@ -406,7 +406,7 @@ class ServiceManager():
         if not self._expensive_services_loaded:
             logger.info('get_all_services: loading expensive services (Piper, Kokoro, MMS) for config dialog')
             # Load the deferred expensive services
-            EXPENSIVE_SERVICES = {'PiperTTS', 'KokoroTTS', 'MmsTTS'}
+            EXPENSIVE_SERVICES = {'PiperTTS', 'KokoroTTS', 'MmsTTS', 'SupertonicTTS'}
             for service_name in EXPENSIVE_SERVICES:
                 if service_name not in self.services:
                     self.instantiate_service_lazy(service_name)

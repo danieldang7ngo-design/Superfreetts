@@ -410,6 +410,7 @@ class MultiEngineExecutor:
             'Piper': 1,
             'Kokoro': 1,
             'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
+            'Supertonic': 1,
             'default': 1
         }
         

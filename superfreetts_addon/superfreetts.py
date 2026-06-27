@@ -102,12 +102,14 @@ class SuperFreeTTS():
             'KokoroTTS': 1,
             'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
             'MmsTTS': 1,
+            'SupertonicTTS': 1,
         }
         service_pool_map = {
             'PiperTTS': 'Piper',
             'KokoroTTS': 'Kokoro',
             'EdgeTTS': 'EdgeTTS',
             'MmsTTS': 'MMS',
+            'SupertonicTTS': 'Supertonic',
         }
         engine_config = {}
         for service_name, pool_name in service_pool_map.items():
@@ -137,6 +139,9 @@ class SuperFreeTTS():
             elif pool_name == 'MMS':
                 from .services import service_mms
                 service_mms._sherpa_pool.update_max_processes(concurrency)
+            elif pool_name == 'Supertonic':
+                from .services import service_supertonic
+                service_supertonic._supertonic_pool.update_max_processes(concurrency)
         except Exception as pool_err:
             logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
 
@@ -716,9 +721,19 @@ class SuperFreeTTS():
                     engine_groups[group_key] = []
                 engine_groups[group_key].append((dedup_key, task_data, task_indices))
 
-        # 2. Chunk groups into batches — prepared upfront
-        BATCH_SIZE_BY_ENGINE = {'EdgeTTS': 1}
-        DEFAULT_BATCH_SIZE = 10
+        # 2. Chunk groups into single-item work units for continuous batching.
+        # Offline runners only return after a whole IPC batch completes, so
+        # larger chunks let one long text hold a worker/process slot.
+        BATCH_SIZE_BY_ENGINE = {
+            'EdgeTTS': 1,
+            'PiperTTS': 1,
+            'KokoroTTS': 1,
+            'MmsTTS': 1,
+            'Piper': 1,
+            'Kokoro': 1,
+            'MMS': 1,
+        }
+        DEFAULT_BATCH_SIZE = 1
         all_chunks = []  # list of (service_name, chunk_items)
 
         if sequence_mode:
@@ -911,27 +926,22 @@ class SuperFreeTTS():
         if not items:
             return service_limits
 
-        local_limit = max(1, min(
-            batch_constants.SEQUENCE_MAX_WORKER_THREADS,
-            cpu_utils.CPUInfo.get_max_workers(),
-        ))
-
         for _, task_data, _ in items:
             service_name = self.executor.detect_service(task_data)
             if service_name in service_limits:
                 continue
 
+            try:
+                configured_workers = self.executor.get_executor(service_name)._max_workers
+            except Exception:
+                configured_workers = getattr(self.executor, 'engine_config', {}).get('default', 1)
+
             if service_name == 'EdgeTTS':
-                configured_workers = getattr(self.executor, 'engine_config', {}).get(
-                    'EdgeTTS',
-                    batch_constants.EDGETTS_MAX_WORKERS,
-                )
-                service_limits[service_name] = max(1, min(
-                    int(configured_workers),
-                    batch_constants.EDGETTS_MAX_WORKERS,
-                ))
+                max_cap = batch_constants.EDGETTS_MAX_WORKERS
             else:
-                service_limits[service_name] = local_limit
+                max_cap = min(batch_constants.MAX_WORKER_THREADS, cpu_utils.CPUInfo.get_max_workers())
+
+            service_limits[service_name] = max(1, min(int(configured_workers), max_cap))
 
         return service_limits
 

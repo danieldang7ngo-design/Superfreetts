@@ -33,6 +33,11 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 ### 🎯 **Cho eSpeak-ng**
 - **espeakng/** - Wrapper cho eSpeak-ng TTS engine
 
+### **Cho Supertonic**
+- **Không vendor trong external/** - Supertonic SDK và model được cài vào shared embedded Python runtime bằng setup dialog.
+- **Model cache** - Lưu trong `data/supertonic_cache` theo profile Anki, không đóng gói vào `.ankiaddon`.
+- **License lưu ý** - Supertonic model/license upstream cần được review trước khi phát hành public.
+
 ### 🎯 **HTTP & Network**
 - **requests/** - HTTP library đơn giản (gọi API các dịch vụ)
 - **urllib3/** - HTTP client low-level (requests dùng)

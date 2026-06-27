@@ -1,5 +1,6 @@
 import os
 import sys
+import concurrent.futures
 from unittest.mock import Mock
 
 from tests import mock_anki
@@ -57,6 +58,79 @@ class DummyExecutor:
 
     def cache_result(self, processed_text, voice_id, source_text, audio_filename, full_filename):
         self.cached.append((processed_text, voice_id, source_text, audio_filename, full_filename))
+
+
+class DummyMonitor:
+    def maybe_gc(self, items_processed):
+        pass
+
+
+class RecordingExecutorPool:
+    def __init__(self, max_workers=2):
+        self.submitted_chunks = []
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+
+    def submit(self, fn, chunk):
+        self.submitted_chunks.append(list(chunk))
+        return self.pool.submit(fn, chunk)
+
+    def shutdown(self):
+        self.pool.shutdown(wait=True)
+
+
+class ContinuousBatchExecutor:
+    def __init__(self):
+        self.pool = RecordingExecutorPool(max_workers=2)
+        self.monitor = DummyMonitor()
+
+    def detect_service(self, task):
+        return task["chosen_voice"].voice_id.service
+
+    def get_executor(self, service_name):
+        return self.pool
+
+    def cache_result(self, processed_text, voice_id, source_text, audio_filename, full_filename):
+        pass
+
+
+class DummyNoteActionContext:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        return False
+
+    def set_source_text(self, source_text):
+        pass
+
+    def set_processed_text(self, processed_text):
+        pass
+
+    def set_sound(self, sound_file):
+        pass
+
+    def set_status(self, status):
+        pass
+
+    def set_error(self, exception):
+        pass
+
+
+class DummyBatchStatus:
+    def __init__(self):
+        self.must_continue = True
+        self.futures_to_cancel = []
+        self.unique_tasks_completed = 0
+        self.messages = []
+
+    def set_status_message(self, message):
+        self.messages.append(message)
+
+    def get_note_action_context(self, note_id, blank_fields):
+        return DummyNoteActionContext()
+
+    def notify_change(self, note_id):
+        pass
 
 
 def make_app(tmp_path):
@@ -169,3 +243,38 @@ def test_generate_audio_write_file_uses_disk_cache_without_service_call(tmp_path
     assert full_filename == cached.full_filename
     assert audio_filename == cached.audio_filename
     assert service_manager.single_calls == []
+
+
+def test_execute_unique_tasks_submits_offline_items_individually_for_continuous_batching(tmp_path):
+    app, _ = make_app(tmp_path)
+    app.executor = ContinuousBatchExecutor()
+    chosen_voice = make_voice(service="PiperTTS")
+    tasks = [
+        make_task(1, "short", chosen_voice),
+        make_task(2, "a much longer text", chosen_voice),
+        make_task(3, "mid", chosen_voice),
+    ]
+    dedup_map = app._collect_batch_duplicates(tasks)
+
+    def fake_generate_audio_batch_task(chunk):
+        results = []
+        for _, task_data, _ in chunk:
+            note_id = task_data["note_id"]
+            results.append((
+                (
+                    task_data["source_text"],
+                    task_data["processed_text"],
+                    f"{note_id}.mp3",
+                    os.path.join(str(tmp_path), f"{note_id}.mp3"),
+                ),
+                None,
+            ))
+        return results
+
+    app._generate_audio_batch_task = fake_generate_audio_batch_task
+
+    audio_cache = app._execute_unique_tasks_unified(tasks, dedup_map, DummyBatchStatus())
+    app.executor.pool.shutdown()
+
+    assert sorted(len(chunk) for chunk in app.executor.pool.submitted_chunks) == [1, 1, 1]
+    assert len(audio_cache) == 3

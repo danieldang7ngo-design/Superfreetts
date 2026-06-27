@@ -15,7 +15,7 @@ from . import stats
 from . import i18n
 from . import component_about
 from . import component_piper_manager
-from . import component_kokoro_manager, component_mms_manager
+from . import component_kokoro_manager, component_mms_manager, component_supertonic_setup
 from . import component_onnx_manager
 from . import component_donation
 
@@ -233,7 +233,7 @@ class Configuration(component_common.ConfigComponentBase):
         update_message(lineedit.text())
 
     def _supports_setup_shortcut(self, service) -> bool:
-        return service.name in {"KokoroTTS", "MmsTTS", "PiperTTS"}
+        return service.name in {"KokoroTTS", "MmsTTS", "PiperTTS", "SupertonicTTS"}
 
     def _set_service_config_value_with_ui_sync(self, service_name: str, key: str, value: str):
         self.model.set_service_configuration_key(service_name, key, value)
@@ -272,6 +272,21 @@ class Configuration(component_common.ConfigComponentBase):
             # Set Piper engine directory
             if os.path.exists(constants.PIPER_ENGINE_DIR):
                 self._set_service_config_value_with_ui_sync(service.name, "executable_path", constants.PIPER_ENGINE_DIR)
+            return
+
+        if service.name == "SupertonicTTS":
+            dlg = component_supertonic_setup.SupertonicSetupDialog(self.dialog)
+            dlg.exec()
+            self.hypertts.service_manager.clear_voice_list_cache()
+            self.model_change()
+            from .engine_manager import EngineManager
+            engine_path = EngineManager.get_python_exe()
+            if os.path.exists(engine_path):
+                self._set_service_config_value_with_ui_sync(service.name, "engine_path", engine_path)
+            if os.path.exists(constants.SUPERTONIC_CACHE_DIR):
+                self._set_service_config_value_with_ui_sync(service.name, "cache_path", constants.SUPERTONIC_CACHE_DIR)
+            if os.path.exists(constants.SUPERTONIC_CUSTOM_VOICES_DIR):
+                self._set_service_config_value_with_ui_sync(service.name, "custom_voices_path", constants.SUPERTONIC_CUSTOM_VOICES_DIR)
             return
 
     def get_service_enable_change_fn(self, service):
@@ -462,6 +477,21 @@ class Configuration(component_common.ConfigComponentBase):
                      gui_utils.configure_primary_button(setup_btn)
                      h_layout.addWidget(setup_btn)
 
+                if service.name == "SupertonicTTS" and key == "engine_path":
+                     setup_btn = aqt.qt.QPushButton(i18n.get_text("button_setup_supertonic", lang))
+                     def open_supertonic_setup(le=lineedit):
+                         dlg = component_supertonic_setup.SupertonicSetupDialog(self.dialog)
+                         dlg.exec()
+                         from .engine_manager import EngineManager
+                         engine_path = EngineManager.get_python_exe()
+                         if os.path.exists(engine_path):
+                             le.setText(engine_path)
+                         self.hypertts.service_manager.clear_voice_list_cache()
+                         self.model_change()
+                     setup_btn.clicked.connect(lambda checked=False, le=lineedit: open_supertonic_setup(le))
+                     gui_utils.configure_primary_button(setup_btn)
+                     h_layout.addWidget(setup_btn)
+
                 validation_label = aqt.qt.QLabel()
                 validation_label.setWordWrap(True)
                 self.option_validation_label_map[f"{service.name}_{key}"] = validation_label
@@ -542,6 +572,20 @@ class Configuration(component_common.ConfigComponentBase):
                      h_layout.addWidget(setup_btn)
 
                 # MeloTTS removed
+                if service.name == "SupertonicTTS" and key == "custom_voices_path":
+                     manage_btn = aqt.qt.QPushButton(i18n.get_text("button_manage_supertonic_voices", lang))
+                     def open_supertonic_voice_manager(le=lineedit):
+                         dest_dir = le.text() or constants.SUPERTONIC_CUSTOM_VOICES_DIR
+                         os.makedirs(dest_dir, exist_ok=True)
+                         le.setText(dest_dir)
+                         from .component_supertonic_voice_manager import SupertonicVoiceManagerDialog
+                         dlg = SupertonicVoiceManagerDialog(self.dialog, dest_dir)
+                         dlg.exec()
+                         self.hypertts.service_manager.clear_voice_list_cache()
+                         self.model_change()
+                     manage_btn.clicked.connect(lambda checked=False, le=lineedit: open_supertonic_voice_manager(le))
+                     gui_utils.configure_secondary_button(manage_btn)
+                     h_layout.addWidget(manage_btn)
 
                 validation_label = aqt.qt.QLabel()
                 validation_label.setWordWrap(True)

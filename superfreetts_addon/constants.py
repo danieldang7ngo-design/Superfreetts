@@ -111,6 +111,9 @@ SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
 KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
 MMS_ENGINE_DIR = os.path.join(DATA_DIR, 'mms_engine')
 PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
+SUPERTONIC_ENGINE_DIR = os.path.join(DATA_DIR, 'supertonic_engine')
+SUPERTONIC_CACHE_DIR = os.path.join(DATA_DIR, 'supertonic_cache')
+SUPERTONIC_CUSTOM_VOICES_DIR = os.path.join(DATA_DIR, 'supertonic_custom_voices')
 # The piper zip contains a internal folder named 'piper'
 PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
 PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
@@ -120,7 +123,7 @@ def update_paths(new_data_dir):
     Update all data-related paths. This is used to point the data directory
     to the Anki profile folder instead of the addon package folder.
     """
-    global DATA_DIR, SHARED_ENGINE_DIR, KOKORO_ENGINE_DIR, MMS_ENGINE_DIR, PIPER_ENGINE_DIR, PIPER_EXE_PATH, PIPER_MODELS_DIR
+    global DATA_DIR, SHARED_ENGINE_DIR, KOKORO_ENGINE_DIR, MMS_ENGINE_DIR, PIPER_ENGINE_DIR, PIPER_EXE_PATH, PIPER_MODELS_DIR, SUPERTONIC_ENGINE_DIR, SUPERTONIC_CACHE_DIR, SUPERTONIC_CUSTOM_VOICES_DIR
     DATA_DIR = new_data_dir
     SHARED_ENGINE_DIR = os.path.join(DATA_DIR, 'python_engine')
     KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
@@ -128,6 +131,9 @@ def update_paths(new_data_dir):
     PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
     PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
     PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
+    SUPERTONIC_ENGINE_DIR = os.path.join(DATA_DIR, 'supertonic_engine')
+    SUPERTONIC_CACHE_DIR = os.path.join(DATA_DIR, 'supertonic_cache')
+    SUPERTONIC_CUSTOM_VOICES_DIR = os.path.join(DATA_DIR, 'supertonic_custom_voices')
 
 CONFIG_ADDON_NAME = _get_addon_name()
 

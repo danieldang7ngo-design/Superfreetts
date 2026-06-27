@@ -5,6 +5,7 @@
             "PiperTTS": false,
             "KokoroTTS": false,
             "MmsTTS": false,
+            "SupertonicTTS": false,
             "GoogleTranslate": false,
             "NaverTTS": false,
             "Sapi5TTS": false,
@@ -13,6 +14,9 @@
         "service_config": {
             "EdgeTTS": {
                 "concurrency_workers": 20
+            },
+            "SupertonicTTS": {
+                "concurrency_workers": 1
             }
         },
         "display_introduction_message": true

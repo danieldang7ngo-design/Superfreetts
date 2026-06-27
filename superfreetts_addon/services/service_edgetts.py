@@ -213,15 +213,16 @@ class EdgeTTS(service.ServiceBase):
             async def _acquire_request_slot():
                 await asyncio.to_thread(request_gate.acquire)
 
-            async def _fetch_one(text, wave_index=0):
-                if wave_index > 0 and wave_start_stagger_ms > 0:
-                    await asyncio.sleep((wave_index * wave_start_stagger_ms) / 1000)
+            async def _fetch_one(index, text, worker_index):
+                if worker_index > 0 and wave_start_stagger_ms > 0:
+                    await asyncio.sleep((worker_index * wave_start_stagger_ms) / 1000)
 
                 if initial_delay_max_ms > 0:
                     delay = random.uniform(initial_delay_min_ms, initial_delay_max_ms) / 1000
                     await asyncio.sleep(delay)
 
                 for attempt in range(max_retries + 1):
+                    retry_delay = None
                     await _acquire_request_slot()
                     try:
                         if debug_enabled:
@@ -248,32 +249,49 @@ class EdgeTTS(service.ServiceBase):
                         )
 
                         if data:
-                            return data
+                            return index, data
 
                         raise errors.RequestError(text, voice, "EdgeTTS returned empty audio")
                     except Exception as e:
                         if attempt < max_retries:
-                            wait_time = (attempt + 1) * retry_backoff_seconds
+                            retry_delay = (attempt + 1) * retry_backoff_seconds
                             if debug_enabled:
                                 logger.debug(
-                                    f"EdgeTTS: retrying '{text[:20]}...' in {wait_time}s after: {e}"
+                                    f"EdgeTTS: retrying '{text[:20]}...' in {retry_delay}s after: {e}"
                                 )
-                            await asyncio.sleep(wait_time)
-                            continue
-
-                        friendly_message = self._friendly_error_message(e, text, voice.voice_key)
-                        logger.warning(f"EdgeTTS Batch: Exception for text '{text[:20]}...': {friendly_message}")
-                        return None
+                        else:
+                            friendly_message = self._friendly_error_message(e, text, voice.voice_key)
+                            logger.warning(f"EdgeTTS Batch: Exception for text '{text[:20]}...': {friendly_message}")
+                            return index, None
                     finally:
                         request_gate.release()
+                    if retry_delay is not None:
+                        await asyncio.sleep(retry_delay)
+                        continue
 
-            results = []
-            for offset in range(0, len(normalized_texts), concurrency_workers):
-                wave = normalized_texts[offset:offset + concurrency_workers]
-                wave_results = await asyncio.gather(
-                    *[_fetch_one(text, wave_index) for wave_index, text in enumerate(wave)]
-                )
-                results.extend(wave_results)
+            results = [None] * len(normalized_texts)
+            work_queue = asyncio.Queue()
+            for item in enumerate(normalized_texts):
+                work_queue.put_nowait(item)
+
+            async def _worker(worker_index):
+                while True:
+                    try:
+                        index, text = work_queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        return
+                    try:
+                        result_index, data = await _fetch_one(index, text, worker_index)
+                        results[result_index] = data
+                    finally:
+                        work_queue.task_done()
+
+            worker_count = min(concurrency_workers, len(normalized_texts))
+            workers = [
+                asyncio.create_task(_worker(worker_index))
+                for worker_index in range(worker_count)
+            ]
+            await asyncio.gather(*workers)
             return results
 
         try:
