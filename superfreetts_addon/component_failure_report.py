@@ -16,7 +16,8 @@ class FailureReportDialog(aqt.qt.QDialog):
         self.add_tag_requested = False
 
         self.setWindowTitle(self._text("failure_report_title"))
-        self.setMinimumSize(860, 420)
+        self.setMinimumSize(420, 320)
+        self.resize(860, 420)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
 
         self._build_ui()

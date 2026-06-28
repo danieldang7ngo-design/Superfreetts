@@ -75,7 +75,8 @@ class WelcomeDialog(QDialog):
         accent = constants.COLOR_ACCENT
 
         self.setWindowTitle(i18n.get_text("welcome_dialog_title", lang))
-        self.setFixedSize(560, 620)
+        self.setMinimumSize(360, 420)
+        self.resize(560, 620)
         self.setWindowFlags(
             self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
         )

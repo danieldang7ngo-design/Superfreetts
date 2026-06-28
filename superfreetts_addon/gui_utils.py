@@ -8,6 +8,52 @@ from . import constants
 from . import errors
 
 
+_global_wheel_filter = None
+
+
+class _NoWheelValueChangeFilter(aqt.qt.QObject):
+    def eventFilter(self, obj, event):
+        try:
+            wheel_event_type = getattr(getattr(aqt.qt.QEvent, "Type", aqt.qt.QEvent), "Wheel")
+            if event.type() != wheel_event_type:
+                return False
+
+            if isinstance(obj, aqt.qt.QComboBox):
+                view = obj.view()
+                if view is not None and view.isVisible():
+                    return False
+                event.ignore()
+                return True
+
+            abstract_spinbox = getattr(aqt.qt, "QAbstractSpinBox", None)
+            if abstract_spinbox is not None and isinstance(obj, abstract_spinbox):
+                event.ignore()
+                return True
+        except Exception:
+            return False
+        return False
+
+
+def install_global_wheel_filter():
+    """Prevent mouse-wheel scrolling from accidentally changing combo/spin values."""
+    global _global_wheel_filter
+    app = aqt.qt.QApplication.instance()
+    if app is None or _global_wheel_filter is not None:
+        return
+    _global_wheel_filter = _NoWheelValueChangeFilter(app)
+    app.installEventFilter(_global_wheel_filter)
+
+
+def make_scroll_area(widget):
+    scroll_area = aqt.qt.QScrollArea()
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
+    scroll_area.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    scroll_area.setVerticalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    scroll_area.setWidget(widget)
+    return scroll_area
+
+
 class NonAliasedImage(aqt.qt.QWidget):
     def __init__(self, pixmap):
         aqt.qt.QWidget.__init__(self)

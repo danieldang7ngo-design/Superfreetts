@@ -30,7 +30,8 @@ class ServicesPage(LegacyServicesComponent):
         self.search_input = aqt.qt.QLineEdit()
         self.search_input.setPlaceholderText(i18n.get_text("config_search_placeholder", lang))
         self.search_input.setMinimumHeight(32)
-        self.search_input.setFixedWidth(240)
+        self.search_input.setMinimumWidth(120)
+        self.search_input.setMaximumWidth(240)
         self.search_input.setStyleSheet(
             "QLineEdit { border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 10px; "
             "font-size: 12px; color: #334155; background-color: #FFFFFF; }"

@@ -60,7 +60,7 @@ class SettingsDialog(aqt.qt.QDialog):
     def setupUi(self):
         lang = self.hypertts.get_ui_language()
         self.setWindowTitle(i18n.get_text("unified_settings_title", lang))
-        self.setMinimumSize(680, 520)
+        self.setMinimumSize(420, 360)
         self.resize(900, 700)
 
         main_layout = aqt.qt.QVBoxLayout(self)
@@ -99,8 +99,8 @@ class SettingsDialog(aqt.qt.QDialog):
         sidebar_scroll.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
         sidebar_scroll.setHorizontalScrollBarPolicy(aqt.qt.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         sidebar_scroll.setWidget(sidebar)
-        sidebar_scroll.setMinimumWidth(180)
-        sidebar_scroll.setMaximumWidth(240)
+        sidebar_scroll.setMinimumWidth(130)
+        sidebar_scroll.setMaximumWidth(220)
 
         body_layout.addWidget(sidebar_scroll)
 

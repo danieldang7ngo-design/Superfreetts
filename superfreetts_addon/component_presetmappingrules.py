@@ -44,7 +44,10 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
 
     def draw(self, layout):
         lang = self.hypertts.get_ui_language()
-        self.vlayout = aqt.qt.QVBoxLayout()
+        self.content_widget = aqt.qt.QWidget()
+        self.vlayout = aqt.qt.QVBoxLayout(self.content_widget)
+        self.vlayout.setContentsMargins(6, 6, 6, 6)
+        self.vlayout.setSpacing(10)
 
         # dialog header 
         # =============
@@ -125,8 +128,7 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
         self.scroll_area = aqt.qt.QScrollArea()
         self.scroll_area.setWidgetResizable(True)
 
-        # Set minimum horizontal size
-        self.scroll_area.setMinimumWidth(800)  # Set the desired minimum width in pixels
+        self.scroll_area.setMinimumWidth(320)
 
         self.layout_widget = aqt.qt.QWidget()
         self.layout_widget.setLayout(self.mapping_rules_gridlayout)
@@ -179,7 +181,7 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
         self.run_all_button.pressed.connect(self.run_all_button_pressed)
         self.easy_mode_checkbox.stateChanged.connect(self.easy_mode_changed)
 
-        layout.addLayout(self.vlayout)
+        layout.addWidget(gui_utils.make_scroll_area(self.content_widget), 1)
 
     def clear_mapping_rules_gridlayout(self):
         self.rules_components = []
@@ -326,6 +328,7 @@ class PresetMappingRulesDialog(aqt.qt.QDialog):
         # Cho phép dialog Preset Mapping Rules thu nhỏ/phóng to
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
+        self.setMinimumSize(420, 360)
         self.setupUi()
         self.mapping_rules = ComponentPresetMappingRules(hypertts, 
             self, deck_note_type, editor_context)

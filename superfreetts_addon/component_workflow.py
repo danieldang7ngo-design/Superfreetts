@@ -48,6 +48,7 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.setWindowFlag(aqt.qt.Qt.WindowType.WindowMinMaxButtonsHint, True)
         self.setStyleSheet(gui_utils.get_dynamic_stylesheet())
         self.setWindowTitle(self._text("workflow_dialog_title"))
+        self.setMinimumSize(420, 360)
         self.resize(920, 620)
 
         self._build_ui()
@@ -68,12 +69,22 @@ class WorkflowDialog(aqt.qt.QDialog):
 
     def _build_ui(self) -> None:
         lang = self.hypertts.get_ui_language()
-        self.main_layout = aqt.qt.QVBoxLayout(self)
+        root_layout = aqt.qt.QVBoxLayout(self)
+        root_layout.setContentsMargins(10, 10, 10, 10)
+        root_layout.setSpacing(0)
 
-        top_layout = aqt.qt.QHBoxLayout()
-        top_layout.addWidget(aqt.qt.QLabel(self._text("workflow_label_name")))
+        content = aqt.qt.QWidget()
+        self.main_layout = aqt.qt.QVBoxLayout(content)
+        self.main_layout.setContentsMargins(6, 6, 6, 6)
+        self.main_layout.setSpacing(10)
+        root_layout.addWidget(gui_utils.make_scroll_area(content), 1)
+
+        top_layout = aqt.qt.QVBoxLayout()
+        workflow_picker_layout = aqt.qt.QHBoxLayout()
+        workflow_picker_layout.addWidget(aqt.qt.QLabel(self._text("workflow_label_name")))
         self.workflow_name_combobox = aqt.qt.QComboBox()
-        top_layout.addWidget(self.workflow_name_combobox, stretch=1)
+        workflow_picker_layout.addWidget(self.workflow_name_combobox, stretch=1)
+        top_layout.addLayout(workflow_picker_layout)
 
         self.new_button = aqt.qt.QPushButton(i18n.get_text("button_new", lang))
         self.open_button = aqt.qt.QPushButton(i18n.get_text('button_open', lang))
@@ -82,6 +93,8 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.rename_button = aqt.qt.QPushButton(i18n.get_text('button_rename', lang))
         self.delete_button = aqt.qt.QPushButton(i18n.get_text('button_delete', lang))
 
+        workflow_actions_layout = aqt.qt.QHBoxLayout()
+        workflow_actions_layout.setSpacing(6)
         for button in [
             self.new_button,
             self.open_button,
@@ -90,7 +103,9 @@ class WorkflowDialog(aqt.qt.QDialog):
             self.rename_button,
             self.delete_button,
         ]:
-            top_layout.addWidget(button)
+            workflow_actions_layout.addWidget(button)
+        workflow_actions_layout.addStretch()
+        top_layout.addLayout(workflow_actions_layout)
 
         self.main_layout.addLayout(top_layout)
 
@@ -345,8 +360,9 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.new_button.setEnabled(not running)
         self.open_button.setEnabled((not running) and has_saved_workflows)
         self.save_button.setEnabled((not running) and self.model_changed)
-        self.duplicate_button.setEnabled((not running) and has_saved_workflows)
+        self.duplicate_button.setEnabled((not running) and self.workflow_model != None)
         self.rename_button.setEnabled(not running)
+        self.delete_button.setEnabled(False)
         if running:
             self.delete_button.setEnabled(False)
         elif self.workflow_model != None and self.hypertts.workflow_exists(self.workflow_model.uuid):
@@ -435,15 +451,13 @@ class WorkflowDialog(aqt.qt.QDialog):
 
     def duplicate_workflow_button_pressed(self) -> None:
         with self.hypertts.error_manager.get_single_action_context('Duplicating Workflow'):
-            workflow_id = self.choose_existing_workflow(self._text("workflow_choose_duplicate"))
-            if workflow_id != None:
-                self.load_workflow(workflow_id)
-                self.workflow_model.reset_uuid(self.hypertts.anki_utils)
-                self.workflow_model.name = self.workflow_model.name + ' (copy)'
-                self.update_workflow_dropdown(self.workflow_model.name, self.workflow_model.uuid)
-                self.model_changed = True
-                self.disable_delete_button()
-                self.refresh_button_states()
+            workflow_model = self.get_model()
+            workflow_model.reset_uuid(self.hypertts.anki_utils)
+            workflow_model.name = workflow_model.name + ' (copy)'
+            self.update_workflow_dropdown(workflow_model.name, workflow_model.uuid)
+            self.model_changed = True
+            self.disable_delete_button()
+            self.refresh_button_states()
 
     def rename_workflow_button_pressed(self) -> None:
         with self.hypertts.error_manager.get_single_action_context('Renaming Workflow'):
@@ -460,16 +474,16 @@ class WorkflowDialog(aqt.qt.QDialog):
                 self.mark_model_changed()
 
     def delete_workflow_button_pressed(self) -> None:
-        workflow_model = self.get_model()
-        if not self.hypertts.workflow_exists(workflow_model.uuid):
-            self.new_workflow_after_delete()
-            return
-        proceed = self.hypertts.anki_utils.ask_user(
-            self._text("workflow_delete_confirm", name=workflow_model.name),
-            self,
-        )
-        if proceed:
-            with self.hypertts.error_manager.get_single_action_context('Deleting Workflow'):
+        with self.hypertts.error_manager.get_single_action_context('Deleting Workflow'):
+            workflow_model = self.get_model()
+            if not self.hypertts.workflow_exists(workflow_model.uuid):
+                self.new_workflow_after_delete()
+                return
+            proceed = self.hypertts.anki_utils.ask_user(
+                self._text("workflow_delete_confirm", name=workflow_model.name),
+                self,
+            )
+            if proceed:
                 self.hypertts.delete_workflow(workflow_model.uuid)
                 self.new_workflow_after_delete()
 

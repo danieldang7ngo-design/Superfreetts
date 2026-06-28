@@ -19,7 +19,8 @@ class ReleaseNotesDialog(aqt.qt.QDialog):
         lang = self.hypertts.get_ui_language()
 
         self.setWindowTitle(i18n.get_text("release_notes_window_title", lang))
-        self.setMinimumSize(680, 560)
+        self.setMinimumSize(420, 360)
+        self.resize(680, 560)
         self.setWindowFlags(
             self.windowFlags() & ~aqt.qt.Qt.WindowType.WindowContextHelpButtonHint
         )

@@ -10,7 +10,9 @@ import aqt.qt
 from typing import List
 from . import constants    
 # from . import constants_events removed
+from . import config_models
 from . import errors
+from . import i18n
 from . import stats
 
 from . import logging_utils
@@ -49,6 +51,21 @@ class AnkiUtils():
 
     def write_config(self, config):
         aqt.mw.addonManager.writeConfig(constants.CONFIG_ADDON_NAME, config)
+
+    def get_addon_dir(self):
+        return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
+    def get_ui_language(self):
+        config = self.get_config() or {}
+        preferences_config = config.get(constants.CONFIG_PREFERENCES, {})
+        try:
+            prefs = config_models.deserialize_preferences(preferences_config)
+            lang = getattr(prefs, "ui_language", "en") or "en"
+        except Exception:
+            lang = preferences_config.get("ui_language", "en") or "en"
+        if lang not in i18n.SUPPORTED_LANGUAGES:
+            lang = "en"
+        return lang
 
     def night_mode_enabled(self):
         night_mode = aqt.theme.theme_manager.night_mode

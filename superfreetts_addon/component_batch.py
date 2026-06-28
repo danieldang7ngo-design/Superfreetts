@@ -26,7 +26,7 @@ logger = logging_utils.get_child_logger(__name__)
 sc = stats.StatsContext(stats.EventContext.generate)
 
 class ComponentBatch(component_common.ConfigComponentBase):
-    MIN_WIDTH_COMPONENT = 600
+    MIN_WIDTH_COMPONENT = 420
     MIN_HEIGHT = 250
 
     def __init__(self, hypertts, dialog):
@@ -447,30 +447,39 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     def draw(self, layout):
         lang = self.hypertts.get_ui_language()
-        self.vlayout = aqt.qt.QVBoxLayout()
+        self.content_widget = aqt.qt.QWidget()
+        self.vlayout = aqt.qt.QVBoxLayout(self.content_widget)
+        self.vlayout.setContentsMargins(6, 6, 6, 6)
+        self.vlayout.setSpacing(10)
 
         # profile management
         # ==================
 
-        hlayout = aqt.qt.QHBoxLayout()
-        hlayout.addWidget(aqt.qt.QLabel(i18n.get_text("batch_button_preset", lang)))
+        top_layout = aqt.qt.QVBoxLayout()
+        profile_row = aqt.qt.QHBoxLayout()
+        profile_row.addWidget(aqt.qt.QLabel(i18n.get_text("batch_button_preset", lang)))
 
         font = aqt.qt.QFont()
         font.setBold(True)
         self.profile_name_combobox.setFont(font)
 
-        hlayout.addWidget(self.profile_name_combobox)
-        hlayout.addWidget(self.profile_new_button)
-        hlayout.addWidget(self.profile_save_button)
-        hlayout.addWidget(self.profile_duplicate_button)
-        hlayout.addWidget(self.profile_rename_button)
-        hlayout.addWidget(self.profile_delete_button)
-
-
-        hlayout.addStretch()
+        profile_row.addWidget(self.profile_name_combobox, 1)
         # logo header
-        hlayout.addLayout(gui_utils.get_superfreetts_label_header(self.hypertts.superfreetts_pro_enabled()))
-        self.vlayout.addLayout(hlayout)
+        profile_row.addLayout(gui_utils.get_superfreetts_label_header(self.hypertts.superfreetts_pro_enabled()))
+        top_layout.addLayout(profile_row)
+
+        preset_actions_row = aqt.qt.QHBoxLayout()
+        for button in [
+            self.profile_new_button,
+            self.profile_save_button,
+            self.profile_duplicate_button,
+            self.profile_rename_button,
+            self.profile_delete_button,
+        ]:
+            preset_actions_row.addWidget(button)
+        preset_actions_row.addStretch()
+        top_layout.addLayout(preset_actions_row)
+        self.vlayout.addLayout(top_layout)
 
         self.profile_new_button.pressed.connect(self.new_profile_button_pressed)
         self.profile_save_button.pressed.connect(self.save_profile_button_pressed)
@@ -502,8 +511,8 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.splitter.setChildrenCollapsible(False)
             self.splitter.setCollapsible(0, True)   # Settings can be hidden via button
             self.splitter.setCollapsible(1, False)  # Results preview should stay visible
-            self.tabs.setMinimumWidth(350)
-            self.preview_widget.setMinimumWidth(350)
+            self.tabs.setMinimumWidth(240)
+            self.preview_widget.setMinimumWidth(240)
             self.splitter.setStretchFactor(0, 1)
             self.splitter.setStretchFactor(1, 1)
 
@@ -568,7 +577,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
         self.cancel_button.setFocus()
 
-        layout.addLayout(self.vlayout)
+        layout.addWidget(gui_utils.make_scroll_area(self.content_widget), 1)
 
     def get_min_size(self):
         return self.MIN_HEIGHT

@@ -205,6 +205,7 @@ def update_menu_language(hypertts):
         action_unified_settings.setText(f'🎧 {i18n.get_text("unified_settings_title", lang)}')
 
 def init(hypertts):
+    gui_utils.install_global_wheel_filter()
 
     def browerMenusInit(browser: aqt.browser.Browser):
         lang = hypertts.get_ui_language()
