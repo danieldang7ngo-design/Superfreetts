@@ -26,6 +26,8 @@ from . import audio_file_store
 from . import logging_utils
 from . import i18n
 from . import source_text_resolver
+from . import batch_executor
+from . import text_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
