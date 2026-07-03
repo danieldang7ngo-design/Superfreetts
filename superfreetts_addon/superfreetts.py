@@ -42,6 +42,9 @@ from . import batch_progress_ui
 from . import audio_file_store
 from . import note_audio_updater
 from . import source_text_resolver
+from . import config_store as config_store_module
+from . import realtime_manager as realtime_manager_module
+from . import batch_orchestrator as batch_orchestrator_module
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -59,18 +62,29 @@ class SuperFreeTTS():
         self.anki_utils = anki_utils
         self.service_manager = service_manager
         self.error_manager = errors.ErrorManager(self.anki_utils)
-        self.config = self.anki_utils.get_config()
         self.latest_saved_batch_name: Optional[str] = None
         self.text_processing_cache = {}  # Simple dict for processed text caching
+
+        # ConfigStore owns all config reads/writes from this point on.
+        self.config_store = config_store_module.ConfigStore(anki_utils, service_manager)
+        # Expose self.config as a live reference to the same dict for legacy code
+        # that still reads self.config directly (updated after migration below).
+        self.config = self.config_store.config
+
+        # RealtimeManager owns all template tags and realtime playback.
+        self.realtime_manager = realtime_manager_module.RealtimeManager(self)
+
+        # BatchOrchestrator handles all batch logic, deduplication, and checkpoints.
+        self.batch_orchestrator = batch_orchestrator_module.BatchOrchestrator(self)
+
         self.audio_store = audio_file_store.AudioFileStore(self.anki_utils, self.get_preferences)
-        
+
         # Apply logging preferences based on stored debug mode
         self.apply_logging_preferences()
-        
+
         # Initialize multi-engine executor with settings from service configurations
         try:
-            config = self.anki_utils.get_config()
-            configuration_config = config.get(constants.CONFIG_CONFIGURATION, {})
+            configuration_config = self.config.get(constants.CONFIG_CONFIGURATION, {})
             service_config_map = configuration_config.get(constants.CONFIG_SERVICE_CONFIG, {})
             engine_config = self._build_engine_config(service_config_map)
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
@@ -79,12 +93,9 @@ class SuperFreeTTS():
             logger.warning(f'[INIT] Failed to initialize multi-engine executor, falling back to unified: {e}')
             self.executor = batch_executor.get_batch_executor(max_workers=1)
 
-        # do maintenance        # migration
+        # Maintenance: migration, audio registration, cache cleanup
         self.perform_config_migration()
-        # register added audio
         self.config_register_added_audio()
-        
-        # Cleanup cache
         self.cleanup_user_files()
 
     # =========================================================================
@@ -197,729 +208,26 @@ class SuperFreeTTS():
             batch_status.set_phase(phase)
         batch_status.set_status_message(message)
 
-    def prepare_batch_audio_generation(self, note_id_list, batch: config_models.BatchConfig, batch_status):
-        """Prepare note/text/voice tasks without generating audio or updating notes."""
-        tasks = []
-        audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
-        lang = self.get_ui_language()
-
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_loading_voices", lang),
-            batch_progress_ui.BatchProgressPhase.LOADING,
-        )
-        logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
-        pre_load_start = time.time()
-        try:
-            _ = self.service_manager.full_voice_list()
-            pre_load_time = time.time() - pre_load_start
-            logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
-        except Exception as e:
-            logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
-
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
-            batch_progress_ui.BatchProgressPhase.PREPARING,
-        )
-        logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
-        extract_start = time.time()
-
-        for note_id in note_id_list:
-            if not batch_status.must_continue:
-                break
-
-            note = self.anki_utils.get_note_by_id(note_id)
-            try:
-                source_text = self.get_source_text(note, batch.source, None)
-
-                cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
-                if cache_key not in self.text_processing_cache:
-                    processed_text = self.process_text(source_text, batch.text_processing)
-                    self.text_processing_cache[cache_key] = processed_text
-                else:
-                    processed_text = self.text_processing_cache[cache_key]
-                    logger.debug(f"[BATCH] Text cache hit")
-
-                sequence_index = len(tasks)
-                priority_voice_list = None
-                if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-                    priority_voice_list = copy.copy(batch.voice_selection.voice_list)
-
-                chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
-
-                task = {
-                    'note_id': note_id,
-                    'source_text': source_text,
-                    'processed_text': processed_text,
-                    'batch': batch,
-                    'audio_request_context': audio_request_context,
-                    'chosen_voice': chosen_voice,
-                }
-
-                if priority_voice_list is not None:
-                    task['priority_voice_list'] = priority_voice_list
-                tasks.append(task)
-            except Exception as e:
-                with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                    note_action_context.set_error(e)
-
-        extract_time = time.time() - extract_start
-        logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
-
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_analyzing_duplicates", lang),
-            batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
-        )
-        logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
-        dedup_start = time.time()
-        dedup_map = self._collect_batch_duplicates(tasks)
-        dedup_time = time.time() - dedup_start
-
-        unique_count = len(dedup_map)
-        total_count = len(tasks)
-        if unique_count < total_count and total_count > 0:
-            logger.info(f'[BATCH] Deduplication found: {total_count} tasks, {unique_count} unique, {total_count - unique_count} duplicates (saving {((total_count - unique_count) / total_count) * 100:.1f}% TTS calls) - analyzed in {dedup_time:.2f}s')
-        else:
-            logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
-
-        return {
-            'tasks': tasks,
-            'dedup_map': dedup_map,
-        }
+    def prepare_batch_audio_generation(self, note_id_list, batch, batch_status):
+        return self.batch_orchestrator.prepare_batch_audio_generation(note_id_list, batch, batch_status)
 
     def generate_prepared_batch_audio(self, prepared_batch, batch_status):
-        """Generate audio files for prepared tasks without touching Anki media or notes."""
-        start_time = time.time()
-        lang = self.get_ui_language()
-        tasks = prepared_batch.get('tasks', [])
-        dedup_map = prepared_batch.get('dedup_map', {})
+        return self.batch_orchestrator.generate_prepared_batch_audio(prepared_batch, batch_status)
 
-        if not batch_status.must_continue:
-            return []
+    def apply_generated_batch_audio(self, generated_results, batch, batch_status, anki_collection):
+        return self.batch_orchestrator.apply_generated_batch_audio(generated_results, batch, batch_status, anki_collection)
 
-        max_workers = cpu_utils.CPUInfo.get_max_workers()
-        unique_count = len(dedup_map)
-        batch_status.total_unique_tasks = unique_count
-        batch_status.unique_tasks_completed = 0
+    def process_batch_audio(self, note_id_list, batch, batch_status, anki_collection):
+        return self.batch_orchestrator.process_batch_audio(note_id_list, batch, batch_status, anki_collection)
 
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_generating_audio", lang).format(unique_count),
-            batch_progress_ui.BatchProgressPhase.GENERATING,
-        )
-        logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
-
-        audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
-        logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {time.time() - start_time:.2f}s')
-
-        batch_status.futures_to_cancel.clear()
-        batch_status.total_unique_tasks = 0
-        batch_status.unique_tasks_completed = 0
-
-        results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
-        audio_cache.clear()
-        self.text_processing_cache.clear()
-
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_ready_to_apply", lang).format(len(results)),
-            batch_progress_ui.BatchProgressPhase.COMPLETED,
-        )
-        logger.info(f'[BATCH] Audio generation ready to apply: {len(results)} note results')
-        return results
-
-    def apply_generated_batch_audio(self, generated_results, batch: config_models.BatchConfig, batch_status, anki_collection):
-        """Apply generated audio results to Anki media and notes."""
-        lang = self.get_ui_language()
-        batch_status.total_unique_tasks = len(generated_results)
-        batch_status.unique_tasks_completed = 0
-
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_applying_notes", lang).format(len(generated_results)),
-            batch_progress_ui.BatchProgressPhase.SAVING,
-        )
-        logger.info(f'[BATCH] Applying generated audio to {len(generated_results)} notes...')
-        update_start = time.time()
-
-        # Phase 1: Update notes in memory (add media + modify field, but don't save to collection yet)
-        notes_to_update = []
-        for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(generated_results):
-            if not batch_status.must_continue:
-                break
-
-            with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                try:
-                    if is_error:
-                        note_action_context.set_error(is_error)
-                    else:
-                        note = self.anki_utils.get_note_by_id(note_id)
-                        self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
-                        notes_to_update.append(note)
-                        note_action_context.set_source_text(source_text)
-                        note_action_context.set_processed_text(processed_text)
-                        note_action_context.set_sound(sound_file)
-                        note_action_context.set_status(constants.BatchNoteStatus.Done)
-                except Exception as e:
-                    logger.error(f"Error updating note {note_id}: {e}")
-                    note_action_context.set_error(e)
-
-            batch_status.unique_tasks_completed = idx + 1
-            batch_status.notify_change(note_id)
-
-        # Phase 2: Save all notes in a single transaction
-        if notes_to_update and batch_status.must_continue:
-            logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
-            anki_collection.update_notes(notes_to_update)
-            logger.info(f'[BATCH] Notes saved successfully')
-
-        batch_status.total_unique_tasks = 0
-        batch_status.unique_tasks_completed = 0
-        batch_status.set_status_message(None)
-        logger.info(f'[BATCH] Applied generated audio in {time.time() - update_start:.2f}s')
-
-    def process_batch_audio(self, note_id_list, batch: config_models.BatchConfig, batch_status, anki_collection):
-        import time
-        start_time = time.time()
-
-        tasks = []
-        audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
-
-        # Initialize executor (already created in __init__, just get reference)
-        logger.info(f'[BATCH] Using multi-engine batch executor')
-
-        # Simple checkpoint management
-        batch_name = batch.name or f"batch_{int(time.time())}"
-        original_note_id_list = note_id_list[:]  # Keep original for checkpoint save
-        checkpoint_data = self.executor.checkpoint.load(batch_name)
-        checkpoint = None
-        checkpoint_enabled = True
-        
-        # Check for resumable batch
-        if checkpoint_data and checkpoint_data.get('completed_indices'):
-            completed = checkpoint_data.get('completed_indices', [])
-            
-            # Filter to only pending notes
-            pending_notes = [note_id_list[i] for i in range(len(note_id_list)) if i not in completed]
-            if pending_notes:
-                logger.info(f'[BATCH] Resuming: {len(pending_notes)}/{len(note_id_list)} notes remaining')
-                note_id_list = pending_notes
-                checkpoint = checkpoint_data
-            else:
-                logger.info(f'[BATCH] {batch_name} already completed')
-                self.executor.checkpoint.remove(batch_name)
-                checkpoint = None
-        else:
-            # First time: initialize checkpoint dict
-            checkpoint = {
-                'batch_name': batch_name,
-                'completed_indices': [],
-                'note_id_list': original_note_id_list,
-                'errors': {}
-            }
-
-        
-        # Use batch_running_action_context to properly signal UI start/end
-        # This calls notify_start() on enter (triggers show_running_stack + progress bar)
-        # and notify_end() on exit (triggers show_completed_stack or show_not_running_stack)
-        with batch_status.get_batch_running_action_context():
-            try:
-                # 0. Pre-load voice list
-                lang = self.get_ui_language()
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_loading_voices", lang),
-                    batch_progress_ui.BatchProgressPhase.LOADING,
-                )
-                logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
-                pre_load_start = time.time()
-                try:
-                    _ = self.service_manager.full_voice_list()
-                    pre_load_time = time.time() - pre_load_start
-                    logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
-                except Exception as e:
-                    logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
-
-                # 1. Prepare requests
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
-                    batch_progress_ui.BatchProgressPhase.PREPARING,
-                )
-                logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
-                extract_start = time.time()
-
-                for idx, note_id in enumerate(note_id_list):
-                    if not batch_status.must_continue: break
-
-                    note = self.anki_utils.get_note_by_id(note_id)
-                    try:
-                        source_text = self.get_source_text(note, batch.source, None)
-                        
-                        # Simple text cache for processing efficiency
-                        cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
-                        if cache_key not in self.text_processing_cache:
-                            processed_text = self.process_text(source_text, batch.text_processing)
-                            self.text_processing_cache[cache_key] = processed_text
-                        else:
-                            processed_text = self.text_processing_cache[cache_key]
-                            logger.debug(f"[BATCH] Text cache hit")
-                        
-                        sequence_index = len(tasks)
-
-                        # Priority mode voice list state
-                        priority_voice_list = None
-                        if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-                            priority_voice_list = copy.copy(batch.voice_selection.voice_list)
-
-                        chosen_voice = self.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
-
-                        # Create simple task dict (no MemoryPool)
-                        task = {
-                            'note_id': note_id,
-                            'source_text': source_text,
-                            'processed_text': processed_text,
-                            'batch': batch,
-                            'audio_request_context': audio_request_context,
-                            'chosen_voice': chosen_voice,
-                        }
-
-                        if priority_voice_list is not None:
-                            task['priority_voice_list'] = priority_voice_list
-                        tasks.append(task)
-                    except Exception as e:
-                        with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                            note_action_context.set_error(e)
-
-                extract_time = time.time() - extract_start
-                logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
-
-                if not batch_status.must_continue: return
-
-                # 2. Deduplication
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_analyzing_duplicates", lang),
-                    batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
-                )
-                logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
-                dedup_start = time.time()
-                dedup_map = self._collect_batch_duplicates(tasks)
-                dedup_time = time.time() - dedup_start
-
-                unique_count = len(dedup_map)
-                total_count = len(tasks)
-                if unique_count < total_count:
-                    logger.info(f'[BATCH] Deduplication found: {total_count} tasks, {unique_count} unique, {total_count - unique_count} duplicates (saving {((total_count - unique_count) / total_count) * 100:.1f}% TTS calls) - analyzed in {dedup_time:.2f}s')
-                else:
-                    logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
-
-                # 3. Parallel Generation with unified executor
-                # Use a reasonable high limit for the overall collection of tasks, 
-                # but individual pools will respect their own limits.
-                max_workers = cpu_utils.CPUInfo.get_max_workers()
-                logger.info(f"[BATCH] Parallel generation started: engine pools will respect their own limits")
-
-                batch_status.total_unique_tasks = unique_count
-                batch_status.unique_tasks_completed = 0
-
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_generating_audio", lang).format(unique_count),
-                    batch_progress_ui.BatchProgressPhase.GENERATING,
-                )
-                logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
-                gen_start = time.time()
-
-                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
-
-                gen_time = time.time() - gen_start
-                logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {gen_time:.2f}s')
-
-                batch_status.futures_to_cancel.clear()
-
-                # 4. Apply cached results to all notes
-                batch_status.total_unique_tasks = 0
-                batch_status.unique_tasks_completed = 0
-                
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_applying_notes", lang).format(len(tasks)),
-                    batch_progress_ui.BatchProgressPhase.SAVING,
-                )
-
-                logger.info(f'[BATCH] Applying audio to {len(tasks)} notes...')
-                apply_start = time.time()
-                results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
-                apply_time = time.time() - apply_start
-                logger.info(f'[BATCH] Applied results in {apply_time:.2f}s')
-
-                # Release large intermediate data structures to free memory
-                audio_cache.clear()
-                del audio_cache
-                dedup_map.clear()
-                del dedup_map
-                tasks.clear()
-                del tasks
-
-                # 5. Update Notes
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_saving_collection", lang),
-                    batch_progress_ui.BatchProgressPhase.SAVING,
-                )
-                logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
-                update_start = time.time()
-
-                # Phase 1: Update notes in memory (add media + modify field, but don't save to collection yet)
-                notes_to_update = []
-                for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(results):
-                    if not batch_status.must_continue:
-                        break
-
-                    note_status = batch_status.note_status_map.get(note_id)
-                    already_done = note_status and note_status.status == constants.BatchNoteStatus.Done
-
-                    with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                        try:
-                            if is_error:
-                                # is_error now contains the actual exception object from the task
-                                note_action_context.set_error(is_error)
-                                if checkpoint:
-                                    checkpoint['errors'][str(idx)] = str(is_error)
-                            else:
-                                note = self.anki_utils.get_note_by_id(note_id)
-                                self._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
-                                notes_to_update.append(note)
-
-                                if not already_done:
-                                    note_action_context.set_source_text(source_text)
-                                    note_action_context.set_processed_text(processed_text)
-                                    note_action_context.set_sound(sound_file)
-                                    note_action_context.set_status(constants.BatchNoteStatus.Done)
-                        except Exception as e:
-                            logger.error(f"Error updating note {note_id}: {e}")
-                            note_action_context.set_error(e)
-                            if checkpoint:
-                                checkpoint['errors'][str(idx)] = str(e)
-
-                # Phase 2: Save all notes in a single transaction
-                if notes_to_update and batch_status.must_continue:
-                    logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
-                    anki_collection.update_notes(notes_to_update)
-                    logger.info(f'[BATCH] Notes saved successfully')
-                    
-                    # Update checkpoint with all completed indices
-                    if checkpoint and checkpoint_enabled:
-                        try:
-                            completed_list = checkpoint.get('completed_indices', [])
-                            for idx in range(len(results)):
-                                if idx not in completed_list:
-                                    completed_list.append(idx)
-                            self.executor.checkpoint.save(batch_name, completed_list, checkpoint.get('note_id_list', []), checkpoint.get('errors', {}))
-                        except Exception as e:
-                            logger.warning(f'[BATCH] Failed to save checkpoint: {e}')
-                            checkpoint_enabled = False
-
-                update_time = time.time() - update_start
-                total_time = time.time() - start_time
-                logger.info(f'[BATCH] Completed in {total_time:.2f}s')
-
-                # Release large data structures
-                results.clear()
-                del results
-
-                if batch_status.must_continue:
-                    if checkpoint and checkpoint_enabled:
-                        self.executor.checkpoint.remove(batch_name)
-                    logger.info(f'[BATCH] Batch completed successfully')
-                else:
-                    if checkpoint and checkpoint_enabled:
-                        logger.info(f'[BATCH] Batch cancelled, checkpoint saved for resume')
-                
-                batch_status.set_status_message(None)
-            
-            finally:
-                # Simple cleanup
-                batch_status.futures_to_cancel.clear()
-                self.text_processing_cache.clear()
-                logger.info(f'[BATCH] Cleanup complete')
-
-
-    def _collect_batch_duplicates(self, tasks: List[Dict[str, Any]]) -> Dict[Tuple, List[int]]:
-        """
-        Analyze tasks to identify duplicate (processed_text, voice_id) combinations.
-        Optimized: O(n) time complexity with direct tuple keys, no redundant hashing.
-        
-        Args:
-            tasks: List of task dictionaries containing note data and configuration
-            
-        Returns:
-            Deduplication map: {(processed_text, voice_id): [task_indices]}
-        """
-        dedup_map = {}
-
-        if not tasks:
-            return dedup_map
-
-        # For all modes, voice is determined per task explicitly using 'chosen_voice'
-        for task_idx, task_data in enumerate(tasks):
-            processed_text = task_data['processed_text']
-            voice_with_options = task_data.get('chosen_voice')
-            voice_id = voice_with_options.voice_id if voice_with_options else None
-
-            voice_options = voice_with_options.options if voice_with_options else {}
-
-            if voice_id is None:
-                dedup_key = (f'no_voice_{task_idx}',)
-            else:
-                dedup_key = self.audio_store.build_request_key(processed_text, voice_id, voice_options)
-
-            if dedup_key not in dedup_map:
-                dedup_map[dedup_key] = []
-            dedup_map[dedup_key].append(task_idx)
-
-        return dedup_map
+    def _collect_batch_duplicates(self, tasks):
+        return self.batch_orchestrator._collect_batch_duplicates(tasks)
 
     def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status):
-        """
-        Execute unique tasks using MultiEngineExecutor with DYNAMIC BATCHING.
-        Groups tasks by (service, voice) and chunks them into vector IPC calls.
-        
-        Uses a producer-consumer pattern: background thread submits chunks while
-        the main thread collects results immediately to avoid blocking on the
-        BoundedThreadPoolExecutor's semaphore.
-        """
-        lang = self.get_ui_language()
-        audio_cache = {}
-        completed_count = 0
-        unique_count = len(dedup_map)
-        sequence_mode = (
-            len(tasks) > 0
-            and tasks[0].get('batch')
-            and tasks[0]['batch'].voice_selection.selection_mode == constants.VoiceSelectionMode.sequence
-        )
-        
-        # 1. Group tasks by (service, voice_id) for batching compatibility
-        engine_groups = {} # (service_name, voice_id) -> list of (dedup_key, task_data, task_indices)
-
-        if not sequence_mode:
-            for dedup_key, task_indices in dedup_map.items():
-                task_idx = task_indices[0]
-                task_data = tasks[task_idx]
-                service_name = self.executor.detect_service(task_data)
-
-                # Extract voice_id safely
-                chosen_voice = task_data.get('chosen_voice')
-                # Voice ID can be complex, stringify for dictionary key
-                voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
-
-                group_key = (service_name, voice_id_str)
-                if group_key not in engine_groups:
-                    engine_groups[group_key] = []
-                engine_groups[group_key].append((dedup_key, task_data, task_indices))
-
-        # 2. Chunk groups into single-item work units for continuous batching.
-        # Offline runners only return after a whole IPC batch completes, so
-        # larger chunks let one long text hold a worker/process slot.
-        BATCH_SIZE_BY_ENGINE = {
-            'EdgeTTS': 1,
-            'PiperTTS': 1,
-            'KokoroTTS': 1,
-            'MmsTTS': 1,
-            'Piper': 1,
-            'Kokoro': 1,
-            'MMS': 1,
-        }
-        DEFAULT_BATCH_SIZE = 1
-        all_chunks = []  # list of (service_name, chunk_items)
-
-        if sequence_mode:
-            ordered_items = []
-            for dedup_key, task_indices in dedup_map.items():
-                task_idx = task_indices[0]
-                ordered_items.append((dedup_key, tasks[task_idx], task_indices))
-            sequence_chunk_size = self._get_sequence_worker_limit(ordered_items)
-            logger.info(
-                f"[BATCH] Sequence mode service limits: "
-                f"{self._get_sequence_service_limits(ordered_items)}; chunk_size={sequence_chunk_size}"
-            )
-            for offset in range(0, len(ordered_items), sequence_chunk_size):
-                all_chunks.append(('__sequence__', ordered_items[offset:offset + sequence_chunk_size]))
-        else:
-            for (service_name, _), group_tasks in engine_groups.items():
-                max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
-                chunk = []
-                chunk_chars = 0
-                for item in group_tasks:
-                    dedup_key, task_data, task_indices = item
-                    text = task_data['source_text']
-                    text_len = len(text)
-
-                    if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
-                        all_chunks.append((service_name, list(chunk)))
-                        chunk = []
-                        chunk_chars = 0
-
-                    chunk.append(item)
-                    chunk_chars += text_len
-
-                if chunk:
-                    all_chunks.append((service_name, list(chunk)))
-
-        # 3. Submit chunks in a background thread (producer) while main thread
-        #    collects results immediately (consumer). This avoids the blocking delay
-        #    caused by submitting ALL chunks before starting result collection.
-        future_to_chunk = {}  # future -> chunk items
-        future_lock = threading.Lock()  # protects future_to_chunk during concurrent access
-        submit_error = [None]  # capture any submit-thread exception
-        last_heartbeat_time = 0
-        heartbeat_interval_seconds = 2.0
-        
-        def _submit_all():
-            """Background thread: submit chunks to per-engine executors."""
-            try:
-                for service_name, chunk_items in all_chunks:
-                    if not batch_status.must_continue:
-                        break
-                    executor_pool = self.executor.get_executor(service_name)
-                    if service_name == '__sequence__':
-                        future = executor_pool.submit(self._generate_audio_sequence_task, list(chunk_items))
-                    else:
-                        future = executor_pool.submit(self._generate_audio_batch_task, list(chunk_items))
-                    with future_lock:
-                        future_to_chunk[future] = list(chunk_items)
-                        batch_status.futures_to_cancel.append(future)
-            except Exception as e:
-                logger.error(f"[BATCH] Submit thread error: {e}")
-                submit_error[0] = e
-        
-        submit_thread = threading.Thread(target=_submit_all, daemon=True)
-        submit_thread.start()
-        
-        # 4. Collect results immediately as they arrive (no blocking wait for all submits)
-        
-        while submit_thread.is_alive() or future_to_chunk:
-            if not batch_status.must_continue:
-                with future_lock:
-                    for pending_future in list(future_to_chunk):
-                        if not pending_future.done():
-                            pending_future.cancel()
-                break
-            
-            # Find completed futures
-            done_futures = []
-            with future_lock:
-                for future in list(future_to_chunk):
-                    if future.done():
-                        done_futures.append((future, future_to_chunk.pop(future)))
-                        try:
-                            batch_status.futures_to_cancel.remove(future)
-                        except ValueError:
-                            pass
-            
-            if not done_futures:
-                current_time = time.time()
-                if current_time - last_heartbeat_time >= heartbeat_interval_seconds:
-                    with future_lock:
-                        active_count = sum(1 for pending_future in future_to_chunk if not pending_future.done())
-                    batch_status.set_status_message(
-                        i18n.get_text("status_generating_audio_active", lang).format(
-                            completed_count,
-                            unique_count,
-                            active_count,
-                        )
-                    )
-                    last_heartbeat_time = current_time
-                # Brief sleep to avoid busy-waiting, then re-check
-                time.sleep(0.05)
-                continue
-            
-            for future, chunk in done_futures:
-                try:
-                    # Enforce strict 25s timeout per batch as mandated
-                    batch_results = future.result(timeout=25.0) 
-                    
-                    for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
-                        result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
-                        audio_cache[dedup_key] = result_tuple
-                        result, error = result_tuple
-                        
-                        # Mark progress
-                        completed_count += 1
-                        batch_status.unique_tasks_completed = completed_count
-                        
-                        # Update progress for all notes using this combination
-                        is_successful = result is not None
-                        for task_idx in task_indices:
-                            note_id = tasks[task_idx]['note_id']
-                            with batch_status.get_note_action_context(note_id, False) as ctx:
-                                if is_successful:
-                                    src, proc, audio_fn, full_fn = result
-                                    ctx.set_source_text(src)
-                                    ctx.set_processed_text(proc)
-                                    ctx.set_sound(audio_fn)
-                                    ctx.set_status(constants.BatchNoteStatus.Generated)
-                                else:
-                                    ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
-                            batch_status.notify_change(note_id)
-                    
-                    batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
-                    self.executor.monitor.maybe_gc(completed_count)
-                    del batch_results
-                    
-                except Exception as e:
-                    logger.error(f"[BATCH] Batch execution failed: {e}")
-                    # Mark all items in this chunk as failed
-                    for dedup_key, _, task_indices in chunk:
-                        audio_cache[dedup_key] = (None, e)
-                        completed_count += 1
-                        for task_idx in task_indices:
-                            note_id = tasks[task_idx]['note_id']
-                            with batch_status.get_note_action_context(note_id, False) as ctx:
-                                ctx.set_error(e)
-                            batch_status.notify_change(note_id)
-                    self.executor.monitor.maybe_gc(completed_count)
-        
-        # Wait for submit thread to finish (should be done already)
-        submit_thread.join(timeout=5.0)
-        
-        if submit_error[0]:
-            logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
-
-        return audio_cache
+        return self.batch_orchestrator._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
 
     def _apply_batch_deduplication(self, tasks, dedup_map, audio_cache, batch_status):
-        """
-        Apply cached audio results to all task indices (including duplicates).
-        Returns list of (note_id, source_text, processed_text, sound_file, full_filename) tuples.
-        """
-        results = []
-
-        for dedup_key, task_indices in dedup_map.items():
-            if dedup_key not in audio_cache:
-                logger.warning(f'audio cache missing result for dedup_key')
-                continue
-
-            cached_result = audio_cache[dedup_key]
-            res, err = cached_result
-            if res is None:
-                # This combination failed, skip all tasks using it
-                for task_idx in task_indices:
-                    note_id = tasks[task_idx]['note_id']
-                    results.append((note_id, None, None, None, None, err))  # error object instead of boolean
-                continue
-
-            source_text, processed_text, sound_file, full_filename = res
-
-            # Apply to all tasks using this combination
-            for task_idx in task_indices:
-                note_id = tasks[task_idx]['note_id']
-                results.append((note_id, source_text, processed_text, sound_file, full_filename, None))  # None = no error
-
-        return results
+        return self.batch_orchestrator._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
 
     def _get_sequence_service_limits(self, items):
         service_limits = {}
@@ -952,6 +260,74 @@ class SuperFreeTTS():
         service_limits = self._get_sequence_service_limits(items)
         total_limit = sum(service_limits.values()) or 1
         return max(1, min(total_limit, len(items)))
+
+    def _generate_audio_single_sequence_task(
+        self,
+        item: Tuple,
+        service_gates: Dict[str, threading.BoundedSemaphore],
+    ) -> List:
+        """
+        Continuous-fill variant of sequence audio generation.
+
+        Handles exactly ONE (dedup_key, task_data, task_indices) item.
+        Returns a 1-element list so the outer result-collection loop
+        (which iterates ``enumerate(chunk)``) works identically to the
+        chunk-based path.
+
+        ``service_gates`` is a shared dict of BoundedSemaphore objects
+        owned by ``_execute_unique_tasks_unified``.  Acquiring the gate
+        *inside* the worker (not before submit) means:
+          - The outer pool fills up immediately with futures.
+          - Workers block only on the gate, not on submission.
+          - As soon as one EdgeTTS slot frees, the next worker grabs it.
+        """
+        dedup_key, task_data, task_indices = item
+        chosen_voice = task_data.get('chosen_voice')
+
+        if chosen_voice is None:
+            return [(None, errors.NoVoiceSet())]
+
+        proc_text = task_data['processed_text']
+        voice_id = chosen_voice.voice_id
+        voice_options = chosen_voice.options
+        service_name = self.executor.detect_service(task_data)
+
+        request_key = (
+            dedup_key
+            if isinstance(dedup_key, audio_file_store.AudioRequestKey)
+            else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
+        )
+        cached_file = self.audio_store.get_cached_file(request_key)
+        if cached_file is not None:
+            return [(
+                (task_data['source_text'], proc_text, cached_file.audio_filename, cached_file.full_filename),
+                None,
+            )]
+
+        gate = service_gates.get(service_name)
+        try:
+            if gate is not None:
+                gate.acquire()
+            try:
+                full_filename, audio_filename = self.generate_audio_write_file(
+                    proc_text,
+                    voice_id,
+                    voice_options,
+                    task_data['audio_request_context'],
+                )
+            finally:
+                if gate is not None:
+                    gate.release()
+            self.executor.cache_result(
+                proc_text, str(request_key),
+                task_data['source_text'], audio_filename, full_filename,
+            )
+            return [(
+                (task_data['source_text'], proc_text, audio_filename, full_filename),
+                None,
+            )]
+        except Exception as e:
+            return [(None, e)]
 
     def _generate_audio_sequence_task(self, chunk):
         results = [None] * len(chunk)
@@ -1157,11 +533,7 @@ class SuperFreeTTS():
         return self.get_audio_file(processed_text, batch.voice_selection, audio_request_context)
 
     def get_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
-        source_text = text
-        processed_text = text_utils.process_text(source_text, realtime_model.text_processing)
-        if len(processed_text) == 0:
-            raise errors.SourceTextEmpty()
-        return self.get_audio_file(processed_text, realtime_model.voice_selection, context.AudioRequestContext(constants.AudioRequestReason.realtime))
+        return self.realtime_manager.get_realtime_audio(realtime_model, text)
 
     def get_audio_file(self, processed_text, voice_selection, audio_request_context):
         # sanity checks
@@ -1355,8 +727,7 @@ class SuperFreeTTS():
         self.anki_utils.play_sound(full_filename)
     
     def play_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
-        full_filename, audio_filename = self.get_realtime_audio(realtime_model, text)
-        self.anki_utils.play_sound(full_filename)
+        return self.realtime_manager.play_realtime_audio(realtime_model, text)
 
     def play_sound(self, source_text, voice_id, options):
         logger.info(f'playing audio for {source_text}')
@@ -1490,167 +861,19 @@ class SuperFreeTTS():
         return note_audio_updater.keep_only_sound_tags(field_value)
 
 
-    # processing of Anki TTS tags
-    # ===========================
-
-    def get_audio_filename_tts_tag(self, tts_tag):
-        preset = self.extract_preset(tts_tag.other_args)
-        realtime_side_model = self.get_realtime_side_config(preset)
-        full_filename, audio_filename = self.get_realtime_audio(realtime_side_model, tts_tag.field_text)
-        return full_filename
-
-    def build_realtime_tts_tag(self, realtime_side_model: config_models.RealtimeConfigSide, setting_key):
-        logger.debug('build_realtime_tts_tag')
-        if realtime_side_model.source.mode == constants.RealtimeSourceType.AnkiTTSTag:
-            logger.debug(f'build_realtime_tts_tag, realtime_side_model: {realtime_side_model}')
-            
-            # get the audio language of the first voice
-            voice_selection = realtime_side_model.voice_selection
-            logger.debug(f'voice_selection.selection_mode: {voice_selection.selection_mode}')
-            # first, we need to get the voice_id
-            if voice_selection.selection_mode == constants.VoiceSelectionMode.single:
-                voice_id = voice_selection.voice.voice_id
-            else:
-                voice_id = voice_selection.get_voice_list()[0].voice_id
-            # now, locate the voice for this voice id
-            voice = self.service_manager.locate_voice(voice_id)
-            audio_language = voice_module.get_audio_language_for_voice(voice)
-
-
-            field_format = realtime_side_model.source.field_name
-            if realtime_side_model.source.field_type == constants.AnkiTTSFieldType.Cloze:
-                field_format = f'cloze:{realtime_side_model.source.field_name}'
-            elif realtime_side_model.source.field_type == constants.AnkiTTSFieldType.ClozeOnly:
-                field_format = f'cloze-only:{realtime_side_model.source.field_name}'
-            return '{{tts ' + f"""{audio_language.name} {constants.TTS_TAG_HYPERTTS_PRESET}={setting_key} voices={constants.TTS_TAG_VOICE}:{field_format}""" + '}}'
-        else:
-            raise Exception(f'unsupported RealtimeSourceType: {realtime_side_model.source.mode}')
-
-    def extract_preset(self, extra_args_array):
-        subset = [x for x in extra_args_array
-                  if constants.TTS_TAG_HYPERTTS_PRESET in x or constants.TTS_TAG_HYPERTTS_PRESET_LEGACY in x]
-        if len(subset) != 1:
-            logger.error(f'could not process TTS tag extra args: {extra_args_array}')
-            raise errors.TTSTagProcessingError()
-        array_entry = subset[0]
-        components = array_entry.split('=')
-        return components[1]
-
-    def get_realtime_side_config(self, preset):
-        # based 
-        if constants.AnkiCardSide.Front.name in preset:
-            # front
-            preset_name = preset.replace(constants.AnkiCardSide.Front.name + '_', '')
-            return self.load_realtime_config(preset_name).front
-        else:
-            # back
-            preset_name = preset.replace(constants.AnkiCardSide.Back.name + '_', '')
-            return self.load_realtime_config(preset_name).back
-
-
-    def card_template_has_tts_tag(self, note, side, card_ord):
-        # return preset name if found
-        note_model = note.note_type()
-        card_template = note_model["tmpls"][card_ord]
-        side_template_key = 'qfmt'
-        if side == constants.AnkiCardSide.Back:
-            side_template_key = 'afmt'
-        side_template = card_template[side_template_key]
-        side_template = side_template.replace('\n', ' ')
-        m = re.match(r'.*{{tts.*superfreet(?:t|s)s_preset=([^\s]+).*}}.*', side_template)
-        if m != None:
-            preset_name = m.groups()[0]
-            preset_name = preset_name.replace(side.name + '_', '')
-            logger.info(f'found preset name in TTS tag inside card template: {preset_name}')
-            return preset_name
-        else:
-            logger.info(f'didnt find a TTS tag in card template: {side_template}')
-        return None
-
-
-    def remove_tts_tag(self, card_template):
-        return re.sub('{{tts.*}}', '', card_template)
-
-    def set_tts_tag_note_model(self, realtime_side_model: config_models.RealtimeConfigSide, setting_key, note_model, side, card_ord, clear_only):
-        logger.debug('set_tts_tag_note_model')
-        # build tts tag
-        tts_tag = self.build_realtime_tts_tag(realtime_side_model, setting_key)
-        logger.info(f'tts tag: {tts_tag}')
-
-        return self.alter_tts_tag_note_model(note_model, side, card_ord, clear_only, tts_tag)
-
-
-    def alter_tts_tag_note_model(self, note_model, side, card_ord, clear_only, tts_tag):
-        # alter card template
-        card_template = note_model["tmpls"][card_ord]
-        side_template_key = 'qfmt'
-        if side == constants.AnkiCardSide.Back:
-            side_template_key = 'afmt'
-        side_template = card_template[side_template_key]
-        side_template = self.remove_tts_tag(side_template)
-        if not clear_only:
-            side_template += '\n' + tts_tag
-        card_template[side_template_key] = side_template
-
-        note_model["tmpls"][card_ord] = card_template
-
-        return note_model
-
-    def render_card_template_extract_tts_tag(self, realtime_model: config_models.RealtimeConfig, note, side, card_ord):
-        realtime_model.validate()
-        note_model = note.note_type()
-        note_model = copy.deepcopy(note_model)
-        note_model = self.set_tts_tag_note_model(realtime_model, 'preview', note_model, side, card_ord, False)
-        logger.debug(f'render_card_template_extract_tts_tag, note_model {pprint.pformat(note_model, compact=True, width=500)}')
-
-        card = self.anki_utils.create_card_from_note(note, card_ord, note_model, note_model["tmpls"][card_ord])
-        if side == constants.AnkiCardSide.Front:
-            return self.anki_utils.extract_tts_tags(card.question_av_tags())
-        elif side == constants.AnkiCardSide.Back:
-            return self.anki_utils.extract_tts_tags(card.answer_av_tags())
-
-    def build_side_settings_key(self, card_side: constants.AnkiCardSide, settings_key):
-        return f'{card_side.name}_{settings_key}'
-
-
-    def persist_realtime_config_update_note_type(self, realtime_model: config_models.RealtimeConfig, note, card_ord, current_settings_key):
-        logger.debug('persist_realtime_config_update_note_type')
-        undo_id = self.anki_utils.undo_tts_tag_start()
-
-        settings_key = self.save_realtime_config(realtime_model, current_settings_key)
-        note_model = note.note_type()
-        
-        # proces front side
-        side = constants.AnkiCardSide.Front
-        if realtime_model.front.side_enabled:
-            side_settings_key = self.build_side_settings_key(side, settings_key)
-            note_model = self.set_tts_tag_note_model(realtime_model.front, side_settings_key, note_model, side, card_ord, False)
-        else:
-            note_model = self.set_tts_tag_note_model(realtime_model.front, None, note_model, side, card_ord, True)
-
-        # process back side
-        side = constants.AnkiCardSide.Back
-        if realtime_model.back.side_enabled:
-            side_settings_key = self.build_side_settings_key(side, settings_key)
-            note_model = self.set_tts_tag_note_model(realtime_model.back, side_settings_key, note_model, side, card_ord, False)
-        else:
-            note_model = self.set_tts_tag_note_model(realtime_model.back, None, note_model, side, card_ord, True)
-
-        # save note model
-        self.anki_utils.save_note_type_update(note_model)
-
-        self.anki_utils.undo_end(undo_id)
-
-    def remove_tts_tags(self, note, card_ord):
-        logger.debug('remove_tts_tags')
-        undo_id = self.anki_utils.undo_tts_tag_start()
-        note_model = note.note_type()
-        side = constants.AnkiCardSide.Front
-        note_model = self.alter_tts_tag_note_model(note_model, side, card_ord, True, None)
-        side = constants.AnkiCardSide.Back
-        note_model = self.alter_tts_tag_note_model(note_model, side, card_ord, True, None)
-        self.anki_utils.save_note_type_update(note_model)
-        self.anki_utils.undo_end(undo_id)        
+    # Anki TTS and Card template tags (delegated to RealtimeManager)
+    def get_audio_filename_tts_tag(self, tts_tag): return self.realtime_manager.get_audio_filename_tts_tag(tts_tag)
+    def build_realtime_tts_tag(self, realtime_side_model, setting_key): return self.realtime_manager.build_realtime_tts_tag(realtime_side_model, setting_key)
+    def extract_preset(self, extra_args_array): return self.realtime_manager.extract_preset(extra_args_array)
+    def get_realtime_side_config(self, preset): return self.realtime_manager.get_realtime_side_config(preset)
+    def card_template_has_tts_tag(self, note, side, card_ord): return self.realtime_manager.card_template_has_tts_tag(note, side, card_ord)
+    def remove_tts_tag(self, card_template): return self.realtime_manager.remove_tts_tag(card_template)
+    def set_tts_tag_note_model(self, realtime_side_model, setting_key, note_model, side, card_ord, clear_only): return self.realtime_manager.set_tts_tag_note_model(realtime_side_model, setting_key, note_model, side, card_ord, clear_only)
+    def alter_tts_tag_note_model(self, note_model, side, card_ord, clear_only, tts_tag): return self.realtime_manager.alter_tts_tag_note_model(note_model, side, card_ord, clear_only, tts_tag)
+    def render_card_template_extract_tts_tag(self, realtime_model, note, side, card_ord): return self.realtime_manager.render_card_template_extract_tts_tag(realtime_model, note, side, card_ord)
+    def build_side_settings_key(self, card_side, settings_key): return self.realtime_manager.build_side_settings_key(card_side, settings_key)
+    def persist_realtime_config_update_note_type(self, realtime_model, note, card_ord, current_settings_key): return self.realtime_manager.persist_realtime_config_update_note_type(realtime_model, note, card_ord, current_settings_key)
+    def remove_tts_tags(self, note, card_ord): return self.realtime_manager.remove_tts_tags(note, card_ord)        
 
 
     # functions related to getting data from notes
@@ -1668,23 +891,10 @@ class SuperFreeTTS():
         return list(note.keys())
 
     def populate_batch_status_processed_text(self, note_id_list, batch_source, text_processing, batch_status):
-        with batch_status.get_batch_running_action_context():
-            for note_id in note_id_list:
-                with batch_status.get_note_action_context(note_id, True) as note_action_context:
-                    note = self.anki_utils.get_note_by_id(note_id)
-                    source_text, processed_text = self.get_source_processed_text(note, batch_source, text_processing)
-                    note_action_context.set_source_text(source_text)
-                    note_action_context.set_processed_text(processed_text)
-                    note_action_context.set_status(constants.BatchNoteStatus.OK)
-                if batch_status.must_continue == False:
-                    logger.info('batch_status execution interrupted')
-                    break
+        return self.batch_orchestrator.populate_batch_status_processed_text(note_id_list, batch_source, text_processing, batch_status)
 
     def get_source_processed_text(self, note, batch_source, text_processing):
-        source_text = self.get_source_text(note, batch_source, None)
-        logger.debug(f'get_source_processed_text: source_text: {source_text}')
-        processed_text = text_utils.process_text(source_text, text_processing)
-        return source_text, processed_text
+        return self.batch_orchestrator.get_source_processed_text(note, batch_source, text_processing)
 
     def ensure_note_tag(self, note, tag_name: str) -> bool:
         tags = list(getattr(note, 'tags', []) or [])
@@ -1711,211 +921,63 @@ class SuperFreeTTS():
                 tagged_count += 1
         return tagged_count
 
-    # functions related to addon config
-    # =================================
+    # =========================================================================
+    # Config / Preset / Workflow / Realtime — delegated to ConfigStore
+    # All methods below are thin wrappers that keep the public API identical
+    # while logic lives in superfreetts_addon/config_store.py.
+    # =========================================================================
+
+    def perform_config_migration(self):
+        self.config_store.perform_config_migration()
+        # Keep self.config pointing at the (possibly new) dict after migration
+        self.config = self.config_store.config
 
     # presets
-    
-    def get_preset_list(self) -> List[config_models.PresetInfo]:
-        if constants.CONFIG_PRESETS not in self.config:
-            return []
-        preset_list = []
-        for preset_id, preset_data in self.config[constants.CONFIG_PRESETS].items():
-            preset_list.append(config_models.PresetInfo(id=preset_id, name=preset_data['name']))
-        # sort alphabetically
-        preset_list.sort(key=lambda x: x.name)
-        return preset_list
-
-    def save_preset(self, preset: config_models.BatchConfig):
-        preset.validate()
-        if constants.CONFIG_PRESETS not in self.config:
-            self.config[constants.CONFIG_PRESETS] = {}
-        self.config[constants.CONFIG_PRESETS][preset.uuid] = preset.serialize()
-        self.anki_utils.write_config(self.config)
-        logger.info(f'saved preset [{preset.name}] {pprint.pformat(preset.serialize(), compact=True, width=500)}')
-
-    def load_preset(self, preset_id: str) -> config_models.BatchConfig:
-        logger.info(f'loading preset [{preset_id}]')
-        if preset_id not in self.config[constants.CONFIG_PRESETS]:
-            raise errors.PresetNotFound(preset_id)
-        return self.deserialize_batch_config(self.config[constants.CONFIG_PRESETS][preset_id])
-
-    def get_preset_name(self, preset_id: str) -> str:
-        if preset_id not in self.config[constants.CONFIG_PRESETS]:
-            raise errors.PresetNotFound(preset_id)        
-        return self.config[constants.CONFIG_PRESETS][preset_id]['name']
-
-    def preset_exists(self, preset_id: str) -> bool:
-        return preset_id in self.config.get(constants.CONFIG_PRESETS, {})
-
-    def delete_preset(self, preset_id: str):
-        if preset_id not in self.config[constants.CONFIG_PRESETS]:
-            raise errors.PresetNotFound(preset_id)
-        del self.config[constants.CONFIG_PRESETS][preset_id]
-        self.anki_utils.write_config(self.config)        
-
-    def get_next_preset_name(self) -> str:
-        """returns the next available preset name which doesn't collide with others"""
-        preset_list: List[config_models.PresetInfo] = self.get_preset_list()
-        preset_name_dict = {}
-        for preset_info in preset_list:
-            preset_name_dict[preset_info.name] = True
-        i = 1
-        new_preset_name = f'Preset {i}'
-        while new_preset_name in preset_name_dict:
-            i += 1
-            new_preset_name = f'Preset {i}'
-        return new_preset_name
+    def get_preset_list(self): return self.config_store.get_preset_list()
+    def save_preset(self, preset): return self.config_store.save_preset(preset)
+    def load_preset(self, preset_id): return self.config_store.load_preset(preset_id)
+    def get_preset_name(self, preset_id): return self.config_store.get_preset_name(preset_id)
+    def preset_exists(self, preset_id): return self.config_store.preset_exists(preset_id)
+    def delete_preset(self, preset_id): return self.config_store.delete_preset(preset_id)
+    def get_next_preset_name(self): return self.config_store.get_next_preset_name()
 
     # workflows
+    def get_workflow_list(self): return self.config_store.get_workflow_list()
+    def save_workflow(self, workflow): return self.config_store.save_workflow(workflow)
+    def load_workflow(self, workflow_id): return self.config_store.load_workflow(workflow_id)
+    def workflow_exists(self, workflow_id): return self.config_store.workflow_exists(workflow_id)
+    def get_workflow_name(self, workflow_id): return self.config_store.get_workflow_name(workflow_id)
+    def delete_workflow(self, workflow_id): return self.config_store.delete_workflow(workflow_id)
+    def get_next_workflow_name(self): return self.config_store.get_next_workflow_name()
+    def get_missing_workflow_preset_ids(self, workflow): return self.config_store.get_missing_workflow_preset_ids(workflow)
 
-    def get_workflow_list(self) -> List[config_models.WorkflowInfo]:
-        if constants.CONFIG_WORKFLOWS not in self.config:
-            return []
-        workflow_list = []
-        for workflow_id, workflow_data in self.config[constants.CONFIG_WORKFLOWS].items():
-            workflow_list.append(config_models.WorkflowInfo(id=workflow_id, name=workflow_data['name']))
-        workflow_list.sort(key=lambda x: x.name)
-        return workflow_list
-
-    def save_workflow(self, workflow: config_models.WorkflowConfig):
-        workflow.validate()
-        if constants.CONFIG_WORKFLOWS not in self.config:
-            self.config[constants.CONFIG_WORKFLOWS] = {}
-        self.config[constants.CONFIG_WORKFLOWS][workflow.uuid] = workflow.serialize()
-        self.anki_utils.write_config(self.config)
-        logger.info(f'saved workflow [{workflow.name}] {pprint.pformat(workflow.serialize(), compact=True, width=500)}')
-
-    def load_workflow(self, workflow_id: str) -> config_models.WorkflowConfig:
-        logger.info(f'loading workflow [{workflow_id}]')
-        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
-            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
-        return self.deserialize_workflow_config(self.config[constants.CONFIG_WORKFLOWS][workflow_id])
-
-    def workflow_exists(self, workflow_id: str) -> bool:
-        return workflow_id in self.config.get(constants.CONFIG_WORKFLOWS, {})
-
-    def get_workflow_name(self, workflow_id: str) -> str:
-        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
-            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
-        return self.config[constants.CONFIG_WORKFLOWS][workflow_id]['name']
-
-    def delete_workflow(self, workflow_id: str):
-        if workflow_id not in self.config.get(constants.CONFIG_WORKFLOWS, {}):
-            raise errors.HyperTTSError(f'Workflow not found: {workflow_id}')
-        del self.config[constants.CONFIG_WORKFLOWS][workflow_id]
-        self.anki_utils.write_config(self.config)
-
-    def get_next_workflow_name(self) -> str:
-        workflow_list: List[config_models.WorkflowInfo] = self.get_workflow_list()
-        workflow_name_dict = {}
-        for workflow_info in workflow_list:
-            workflow_name_dict[workflow_info.name] = True
-        i = 1
-        new_workflow_name = f'Workflow {i}'
-        while new_workflow_name in workflow_name_dict:
-            i += 1
-            new_workflow_name = f'Workflow {i}'
-        return new_workflow_name
-
-    def get_missing_workflow_preset_ids(self, workflow: config_models.WorkflowConfig) -> List[str]:
-        missing = []
-        for preset_id in workflow.preset_ids:
-            if not self.preset_exists(preset_id):
-                missing.append(preset_id)
-        return missing
-
-    # default presets / easy mode
-
-    def get_default_easy_preset_name(self, deck_note_type: config_models.DeckNoteType) -> str:
-        note_type_name = self.anki_utils.get_note_type_name(deck_note_type.model_id)
-        deck_name = self.anki_utils.get_deck_name(deck_note_type.deck_id)
-        return f'Default {note_type_name} {deck_name}'
-
-    def get_default_preset_id(self, deck_note_type: config_models.DeckNoteType) -> str:
-        # returns preset_id or None
-        mapping_rules = self.load_mapping_rules()
-        return mapping_rules.get_default_preset_id(deck_note_type)
-
-    def save_default_preset(self, deck_note_type: config_models.DeckNoteType, preset: config_models.BatchConfig):
-        # first, save the preset
-        self.save_preset(preset)
-        # associate the preset with the deck_note_type
-        mapping_rules = self.load_mapping_rules()
-        mapping_rules.set_default_preset_id(deck_note_type, preset.uuid)
-        # save the mapping rules
-        self.save_mapping_rules(mapping_rules)
-        
+    # default presets
+    def get_default_easy_preset_name(self, dnt): return self.config_store.get_default_easy_preset_name(dnt)
+    def get_default_preset_id(self, dnt): return self.config_store.get_default_preset_id(dnt)
+    def save_default_preset(self, dnt, preset): return self.config_store.save_default_preset(dnt, preset)
 
     # mapping rules
-    def save_mapping_rules(self, mapping_rules: config_models.PresetMappingRules):
-        self.config[constants.CONFIG_MAPPING_RULES] = config_models.serialize_preset_mapping_rules(mapping_rules)
-        self.anki_utils.write_config(self.config)
-        logger.info('saved mapping rules')
+    def save_mapping_rules(self, mapping_rules): return self.config_store.save_mapping_rules(mapping_rules)
+    def load_mapping_rules(self): return self.config_store.load_mapping_rules()
 
-    def load_mapping_rules(self) -> config_models.PresetMappingRules:
-        if constants.CONFIG_MAPPING_RULES not in self.config:
-            return config_models.PresetMappingRules()
-        return config_models.deserialize_preset_mapping_rules(self.config[constants.CONFIG_MAPPING_RULES])
-    
     # realtime config
+    def save_realtime_config(self, realtime_model, settings_key): return self.config_store.save_realtime_config(realtime_model, settings_key)
+    def load_realtime_config(self, settings_key): return self.config_store.load_realtime_config(settings_key)
 
-    def save_realtime_config(self, realtime_model, settings_key):
-        realtime_model.validate()
-        if constants.CONFIG_REALTIME_CONFIG not in self.config:
-            self.config[constants.CONFIG_REALTIME_CONFIG] = {}
-        
-        if settings_key == None:
-            # find a free name
-            key_index = 0
-            candidate_key = f'realtime_{key_index}'
-            while candidate_key in self.config[constants.CONFIG_REALTIME_CONFIG]:
-                key_index += 1
-                candidate_key = f'realtime_{key_index}'
-            final_key = candidate_key
-        else:
-            # use the key provided
-            final_key = settings_key
-        self.config[constants.CONFIG_REALTIME_CONFIG][final_key] = realtime_model.serialize()
-        self.anki_utils.write_config(self.config)
-        return final_key
-
-    def load_realtime_config(self, settings_key):
-        logger.info(f'loading realtime config [{settings_key}]')
-        if settings_key not in self.config[constants.CONFIG_REALTIME_CONFIG]:
-            raise errors.RealtimePresetNotFound(settings_key)
-        realtime_config = self.config[constants.CONFIG_REALTIME_CONFIG][settings_key]
-        logger.info(f'loaded realtime config {pprint.pformat(realtime_config, compact=True, width=500)}')
-        return self.deserialize_realtime_config(realtime_config)
-
-    # services config
-
-    def get_client_uuid(self) -> str:
-        return self.get_configuration().user_uuid
-
-    def save_configuration(self, configuration_model):
-        configuration_model = self.service_manager.remove_non_existent_services(configuration_model)
-        configuration_model.validate()
-        self.config[constants.CONFIG_CONFIGURATION] = config_models.serialize_configuration(configuration_model)
-        self.anki_utils.write_config(self.config)
-
-    def get_configuration(self) -> config_models.Configuration:
-        return self.deserialize_configuration(self.config.get(constants.CONFIG_CONFIGURATION, {}))
-
-    def save_superfreetts_pro_api_key(self, api_key: str):
-        """Super Free TTS: Pro mode disabled, no-op."""
-        pass
+    # global configuration
+    def get_configuration(self): return self.config_store.get_configuration()
+    def save_configuration(self, configuration_model): return self.config_store.save_configuration(configuration_model)
+    def get_client_uuid(self): return self.config_store.get_client_uuid()
+    def save_superfreetts_pro_api_key(self, api_key: str): pass  # Pro mode disabled
 
     def reconfigure_service_manager(self):
-        """reconfigures the service manager with the current configuration"""
+        """Reconfigure the service manager with the current configuration."""
         configuration = self.get_configuration()
         preferences = self.get_preferences()
         disable_ssl_verification = preferences.error_handling.disable_ssl_verification
         services_enabled = self.service_manager.configure(configuration, disable_ssl_verification)
         self.service_manager.clear_voice_list_cache()
         logger.debug(f'reconfigure_service_manager, services_enabled: {services_enabled}')
-        
-        # Recreate batch executor with updated worker configuration
         try:
             service_config_map = configuration.get_service_config()
             engine_config = self._build_engine_config(service_config_map)
@@ -1923,13 +985,11 @@ class SuperFreeTTS():
             logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
         except Exception as e:
             logger.warning(f'[RECONFIG] Failed to update batch executor: {e}')
-        
         if services_enabled:
-            # at least one service was enabled
             self.anki_utils.broadcast_services_configured()
 
     def config_register_added_audio(self):
-        """registers that the user has added audio, so we can show the welcome screen"""
+        """Register that the user has added audio (welcome-screen state machine)."""
         configuration = self.get_configuration()
         if configuration.trial_registration_step == config_models.TrialRegistrationStep.pending_add_audio:
             configuration.trial_registration_step = config_models.TrialRegistrationStep.finished
@@ -1937,192 +997,57 @@ class SuperFreeTTS():
             self.save_configuration(configuration)
             self.anki_utils.run_on_main(self.anki_utils.broadcast_audio_added)
 
-    def superfreetts_pro_enabled(self):
-        # Super Free TTS: Pro always disabled
-        return False
+    def superfreetts_pro_enabled(self): return False  # Pro always disabled
 
-    def set_editor_use_selection(self, use_selection):
-        self.config[constants.CONFIG_USE_SELECTION] = use_selection
-        self.anki_utils.write_config(self.config)
-
-    def get_editor_use_selection(self):
-        return self.config.get(constants.CONFIG_USE_SELECTION, False)
+    # editor selection flag
+    def set_editor_use_selection(self, use_selection): return self.config_store.set_editor_use_selection(use_selection)
+    def get_editor_use_selection(self): return self.config_store.get_editor_use_selection()
 
     # preferences
-    def get_preferences(self):
-        return self.deserialize_preferences(self.config.get(constants.CONFIG_PREFERENCES, {}))
+    def get_preferences(self): return self.config_store.get_preferences()
+    def get_ui_language(self): return self.config_store.get_ui_language()
 
     def apply_logging_preferences(self):
-        """Apply logging preferences from configuration."""
-        try:
-            prefs = self.get_preferences()
-            if prefs.error_handling.debug_mode:
-                log_dir = self.anki_utils.get_user_files_dir()
-                if not os.path.isdir(log_dir):
-                    os.makedirs(log_dir, exist_ok=True)
-                log_path = os.path.join(log_dir, 'superfreetts.log')
-                logging_utils.configure_file_logging(log_path)
-                logger.info(f"Debug logging enabled. Log file: {log_path}")
-            else:
+        # Bootstrap path: config_store may not exist yet on very first call from __init__
+        if hasattr(self, 'config_store'):
+            self.config_store.apply_logging_preferences()
+        else:
+            # Called before config_store is constructed; use raw config dict
+            try:
+                prefs = config_models.deserialize_preferences(
+                    self.anki_utils.get_config().get(constants.CONFIG_PREFERENCES, {})
+                )
+                if prefs.error_handling.debug_mode:
+                    log_dir = self.anki_utils.get_user_files_dir()
+                    if not os.path.isdir(log_dir):
+                        os.makedirs(log_dir, exist_ok=True)
+                    log_path = os.path.join(log_dir, 'superfreetts.log')
+                    logging_utils.configure_file_logging(log_path)
+                else:
+                    logging_utils.configure_silent()
+            except Exception:
                 logging_utils.configure_silent()
-        except Exception as e:
-            # Fallback to silent if preferences can't be loaded yet
-            logging_utils.configure_silent()
 
     def save_preferences(self, preferences_model):
-        self.config[constants.CONFIG_PREFERENCES] = config_models.serialize_preferences(preferences_model)
-        self.anki_utils.write_config(self.config)
-        # Refresh menu language immediately
+        self.config_store.save_preferences(preferences_model)
         gui.update_menu_language(self)
-        # Apply logging preferences
         self.apply_logging_preferences()
-        # reconfigure service manager to apply new SSL/Concurrency settings
         self.reconfigure_service_manager()
 
-    # ui language
-    # ===========
-
-    def get_ui_language(self) -> str:
-        """
-        Lấy ngôn ngữ giao diện hiện tại cho Super Free TTS.
-        - Đọc từ Preferences.ui_language
-        - Nếu không hợp lệ hoặc chưa set, fallback về 'en'
-        """
-        prefs = self.get_preferences()
-        lang = getattr(prefs, "ui_language", "en")
-        if lang not in i18n.SUPPORTED_LANGUAGES:
-            lang = "en"
-        return lang
-
-    # deserialization routines for loading from config
-    # ================================================
-
-    def perform_config_migration(self):
-        self.config = config_models.migrate_configuration(self.anki_utils, self.config)
-        self.anki_utils.write_config(self.config)
-
-    def deserialize_batch_config(self, batch_config):
-        batch = config_models.BatchConfig(self.anki_utils)
-        source = config_models.deserialize_batchsource(batch_config['source'])
-        target = config_models.deserialize_batch_target(batch_config['target'])
-        voice_selection = self.deserialize_voice_selection(batch_config['voice_selection'])
-
-        text_processing_config = batch_config.get('text_processing', {})
-        text_processing = self.deserialize_text_processing(text_processing_config)
-
-        batch.set_source(source)
-        batch.set_target(target)
-        batch.set_voice_selection(voice_selection)
-        batch.text_processing = text_processing
-        batch.uuid = batch_config['uuid']
-        batch.name = batch_config['name']
-        
-        return batch
-
-    def deserialize_workflow_config(self, workflow_config):
-        workflow = config_models.WorkflowConfig(self.anki_utils)
-        workflow.uuid = workflow_config['uuid']
-        workflow.name = workflow_config['name']
-        workflow.preset_ids = list(workflow_config.get('preset_ids', []))
-        return workflow
-
-    def deserialize_realtime_config(self, realtime_config):
-        realtime = config_models.RealtimeConfig()
-        realtime.front = self.deserialize_realtime_side_config(realtime_config['front'])
-        realtime.back = self.deserialize_realtime_side_config(realtime_config['back'])
-        return realtime
-
-    def deserialize_realtime_side_config(self, realtime_side_config):
-        realtime_side = config_models.RealtimeConfigSide()
-        realtime_side.side_enabled = realtime_side_config['side_enabled']
-        if not realtime_side.side_enabled:
-            return realtime_side
-
-        realtime_source_type = constants.RealtimeSourceType[realtime_side_config['source']['mode']]
-        if realtime_source_type == constants.RealtimeSourceType.AnkiTTSTag:
-            source = config_models.RealtimeSourceAnkiTTS()
-            source.field_name = realtime_side_config['source']['field_name']
-            source.field_type = constants.AnkiTTSFieldType[realtime_side_config['source']['field_type']]
-        else:
-            raise Exception(f'unsupported RealtimeSourceType: {realtime_source_type}')
-        voice_selection = self.deserialize_voice_selection(realtime_side_config['voice_selection'])
-        text_processing_config = realtime_side_config.get('text_processing', {})
-        text_processing = self.deserialize_text_processing(text_processing_config)
-
-        realtime_side.source = source
-        realtime_side.voice_selection = voice_selection
-        realtime_side.text_processing = text_processing
-        
-        return realtime_side       
-
-    def deserialize_voice_selection(self, voice_selection_config):
-        voice_selection_mode = constants.VoiceSelectionMode[voice_selection_config['voice_selection_mode']]
-        if voice_selection_mode == constants.VoiceSelectionMode.single:
-            single = config_models.VoiceSelectionSingle()
-            voice_id = voice_module.deserialize_voice_id_v3(voice_selection_config['voice']['voice_id'])
-            voice_options = voice_selection_config['voice']['options']
-            single.set_voice(config_models.VoiceWithOptions(voice_id, voice_options))
-            return single
-        elif voice_selection_mode == constants.VoiceSelectionMode.random:
-            random = config_models.VoiceSelectionRandom()
-            for voice_data in voice_selection_config['voice_list']:
-                voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
-                try:
-                    # try to locate the voice
-                    voice = self.service_manager.locate_voice(voice_id)
-                    random.add_voice(config_models.VoiceWithOptionsRandom(voice_id, voice_data['options'], voice_data['weight']))
-                except errors.VoiceIdNotFound as exc:
-                    logger.warning(f'voice_id not found: {voice_id}, omitting from random selection')
-            return random
-        elif voice_selection_mode == constants.VoiceSelectionMode.priority:
-            priority = config_models.VoiceSelectionPriority()
-            for voice_data in voice_selection_config['voice_list']:
-                voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
-                try:
-                    # try to locate the voice
-                    voice = self.service_manager.locate_voice(voice_id)
-                    priority.add_voice(config_models.VoiceWithOptionsPriority(voice_id, voice_data['options']))
-                except errors.VoiceIdNotFound as exc:
-                    logger.warning(f'voice_id not found: {voice_id}, omitting from priority selection')
-            return priority
-        elif voice_selection_mode == constants.VoiceSelectionMode.sequence:
-            sequence = config_models.VoiceSelectionSequence()
-            for voice_data in voice_selection_config['voice_list']:
-                voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
-                try:
-                    # try to locate the voice
-                    voice = self.service_manager.locate_voice(voice_id)
-                    sequence.add_voice(config_models.VoiceWithOptionsSequence(voice_id, voice_data['options']))
-                except errors.VoiceIdNotFound as exc:
-                    logger.warning(f'voice_id not found: {voice_id}, omitting from sequence selection')
-            return sequence
-
-    def deserialize_text_processing(self, text_processing_config):
-        text_processing = config_models.TextProcessing()
-        text_processing.enabled = text_processing_config.get('enabled', constants.TEXT_PROCESSING_DEFAULT_ENABLED)
-        text_processing.html_to_text_line = text_processing_config.get('html_to_text_line', constants.TEXT_PROCESSING_DEFAULT_HTMLTOTEXTLINE)
-        text_processing.strip_brackets = text_processing_config.get('strip_brackets', constants.TEXT_PROCESSING_DEFAULT_STRIP_BRACKETS)
-        text_processing.strip_cloze = text_processing_config.get('strip_cloze', constants.TEXT_PROCESSING_DEFAULT_STRIP_CLOZE)
-        text_processing.ssml_convert_characters = text_processing_config.get('ssml_convert_characters', constants.TEXT_PROCESSING_DEFAULT_SSML_CHARACTERS)
-        text_processing.run_replace_rules_after = text_processing_config.get('run_replace_rules_after', constants.TEXT_PROCESSING_DEFAULT_REPLACE_AFTER)
-        text_processing.ignore_case = text_processing_config.get('ignore_case', constants.TEXT_PROCESSING_DEFAULT_IGNORE_CASE)
-        rules = text_processing_config.get('text_replacement_rules', [])
-        for rule in rules:
-            rule_obj = config_models.TextReplacementRule(constants.TextReplacementRuleType[rule['rule_type']])
-            rule_obj.source = rule['source']
-            rule_obj.target = rule['target']
-            text_processing.add_text_replacement_rule(rule_obj)
-        return text_processing
-
-    def deserialize_configuration(self, configuration_config) -> config_models.Configuration:
-        return config_models.deserialize_configuration(configuration_config)
-
-    def deserialize_preferences(self, preferences_config):
-        return config_models.deserialize_preferences(preferences_config)
+    # deserialization (delegates to config_store)
+    def deserialize_batch_config(self, batch_config): return self.config_store.deserialize_batch_config(batch_config)
+    def deserialize_workflow_config(self, wf_config): return self.config_store.deserialize_workflow_config(wf_config)
+    def deserialize_realtime_config(self, rt_config): return self.config_store.deserialize_realtime_config(rt_config)
+    def deserialize_realtime_side_config(self, rts_config): return self.config_store.deserialize_realtime_side_config(rts_config)
+    def deserialize_voice_selection(self, vs_config): return self.config_store.deserialize_voice_selection(vs_config)
+    def deserialize_text_processing(self, tp_config): return self.config_store.deserialize_text_processing(tp_config)
+    def deserialize_configuration(self, cfg): return self.config_store.deserialize_configuration(cfg)
+    def deserialize_preferences(self, prefs_cfg): return self.config_store.deserialize_preferences(prefs_cfg)
 
     # error handling
-    # ==============
     def get_tts_player_action_context(self):
         lang = self.get_ui_language()
-        return self.error_manager.get_single_action_context_configurable(i18n.get_text("title_playing_realtime", lang), 
-            self.get_preferences().error_handling.realtime_tts_errors_dialog_type)
+        return self.error_manager.get_single_action_context_configurable(
+            i18n.get_text("title_playing_realtime", lang),
+            self.get_preferences().error_handling.realtime_tts_errors_dialog_type
+        )
