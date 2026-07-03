@@ -57,3 +57,22 @@ def test_text_processing_cache_key_is_stable_for_equivalent_models():
 
     assert source_text_resolver.text_processing_cache_key("hello", left) == source_text_resolver.text_processing_cache_key("hello", right)
 
+
+def test_process_text_pipeline():
+    # Verify resolving works with HTML & cloze markers
+    tp = config_models.TextProcessing()
+    tp.html_to_text_line = True
+    tp.strip_cloze = True
+    tp.strip_brackets = True
+
+    resolved = source_text_resolver.process_text("<b>{{c1::word}}</b> (ignore)", tp)
+    assert resolved == "word "
+
+
+def test_process_text_empty_raises():
+    tp = config_models.TextProcessing()
+    tp.strip_brackets = True
+    with pytest.raises(errors.SourceTextEmpty):
+        source_text_resolver.process_text("(ignore)", tp)
+
+

@@ -34,6 +34,7 @@ class ServiceManager():
     def __init__(self, services_directory, package_name, allow_test_services):
         self.services_directory = services_directory
         self.package_name = package_name
+        self.allow_test_services = allow_test_services
         self.services = {}
         self._service_classes = {}  # Cache of ServiceBase subclasses for lazy instantiation
         self._services_initialized = False  # Track if lightweight services have been instantiated

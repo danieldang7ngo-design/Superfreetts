@@ -72,3 +72,29 @@ def test_atomic_write_creates_final_file(tmp_path):
     with open(result.full_filename, "rb") as f:
         assert f.read() == b"audio-bytes"
 
+
+def test_path_generation_is_deterministic(tmp_path):
+    store = make_store(tmp_path)
+    voice_id1 = make_voice_id(name="Jenny", service="EdgeTTS")
+    voice_id2 = make_voice_id(name="Guy", service="EdgeTTS")
+
+    key1_a = store.build_request_key("hello", voice_id1, {"speed": 10})
+    key1_b = store.build_request_key("hello", voice_id1, {"speed": 10})
+    key2 = store.build_request_key("hello", voice_id2, {"speed": 10})
+    key3 = store.build_request_key("different", voice_id1, {"speed": 10})
+
+    # Same inputs -> same hash
+    assert key1_a.hash() == key1_b.hash()
+    assert store.get_full_audio_file_name(key1_a.hash(), options.AudioFormat.mp3) == store.get_full_audio_file_name(key1_b.hash(), options.AudioFormat.mp3)
+
+    # Different inputs -> different hashes
+    assert key1_a.hash() != key2.hash()
+    assert key1_a.hash() != key3.hash()
+
+
+def test_resolve_audio_format_fallback(tmp_path):
+    store = make_store(tmp_path)
+    # Default fallback to mp3
+    assert store.resolve_audio_format(None) == options.AudioFormat.mp3
+
+

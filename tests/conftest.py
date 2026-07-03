@@ -9,7 +9,7 @@ mock_anki.mock_all()
 
 import os
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 # Add parent directory to path for imports
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -115,6 +115,54 @@ def mock_logger(monkeypatch):
     """Mock logger to capture log output"""
     logger = MagicMock()
     return logger
+
+
+@pytest.fixture(scope="session")
+def anki_mock():
+    """Consolidate Anki mocking into a session-scoped fixture"""
+    from . import mock_anki
+    mock_anki.mock_all()
+    return mock_anki
+
+
+@pytest.fixture
+def tmp_media_dir(tmp_path):
+    """Clean temporary directory for audio operations"""
+    return tmp_path
+
+
+@pytest.fixture
+def sample_config_dict():
+    """Returns a clean version-8 config dict based on config.json"""
+    import json
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.json')
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    from superfreetts_addon import constants
+    config[constants.CONFIG_SCHEMA] = 8
+    return config
+
+
+@pytest.fixture
+def text_processing_config():
+    """Returns a TextProcessing instance with defaults"""
+    from superfreetts_addon import config_models
+    tp = config_models.TextProcessing()
+    tp.enabled = True
+    tp.html_to_text_line = True
+    tp.strip_brackets = True
+    tp.strip_cloze = True
+    tp.ssml_convert_characters = True
+    tp.run_replace_rules_after = True
+    tp.ignore_case = False
+    return tp
+
+
+@pytest.fixture(scope="session")
+def fake_service():
+    """A minimal ServiceBase subclass that returns dummy audio bytes"""
+    from .helpers import FakeService
+    return FakeService()
 
 
 # Markers for test organization

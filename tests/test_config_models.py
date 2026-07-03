@@ -150,5 +150,174 @@ class TestConfiguration:
     def test_configuration_creation(self):
         """Test creating configuration"""
         config = config_models.Configuration()
-        
         assert config is not None
+
+
+@pytest.mark.unit
+class TestConfigSerializationAndMigration:
+    """Serialization and migration tests for config models"""
+
+    def test_serialization_round_trips(self, mock_anki_utils, mock_service_manager):
+        # 1. Configuration
+        original_config = config_models.Configuration()
+        original_config.user_uuid = "test-uuid-999"
+        original_config.service_enabled = {"EdgeTTS": True, "PiperTTS": False}
+        serialized_config = config_models.serialize_configuration(original_config)
+        deserialized_config = config_models.deserialize_configuration(serialized_config)
+        assert deserialized_config.user_uuid == "test-uuid-999"
+        assert deserialized_config.service_enabled["EdgeTTS"] is True
+
+        # 2. BatchSource
+        src = config_models.BatchSource(mode=constants.BatchMode.simple, source_field="Front")
+        serialized_src = config_models.serialize_batchsource(src)
+        deserialized_src = config_models.deserialize_batchsource(serialized_src)
+        assert deserialized_src.mode == constants.BatchMode.simple
+        assert deserialized_src.source_field == "Front"
+
+        # 3. BatchTarget
+        tgt = config_models.BatchTarget(target_field="Sound", remove_sound_tag=False)
+        serialized_tgt = config_models.serialize_batch_target(tgt)
+        deserialized_tgt = config_models.deserialize_batch_target(serialized_tgt)
+        assert deserialized_tgt.target_field == "Sound"
+        assert deserialized_tgt.remove_sound_tag is False
+
+        # 4. PresetMappingRules
+        rules = config_models.PresetMappingRules()
+        rule = config_models.MappingRule(
+            preset_id="preset-1",
+            rule_type=constants.MappingRuleType.NoteType,
+            model_id=123,
+            enabled=True,
+            automatic=True
+        )
+        rules.rules.append(rule)
+        serialized_rules = config_models.serialize_preset_mapping_rules(rules)
+        deserialized_rules = config_models.deserialize_preset_mapping_rules(serialized_rules)
+        assert len(deserialized_rules.rules) == 1
+        assert deserialized_rules.rules[0].preset_id == "preset-1"
+
+    def test_migration_v1_to_latest(self, mock_anki_utils):
+        # Migration test from schema version 1 (presets are cleared in v6, so we verify they are empty)
+        v1_config = {
+            constants.CONFIG_SCHEMA: 1,
+            constants.CONFIG_BATCH_CONFIG: {
+                "Preset One": {
+                    "source": {"mode": "simple", "source_field": "Front"},
+                    "target": {"target_field": "Back", "remove_sound_tag": True},
+                    "voice_selection": {
+                        "voice_selection_mode": "single",
+                        "voice": {
+                            "options": {},
+                            "voice": {
+                                "service": "EdgeTTS",
+                                "voice_key": {"id": "en-US-JennyNeural"}
+                            }
+                        }
+                    },
+                    "text_processing": {}
+                }
+            }
+        }
+        
+        migrated = config_models.migrate_configuration(mock_anki_utils, v1_config)
+        assert migrated[constants.CONFIG_SCHEMA] == constants.CONFIG_SCHEMA_VERSION
+        assert len(migrated[constants.CONFIG_PRESETS]) == 0
+
+    def test_migration_v6_to_latest(self, mock_anki_utils):
+        # Presets should be preserved when migrating from v6
+        v6_config = {
+            constants.CONFIG_SCHEMA: 6,
+            constants.CONFIG_PRESETS: {
+                "preset-uuid": {
+                    "uuid": "preset-uuid",
+                    "name": "Preset One",
+                    "source": {"mode": "simple", "source_field": "Front"},
+                    "target": {"target_field": "Back", "remove_sound_tag": True},
+                    "voice_selection": {
+                        "voice_selection_mode": "single",
+                        "voice": {
+                            "options": {},
+                            "voice_id": {
+                                "service": "EdgeTTS",
+                                "voice_key": {"id": "en-US-JennyNeural"}
+                            }
+                        }
+                    },
+                    "text_processing": {}
+                }
+            }
+        }
+        migrated = config_models.migrate_configuration(mock_anki_utils, v6_config)
+        assert migrated[constants.CONFIG_SCHEMA] == constants.CONFIG_SCHEMA_VERSION
+        assert len(migrated[constants.CONFIG_PRESETS]) == 1
+        assert migrated[constants.CONFIG_PRESETS]["preset-uuid"]["name"] == "Preset One"
+
+    def test_migration_v5_to_latest(self, mock_anki_utils):
+        # Migration from v5 to check thread/worker clamping
+        v5_config = {
+            constants.CONFIG_SCHEMA: 5,
+            constants.CONFIG_SERVICE_CONFIG: {
+                "EdgeTTS": {"num_threads": 20, "concurrency_workers": 20}
+            },
+            constants.CONFIG_PREFERENCES: {
+                "piper_workers": 4,
+                "batch_concurrency": 4
+            }
+        }
+        
+        migrated = config_models.migrate_configuration(mock_anki_utils, v5_config)
+        assert migrated[constants.CONFIG_SCHEMA] == constants.CONFIG_SCHEMA_VERSION
+        
+        # All workers must be forced/clamped to 1
+        edge_config = migrated[constants.CONFIG_SERVICE_CONFIG]["EdgeTTS"]
+        assert edge_config["num_threads"] == 1
+        assert edge_config["concurrency_workers"] == 1
+        
+        prefs = migrated[constants.CONFIG_PREFERENCES]
+        assert prefs["piper_workers"] == 1
+        assert prefs["batch_concurrency"] == 1
+
+    def test_preset_crud_operations(self, mock_anki_utils, mock_service_manager):
+        from superfreetts_addon.superfreetts import SuperFreeTTS
+        from superfreetts_addon import voice as voice_module
+        from unittest.mock import patch
+
+        # Create SuperFreeTTS app instance
+        app = SuperFreeTTS(mock_anki_utils, mock_service_manager)
+        app.config = {
+            constants.CONFIG_PRESETS: {},
+            "configuration": {},
+            "preferences": {}
+        }
+        
+        # Test creating / saving a preset
+        preset = config_models.BatchConfig(mock_anki_utils)
+        preset.name = "My Test Preset"
+        preset.set_source(config_models.BatchSource(mode=constants.BatchMode.simple, source_field="Front"))
+        preset.set_target(config_models.BatchTarget(target_field="Back"))
+        
+        voice_id = voice_module.TtsVoiceId_v3(voice_key={"id": "en-US-JennyNeural"}, service="EdgeTTS")
+        voice_sel = config_models.VoiceSelectionSingle()
+        voice_sel.set_voice(config_models.VoiceWithOptions(voice_id, {}))
+        preset.set_voice_selection(voice_sel)
+        preset.set_text_processing(config_models.TextProcessing())
+        
+        app.save_preset(preset)
+        assert app.preset_exists(preset.uuid) is True
+        assert app.get_preset_name(preset.uuid) == "My Test Preset"
+        
+        # Test loading
+        with patch.object(app, 'deserialize_batch_config', return_value=preset):
+            loaded = app.load_preset(preset.uuid)
+            assert loaded.name == "My Test Preset"
+            
+        # Test deletion
+        app.delete_preset(preset.uuid)
+        assert app.preset_exists(preset.uuid) is False
+
+    def test_from_dict_defaults(self):
+        # Test default values for dataclasses
+        target = config_models.BatchTarget(target_field="Sound")
+        assert target.remove_sound_tag is True
+        assert target.insert_location == config_models.InsertLocation.AFTER
+
