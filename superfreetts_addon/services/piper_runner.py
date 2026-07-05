@@ -30,6 +30,20 @@ def pcm_to_wav(pcm_data, sample_rate=22050, channels=1, sampwidth=2):
     return buf.getvalue()
 
 def main():
+    # ponytail: force utf-8 on stdio streams, windows pipes are not safe
+    if os.name == 'nt':
+        # Python 3.7+
+        if hasattr(sys, 'reconfigure'):
+            sys.stdin.reconfigure(encoding='utf-8')
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+        else:
+            # Fallback for older pythons
+            import io
+            sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
     log("PIPER-STOCK RUNNER STARTED")
     
     # Resolve piper.exe path
@@ -54,9 +68,7 @@ def main():
             
             if action == 'init':
                 # No-op for stock piper as it's spawned per-request or we just check paths here
-                response = json.dumps({"status": "ok", "message": "ready"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                print(json.dumps({"status": "ok", "message": "ready"}), flush=True)
                 continue
             
             # Batch Generation
@@ -68,24 +80,18 @@ def main():
                 for task in tasks:
                     batch_results.append(generate_single(piper_exe, task, num_threads))
                 
-                response = json.dumps({"status": "ok", "results": batch_results}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                print(json.dumps({"status": "ok", "results": batch_results}), flush=True)
                 continue
 
             # Single Generation
             num_threads = data.get('num_threads', 1)
             res = generate_single(piper_exe, data, num_threads)
-            response = json.dumps(res) + "\n"
-            sys.stdout.buffer.write(response.encode('utf-8'))
-            sys.stdout.buffer.flush()
+            print(json.dumps(res), flush=True)
 
         except Exception as e:
             log(f"Error in piper loop: {e}")
             try:
-                err_resp = json.dumps({"status": "error", "message": str(e)}) + "\n"
-                sys.stdout.buffer.write(err_resp.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                print(json.dumps({"status": "error", "message": str(e)}), flush=True)
             except: pass
 
 def generate_single(piper_exe, data, global_threads=1):

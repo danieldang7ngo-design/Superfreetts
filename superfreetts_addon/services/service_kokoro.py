@@ -239,7 +239,7 @@ class KokoroTTS(service.ServiceBase):
                     if not response_line:
                         raise BrokenPipeError("Kokoro process closed stream.")
                     
-                    resp_text = response_line.decode('utf-8').strip()
+                    resp_text = response_line.decode('utf-8', errors='replace').strip()
                     try:
                         resp = json.loads(resp_text)
                     except Exception:
@@ -298,7 +298,7 @@ class KokoroTTS(service.ServiceBase):
                     if not response_line:
                         raise BrokenPipeError("Kokoro process closed stream.")
                     
-                    resp_data = response_line.decode('utf-8').strip()
+                    resp_data = response_line.decode('utf-8', errors='replace').strip()
                     try:
                         resp = json.loads(resp_data)
                     except Exception:

@@ -3,6 +3,12 @@ import sys
 import json
 import time
 
+# ponytail: force utf-8 on stdio streams, windows pipes are not safe
+if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # Robust path detection for embedded Python
 base_dir = os.path.dirname(sys.executable)
 site_packages = os.path.join(base_dir, 'Lib', 'site-packages')

@@ -5,6 +5,12 @@ import os
 import sys
 import traceback
 
+# ponytail: force utf-8 on stdio streams, windows pipes are not safe
+if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 
 _ENGINE = None
 _ENGINE_CACHE_KEY = None

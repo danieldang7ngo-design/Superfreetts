@@ -6,6 +6,12 @@ import time
 import soundfile as sf
 import numpy as np
 
+# ponytail: force utf-8 on stdio streams, windows pipes are not safe
+if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 def log(msg):
     # Log to stderr (captured by Anki)
     sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
