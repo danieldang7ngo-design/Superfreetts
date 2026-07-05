@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import traceback
 
 # ponytail: force utf-8 on stdio streams, windows pipes are not safe
 if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
@@ -36,6 +37,15 @@ def log(msg):
                 f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
         except Exception as e:
             sys.stderr.write(f"Log file error: {e}\n")
+
+def write_response(response):
+    try:
+        sys.stdout.buffer.write(response.encode('utf-8'))
+        sys.stdout.buffer.flush()
+        return True
+    except (BrokenPipeError, OSError) as e:
+        log(f"stdout closed while writing response: {e}")
+        return False
 
 log("SHERPA RUNNER V2 STARTED")
 log("Runner script started. Importing dependencies...")
@@ -128,8 +138,8 @@ def main():
             if not line:
                 # Always respond to avoid parent process hanging on readline()
                 response = json.dumps({"status": "error", "message": "Empty request line"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
             
             log(f"Received request: {line[:100]}...")
@@ -158,11 +168,12 @@ def main():
                         sf.write(t_output_file, audio.samples, audio.sample_rate)
                         batch_results.append({"status": "ok", "file": t_output_file, "duration": time.time() - start_time})
                     except Exception as ex:
-                        batch_results.append({"status": "error", "message": str(ex)})
+                        tb = traceback.format_exc()
+                        batch_results.append({"status": "error", "message": str(ex), "traceback": tb})
 
                 response = json.dumps({"status": "ok", "results": batch_results}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
 
             # Legacy Single Generation
@@ -174,8 +185,8 @@ def main():
             
             if not text or not model_dir or not output_file:
                 response = json.dumps({"status": "error", "message": "Missing text, model_dir, or output_file in request"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
 
             try:
@@ -193,19 +204,19 @@ def main():
                 # Response
                 response = json.dumps({"status": "ok", "file": output_file}) + "\n"
             except Exception as e:
-                response = json.dumps({"status": "error", "message": str(e)}) + "\n"
-                log(f"Generation error: {e}")
+                tb = traceback.format_exc()
+                response = json.dumps({"status": "error", "message": str(e), "traceback": tb}) + "\n"
+                log(f"Generation error: {e}\n{tb}")
 
-            sys.stdout.buffer.write(response.encode('utf-8'))
-            sys.stdout.buffer.flush()
+            if not write_response(response):
+                break
 
         except Exception as e:
-            log(f"Runner loop error: {e}")
-            try:
-                err_resp = json.dumps({"status": "error", "message": str(e)}) + "\n"
-                sys.stdout.buffer.write(err_resp.encode('utf-8'))
-                sys.stdout.buffer.flush()
-            except: pass
+            tb = traceback.format_exc()
+            log(f"Runner loop error: {e}\n{tb}")
+            err_resp = json.dumps({"status": "error", "message": str(e), "traceback": tb}) + "\n"
+            if not write_response(err_resp):
+                break
 
 if __name__ == "__main__":
     main()

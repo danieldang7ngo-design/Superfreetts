@@ -463,7 +463,12 @@ class PiperTTS(service.ServiceBase):
                             "num_threads": self.get_configuration_value_optional('num_threads', 1)
                         })
                     
-                    request = {"action": "generate_batch", "tasks": tasks}
+                    num_threads = self.get_configuration_value_optional('num_threads', 1)
+                    request = {
+                        "action": "generate_batch",
+                        "tasks": tasks,
+                        "num_threads": int(num_threads),
+                    }
                     payload = json.dumps(request) + "\n"
                     process.stdin.write(payload.encode('utf-8'))
                     process.stdin.flush()

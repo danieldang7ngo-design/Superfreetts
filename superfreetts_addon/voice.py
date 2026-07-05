@@ -1,7 +1,33 @@
 import sys
 import abc
 import dataclasses
-import databind.json
+try:
+    import databind
+except Exception:
+    # Minimal fallback shim so static checks and simple serializations won't crash
+    import json as _json
+
+    class _DataBindShim:
+        class json:
+            @staticmethod
+            def dump(obj, schema=None):
+                try:
+                    if dataclasses.is_dataclass(obj):
+                        return _json.dumps(dataclasses.asdict(obj))
+                except Exception:
+                    pass
+                return _json.dumps(obj)
+
+            @staticmethod
+            def load(s, schema=None):
+                try:
+                    if isinstance(s, (str, bytes)):
+                        return _json.loads(s)
+                except Exception:
+                    pass
+                return s
+
+    databind = _DataBindShim()
 import functools
 from typing import Dict, Any, List, Union
 
@@ -14,29 +40,36 @@ class VoiceBase(abc.ABC):
     abstract base class which defines all the mandatory properties
     """
 
-    @abc.abstractproperty
-    def name():
-        pass
-    
-    @abc.abstractproperty
-    def gender() -> constants.Gender:
-        pass
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError()
 
-    @abc.abstractproperty
-    def language() -> languages.AudioLanguage:
-        pass
+    @property
+    @abc.abstractmethod
+    def gender(self) -> constants.Gender:
+        raise NotImplementedError()
 
-    @abc.abstractproperty
-    def service():
-        pass
+    @property
+    @abc.abstractmethod
+    def language(self) -> languages.AudioLanguage:
+        raise NotImplementedError()
 
-    @abc.abstractproperty
-    def voice_key():
-        pass
+    @property
+    @abc.abstractmethod
+    def service(self):
+        """Service instance that provides this voice (type opaque to avoid cycles)"""
+        raise NotImplementedError()
 
-    @abc.abstractproperty
-    def options():
-        pass
+    @property
+    @abc.abstractmethod
+    def voice_key(self) -> Union[Dict[str, Any], str]:
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def options(self) -> Dict[str, Dict[str, Any]]:
+        raise NotImplementedError()
 
     def serialize(self):
         return {
@@ -172,9 +205,20 @@ def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_
         except Exception:
             pass
     if isinstance(voice_id, dict):
+        vk = voice_id.get('voice_key')
+        if isinstance(vk, dict):
+            vkey = vk
+        elif isinstance(vk, str):
+            vkey = vk
+        else:
+            vkey = ""
+
+        svc = voice_id.get('service')
+        svc_str = str(svc) if svc is not None else ""
+
         return TtsVoiceId_v3(
-            voice_key=voice_id.get('voice_key'),
-            service=voice_id.get('service')
+            voice_key=vkey,
+            service=svc_str
         )
     return databind.json.load(voice_id, TtsVoiceId_v3)
 

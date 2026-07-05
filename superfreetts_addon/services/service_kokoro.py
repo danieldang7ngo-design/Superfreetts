@@ -108,6 +108,12 @@ class KokoroTTS(service.ServiceBase):
         time.sleep(2)
         try:
             engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
+            # If user didn't configure an engine path, fall back to the packaged engine if present
+            if not engine_path:
+                possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+                if os.path.exists(possible):
+                    engine_path = possible
+
             if engine_path and os.path.exists(engine_path):
                 script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
                 # Ensure hyper_tts is initialized
@@ -118,8 +124,8 @@ class KokoroTTS(service.ServiceBase):
                 if not installed or installed[0].voice_key == "none":
                     return
 
-                _kokoro_pool.get_process(engine_path, script_path, debug_enabled=True)
-                _kokoro_pool.release_process(None, engine_path, script_path) 
+                process = _kokoro_pool.get_process(engine_path, script_path, debug_enabled=True)
+                _kokoro_pool.release_process(process, engine_path, script_path)
         except: pass
 
     @property
@@ -197,7 +203,12 @@ class KokoroTTS(service.ServiceBase):
 
     def get_tts_audio(self, source_text, voice: voice.TtsVoice_v3, options):
         engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
-        
+        # If not explicitly configured, try packaged engine
+        if not engine_path:
+            possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+            if os.path.exists(possible):
+                engine_path = possible
+
         if not engine_path or not os.path.exists(engine_path):
              raise errors.RequestError(source_text, voice, "Kokoro engine not configured.")
              
@@ -227,7 +238,7 @@ class KokoroTTS(service.ServiceBase):
                         "text": source_text.strip(),
                         "voice": voice.voice_key,
                         "output_file": "MEMORY", 
-                        "num_threads": int(threads_opt),
+                        "threads": int(threads_opt),
                         "speed": options.get('speed', 1.0),
                     }
                     payload = json.dumps(request) + "\n"
@@ -270,6 +281,11 @@ class KokoroTTS(service.ServiceBase):
 
     def get_tts_audio_batch(self, source_texts: List[str], voice: voice.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
         engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
+        if not engine_path:
+            possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+            if os.path.exists(possible):
+                engine_path = possible
+
         if not engine_path or not os.path.exists(engine_path):
              return [None] * len(source_texts)
              
@@ -289,7 +305,15 @@ class KokoroTTS(service.ServiceBase):
                             "speed": options.get('speed', 1.0)
                         })
                     
-                    request = {"action": "generate_batch", "tasks": tasks}
+                    threads_opt = self.get_configuration_value_optional('num_threads', 1)
+                    if threads_opt <= 0:
+                        threads_opt = 1
+
+                    request = {
+                        "action": "generate_batch",
+                        "tasks": tasks,
+                        "threads": int(threads_opt),
+                    }
                     payload = json.dumps(request) + "\n"
                     process.stdin.write(payload.encode('utf-8'))
                     process.stdin.flush()

@@ -1,5 +1,6 @@
 
 import sys
+import traceback
 import json
 import os
 import time
@@ -18,6 +19,13 @@ if os.path.exists(libs_path) and libs_path not in sys.path:
 def log(msg):
     sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     sys.stderr.flush()
+
+def write_json(obj):
+    try:
+        print(json.dumps(obj), flush=True)
+        return True
+    except (BrokenPipeError, OSError):
+        return False
 
 def pcm_to_wav(pcm_data, sample_rate=22050, channels=1, sampwidth=2):
     """Convert raw PCM data to WAV format in memory."""
@@ -68,7 +76,8 @@ def main():
             
             if action == 'init':
                 # No-op for stock piper as it's spawned per-request or we just check paths here
-                print(json.dumps({"status": "ok", "message": "ready"}), flush=True)
+                if not write_json({"status": "ok", "message": "ready"}):
+                    break
                 continue
             
             # Batch Generation
@@ -80,19 +89,21 @@ def main():
                 for task in tasks:
                     batch_results.append(generate_single(piper_exe, task, num_threads))
                 
-                print(json.dumps({"status": "ok", "results": batch_results}), flush=True)
+                if not write_json({"status": "ok", "results": batch_results}):
+                    break
                 continue
 
             # Single Generation
             num_threads = data.get('num_threads', 1)
             res = generate_single(piper_exe, data, num_threads)
-            print(json.dumps(res), flush=True)
+            if not write_json(res):
+                break
 
         except Exception as e:
-            log(f"Error in piper loop: {e}")
-            try:
-                print(json.dumps({"status": "error", "message": str(e)}), flush=True)
-            except: pass
+            tb = traceback.format_exc()
+            log(f"Error in piper loop: {e}\n{tb}")
+            if not write_json({"status": "error", "message": str(e), "traceback": tb}):
+                break
 
 def generate_single(piper_exe, data, global_threads=1):
     try:
@@ -150,8 +161,19 @@ def generate_single(piper_exe, data, global_threads=1):
             startupinfo=startupinfo
         )
         
-        # Send text and close stdin
-        stdout, stderr = process.communicate(input=text.encode('utf-8'))
+        # Send text and close stdin with timeout to avoid hangs
+        try:
+            stdout, stderr = process.communicate(input=text.encode('utf-8'), timeout=30)
+        except subprocess.TimeoutExpired:
+            try:
+                process.kill()
+            except: pass
+            try:
+                process.wait(timeout=1)
+            except: pass
+            tb = traceback.format_exc()
+            log(f"Piper timeout: {tb}")
+            return {"status": "error", "message": "piper.exe timed out after 30s", "traceback": tb}
         
         if process.returncode != 0:
             err_msg = stderr.decode('utf-8', errors='replace')
@@ -185,11 +207,9 @@ def generate_single(piper_exe, data, global_threads=1):
         }
         
     except Exception as e:
-        log(f"Exception in generate_single: {e}")
-        return {"status": "error", "message": str(e)}
-
-if __name__ == "__main__":
-    main()
+        tb = traceback.format_exc()
+        log(f"Exception in generate_single: {e}\n{tb}")
+        return {"status": "error", "message": str(e), "traceback": tb}
 
 if __name__ == "__main__":
     main()

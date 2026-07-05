@@ -115,6 +115,10 @@ class SherpaProcessPool:
             raise e
 
     def release_process(self, proc, executable_path, script_path):
+        if proc is None:
+            self._semaphore.release()
+            return
+
         with self._lock:
             is_healthy = getattr(proc, 'is_healthy', True)
             if proc.poll() is None and is_healthy:
@@ -206,7 +210,7 @@ class SherpaProcessPool:
             [executable_path, "-u", script_path],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, # ponytail: capture stderr to prevent blocking on full pipe
+            stderr=(stderr_sink if debug_enabled else subprocess.PIPE), # capture or redirect to file
             cwd=cwd,
             startupinfo=startupinfo,
             env=env,
@@ -215,23 +219,29 @@ class SherpaProcessPool:
         )
         proc.is_healthy = True
 
-        # ponytail: drain stderr in a thread to avoid UnicodeDecodeError from Python's internal reader
+        # If we captured stderr as a PIPE (debug not enabled), drain & log it at INFO level
         def _drain_stderr(p, debug):
-            for line in iter(p.stderr.readline, b''):
-                if debug:
+            try:
+                for line in iter(p.stderr.readline, b''):
                     try:
                         decoded = line.decode('utf-8', errors='replace')
-                        logger.debug(f"{self.name} stderr: {decoded.rstrip()}")
-                    except:
-                        pass # Ignore any final errors on close
-            p.stderr.close()
+                        # Not a debug-only channel: surface stderr at INFO so we always have a record
+                        logger.info(f"{self.name} stderr: {decoded.rstrip()}")
+                    except Exception:
+                        pass
+            finally:
+                try: p.stderr.close()
+                except: pass
 
-        threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
-        
-        # Guard: Close our handle in parent after child inherits it to avoid leaks
-        if hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
-            try: stderr_sink.close()
-            except: pass
+        if not debug_enabled:
+            threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
+
+        # Guard: Close our file sink handle in parent after child inherits it to avoid leaks
+        if debug_enabled and hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
+            try:
+                stderr_sink.close()
+            except:
+                pass
 
         return proc
 

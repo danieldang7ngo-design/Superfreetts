@@ -1,5 +1,6 @@
 
 import sys
+import traceback
 import json
 import os
 import time
@@ -23,6 +24,15 @@ def log(msg):
             with open(log_path, 'a', encoding='utf-8') as f:
                 f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
         except: pass
+
+def write_response(response):
+    try:
+        sys.stdout.buffer.write(response.encode('utf-8'))
+        sys.stdout.buffer.flush()
+        return True
+    except (BrokenPipeError, OSError) as e:
+        log(f"stdout closed while writing response: {e}")
+        return False
 
 def main():
     log("KOKORO HIGH-FIDELITY RUNNER STARTED (v1.0-stable)")
@@ -132,8 +142,9 @@ def main():
                 sf.write(output_file, samples, sample_rate)
                 return {"status": "ok", "file": output_file}
         except Exception as e:
-            log(f"Generation error: {e}")
-            return {"status": "error", "message": str(e)}
+            tb = traceback.format_exc()
+            log(f"Generation error: {e}\n{tb}")
+            return {"status": "error", "message": str(e), "traceback": tb}
 
     while True:
         try:
@@ -148,8 +159,8 @@ def main():
                 threads = data.get('threads', 0)
                 get_engine(device, threads)
                 response = json.dumps({"status": "ok", "message": "initialized"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
 
             # Batch Generation (New High-Performance Action)
@@ -161,8 +172,8 @@ def main():
                 
                 if not kokoro:
                     response = json.dumps({"status": "error", "message": "Engine not available for batch"}) + "\n"
-                    sys.stdout.buffer.write(response.encode('utf-8'))
-                    sys.stdout.buffer.flush()
+                    if not write_response(response):
+                        break
                     continue
 
                 batch_results = []
@@ -179,8 +190,8 @@ def main():
                     batch_results.append(res)
                 
                 response = json.dumps({"status": "ok", "results": batch_results}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
 
             # Legacy Single Generation
@@ -193,16 +204,16 @@ def main():
             
             if not text or not output_file: 
                 response = json.dumps({"status": "error", "message": "Missing text or output_file in legacy request"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
             
             kokoro = get_engine(device, threads)
             if not kokoro:
                 log("Error: Engine not available.")
                 response = json.dumps({"status": "error", "message": "Engine not available for legacy request"}) + "\n"
-                sys.stdout.buffer.write(response.encode('utf-8'))
-                sys.stdout.buffer.flush()
+                if not write_response(response):
+                    break
                 continue
 
             prefix = voice_name[0].lower() if voice_name else 'a'
@@ -210,11 +221,15 @@ def main():
 
             res = generate_single(kokoro, text, voice_name, speed, lang_code, output_file)
             response = json.dumps(res) + "\n"
-            sys.stdout.buffer.write(response.encode('utf-8'))
-            sys.stdout.buffer.flush()
+            if not write_response(response):
+                break
 
         except Exception as e:
-            log(f"Runner loop error: {e}")
+            tb = traceback.format_exc()
+            log(f"Runner loop error: {e}\n{tb}")
+            err_resp = json.dumps({"status": "error", "message": str(e), "traceback": tb}) + "\n"
+            if not write_response(err_resp):
+                break
 
 if __name__ == "__main__":
     main()
