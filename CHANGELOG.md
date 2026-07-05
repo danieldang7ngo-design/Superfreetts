@@ -4,15 +4,22 @@
 
 ### English
 
-- Refactored core modules (`audio_generator`, `editor_manager`, `job_pipeline`, `tts_orchestrator`, `ui_controller`) for better separation of concerns.
+- Refactored `superfreetts.py` God Class into dedicated modules for better separation of concerns.
+- Added Supertonic TTS support and worker fixes.
+- Fixed UI workflow issues and resolved `NameError` in `batch_orchestrator.py`.
+- Added automated test suite and GitHub Actions CI.
 - Updated `.gitignore` to exclude AI-related and temporary files.
 - Synced addon code and dependencies.
 
 ### Tiếng Việt
 
-- Tái cấu trúc các module lõi (`audio_generator`, `editor_manager`, `job_pipeline`, `tts_orchestrator`, `ui_controller`) để phân tách chức năng tốt hơn.
+- Tái cấu trúc `superfreetts.py` God Class thành các module riêng để phân tách chức năng tốt hơn.
+- Hỗ trợ Supertonic TTS và sửa worker.
+- Sửa lỗi UI workflow và `NameError` trong `batch_orchestrator.py`.
+- Thêm bộ test tự động và GitHub Actions CI.
 - Cập nhật `.gitignore` để loại trừ các file tạm và file liên quan đến AI.
 - Đồng bộ hóa mã nguồn và các dependency của addon.
+
 
 
 ## 1.3.4 - 2026-06-03
