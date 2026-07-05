@@ -299,6 +299,7 @@
   "failure_report_header_error": "Lỗi",
   "failure_report_add_tag": "Thêm tag {tag}",
   "failure_report_ignore_close": "Bỏ qua và đóng",
+  "failure_report_rerun_failed": "Chạy lại các thẻ lỗi",
   "workflow_info_selected_notes": "Chạy nhiều preset tuần tự trên cùng {count} notes đã chọn.",
   "workflow_available_presets": "Preset khả dụng",
   "workflow_add": "Thêm ->",

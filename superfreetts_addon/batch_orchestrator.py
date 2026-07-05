@@ -732,7 +732,9 @@ class BatchOrchestrator:
 
         return results
 
-    def populate_batch_status_processed_text(self, note_id_list: List[int], batch_source: Any, text_processing: Any, batch_status: Any) -> None:
+    def populate_batch_status_processed_text(self, note_id_list: Optional[List[int]], batch_source: Any, text_processing: Any, batch_status: Any) -> None:
+        if note_id_list is None:
+            note_id_list = batch_status.note_id_list
         with batch_status.get_batch_running_action_context():
             for note_id in note_id_list:
                 with batch_status.get_note_action_context(note_id, True) as note_action_context:

@@ -115,6 +115,8 @@ class BatchStatus():
         self.note_status_array: List[NoteStatus] = []
         self.note_status_map: Dict[int, NoteStatus] = {}
         self.note_id_map: Dict[int, int] = {}
+        self.source_model = None
+        self.text_processing_model = None
         self.task_running: bool = False
         self.must_continue: bool = False
         self.status_message: Optional[str] = None
@@ -130,6 +132,15 @@ class BatchStatus():
             self.note_id_map[note_id] = i
             i += 1
 
+    def extend_note_ids(self, additional_note_ids: List[int]):
+        """Add more notes to tracking without resetting existing status"""
+        for note_id in additional_note_ids:
+            if note_id not in self.note_status_map:
+                note_status = NoteStatus(note_id)
+                self.note_status_array.append(note_status)
+                self.note_status_map[note_id] = note_status
+                self.note_id_map[note_id] = len(self.note_status_array) - 1
+    
     def is_running(self) -> bool:
         """Check if batch is currently running."""
         return self.task_running

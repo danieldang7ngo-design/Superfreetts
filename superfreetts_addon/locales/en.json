@@ -309,6 +309,7 @@
   "failure_report_header_error": "Error",
   "failure_report_add_tag": "Add Tag {tag}",
   "failure_report_ignore_close": "Ignore and Close",
+  "failure_report_rerun_failed": "Rerun Failed Notes",
   "workflow_dialog_title": "Super Free TTS: Workflow",
   "workflow_label_name": "Workflow:",
   "workflow_info_selected_notes": "Run multiple presets in sequence on the same {count} selected notes.",

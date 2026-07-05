@@ -27,6 +27,19 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         aqt.qt.QAbstractTableModel.__init__(self, None)
         self.batch_status = batch_status
         self.hypertts = hypertts
+        self.page_size = 100
+        self.current_page = 0
+        self.total_notes = len(self.batch_status.note_id_list)
+        self.loaded_note_ids = []
+        self.is_loading = False
+    
+    def load_page(self, page: int):
+        """Load a specific page of notes into the model"""
+        start = page * self.page_size
+        end = min(start + self.page_size, self.total_notes)
+        self.loaded_note_ids = self.batch_status.note_id_list[start:end]
+        # Trigger background text processing for this page
+        self._request_processed_text(self.loaded_note_ids)
 
     def _get_headers(self):
         lang = self.hypertts.get_ui_language()
@@ -42,7 +55,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
 
     def rowCount(self, parent):
         # logger.debug('SourceTextPreviewTableModel.rowCount')
-        return len(self.batch_status.note_id_list)
+        return len(self.loaded_note_ids)
 
     def columnCount(self, parent):
         # logger.debug('SourceTextPreviewTableModel.columnCount')
@@ -54,6 +67,33 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         end_index = self.createIndex(row, self.columnCount(None) - 1)
         self.dataChanged.emit(start_index, end_index)
 
+    def has_more_pages(self):
+        return (self.current_page + 1) * self.page_size < self.total_notes
+
+    def load_next_page(self):
+        if self.has_more_pages():
+            self.current_page += 1
+            self.load_page(self.current_page)
+
+    def _request_processed_text(self, note_ids: List[int]):
+        self.is_loading = True
+        # Use QueryOp for background
+        op = aqt.operations.QueryOp(
+            parent=aqt.mw,
+            op=lambda col: self.hypertts.populate_batch_status_processed_text(
+                note_ids, self.batch_status.source_model, self.batch_status.text_processing_model, self.batch_status
+            ),
+            success=self._on_page_processed,
+        ).failure(self._on_page_failed).run_in_background()
+
+    def _on_page_processed(self, result):
+        self.is_loading = False
+        self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(len(self.loaded_note_ids), self.columnCount(None)))
+    
+    def _on_page_failed(self, error):
+        self.is_loading = False
+        logger.error(f"Failed to process page: {error}")
+
     def data(self, index, role):
         if role != aqt.qt.Qt.ItemDataRole.DisplayRole:
             return None
@@ -61,7 +101,13 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         if not index.isValid():
             return aqt.qt.QVariant()
         data = None
-        note_status = self.batch_status[index.row()]
+        
+        note_id = self.loaded_note_ids[index.row()]
+        note_status = self.batch_status.note_status_map.get(note_id)
+
+        if note_status is None:
+            return aqt.qt.QVariant()
+
         if index.column() == 0:
             data = note_status.note_id
         elif index.column() == 1:
@@ -104,7 +150,6 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_status = batch_status.BatchStatus(hypertts.anki_utils, note_id_list, self)
         self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, hypertts)
         self.table_view = None
-
         # create certain widgets right away
         self.stack = aqt.qt.QStackedWidget()
 
@@ -118,9 +163,12 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_run_mode = 'idle'
 
         self.table_repaint_timer = TableRepaintTimer(500)
+        self.status_label = None
 
     def load_model(self, model):
         self.batch_model = model
+        self.batch_status.source_model = model.source
+        self.batch_status.text_processing_model = model.text_processing
         self.apply_to_notes_batch_started = False
         self.generated_batch_results = None
         self.prepared_batch_audio = None
@@ -128,18 +176,11 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_run_mode = 'idle'
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
-        self.hypertts.anki_utils.run_in_background(self.update_batch_status_task, self.update_batch_status_task_done)
+        self.batch_preview_table_model.load_page(0)
+        self._update_status_label()
 
     def update_batch_status_task(self):
-        if self.batch_status.is_running():
-            # stop current batch
-            self.batch_status.stop()
-        while self.batch_status.is_running():
-            time.sleep(0.1)
-
-        logger.info('update_batch_status_task')
-        if self.batch_model.text_processing != None:
-            self.hypertts.populate_batch_status_processed_text(self.note_id_list, self.batch_model.source, self.batch_model.text_processing, self.batch_status)
+        pass
 
     def update_batch_status_task_done(self, result):
         logger.info('update_batch_status_task_done')
@@ -168,8 +209,13 @@ class BatchPreview(component_common.ComponentBase):
             self.table_view.horizontalHeader().setSectionResizeMode(aqt.qt.QHeaderView.Interactive)
 
         self.table_view.selectionModel().selectionChanged.connect(self.selection_changed)
+        self.table_view.verticalScrollBar().valueChanged.connect(self._check_scroll_load)
+        self.batch_preview_table_model.dataChanged.connect(self._update_status_label)
         self.batch_preview_layout.addWidget(self.table_view, stretch=1)
-        
+
+        self.status_label = aqt.qt.QLabel()
+        self.batch_preview_layout.addWidget(self.status_label)
+
         self.error_label = aqt.qt.QLabel()
         self.error_label.setWordWrap(True)
         self.batch_preview_layout.addWidget(self.error_label)
@@ -229,6 +275,19 @@ class BatchPreview(component_common.ComponentBase):
         self.stop_button.pressed.connect(self.stop_button_pressed)
 
         return self.batch_preview_layout
+
+
+    def _check_scroll_load(self, value):
+        if value >= self.table_view.verticalScrollBar().maximum() - 50:
+            self._load_next_page()
+
+    def _load_next_page(self):
+        if not self.batch_preview_table_model.is_loading and self.batch_preview_table_model.has_more_pages():
+            self.batch_preview_table_model.load_next_page()
+
+    def _update_status_label(self):
+        if self.status_label:
+            self.status_label.setText(f"Showing {len(self.batch_preview_table_model.loaded_note_ids)} of {self.batch_preview_table_model.total_notes} notes")
 
     def show_not_running_stack(self):
         self.stack.setCurrentIndex(0)
@@ -357,7 +416,7 @@ class BatchPreview(component_common.ComponentBase):
         failure_records = self.batch_status.get_failure_records()
         if len(failure_records) == 0:
             return
-        add_tag_requested = component_failure_report.show_failure_report(self.hypertts, self.dialog, failure_records)
+        add_tag_requested = component_failure_report.show_failure_report(self.hypertts, self.dialog, failure_records, batch_preview=self)
         if add_tag_requested:
             self.failed_note_ids_to_tag = list(dict.fromkeys(record.note_id for record in failure_records))
             self.hypertts.anki_utils.run_in_background_collection_op(
@@ -462,3 +521,27 @@ class BatchPreview(component_common.ComponentBase):
                 self.enhanced_progress_widget.set_status_text(self.batch_status.status_message)
             except Exception as e:
                 logger.warning(f"Error updating enhanced progress widget: {e}")
+
+    def rerun_failed_notes(self, failed_note_ids: List[int]) -> None:
+        """Rerun generation for only the failed notes with the same preset/settings."""
+        if not failed_note_ids:
+            return
+        # Filter to only the failed notes
+        self.note_id_list = failed_note_ids
+        # Reset state for new run
+        self.apply_to_notes_batch_started = True
+        self.failed_note_ids_to_tag = []
+        self.generated_batch_results = None
+        self.prepared_batch_audio = None
+        self.generated_batch_model = copy.deepcopy(self.batch_model)
+        self.batch_run_mode = 'generating'
+        self.batch_status = batch_status.BatchStatus(self.hypertts.anki_utils, failed_note_ids, self)
+        self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, self.hypertts)
+        if self.table_view:
+            self.table_view.setModel(self.batch_preview_table_model)
+        self.batch_status.begin()
+        aqt.operations.QueryOp(
+            parent=self.dialog,
+            op=self.prepare_audio_fn,
+            success=self.finished_prepare_audio_fn,
+        ).failure(self.batch_operation_failed).run_in_background()

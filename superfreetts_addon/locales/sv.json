@@ -156,5 +156,6 @@
   "preview_header_source_text": "Kalltext",
   "preview_header_processed_text": "Bearbetad text",
   "preview_header_status": "Status",
-  "workflow_error_tag_added": "Ett fel intraffade. Tagg har lagts till: {tag}"
+  "workflow_error_tag_added": "Ett fel intraffade. Tagg har lagts till: {tag}",
+  "failure_report_rerun_failed": "Kor k\u00f6r misslyckade anteckningar"
 }

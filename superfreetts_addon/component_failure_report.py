@@ -9,11 +9,13 @@ from . import i18n
 
 
 class FailureReportDialog(aqt.qt.QDialog):
-    def __init__(self, hypertts: Any, parent: Any, failure_records: List[batch_status.FailureRecord]) -> None:
+    def __init__(self, hypertts: Any, parent: Any, failure_records: List[batch_status.FailureRecord], batch_preview: Any = None) -> None:
         super(aqt.qt.QDialog, self).__init__(parent)
         self.hypertts = hypertts
         self.failure_records = failure_records
+        self.batch_preview = batch_preview
         self.add_tag_requested = False
+        self.rerun_requested = False
 
         self.setWindowTitle(self._text("failure_report_title"))
         self.setMinimumSize(420, 320)
@@ -112,12 +114,24 @@ class FailureReportDialog(aqt.qt.QDialog):
         self.ignore_button.clicked.connect(self.reject)
         button_layout.addWidget(self.add_tag_button)
         button_layout.addWidget(self.ignore_button)
+
+        if self.batch_preview is not None:
+            rerun_button = aqt.qt.QPushButton(self._text("failure_report_rerun_failed"))
+            rerun_button.setToolTip(self._text("failure_report_rerun_failed_tooltip"))
+            gui_utils.configure_pastel_button(rerun_button, style_name='blue', is_primary=True, font_size=11)
+            rerun_button.clicked.connect(self.rerun_button_pressed)
+            button_layout.addWidget(rerun_button)
+
         layout.addLayout(button_layout)
 
     def _set_table_item(self, row_index: int, column_index: int, value: str) -> None:
         item = aqt.qt.QTableWidgetItem(value)
         item.setToolTip(value)
         self.table.setItem(row_index, column_index, item)
+
+    def rerun_button_pressed(self) -> None:
+        self.rerun_requested = True
+        self.accept()
 
     def add_tag_button_pressed(self) -> None:
         self.add_tag_requested = True
@@ -128,9 +142,13 @@ def show_failure_report(
     hypertts: Any,
     parent: Any,
     failure_records: List[batch_status.FailureRecord],
+    batch_preview: Any = None,
 ) -> bool:
     if len(failure_records) == 0:
         return False
-    dialog = FailureReportDialog(hypertts, parent, failure_records)
+    dialog = FailureReportDialog(hypertts, parent, failure_records, batch_preview=batch_preview)
     dialog.exec()
+    if dialog.rerun_requested and batch_preview is not None:
+        note_ids = [record.note_id for record in failure_records]
+        batch_preview.rerun_failed_notes(note_ids)
     return dialog.add_tag_requested

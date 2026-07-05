@@ -54,5 +54,6 @@
   "workflow_generating_preset": "正在生成预设：{preset_name}",
   "workflow_applying_preset": "正在应用预设：{preset_name}",
   "workflow_generated_preset": "已生成预设：{preset_name}",
-  "workflow_applied_preset": "已应用预设：{preset_name}"
+  "workflow_applied_preset": "已应用预设：{preset_name}",
+  "failure_report_rerun_failed": "重新运行失败的笔记"
 }

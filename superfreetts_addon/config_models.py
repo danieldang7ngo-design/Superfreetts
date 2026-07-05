@@ -2,7 +2,7 @@ import sys
 import abc
 import copy
 import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, is_dataclass
 import databind.json
 import enum
 from typing import List, Optional, Mapping, Any
@@ -78,10 +78,10 @@ class BatchConfig(ConfigModelBase):
         return {
             'uuid': self.uuid,
             'name': self.name,
-            'source': serialize_batchsource(self.source),
-            'target': self.target.serialize(),
-            'voice_selection': self.voice_selection.serialize(),
-            'text_processing': self.text_processing.serialize()
+            'source': serialize_batchsource(self.source) if self.source else None,
+            'target': self.target.serialize() if self.target else None,
+            'voice_selection': self.voice_selection.serialize() if self.voice_selection else None,
+            'text_processing': self.text_processing.serialize() if self.text_processing else None,
         }
 
     def validate(self):
@@ -89,10 +89,10 @@ class BatchConfig(ConfigModelBase):
             raise errors.PresetNameNotSet()
         if self.uuid == None or len(self.uuid) == 0:
             raise RuntimeError('uuid not set')
-        self.source.validate(),
-        self.target.validate(),
-        self.voice_selection.validate(),
-        self.text_processing.validate()
+        if self.source: self.source.validate()
+        if self.target: self.target.validate()
+        if self.voice_selection: self.voice_selection.validate()
+        if self.text_processing: self.text_processing.validate()
 
 
 @dataclass
@@ -121,11 +121,37 @@ class BatchSource():
     def __repr__(self):
         return f"BatchSource(mode={self.mode}, source_field={self.source_field}, source_template={self.source_template})"
 
+def _dataclass_to_dict(obj):
+    """Manual dataclass serializer that handles enums and nested dataclasses.
+    Replaces databind.json.dump which silently drops fields in this environment."""
+    if not is_dataclass(obj):
+        return obj
+    data = {}
+    for f in fields(obj):
+        value = getattr(obj, f.name)
+        if isinstance(value, enum.Enum):
+            data[f.name] = value.name
+        elif is_dataclass(value):
+            data[f.name] = _dataclass_to_dict(value)
+        elif isinstance(value, list):
+            data[f.name] = [_dataclass_to_dict(v) if is_dataclass(v) else v for v in value]
+        elif isinstance(value, dict):
+            data[f.name] = {k: (_dataclass_to_dict(v) if is_dataclass(v) else v) for k, v in value.items()}
+        else:
+            data[f.name] = value
+    return data
+
 def serialize_batchsource(batch_source):
-    return databind.json.dump(batch_source, BatchSource)
-        
+    return _dataclass_to_dict(batch_source)
+
 def deserialize_batchsource(batch_source_config):
-    return databind.json.load(batch_source_config, BatchSource)
+    # Convert mode string back to enum if needed
+    if 'mode' in batch_source_config and isinstance(batch_source_config['mode'], str):
+        batch_source_config['mode'] = constants.BatchMode[batch_source_config['mode']]
+    # Convert template_format_version string back to enum if needed
+    if 'template_format_version' in batch_source_config and isinstance(batch_source_config['template_format_version'], str):
+        batch_source_config['template_format_version'] = constants.TemplateFormatVersion[batch_source_config['template_format_version']]
+    return BatchSource(**batch_source_config)
 
 class InsertLocation(enum.Enum):
     AFTER = 1
@@ -153,10 +179,13 @@ class BatchTarget():
         return f"BatchTarget(target_field={self.target_field}, text_and_sound_tag={self.text_and_sound_tag}, remove_sound_tag={self.remove_sound_tag})"
 
 def serialize_batch_target(batch_target):
-    return databind.json.dump(batch_target, BatchTarget)
+    return _dataclass_to_dict(batch_target)
 
 def deserialize_batch_target(batch_target_config):
-    return databind.json.load(batch_target_config, BatchTarget)
+    # Convert InsertLocation enum if needed
+    if 'insert_location' in batch_target_config and isinstance(batch_target_config['insert_location'], str):
+        batch_target_config['insert_location'] = InsertLocation[batch_target_config['insert_location']]
+    return BatchTarget(**batch_target_config)
 
 # voice selection models
 # ======================
@@ -410,8 +439,8 @@ class TrialRegistrationStep(enum.Enum):
 
 @dataclass
 class Configuration:
-    service_enabled: Mapping[str, bool] = field(default_factory=dict)
-    service_config: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    service_enabled: dict[str, bool] = field(default_factory=dict)
+    service_config: dict[str, dict[str, Any]] = field(default_factory=dict)
     # anonymous identifier
     user_uuid: Optional[str] = None
     # whether the user has chosen easy/advanced mode
@@ -492,17 +521,14 @@ class Configuration:
         pass
 
 
-def serialize_configuration(service_config):
-    return databind.json.dump(service_config, Configuration)
+def serialize_configuration(config_obj):
+    return _dataclass_to_dict(config_obj)
 
-import databind.core.settings
-
-def deserialize_configuration(service_config) -> Configuration:
-    return databind.json.load(
-        service_config, 
-        Configuration, 
-        settings=[databind.core.settings.ExtraKeys(True)]
-    )
+def deserialize_configuration(config_dict) -> Configuration:
+    # Convert enum strings back to enum instances
+    if 'trial_registration_step' in config_dict and isinstance(config_dict['trial_registration_step'], str):
+        config_dict['trial_registration_step'] = TrialRegistrationStep[config_dict['trial_registration_step']]
+    return Configuration(**config_dict)
 
 # realtime config models
 # ======================
@@ -514,16 +540,18 @@ class RealtimeConfig(ConfigModelBase):
 
     def serialize(self):
         return {
-            'front': self.front.serialize(),
-            'back': self.back.serialize(),
+            'front': self.front.serialize() if self.front else None,
+            'back': self.back.serialize() if self.back else None,
         }
 
     def validate(self):
         logger.debug('RealtimeConfig.validate')
-        logger.debug('self.front.validate()')
-        self.front.validate()
-        logger.debug('self.back.validate()')
-        self.back.validate()
+        if self.front:
+            logger.debug('self.front.validate()')
+            self.front.validate()
+        if self.back:
+            logger.debug('self.back.validate()')
+            self.back.validate()
 
 class RealtimeConfigSide(ConfigModelBase):
     def __init__(self):
@@ -536,25 +564,25 @@ class RealtimeConfigSide(ConfigModelBase):
         if self.side_enabled:
             return {
                 'side_enabled': self.side_enabled,
-                'source': self.source.serialize(),
-                'voice_selection': self.voice_selection.serialize(),
-                'text_processing': self.text_processing.serialize()
+                'source': self.source.serialize() if self.source else None,
+                'voice_selection': self.voice_selection.serialize() if self.voice_selection else None,
+                'text_processing': self.text_processing.serialize() if self.text_processing else None,
             }
         else:
             return {
                 'side_enabled': self.side_enabled,
-            }            
+            }
 
     def validate(self):
         logger.debug('RealtimeConfigSide.validate')
         if self.side_enabled:
-            self.source.validate()
+            if self.source: self.source.validate()
             if self.voice_selection == None:
                 raise errors.VoiceSelectionNotSet()
-            self.voice_selection.validate()
+            if self.voice_selection: self.voice_selection.validate()
             if self.text_processing == None:
                 raise errors.TextProcessingNotSet()
-            self.text_processing.validate()
+            if self.text_processing: self.text_processing.validate()
 
     def __str__(self):
         return f"""<b>Source:</b> {self.source}
@@ -773,10 +801,20 @@ class PresetMappingRules:
 
 
 def serialize_preset_mapping_rules(preset_mapping_rules):
-    return databind.json.dump(preset_mapping_rules, PresetMappingRules)
+    return _dataclass_to_dict(preset_mapping_rules)
 
 def deserialize_preset_mapping_rules(preset_mapping_rules_config):
-    return databind.json.load(preset_mapping_rules_config, PresetMappingRules)
+    rules_data = preset_mapping_rules_config.get('rules', [])
+    rules_list = []
+    for rule_data in rules_data:
+        if 'rule_type' in rule_data and isinstance(rule_data['rule_type'], str):
+            rule_data['rule_type'] = constants.MappingRuleType[rule_data['rule_type']]
+        rules_list.append(MappingRule(**rule_data))
+    
+    return PresetMappingRules(
+        rules=rules_list,
+        use_easy_mode=preset_mapping_rules_config.get('use_easy_mode', False)
+    )
 
 
 class EasyAdvancedMode(enum.Enum):
@@ -811,58 +849,49 @@ def migrate_configuration(anki_utils, config):
                 config[constants.CONFIG_PRESETS][batch_uuid] = batch
 
     if current_config_schema_version < 3:
-
-
-
         def voice_to_voice_id_conversion(voice_data):
-            service = voice['service']
+            service = voice_data['service']
             voice_key = voice_data['voice_key']
             if service in ['ElevenLabs', 'OpenAI']:
                 if 'language' in voice_key:
-                    # language used to be part of voice_key for OpenAI and ElevenLabs before TtsVoice_v3
                     del voice_key['language']
-            return {
-                'service': service,
-                'voice_key': voice_key
-            }
-            
+            return {'service': service, 'voice_key': voice_key}
 
-        # Migration from version 2 to 3
-        # instead of voices, we store voice_id's
         presets_config = config.get(constants.CONFIG_PRESETS, {})
         for preset in presets_config.values():
             voice_selection = preset.get('voice_selection', {})
-            
             if voice_selection.get('voice_selection_mode') == 'single':
-                voice = voice_selection.get('voice', {}).get('voice', {})
-                voice_selection['voice'] = {
-                    'options': voice_selection['voice'].get('options', {}),
-                    'voice_id': voice_to_voice_id_conversion(voice)
-                }
-            
+                voice_data = voice_selection.get('voice', {}).get('voice', {})
+                if voice_data:
+                    voice_selection['voice'] = {
+                        'options': voice_selection.get('voice', {}).get('options', {}),
+                        'voice_id': voice_to_voice_id_conversion(voice_data)
+                    }
             elif voice_selection.get('voice_selection_mode') in ['priority', 'random', 'sequence']:
                 for voice_entry in voice_selection.get('voice_list', []):
-                    voice = voice_entry.get('voice', {})
-                    voice_entry['voice_id'] = voice_to_voice_id_conversion(voice)
-                    voice_entry.pop('voice', None)
+                    voice_data = voice_entry.get('voice', {})
+                    if voice_data:
+                        voice_entry['voice_id'] = voice_to_voice_id_conversion(voice_data)
+                        voice_entry.pop('voice', None)
 
-        # Update realtime config
         realtime_config = config.get('realtime_config', {})
         for side_config in realtime_config.values():
             for side in ['front', 'back']:
                 if side in side_config and 'voice_selection' in side_config[side]:
                     voice_selection = side_config[side]['voice_selection']
                     if voice_selection.get('voice_selection_mode') == 'single':
-                        voice = voice_selection.get('voice', {}).get('voice', {})
-                        voice_selection['voice'] = {
-                            'options': voice_selection['voice'].get('options', {}),
-                            'voice_id': voice_to_voice_id_conversion(voice)
-                        }
+                        voice_data = voice_selection.get('voice', {}).get('voice', {})
+                        if voice_data:
+                            voice_selection['voice'] = {
+                                'options': voice_selection.get('voice', {}).get('options', {}),
+                                'voice_id': voice_to_voice_id_conversion(voice_data)
+                            }
                     elif voice_selection.get('voice_selection_mode') in ['priority', 'random', 'sequence']:
                         for voice_entry in voice_selection.get('voice_list', []):
-                            voice = voice_entry.get('voice', {})
-                            voice_entry['voice_id'] = voice_to_voice_id_conversion(voice)
-                            voice_entry.pop('voice', None)                        
+                            voice_data = voice_entry.get('voice', {})
+                            if voice_data:
+                                voice_entry['voice_id'] = voice_to_voice_id_conversion(voice_data)
+                                voice_entry.pop('voice', None)
 
     if current_config_schema_version < 5:
         # Super Free TTS: Force all users to safe serial mode (1 thread, 1 worker) by default.

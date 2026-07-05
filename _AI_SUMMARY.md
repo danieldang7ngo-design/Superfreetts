@@ -6,8 +6,8 @@
 **Super Free TTS** is a 100% free Anki add-on, forked from HyperTTS and maintained by Paul from AnkiVN. Its primary goal is to help users automatically generate text-to-speech (TTS) audio for their flashcards using only free resources.
 
 **Key Values:**
-- **Free:** Exclusively uses free TTS engines (EdgeTTS, Piper, Kokoro, MMS, Google Translate, Windows SAPI, macOS TTS, eSpeak-ng).
-- **Stability & Performance:** Focuses on non-blocking UI, efficient caching, and reliable background batch processing.
+- **Free:** Exclusively uses free TTS engines (EdgeTTS, Piper, Kokoro, MMS, Supertonic, Google Translate, Windows SAPI, macOS TTS, eSpeak-ng).
+- **Stability & Performance:** Focuses on non-blocking UI, efficient caching, and reliable background batch processing with continuous batching.
 - **Accessibility:** Offers simplified "Easy Mode" for beginners while retaining an advanced "Collection Mode" for power users.
 
 ## 2. Core Architecture
@@ -35,12 +35,12 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 - **Preset Mapping Rules:** Automatically pre-selecting voices or presets based on Anki Deck or Note Type.
 - **Realtime TTS:** Dynamically inserts an Anki tag `{{tts ...}}` to stream audio on the fly during review via `ttsplayer.py` instead of saving files.
 - **Text Processing:** Tools to automatically clean text (e.g., HTML tags, brackets, cloze deletions) prior to TTS.
-- **Localization (i18n):** User interface comes in both English and Ti?ng Vi?t (Vietnamese).
+- **Localization (i18n):** User interface supports English, Vietnamese, and Korean (en/vi/ko).
 
 ## 4. Development Roadmap Summary
 - **Phase P0 & 1 (Completed):** Unified Settings UI & AnkiVN Menu integration. Multi-threading issues fixed, UI freezing reduced, and logging optimized.
-- **Phase 2 & 3 (Completed):** UX, Configuration & Performance. Resolved overlap bugs in Preferences, implemented interleaved batch producer-consumer pattern, and added per-service concurrency capping (EdgeTTS limit).
-- **Phase 4 & 5 (Completed/In Progress):** Project is fully cleaned (no cache/logs in release). Automated test suites integrated into `tests/`. Plans remain for advanced destination templates.
+- **Phase 2 & 3 (Completed):** UX, Configuration & Performance. Resolved overlap bugs in Preferences, implemented interleaved batch producer-consumer pattern, and added per-service concurrency capping (EdgeTTS limit=3, adjustable to 20 via `_local_override.py`).
+- **Phase 4 & 5 (Completed/In Progress):** Project is fully cleaned (no cache/logs in release). Automated test suites integrated into `tests/`. Supertonic TTS integrated. Support for Korean i18n added. Continuous batching for large collections.
 
 ## 5. Guide for Contributors & AI Agents
 If you wish to debug or expand the project, follow these technical guidelines:

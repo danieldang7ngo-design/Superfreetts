@@ -101,9 +101,11 @@ def test_batch_executor_selects_supertonic_pool():
 
 
 def test_engine_config_scales_supertonic_without_touching_edge_cap():
-    instance = superfreetts.SuperFreeTTS.__new__(superfreetts.SuperFreeTTS)
+    from superfreetts_addon.tts_orchestrator import TTSOrchestrator
+    mock_stts = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock()
+    instance = TTSOrchestrator(mock_stts)
     with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=4):
-        config = instance._build_engine_config(
+        config = instance.build_engine_config(
             {
                 "SupertonicTTS": {"concurrency_workers": 8},
                 "EdgeTTS": {"concurrency_workers": 99},
@@ -114,20 +116,39 @@ def test_engine_config_scales_supertonic_without_touching_edge_cap():
     assert config["EdgeTTS"] == batch_constants.EDGETTS_MAX_WORKERS
 
 
-def test_sequence_mode_uses_configured_supertonic_workers():
-    instance = superfreetts.SuperFreeTTS.__new__(superfreetts.SuperFreeTTS)
-    instance.executor = batch_executor.MultiEngineExecutor(engine_config={"Supertonic": 8, "default": 1})
-    voice = types.SimpleNamespace(voice_id=types.SimpleNamespace(service="SupertonicTTS"))
-    items = [
-        (f"key-{idx}", {"chosen_voice": voice}, [idx])
-        for idx in range(12)
-    ]
-    try:
-        with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=16):
-            assert instance._get_sequence_service_limits(items) == {"SupertonicTTS": 8}
-            assert instance._get_sequence_worker_limit(items) == 8
-    finally:
-        instance.executor.shutdown(wait=False)
+def test_supertonic_engine_config_respects_concurrency_settings():
+    from superfreetts_addon.tts_orchestrator import TTSOrchestrator
+    from unittest.mock import MagicMock, patch
+
+    mock_stts = MagicMock()
+    orchestrator = TTSOrchestrator(mock_stts)
+
+    service_config_map = {
+        "SupertonicTTS": {"concurrency_workers": 8}
+    }
+
+    with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=16), \
+         patch.object(orchestrator, 'auto_scale_pool') as mock_auto_scale:
+        engine_config = orchestrator.build_engine_config(service_config_map)
+        assert engine_config.get("Supertonic") == 8
+        mock_auto_scale.assert_called_with("Supertonic", 8)
+
+
+def test_supertonic_engine_config_is_capped_by_max_workers():
+    from superfreetts_addon.tts_orchestrator import TTSOrchestrator
+    from unittest.mock import MagicMock, patch
+
+    mock_stts = MagicMock()
+    orchestrator = TTSOrchestrator(mock_stts)
+
+    service_config_map = {
+        "SupertonicTTS": {"concurrency_workers": 24}
+    }
+
+    with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=16), \
+         patch.object(orchestrator, 'auto_scale_pool'):
+        engine_config = orchestrator.build_engine_config(service_config_map)
+        assert engine_config.get("Supertonic") == 16
 
 
 class FakeTTS:

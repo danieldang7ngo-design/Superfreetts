@@ -54,5 +54,6 @@
   "workflow_generating_preset": "プリセットを生成中：{preset_name}",
   "workflow_applying_preset": "プリセットを適用中：{preset_name}",
   "workflow_generated_preset": "プリセットを生成しました：{preset_name}",
-  "workflow_applied_preset": "プリセットを適用しました：{preset_name}"
+  "workflow_applied_preset": "プリセットを適用しました：{preset_name}",
+  "failure_report_rerun_failed": "失敗したノートを再実行"
 }

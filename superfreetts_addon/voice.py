@@ -171,6 +171,11 @@ def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_
                 voice_id = parsed
         except Exception:
             pass
+    if isinstance(voice_id, dict):
+        return TtsVoiceId_v3(
+            voice_key=voice_id.get('voice_key'),
+            service=voice_id.get('service')
+        )
     return databind.json.load(voice_id, TtsVoiceId_v3)
 
 def build_voice_v3(name, gender, language, service, voice_key, options) -> TtsVoice_v3:

@@ -37,6 +37,7 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 - **Không vendor trong external/** - Supertonic SDK và model được cài vào shared embedded Python runtime bằng setup dialog.
 - **Model cache** - Lưu trong `data/supertonic_cache` theo profile Anki, không đóng gói vào `.ankiaddon`.
 - **License lưu ý** - Supertonic model/license upstream cần được review trước khi phát hành public.
+- **Tích hợp mới**: Supertonic hiện là một engine TTS offline được hỗ trợ.
 
 ### 🎯 **HTTP & Network**
 - **requests/** - HTTP library đơn giản (gọi API các dịch vụ)
@@ -44,8 +45,6 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 - **certifi/** - SSL certificates
 - **charset_normalizer/** - Detect encoding
 - **idna/** - Xử lý domain names quốc tế
-- **aiohappyeyeballs/** - DNS resolver nhanh cho aiohttp (đã thêm)
-- **frozenlist/** - Data structure cho aiohttp (đã thêm)
 
 ### 🎯 **Utilities**
 - **tabulate/** - Tạo bảng đẹp (hiển thị danh sách voices)
@@ -54,6 +53,7 @@ Anki chạy Python riêng, nhưng không có tất cả thư viện. Nên addon 
 - **machineid/** - Lấy ID máy tính
 - **six.py** - Tương thích Python 2/3
 - **typing_extensions.py** - Type hints mở rộng
+- **PyYAML**: Dùng để đọc/ghi file config YAML (nếu có).
 
 ### 🎯 **Data Processing**
 - **databind/** - Serialize/deserialize data

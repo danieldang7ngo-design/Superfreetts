@@ -45,11 +45,26 @@ from . import source_text_resolver
 from . import config_store as config_store_module
 from . import realtime_manager as realtime_manager_module
 from . import batch_orchestrator as batch_orchestrator_module
+from . import audio_generator as audio_generator_module
+from . import editor_manager as editor_manager_module
 logger = logging_utils.get_child_logger(__name__)
 
 
 class SuperFreeTTS():
     """
+    Thin orchestrator / facade for the Super Free TTS addon.
+
+    Wires together all domain modules and exposes a stable public API
+    that the UI components and Anki hooks call into.  All business logic
+    lives in dedicated sub-modules:
+
+      config_store      — config, presets, workflows, preferences, migration
+      realtime_manager  — {{tts}} tag rendering and realtime playback
+      batch_orchestrator — batch task preparation, execution, apply
+      audio_generator   — single-note audio generation, voice choice
+      editor_manager    — Anki editor bridge and Mapping-Rules runner
+      note_audio_updater — note field update helpers
+
     should have awareness of:
     - anki concepts such as notes, editor
     - understand how user has configured their presets
@@ -65,96 +80,47 @@ class SuperFreeTTS():
         self.latest_saved_batch_name: Optional[str] = None
         self.text_processing_cache = {}  # Simple dict for processed text caching
 
-        # ConfigStore owns all config reads/writes from this point on.
+        from .tts_orchestrator import TTSOrchestrator
+        from .ui_controller import UIController
+        from .job_pipeline import JobPipeline
+
+        from .tts_orchestrator import TTSOrchestrator
+        from .ui_controller import UIController
+        from .job_pipeline import JobPipeline
+
         self.config_store = config_store_module.ConfigStore(anki_utils, service_manager)
-        # Expose self.config as a live reference to the same dict for legacy code
-        # that still reads self.config directly (updated after migration below).
         self.config = self.config_store.config
 
-        # RealtimeManager owns all template tags and realtime playback.
+        self.orchestrator = TTSOrchestrator(self)
+        self.ui = UIController(self)
+        self.pipeline = JobPipeline(self)
+
         self.realtime_manager = realtime_manager_module.RealtimeManager(self)
-
-        # BatchOrchestrator handles all batch logic, deduplication, and checkpoints.
         self.batch_orchestrator = batch_orchestrator_module.BatchOrchestrator(self)
-
         self.audio_store = audio_file_store.AudioFileStore(self.anki_utils, self.get_preferences)
+        self.audio_generator = audio_generator_module.AudioGenerator(self)
+        self.editor_manager = editor_manager_module.EditorManager(self)
 
         # Apply logging preferences based on stored debug mode
-        self.apply_logging_preferences()
+        self.orchestrator.apply_logging_preferences()
 
         # Initialize multi-engine executor with settings from service configurations
         try:
             configuration_config = self.config.get(constants.CONFIG_CONFIGURATION, {})
             service_config_map = configuration_config.get(constants.CONFIG_SERVICE_CONFIG, {})
-            engine_config = self._build_engine_config(service_config_map)
+            engine_config = self.orchestrator.build_engine_config(service_config_map)
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
+            self.orchestrator.executor = self.executor
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
         except Exception as e:
             logger.warning(f'[INIT] Failed to initialize multi-engine executor, falling back to unified: {e}')
             self.executor = batch_executor.get_batch_executor(max_workers=1)
+            self.orchestrator.executor = self.executor
 
         # Maintenance: migration, audio registration, cache cleanup
         self.perform_config_migration()
         self.config_register_added_audio()
         self.cleanup_user_files()
-
-    # =========================================================================
-    # Engine configuration helpers (single source of truth)
-    # =========================================================================
-
-    def _build_engine_config(self, service_config_map: dict) -> dict:
-        """Build engine_config dict from service configurations.
-        
-        Single source of truth for concurrency defaults, validation, and
-        pool scaling.  Called by both __init__ and reconfigure_service_manager.
-        """
-        defaults = {
-            'PiperTTS': 1,
-            'KokoroTTS': 1,
-            'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
-            'MmsTTS': 1,
-            'SupertonicTTS': 1,
-        }
-        service_pool_map = {
-            'PiperTTS': 'Piper',
-            'KokoroTTS': 'Kokoro',
-            'EdgeTTS': 'EdgeTTS',
-            'MmsTTS': 'MMS',
-            'SupertonicTTS': 'Supertonic',
-        }
-        engine_config = {}
-        for service_name, pool_name in service_pool_map.items():
-            service_config = service_config_map.get(service_name, {})
-            concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
-            
-            # EdgeTTS is I/O-bound → capped by EDGETTS_MAX_WORKERS.
-            # Local engines are CPU-bound → capped by physical cores.
-            max_cap = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
-            if concurrency > max_cap:
-                logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max ({max_cap}), capping')
-                concurrency = max_cap
-            engine_config[pool_name] = max(1, concurrency)
-            
-            self._auto_scale_pool(pool_name, engine_config[pool_name])
-        return engine_config
-
-    def _auto_scale_pool(self, pool_name: str, concurrency: int) -> None:
-        """Auto-scale internal process pools for Sherpa-based services."""
-        try:
-            if pool_name == 'Piper':
-                from .services import service_piper
-                service_piper._piper_pool.update_max_processes(concurrency)
-            elif pool_name == 'Kokoro':
-                from .services import service_kokoro
-                service_kokoro._kokoro_pool.update_max_processes(concurrency)
-            elif pool_name == 'MMS':
-                from .services import service_mms
-                service_mms._sherpa_pool.update_max_processes(concurrency)
-            elif pool_name == 'Supertonic':
-                from .services import service_supertonic
-                service_supertonic._supertonic_pool.update_max_processes(concurrency)
-        except Exception as pool_err:
-            logger.warning(f"Failed to auto-scale pool for {pool_name}: {pool_err}")
 
     def cleanup_user_files(self) -> None:
         """
@@ -208,6 +174,10 @@ class SuperFreeTTS():
             batch_status.set_phase(phase)
         batch_status.set_status_message(message)
 
+    # =========================================================================
+    # Batch orchestration — delegated to BatchOrchestrator
+    # =========================================================================
+
     def prepare_batch_audio_generation(self, note_id_list, batch, batch_status):
         return self.batch_orchestrator.prepare_batch_audio_generation(note_id_list, batch, batch_status)
 
@@ -228,6 +198,17 @@ class SuperFreeTTS():
 
     def _apply_batch_deduplication(self, tasks, dedup_map, audio_cache, batch_status):
         return self.batch_orchestrator._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
+
+    def populate_batch_status_processed_text(self, note_id_list, batch_source, text_processing, batch_status):
+        return self.batch_orchestrator.populate_batch_status_processed_text(note_id_list, batch_source, text_processing, batch_status)
+
+    def get_source_processed_text(self, note, batch_source, text_processing):
+        return self.batch_orchestrator.get_source_processed_text(note, batch_source, text_processing)
+
+    # =========================================================================
+    # Audio sequence / batch task workers — kept here (used by batch_orchestrator
+    # via self.hypertts)
+    # =========================================================================
 
     def _get_sequence_service_limits(self, items):
         service_limits = {}
@@ -488,6 +469,35 @@ class SuperFreeTTS():
 
         return (None, errors.AudioNotFoundAnyVoiceError(processed_text))
 
+    # =========================================================================
+    # Audio generation — delegated to AudioGenerator
+    # =========================================================================
+
+    def choose_voice(self, voice_selection, voice_list, sequence_index=None) -> config_models.VoiceWithOptions:
+        return self.audio_generator.choose_voice(voice_selection, voice_list, sequence_index)
+
+    def generate_audio_write_file(self, source_text, voice_id: voice_module.TtsVoiceId_v3, voice_options, audio_request_context):
+        return self.audio_generator.generate_audio_write_file(source_text, voice_id, voice_options, audio_request_context)
+
+    def get_audio_file(self, processed_text, voice_selection, audio_request_context):
+        return self.audio_generator.get_audio_file(processed_text, voice_selection, audio_request_context)
+
+    def process_note_audio(self, batch: config_models.BatchConfig, note, add_mode, audio_request_context, text_override, anki_collection):
+        return self.audio_generator.process_note_audio(batch, note, add_mode, audio_request_context, text_override, anki_collection)
+
+    def get_note_audio(self, batch, note, audio_request_context, text_override):
+        return self.audio_generator.get_note_audio(batch, note, audio_request_context, text_override)
+
+    def play_sound(self, source_text, voice_id, options):
+        return self.audio_generator.play_sound(source_text, voice_id, options)
+
+    def get_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
+        return self.realtime_manager.get_realtime_audio(realtime_model, text)
+
+    # =========================================================================
+    # Note update helpers — delegated to note_audio_updater
+    # =========================================================================
+
     def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True):
         note_audio_updater.update_note_with_audio(
             self.anki_utils,
@@ -500,350 +510,69 @@ class SuperFreeTTS():
             update_collection=update_collection,
         )
 
-    def process_note_audio(self, batch: config_models.BatchConfig, note, add_mode, audio_request_context, text_override, anki_collection):
-        target_field = batch.target.target_field
+    def ensure_note_tag(self, note, tag_name: str) -> bool:
+        return note_audio_updater.ensure_note_tag(note, tag_name)
 
-        if target_field not in note:
-            raise errors.TargetFieldNotFoundError(target_field)
+    def tag_error_notes(self, note_ids: List[int], anki_collection, tag_name: str = constants.WORKFLOW_ERROR_TAG) -> int:
+        return note_audio_updater.tag_error_notes(self.anki_utils, note_ids, anki_collection, tag_name)
 
-        source_text = self.get_source_text(note, batch.source, text_override)
-        processed_text = self.process_text(source_text, batch.text_processing)
+    # =========================================================================
+    # Editor & Mapping Rules — delegated to EditorManager
+    # =========================================================================
 
-        full_filename, audio_filename = self.get_audio_file(processed_text, batch.voice_selection, audio_request_context)
-        sound_file = audio_filename
-        logger.debug(f'setting note[{target_field}] to audio file {sound_file}')
-        note_audio_updater.update_note_with_audio(
-            self.anki_utils,
-            note,
-            batch,
-            source_text,
-            sound_file,
-            full_filename,
-            anki_collection,
-            update_collection=not add_mode,
-        )
-
-        return source_text, processed_text, sound_file, full_filename
-
-    def get_note_audio(self, batch, note, audio_request_context, text_override):
-        source_text = self.get_source_text(note, batch.source, text_override)
-        processed_text = text_utils.process_text(source_text, batch.text_processing)
-        if len(processed_text) == 0:
-            raise errors.SourceTextEmpty()        
-        return self.get_audio_file(processed_text, batch.voice_selection, audio_request_context)
-
-    def get_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
-        return self.realtime_manager.get_realtime_audio(realtime_model, text)
-
-    def get_audio_file(self, processed_text, voice_selection, audio_request_context):
-        # sanity checks
-        if voice_selection.selection_mode in [
-            constants.VoiceSelectionMode.priority,
-            constants.VoiceSelectionMode.random,
-            constants.VoiceSelectionMode.sequence,
-        ]:
-            if len(voice_selection.voice_list) == 0:
-                raise errors.NoVoicesAdded()
-
-        # this voice_list copy is only used for priority mode
-        voice_list = None
-        priority_mode = voice_selection.selection_mode == constants.VoiceSelectionMode.priority
-        if priority_mode:
-            voice_list = copy.copy(voice_selection.voice_list)
-        sound_found = False
-        # loop while we haven't found the sound. this will be used for priority mode
-        loop_condition = True
-        while loop_condition:
-            try:
-                voice_with_options = self.choose_voice(voice_selection, voice_list)
-                logger.debug(f'about to generate audio file and write to file for {processed_text}')
-                voice_id = voice_with_options.voice_id
-                assert isinstance(voice_id, voice_module.TtsVoiceId_v3), \
-                    f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}, voice_with_options: {type(voice_with_options).__name__}"
-
-                full_filename, audio_filename = self.generate_audio_write_file(processed_text, 
-                    voice_with_options.voice_id, voice_with_options.options, audio_request_context)
-                logger.debug(f'finished generating audio file and write to file for {processed_text}')
-                self.anki_utils.run_on_main(self.config_register_added_audio)
-                return full_filename, audio_filename
-            except errors.AudioNotFoundError as exc:
-                # try the next voice, as long as one is available
-                if not priority_mode:
-                    # re-raise the exception
-                    raise exc
-            loop_condition = priority_mode and sound_found == False and len(voice_list) > 0
-        raise errors.AudioNotFoundAnyVoiceError(processed_text)
-
-    def choose_voice(self, voice_selection, voice_list, sequence_index=None) -> config_models.VoiceWithOptions:
-        if voice_selection.selection_mode == constants.VoiceSelectionMode.single:
-            return voice_selection.voice
-        elif voice_selection.selection_mode == constants.VoiceSelectionMode.random:
-            logger.info(f'choosing from {len(voice_selection.voice_list)} voices')
-            choice = random.choices(voice_selection.voice_list, weights=[x.random_weight for x in voice_selection.voice_list])
-            return choice[0]
-        elif voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-            # remove that voice from possible list
-            voice = voice_list.pop(0)
-            return voice
-        elif voice_selection.selection_mode == constants.VoiceSelectionMode.sequence:
-            voice_count = len(voice_selection.voice_list)
-            if voice_count == 0:
-                raise errors.NoVoicesAdded()
-            if sequence_index is None:
-                sequence_index = getattr(voice_selection, '_sequence_runtime_index', 0)
-                voice_selection._sequence_runtime_index = sequence_index + 1
-            return voice_selection.voice_list[sequence_index % voice_count]
-
-    def editor_note_add_audio(self, 
-            batch: config_models.BatchConfig, 
-            editor_context: config_models.EditorContext,
-            text_input = None):
-        # used by :
-        #  - component_batch.py
-        #  - component_mappingrule.py
-
-        # adding audio after the cursor is not yet supported
-        if batch.target.insert_location == config_models.InsertLocation.CURSOR_LOCATION:
-            lang = self.get_ui_language()
-            raise errors.SuperFreeTTSError(i18n.get_text("error_insert_cursor_unsupported", lang))
-
-        logger.debug(f'editor_note_add_audio, editor_context: {editor_context}')
-        logger.debug(f'editor_note_add_audio, batch: {repr(batch)}')
-        # editor, note, add_mode, text_override
-        # don't perform undo, it doesn't actually work, because of the way we call update_note
-        audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.editor_browser)
-        if editor_context.add_mode:
-            audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.editor_add)
-        text_override = None
-        if text_input != None:
-            # most likely coming from the Easy mode where the user directly inputs text
-            text_override = text_input
-        else:
-            if batch.source.use_selection:
-                if editor_context.selected_text != None:
-                    text_override = editor_context.selected_text
-        logger.debug(f'text_override: {text_override}')
-        source_text, processed_text, sound_file, full_filename = self.process_note_audio(batch, editor_context.note, editor_context.add_mode,
-            audio_request_context, text_override, self.anki_utils.get_anki_collection())
-        logger.debug('after process_note_audio')
-        logger.debug(f'about to call editor.set_note: {editor_context.note}')
-        def get_set_note_lambda(editor, note):
-            def editor_set_note():
-                editor.set_note(note)
-            return editor_set_note
-        self.anki_utils.run_on_main(get_set_note_lambda(editor_context.editor, editor_context.note))
-        logger.debug('after set_note')
-        self.anki_utils.play_sound(full_filename)
+    def editor_note_add_audio(self, batch: config_models.BatchConfig, editor_context: config_models.EditorContext, text_input=None):
+        return self.editor_manager.editor_note_add_audio(batch, editor_context, text_input)
 
     def editor_note_process_rule(self, rule: config_models.MappingRule, editor_context: config_models.EditorContext):
-        """process a single rule, unconditionally"""
-        preset = self.load_preset(rule.preset_id)
-        self.editor_note_add_audio(preset, editor_context)
-
-
-    # editor related functions
-    # ========================
+        return self.editor_manager.editor_note_process_rule(rule, editor_context)
 
     def get_editor_context(self, editor) -> config_models.EditorContext:
-        logger.debug(f'anki editor configuration: currentField: {editor.currentField} '
-                     f'last_field_index: {editor.last_field_index} '
-                     f'addMode: {editor.addMode} '
-                     f'selectedText: [{editor.web.selectedText()}] '
-                     + (f'card.note.items: {pprint.pformat(editor.card.note().items())} '
-                        f'card.note_type name: {pprint.pformat(editor.card.note_type()["name"])} '
-                        if editor.card is not None else 'card: None')
-                     )
-
-        selected_text = None
-
-        current_field_num = editor.currentField
-        # has the user put the cursor inside a field ?
-        current_field_name = None
-        if current_field_num != None:
-            deck_note_type = self.get_editor_deck_note_type(editor)
-            model = aqt.mw.col.models.get(deck_note_type.model_id)
-            current_field_name = model['flds'][current_field_num]['name']
-
-        if len(editor.web.selectedText()) > 0:
-            # need to get the field name for selected text
-            if current_field_num != None:
-                selected_text = editor.web.selectedText()
-
-        editor_context = config_models.EditorContext(note=editor.note, 
-            editor=editor, 
-            add_mode=editor.addMode,
-            selected_text=selected_text,
-            current_field=current_field_name,
-            clipboard=self.anki_utils.get_clipboard_content())
-        logger.debug(f'editor_context: {editor_context}')
-        return editor_context
+        return self.editor_manager.get_editor_context(editor)
 
     def get_editor_deck_note_type(self, editor) -> config_models.DeckNoteType:
-        note = editor.note
-        if note == None:
-            raise RuntimeError(f'editor.note not found')
-
-        if editor.addMode:
-            add_cards: aqt.addcards.AddCards = editor.parentWindow
-            return config_models.DeckNoteType(model_id=note.mid, deck_id=add_cards.deckChooser.selectedId())
-        else:
-            if editor.card == None:
-                raise RuntimeError(f'editor.card not found')
-            return config_models.DeckNoteType(model_id=note.mid, deck_id=editor.card.did)
-
-
-    # text processing
-    # ===============
-
-    def get_source_text(self, note, batch_source, text_override):
-        return source_text_resolver.get_source_text(note, batch_source, text_override, self.get_ui_language())
-
-    def expand_simple_template(self, note, source_template):
-        return source_text_resolver.expand_simple_template(note, source_template)
-
-    def expand_advanced_template(self, note, source_template):
-        return source_text_resolver.expand_advanced_template(note, source_template, self.get_ui_language())
-
-    def get_field_values(self, note):
-        return source_text_resolver.get_field_values(note)
-
-    def process_text(self, source_text, batch_text_processing):
-        return source_text_resolver.process_text(source_text, batch_text_processing)
-
-    # sound generation
-    # ================
+        return self.editor_manager.get_editor_deck_note_type(editor)
 
     def preview_note_audio_editor(self, batch, editor_context: config_models.EditorContext):
-        text_override = None
-        if batch.source.use_selection:
-            if editor_context.selected_text != None:
-                text_override = editor_context.selected_text
-        self.preview_note_audio(batch, editor_context.note, text_override)
+        return self.editor_manager.preview_note_audio_editor(batch, editor_context)
 
     def preview_note_audio(self, batch, note, text_override):
-        batch.validate()
-        full_filename, audio_filename = self.get_note_audio(batch, 
-            note, context.AudioRequestContext(constants.AudioRequestReason.preview), text_override)
-        self.anki_utils.play_sound(full_filename)
-    
-    def play_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
-        return self.realtime_manager.play_realtime_audio(realtime_model, text)
+        return self.editor_manager.preview_note_audio(batch, note, text_override)
 
-    def play_sound(self, source_text, voice_id, options):
-        logger.info(f'playing audio for {source_text}')
-        if source_text == None or len(source_text) == 0:
-            raise errors.SourceTextEmpty()        
-        full_filename, audio_filename = self.generate_audio_write_file(source_text, voice_id, options, context.AudioRequestContext(constants.AudioRequestReason.preview))
-        self.anki_utils.play_sound(full_filename)
-
-    def get_preview_all_rules_task(self, deck_note_type: config_models.DeckNoteType,editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules):
-        def preview_fn():
-            status = preset_rules_status.PresetRulesStatus('Previewing', self.anki_utils)
-            for absolute_index, subset_index, rule in preset_mapping_rules.iterate_applicable_rules(deck_note_type, False):
-                with status.get_rule_action_context(rule) as rule_action_context:
-                    logger.debug(f'previewing audio for rule {rule}')
-                    preset = self.load_preset(rule.preset_id)
-                    rule_action_context.set_preset(preset)
-                    self.preview_note_audio_editor(preset, editor_context)
-        return preview_fn
+    def get_preview_all_rules_task(self, deck_note_type: config_models.DeckNoteType, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules):
+        return self.editor_manager.get_preview_all_rules_task(deck_note_type, editor_context, preset_mapping_rules)
 
     def get_preview_all_rules_done(self):
-        lang = self.get_ui_language()
-        def done_fn(result):
-            with self.error_manager.get_single_action_context(i18n.get_text("title_previewing_rule", lang)):
-                result = result.result()
-        return done_fn
+        return self.editor_manager.get_preview_all_rules_done()
 
     def preview_all_mapping_rules(self, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules = None):
-        if preset_mapping_rules == None:
-            # load the saved rules
-            preset_mapping_rules = self.load_mapping_rules()
+        return self.editor_manager.preview_all_mapping_rules(editor_context, preset_mapping_rules)
 
-        if len(preset_mapping_rules.rules) == 0:
-            raise errors.NoPresetMappingRulesDefined()
-
-        deck_note_type = self.get_editor_deck_note_type(editor_context.editor)
-        # we want audio generation to happen in the background, but the tooltips will be generated in foreground to display immediately
-        self.anki_utils.run_in_background(self.get_preview_all_rules_task(deck_note_type, editor_context, preset_mapping_rules), self.get_preview_all_rules_done())
-
-    def get_apply_all_rules_task(self, deck_note_type: config_models.DeckNoteType,editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules):
-        def apply_fn():
-            status = preset_rules_status.PresetRulesStatus('Applying', self.anki_utils)
-            for absolute_index, subset_index, rule in preset_mapping_rules.iterate_applicable_rules(deck_note_type, False):
-                with status.get_rule_action_context(rule) as rule_action_context:
-                    logger.debug(f'previewing audio for rule {rule}')
-                    preset = self.load_preset(rule.preset_id)
-                    rule_action_context.set_preset(preset)
-                    self.editor_note_add_audio(preset, editor_context)
-        return apply_fn
+    def get_apply_all_rules_task(self, deck_note_type: config_models.DeckNoteType, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules):
+        return self.editor_manager.get_apply_all_rules_task(deck_note_type, editor_context, preset_mapping_rules)
 
     def get_apply_all_rules_done(self):
-        lang = self.get_ui_language()
-        def done_fn(result):
-            with self.error_manager.get_single_action_context(i18n.get_text("title_running_rules", lang)):
-                result = result.result()
-        return done_fn
+        return self.editor_manager.get_apply_all_rules_done()
 
     def apply_all_mapping_rules(self, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules = None):
-        if preset_mapping_rules == None:
-            # load the saved rules
-            preset_mapping_rules = self.load_mapping_rules()
+        return self.editor_manager.apply_all_mapping_rules(editor_context, preset_mapping_rules)
 
-        if len(preset_mapping_rules.rules) == 0:
-            raise errors.NoPresetMappingRulesDefined()
+    # =========================================================================
+    # Note field helpers
+    # =========================================================================
 
-        deck_note_type = self.get_editor_deck_note_type(editor_context.editor)
-        # we want audio generation to happen in the background, but the tooltips will be generated in foreground to display immediately
-        self.anki_utils.run_in_background(self.get_apply_all_rules_task(deck_note_type, editor_context, preset_mapping_rules), self.get_apply_all_rules_done())
+    def get_all_fields_from_notes(self, note_id_list):
+        field_name_set = {}
+        for note_id in note_id_list:
+            note = self.anki_utils.get_note_by_id(note_id)
+            for field in self.get_fields_from_note(note):
+                field_name_set[field] = True
+        return list(field_name_set.keys())
 
+    def get_fields_from_note(self, note):
+        return list(note.keys())
 
     # processing of sound tags / collection stuff
     # ===========================================
-
-    def generate_audio_write_file(self, source_text, voice_id: voice_module.TtsVoiceId_v3, voice_options, audio_request_context):
-        assert isinstance(voice_id, voice_module.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
-        request_key = self.audio_store.build_request_key(source_text, voice_id, voice_options)
-        cached_file = self.audio_store.get_cached_file(request_key)
-        file_result = cached_file or self.audio_store.get_file_result(request_key, cache_hit=False)
-        logger.info(f'requesting audio for hash {request_key.hash()}, full filename {file_result.full_filename}')
-        
-        # Start performance tracking (only active in debug mode)
-        tracker = performance_tracker.get_performance_tracker()
-        try:
-            # Extract voice name for tracking (safely handle various voice_key formats)
-            service_name = getattr(voice_id, 'service', 'unknown')
-            if hasattr(voice_id, 'voice_key'):
-                if isinstance(voice_id.voice_key, dict):
-                    voice_key_name = voice_id.voice_key.get('name', 'unknown')
-                else:
-                    voice_key_name = str(voice_id.voice_key)
-            else:
-                voice_key_name = 'unknown'
-            voice_name = f"{service_name}:{voice_key_name}"
-        except Exception as e:
-            voice_name = str(voice_id)
-            logger.debug(f'Error extracting voice name for tracking: {e}')
-        tracker.start_generation(source_text, voice_name)
-        
-        try:
-            if cached_file is None:
-
-                # get the voice which corresponds to the voice_id
-                voice = self.service_manager.locate_voice(voice_id)
-                logger.info(f'located voice: {voice}')
-
-                audio_data = self.service_manager.get_tts_audio(source_text, voice, voice_options, audio_request_context)
-                logger.info(f'not found in cache, requesting')
-                logger.debug(f'writing {file_result.full_filename}')
-                file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
-                logger.debug(f'wrote audio data')
-            else:
-                logger.info(f'file exists in cache')
-        finally:
-            # End performance tracking (only active in debug mode)
-            duration = tracker.end_generation()
-        
-        return file_result.full_filename, file_result.audio_filename
 
     def get_collection_sound_tag(self, full_filename, audio_filename):
         return note_audio_updater.get_collection_sound_tag(self.anki_utils, full_filename, audio_filename)
@@ -874,52 +603,27 @@ class SuperFreeTTS():
     def build_side_settings_key(self, card_side, settings_key): return self.realtime_manager.build_side_settings_key(card_side, settings_key)
     def persist_realtime_config_update_note_type(self, realtime_model, note, card_ord, current_settings_key): return self.realtime_manager.persist_realtime_config_update_note_type(realtime_model, note, card_ord, current_settings_key)
     def remove_tts_tags(self, note, card_ord): return self.realtime_manager.remove_tts_tags(note, card_ord)        
+    def play_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text):
+        return self.realtime_manager.play_realtime_audio(realtime_model, text)
 
+    # =========================================================================
+    # Text processing — delegated to source_text_resolver
+    # =========================================================================
 
-    # functions related to getting data from notes
-    # ============================================
+    def get_source_text(self, note, batch_source, text_override):
+        return source_text_resolver.get_source_text(note, batch_source, text_override, self.get_ui_language())
 
-    def get_all_fields_from_notes(self, note_id_list):
-        field_name_set = {}
-        for note_id in note_id_list:
-            note = self.anki_utils.get_note_by_id(note_id)
-            for field in self.get_fields_from_note(note):
-                field_name_set[field] = True
-        return list(field_name_set.keys())
+    def expand_simple_template(self, note, source_template):
+        return source_text_resolver.expand_simple_template(note, source_template)
 
-    def get_fields_from_note(self, note):
-        return list(note.keys())
+    def expand_advanced_template(self, note, source_template):
+        return source_text_resolver.expand_advanced_template(note, source_template, self.get_ui_language())
 
-    def populate_batch_status_processed_text(self, note_id_list, batch_source, text_processing, batch_status):
-        return self.batch_orchestrator.populate_batch_status_processed_text(note_id_list, batch_source, text_processing, batch_status)
+    def get_field_values(self, note):
+        return source_text_resolver.get_field_values(note)
 
-    def get_source_processed_text(self, note, batch_source, text_processing):
-        return self.batch_orchestrator.get_source_processed_text(note, batch_source, text_processing)
-
-    def ensure_note_tag(self, note, tag_name: str) -> bool:
-        tags = list(getattr(note, 'tags', []) or [])
-        if tag_name in tags:
-            return False
-
-        if hasattr(note, 'add_tag'):
-            try:
-                note.add_tag(tag_name)
-                return True
-            except Exception as e:
-                logger.debug(f'falling back to direct tag assignment for [{tag_name}]: {e}')
-
-        tags.append(tag_name)
-        note.tags = tags
-        return True
-
-    def tag_error_notes(self, note_ids: List[int], anki_collection, tag_name: str = constants.WORKFLOW_ERROR_TAG) -> int:
-        tagged_count = 0
-        for note_id in dict.fromkeys(note_ids):
-            note = self.anki_utils.get_note_by_id(note_id)
-            if self.ensure_note_tag(note, tag_name):
-                anki_collection.update_note(note)
-                tagged_count += 1
-        return tagged_count
+    def process_text(self, source_text, batch_text_processing):
+        return source_text_resolver.process_text(source_text, batch_text_processing)
 
     # =========================================================================
     # Config / Preset / Workflow / Realtime — delegated to ConfigStore
@@ -971,22 +675,8 @@ class SuperFreeTTS():
     def save_superfreetts_pro_api_key(self, api_key: str): pass  # Pro mode disabled
 
     def reconfigure_service_manager(self):
-        """Reconfigure the service manager with the current configuration."""
-        configuration = self.get_configuration()
-        preferences = self.get_preferences()
-        disable_ssl_verification = preferences.error_handling.disable_ssl_verification
-        services_enabled = self.service_manager.configure(configuration, disable_ssl_verification)
-        self.service_manager.clear_voice_list_cache()
-        logger.debug(f'reconfigure_service_manager, services_enabled: {services_enabled}')
-        try:
-            service_config_map = configuration.get_service_config()
-            engine_config = self._build_engine_config(service_config_map)
-            self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
-            logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
-        except Exception as e:
-            logger.warning(f'[RECONFIG] Failed to update batch executor: {e}')
-        if services_enabled:
-            self.anki_utils.broadcast_services_configured()
+        self.orchestrator.reconfigure_service_manager()
+        self.executor = self.orchestrator.executor
 
     def config_register_added_audio(self):
         """Register that the user has added audio (welcome-screen state machine)."""
@@ -1008,25 +698,7 @@ class SuperFreeTTS():
     def get_ui_language(self): return self.config_store.get_ui_language()
 
     def apply_logging_preferences(self):
-        # Bootstrap path: config_store may not exist yet on very first call from __init__
-        if hasattr(self, 'config_store'):
-            self.config_store.apply_logging_preferences()
-        else:
-            # Called before config_store is constructed; use raw config dict
-            try:
-                prefs = config_models.deserialize_preferences(
-                    self.anki_utils.get_config().get(constants.CONFIG_PREFERENCES, {})
-                )
-                if prefs.error_handling.debug_mode:
-                    log_dir = self.anki_utils.get_user_files_dir()
-                    if not os.path.isdir(log_dir):
-                        os.makedirs(log_dir, exist_ok=True)
-                    log_path = os.path.join(log_dir, 'superfreetts.log')
-                    logging_utils.configure_file_logging(log_path)
-                else:
-                    logging_utils.configure_silent()
-            except Exception:
-                logging_utils.configure_silent()
+        self.orchestrator.apply_logging_preferences()
 
     def save_preferences(self, preferences_model):
         self.config_store.save_preferences(preferences_model)

@@ -219,6 +219,7 @@
   "failure_report_header_error": "오류",
   "failure_report_add_tag": "태그 추가 {tag}",
   "failure_report_ignore_close": "무시하고 닫기",
+  "failure_report_rerun_failed": "실패한 노트 다시 실행",
   "workflow_dialog_title": "Super Free TTS: 워크플로",
   "workflow_label_name": "워크플로:",
   "workflow_info_selected_notes": "선택한 {count}개 노트에 여러 프리셋을 같은 순서로 실행합니다.",

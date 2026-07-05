@@ -1,17 +1,17 @@
 # -*- coding: mbcs -*-
 
 from ctypes import *
-import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 from comtypes import (
     _check_version, BSTR, CoClass, COMMETHOD, dispid, DISPMETHOD,
     GUID, helpstring, IServiceProvider, IUnknown, wireHWND
 )
+import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 from ctypes import HRESULT
-from comtypes.automation import VARIANT
 from ctypes.wintypes import (
     _FILETIME, _LARGE_INTEGER, _ULARGE_INTEGER, VARIANT_BOOL
 )
 from comtypes.stream import ISequentialStream
+from comtypes.automation import VARIANT
 from comtypes.typeinfo import ULONG_PTR
 from typing import TYPE_CHECKING
 
@@ -20,15 +20,131 @@ if TYPE_CHECKING:
 
 
 _lcid = 0  # change this if required
-typelib_path = 'C:\\WINDOWS\\System32\\Speech\\Common\\sapi.dll'
+typelib_path = 'C:\\Windows\\System32\\Speech\\Common\\sapi.dll'
 WSTRING = c_wchar_p
 UINT_PTR = c_ulonglong
 LONG_PTR = c_longlong
 
-# values for enumeration 'SpeechWordType'
-SWTAdded = 1
-SWTDeleted = 2
-SpeechWordType = c_int  # enum
+# values for enumeration 'SPWORDPRONOUNCEABLE'
+SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE = 0
+SPWP_UNKNOWN_WORD_PRONOUNCEABLE = 1
+SPWP_KNOWN_WORD_PRONOUNCEABLE = 2
+SPWORDPRONOUNCEABLE = c_int  # enum
+
+# values for enumeration 'SPGRAMMARSTATE'
+SPGS_DISABLED = 0
+SPGS_ENABLED = 1
+SPGS_EXCLUSIVE = 3
+SPGRAMMARSTATE = c_int  # enum
+
+# values for enumeration 'SPINTERFERENCE'
+SPINTERFERENCE_NONE = 0
+SPINTERFERENCE_NOISE = 1
+SPINTERFERENCE_NOSIGNAL = 2
+SPINTERFERENCE_TOOLOUD = 3
+SPINTERFERENCE_TOOQUIET = 4
+SPINTERFERENCE_TOOFAST = 5
+SPINTERFERENCE_TOOSLOW = 6
+SPINTERFERENCE_LATENCY_WARNING = 7
+SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN = 8
+SPINTERFERENCE_LATENCY_TRUNCATE_END = 9
+SPINTERFERENCE = c_int  # enum
+
+# values for enumeration 'SpeechVisemeType'
+SVP_0 = 0
+SVP_1 = 1
+SVP_2 = 2
+SVP_3 = 3
+SVP_4 = 4
+SVP_5 = 5
+SVP_6 = 6
+SVP_7 = 7
+SVP_8 = 8
+SVP_9 = 9
+SVP_10 = 10
+SVP_11 = 11
+SVP_12 = 12
+SVP_13 = 13
+SVP_14 = 14
+SVP_15 = 15
+SVP_16 = 16
+SVP_17 = 17
+SVP_18 = 18
+SVP_19 = 19
+SVP_20 = 20
+SVP_21 = 21
+SpeechVisemeType = c_int  # enum
+
+# values for enumeration 'SPVISEMES'
+SP_VISEME_0 = 0
+SP_VISEME_1 = 1
+SP_VISEME_2 = 2
+SP_VISEME_3 = 3
+SP_VISEME_4 = 4
+SP_VISEME_5 = 5
+SP_VISEME_6 = 6
+SP_VISEME_7 = 7
+SP_VISEME_8 = 8
+SP_VISEME_9 = 9
+SP_VISEME_10 = 10
+SP_VISEME_11 = 11
+SP_VISEME_12 = 12
+SP_VISEME_13 = 13
+SP_VISEME_14 = 14
+SP_VISEME_15 = 15
+SP_VISEME_16 = 16
+SP_VISEME_17 = 17
+SP_VISEME_18 = 18
+SP_VISEME_19 = 19
+SP_VISEME_20 = 20
+SP_VISEME_21 = 21
+SPVISEMES = c_int  # enum
+
+# values for enumeration 'SPGRAMMARWORDTYPE'
+SPWT_DISPLAY = 0
+SPWT_LEXICAL = 1
+SPWT_PRONUNCIATION = 2
+SPWT_LEXICAL_NO_SPECIAL_CHARS = 3
+SPGRAMMARWORDTYPE = c_int  # enum
+
+# values for enumeration 'SPAUDIOOPTIONS'
+SPAO_NONE = 0
+SPAO_RETAIN_AUDIO = 1
+SPAUDIOOPTIONS = c_int  # enum
+
+# values for enumeration 'SpeechRecognizerState'
+SRSInactive = 0
+SRSActive = 1
+SRSActiveAlways = 2
+SRSInactiveWithPurge = 3
+SpeechRecognizerState = c_int  # enum
+
+# values for enumeration 'SPSEMANTICFORMAT'
+SPSMF_SAPI_PROPERTIES = 0
+SPSMF_SRGS_SEMANTICINTERPRETATION_MS = 1
+SPSMF_SRGS_SAPIPROPERTIES = 2
+SPSMF_UPS = 4
+SPSMF_SRGS_SEMANTICINTERPRETATION_W3C = 8
+SPSEMANTICFORMAT = c_int  # enum
+
+# values for enumeration 'SPBOOKMARKOPTIONS'
+SPBO_NONE = 0
+SPBO_PAUSE = 1
+SPBO_AHEAD = 2
+SPBO_TIME_UNITS = 4
+SPBOOKMARKOPTIONS = c_int  # enum
+
+# values for enumeration 'SPCONTEXTSTATE'
+SPCS_DISABLED = 0
+SPCS_ENABLED = 1
+SPCONTEXTSTATE = c_int  # enum
+
+# values for enumeration 'SPADAPTATIONRELEVANCE'
+SPAR_Unknown = 0
+SPAR_Low = 1
+SPAR_Medium = 2
+SPAR_High = 3
+SPADAPTATIONRELEVANCE = c_int  # enum
 
 # values for enumeration 'DISPID_SpeechVoice'
 DISPID_SVStatus = 1
@@ -55,93 +171,39 @@ DISPID_SVIsUISupported = 21
 DISPID_SVDisplayUI = 22
 DISPID_SpeechVoice = c_int  # enum
 
-# values for enumeration 'DISPID_SpeechPhraseRules'
-DISPID_SPRulesCount = 1
-DISPID_SPRulesItem = 0
-DISPID_SPRules_NewEnum = -4
-DISPID_SpeechPhraseRules = c_int  # enum
+# values for enumeration 'SPCATEGORYTYPE'
+SPCT_COMMAND = 0
+SPCT_DICTATION = 1
+SPCT_SLEEP = 2
+SPCT_SUB_COMMAND = 3
+SPCT_SUB_DICTATION = 4
+SPCATEGORYTYPE = c_int  # enum
 
-# values for enumeration 'SPAUDIOOPTIONS'
-SPAO_NONE = 0
-SPAO_RETAIN_AUDIO = 1
-SPAUDIOOPTIONS = c_int  # enum
+# values for enumeration 'SpeechInterference'
+SINone = 0
+SINoise = 1
+SINoSignal = 2
+SITooLoud = 3
+SITooQuiet = 4
+SITooFast = 5
+SITooSlow = 6
+SpeechInterference = c_int  # enum
 
-# values for enumeration 'DISPID_SpeechLexicon'
-DISPID_SLGenerationId = 1
-DISPID_SLGetWords = 2
-DISPID_SLAddPronunciation = 3
-DISPID_SLAddPronunciationByPhoneIds = 4
-DISPID_SLRemovePronunciation = 5
-DISPID_SLRemovePronunciationByPhoneIds = 6
-DISPID_SLGetPronunciations = 7
-DISPID_SLGetGenerationChange = 8
-DISPID_SpeechLexicon = c_int  # enum
+# values for enumeration 'SpeechSpecialTransitionType'
+SSTTWildcard = 1
+SSTTDictation = 2
+SSTTTextBuffer = 3
+SpeechSpecialTransitionType = c_int  # enum
 
-# values for enumeration 'SpeechGrammarState'
-SGSEnabled = 1
-SGSDisabled = 0
-SGSExclusive = 3
-SpeechGrammarState = c_int  # enum
-
-# values for enumeration 'SPADAPTATIONRELEVANCE'
-SPAR_Unknown = 0
-SPAR_Low = 1
-SPAR_Medium = 2
-SPAR_High = 3
-SPADAPTATIONRELEVANCE = c_int  # enum
-
-# values for enumeration 'SpeechRuleAttributes'
-SRATopLevel = 1
-SRADefaultToActive = 2
-SRAExport = 4
-SRAImport = 8
-SRAInterpreter = 16
-SRADynamic = 32
-SRARoot = 64
-SpeechRuleAttributes = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechLexiconWords'
-DISPID_SLWsCount = 1
-DISPID_SLWsItem = 0
-DISPID_SLWs_NewEnum = -4
-DISPID_SpeechLexiconWords = c_int  # enum
-
-# values for enumeration 'SpeechLexiconType'
-SLTUser = 1
-SLTApp = 2
-SpeechLexiconType = c_int  # enum
-
-# values for enumeration 'SpeechPartOfSpeech'
-SPSNotOverriden = -1
-SPSUnknown = 0
-SPSNoun = 4096
-SPSVerb = 8192
-SPSModifier = 12288
-SPSFunction = 16384
-SPSInterjection = 20480
-SPSLMA = 28672
-SPSSuppressWord = 61440
-SpeechPartOfSpeech = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechLexiconWord'
-DISPID_SLWLangId = 1
-DISPID_SLWType = 2
-DISPID_SLWWord = 3
-DISPID_SLWPronunciations = 4
-DISPID_SpeechLexiconWord = c_int  # enum
-
-# values for enumeration 'SpeechDataKeyLocation'
-SDKLDefaultLocation = 0
-SDKLCurrentUser = 1
-SDKLLocalMachine = 2
-SDKLCurrentConfig = 5
-SpeechDataKeyLocation = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechLexiconProns'
-DISPID_SLPsCount = 1
-DISPID_SLPsItem = 0
-DISPID_SLPs_NewEnum = -4
-DISPID_SpeechLexiconProns = c_int  # enum
+# values for enumeration 'DISPID_SpeechWaveFormatEx'
+DISPID_SWFEFormatTag = 1
+DISPID_SWFEChannels = 2
+DISPID_SWFESamplesPerSec = 3
+DISPID_SWFEAvgBytesPerSec = 4
+DISPID_SWFEBlockAlign = 5
+DISPID_SWFEBitsPerSample = 6
+DISPID_SWFEExtraData = 7
+DISPID_SpeechWaveFormatEx = c_int  # enum
 
 # values for enumeration 'DISPID_SpeechVoiceStatus'
 DISPID_SVSCurrentStreamNumber = 1
@@ -158,32 +220,10 @@ DISPID_SVSPhonemeId = 11
 DISPID_SVSVisemeId = 12
 DISPID_SpeechVoiceStatus = c_int  # enum
 
-# values for enumeration 'DISPID_SpeechLexiconPronunciation'
-DISPID_SLPType = 1
-DISPID_SLPLangId = 2
-DISPID_SLPPartOfSpeech = 3
-DISPID_SLPPhoneIds = 4
-DISPID_SLPSymbolic = 5
-DISPID_SpeechLexiconPronunciation = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhoneConverter'
-DISPID_SPCLangId = 1
-DISPID_SPCPhoneToId = 2
-DISPID_SPCIdToPhone = 3
-DISPID_SpeechPhoneConverter = c_int  # enum
-
-# values for enumeration 'SpeechGrammarWordType'
-SGDisplay = 0
-SGLexical = 1
-SGPronounciation = 2
-SGLexicalNoSpecialChars = 3
-SpeechGrammarWordType = c_int  # enum
-
-# values for enumeration 'SpeechSpecialTransitionType'
-SSTTWildcard = 1
-SSTTDictation = 2
-SSTTTextBuffer = 3
-SpeechSpecialTransitionType = c_int  # enum
+# values for enumeration 'DISPID_SpeechMemoryStream'
+DISPID_SMSSetData = 100
+DISPID_SMSGetData = 101
+DISPID_SpeechMemoryStream = c_int  # enum
 
 # values for enumeration 'DISPID_SpeechVoiceEvent'
 DISPID_SVEStreamStart = 1
@@ -197,6 +237,61 @@ DISPID_SVEViseme = 8
 DISPID_SVEAudioLevel = 9
 DISPID_SVEEnginePrivate = 10
 DISPID_SpeechVoiceEvent = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechAudioBufferInfo'
+DISPID_SABIMinNotification = 1
+DISPID_SABIBufferSize = 2
+DISPID_SABIEventBias = 3
+DISPID_SpeechAudioBufferInfo = c_int  # enum
+
+# values for enumeration 'SPLEXICONTYPE'
+eLEXTYPE_USER = 1
+eLEXTYPE_APP = 2
+eLEXTYPE_VENDORLEXICON = 4
+eLEXTYPE_LETTERTOSOUND = 8
+eLEXTYPE_MORPHOLOGY = 16
+eLEXTYPE_RESERVED4 = 32
+eLEXTYPE_USER_SHORTCUT = 64
+eLEXTYPE_RESERVED6 = 128
+eLEXTYPE_RESERVED7 = 256
+eLEXTYPE_RESERVED8 = 512
+eLEXTYPE_RESERVED9 = 1024
+eLEXTYPE_RESERVED10 = 2048
+eLEXTYPE_PRIVATE1 = 4096
+eLEXTYPE_PRIVATE2 = 8192
+eLEXTYPE_PRIVATE3 = 16384
+eLEXTYPE_PRIVATE4 = 32768
+eLEXTYPE_PRIVATE5 = 65536
+eLEXTYPE_PRIVATE6 = 131072
+eLEXTYPE_PRIVATE7 = 262144
+eLEXTYPE_PRIVATE8 = 524288
+eLEXTYPE_PRIVATE9 = 1048576
+eLEXTYPE_PRIVATE10 = 2097152
+eLEXTYPE_PRIVATE11 = 4194304
+eLEXTYPE_PRIVATE12 = 8388608
+eLEXTYPE_PRIVATE13 = 16777216
+eLEXTYPE_PRIVATE14 = 33554432
+eLEXTYPE_PRIVATE15 = 67108864
+eLEXTYPE_PRIVATE16 = 134217728
+eLEXTYPE_PRIVATE17 = 268435456
+eLEXTYPE_PRIVATE18 = 536870912
+eLEXTYPE_PRIVATE19 = 1073741824
+eLEXTYPE_PRIVATE20 = -2147483648
+SPLEXICONTYPE = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechFileStream'
+DISPID_SFSOpen = 100
+DISPID_SFSClose = 101
+DISPID_SpeechFileStream = c_int  # enum
+
+# values for enumeration 'SpeechEmulationCompareFlags'
+SECFIgnoreCase = 1
+SECFIgnoreKanaType = 65536
+SECFIgnoreWidth = 131072
+SECFNoSpecialChars = 536870912
+SECFEmulateResult = 1073741824
+SECFDefault = 196609
+SpeechEmulationCompareFlags = c_int  # enum
 
 # values for enumeration 'DISPID_SpeechRecognizer'
 DISPID_SRRecognizer = 1
@@ -221,176 +316,70 @@ DISPID_SVGetAudioInputs = 19
 DISPID_SVGetProfiles = 20
 DISPID_SpeechRecognizer = c_int  # enum
 
-# values for enumeration 'SpeechStreamSeekPositionType'
-SSSPTRelativeToStart = 0
-SSSPTRelativeToCurrentPosition = 1
-SSSPTRelativeToEnd = 2
-SpeechStreamSeekPositionType = c_int  # enum
+# values for enumeration 'DISPID_SpeechAudio'
+DISPID_SAStatus = 200
+DISPID_SABufferInfo = 201
+DISPID_SADefaultFormat = 202
+DISPID_SAVolume = 203
+DISPID_SABufferNotifySize = 204
+DISPID_SAEventHandle = 205
+DISPID_SASetState = 206
+DISPID_SpeechAudio = c_int  # enum
 
-# values for enumeration 'SpeechStreamFileMode'
-SSFMOpenForRead = 0
-SSFMOpenReadWrite = 1
-SSFMCreate = 2
-SSFMCreateForWrite = 3
-SpeechStreamFileMode = c_int  # enum
+# values for enumeration 'SPPARTOFSPEECH'
+SPPS_NotOverriden = -1
+SPPS_Unknown = 0
+SPPS_Noun = 4096
+SPPS_Verb = 8192
+SPPS_Modifier = 12288
+SPPS_Function = 16384
+SPPS_Interjection = 20480
+SPPS_Noncontent = 24576
+SPPS_LMA = 28672
+SPPS_SuppressWord = 61440
+SPPARTOFSPEECH = c_int  # enum
 
-# values for enumeration 'SPDATAKEYLOCATION'
-SPDKL_DefaultLocation = 0
-SPDKL_CurrentUser = 1
-SPDKL_LocalMachine = 2
-SPDKL_CurrentConfig = 5
-SPDATAKEYLOCATION = c_int  # enum
+# values for enumeration 'DISPID_SpeechMMSysAudio'
+DISPID_SMSADeviceId = 300
+DISPID_SMSALineId = 301
+DISPID_SMSAMMHandle = 302
+DISPID_SpeechMMSysAudio = c_int  # enum
 
-# values for enumeration 'SpeechGrammarRuleStateTransitionType'
-SGRSTTEpsilon = 0
-SGRSTTWord = 1
-SGRSTTRule = 2
-SGRSTTDictation = 3
-SGRSTTWildcard = 4
-SGRSTTTextBuffer = 5
-SpeechGrammarRuleStateTransitionType = c_int  # enum
+# values for enumeration 'SpeechLexiconType'
+SLTUser = 1
+SLTApp = 2
+SpeechLexiconType = c_int  # enum
 
-# values for enumeration 'SPBOOKMARKOPTIONS'
-SPBO_NONE = 0
-SPBO_PAUSE = 1
-SPBO_AHEAD = 2
-SPBO_TIME_UNITS = 4
-SPBOOKMARKOPTIONS = c_int  # enum
+# values for enumeration 'SpeechPartOfSpeech'
+SPSNotOverriden = -1
+SPSUnknown = 0
+SPSNoun = 4096
+SPSVerb = 8192
+SPSModifier = 12288
+SPSFunction = 16384
+SPSInterjection = 20480
+SPSLMA = 28672
+SPSSuppressWord = 61440
+SpeechPartOfSpeech = c_int  # enum
 
-# values for enumeration 'SpeechTokenContext'
-STCInprocServer = 1
-STCInprocHandler = 2
-STCLocalServer = 4
-STCRemoteServer = 16
-STCAll = 23
-SpeechTokenContext = c_int  # enum
+# values for enumeration 'DISPID_SpeechAudioStatus'
+DISPID_SASFreeBufferSpace = 1
+DISPID_SASNonBlockingIO = 2
+DISPID_SASState = 3
+DISPID_SASCurrentSeekPosition = 4
+DISPID_SASCurrentDevicePosition = 5
+DISPID_SpeechAudioStatus = c_int  # enum
 
-# values for enumeration 'SpeechEmulationCompareFlags'
-SECFIgnoreCase = 1
-SECFIgnoreKanaType = 65536
-SECFIgnoreWidth = 131072
-SECFNoSpecialChars = 536870912
-SECFEmulateResult = 1073741824
-SECFDefault = 196609
-SpeechEmulationCompareFlags = c_int  # enum
+# values for enumeration 'DISPID_SpeechCustomStream'
+DISPID_SCSBaseStream = 100
+DISPID_SpeechCustomStream = c_int  # enum
 
-# values for enumeration 'SPCONTEXTSTATE'
-SPCS_DISABLED = 0
-SPCS_ENABLED = 1
-SPCONTEXTSTATE = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechRecognizerStatus'
-DISPID_SRSAudioStatus = 1
-DISPID_SRSCurrentStreamPosition = 2
-DISPID_SRSCurrentStreamNumber = 3
-DISPID_SRSNumberOfActiveRules = 4
-DISPID_SRSClsidEngine = 5
-DISPID_SRSSupportedLanguages = 6
-DISPID_SpeechRecognizerStatus = c_int  # enum
-
-# values for enumeration 'SpeechVoiceEvents'
-SVEStartInputStream = 2
-SVEEndInputStream = 4
-SVEVoiceChange = 8
-SVEBookmark = 16
-SVEWordBoundary = 32
-SVEPhoneme = 64
-SVESentenceBoundary = 128
-SVEViseme = 256
-SVEAudioLevel = 512
-SVEPrivate = 32768
-SVEAllEvents = 33790
-SpeechVoiceEvents = c_int  # enum
-
-# values for enumeration 'SpeechRunState'
-SRSEDone = 1
-SRSEIsSpeaking = 2
-SpeechRunState = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechRecoContext'
-DISPID_SRCRecognizer = 1
-DISPID_SRCAudioInInterferenceStatus = 2
-DISPID_SRCRequestedUIType = 3
-DISPID_SRCVoice = 4
-DISPID_SRAllowVoiceFormatMatchingOnNextSet = 5
-DISPID_SRCVoicePurgeEvent = 6
-DISPID_SRCEventInterests = 7
-DISPID_SRCCmdMaxAlternates = 8
-DISPID_SRCState = 9
-DISPID_SRCRetainedAudio = 10
-DISPID_SRCRetainedAudioFormat = 11
-DISPID_SRCPause = 12
-DISPID_SRCResume = 13
-DISPID_SRCCreateGrammar = 14
-DISPID_SRCCreateResultFromMemory = 15
-DISPID_SRCBookmark = 16
-DISPID_SRCSetAdaptationData = 17
-DISPID_SpeechRecoContext = c_int  # enum
-
-# values for enumeration 'SpeechTokenShellFolder'
-STSF_AppData = 26
-STSF_LocalAppData = 28
-STSF_CommonAppData = 35
-STSF_FlagCreate = 32768
-SpeechTokenShellFolder = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechObjectToken'
-DISPID_SOTId = 1
-DISPID_SOTDataKey = 2
-DISPID_SOTCategory = 3
-DISPID_SOTGetDescription = 4
-DISPID_SOTSetId = 5
-DISPID_SOTGetAttribute = 6
-DISPID_SOTCreateInstance = 7
-DISPID_SOTRemove = 8
-DISPID_SOTGetStorageFileName = 9
-DISPID_SOTRemoveStorageFileName = 10
-DISPID_SOTIsUISupported = 11
-DISPID_SOTDisplayUI = 12
-DISPID_SOTMatchesAttributes = 13
-DISPID_SpeechObjectToken = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechDataKey'
-DISPID_SDKSetBinaryValue = 1
-DISPID_SDKGetBinaryValue = 2
-DISPID_SDKSetStringValue = 3
-DISPID_SDKGetStringValue = 4
-DISPID_SDKSetLongValue = 5
-DISPID_SDKGetlongValue = 6
-DISPID_SDKOpenKey = 7
-DISPID_SDKCreateKey = 8
-DISPID_SDKDeleteKey = 9
-DISPID_SDKDeleteValue = 10
-DISPID_SDKEnumKeys = 11
-DISPID_SDKEnumValues = 12
-DISPID_SpeechDataKey = c_int  # enum
-
-# values for enumeration 'SpeechVoicePriority'
-SVPNormal = 0
-SVPAlert = 1
-SVPOver = 2
-SpeechVoicePriority = c_int  # enum
-
-# values for enumeration 'SPCATEGORYTYPE'
-SPCT_COMMAND = 0
-SPCT_DICTATION = 1
-SPCT_SLEEP = 2
-SPCT_SUB_COMMAND = 3
-SPCT_SUB_DICTATION = 4
-SPCATEGORYTYPE = c_int  # enum
-
-# values for enumeration 'SpeechAudioState'
-SASClosed = 0
-SASStop = 1
-SASPause = 2
-SASRun = 3
-SpeechAudioState = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechObjectTokens'
-DISPID_SOTsCount = 1
-DISPID_SOTsItem = 0
-DISPID_SOTs_NewEnum = -4
-DISPID_SpeechObjectTokens = c_int  # enum
+# values for enumeration 'DISPID_SpeechBaseStream'
+DISPID_SBSFormat = 1
+DISPID_SBSRead = 2
+DISPID_SBSWrite = 3
+DISPID_SBSSeek = 4
+DISPID_SpeechBaseStream = c_int  # enum
 
 # values for enumeration 'DISPIDSPRG'
 DISPID_SRGId = 1
@@ -414,6 +403,114 @@ DISPID_SRGSetTextSelection = 18
 DISPID_SRGIsPronounceable = 19
 DISPIDSPRG = c_int  # enum
 
+# values for enumeration 'DISPID_SpeechGrammarRuleStateTransitions'
+DISPID_SGRSTsCount = 1
+DISPID_SGRSTsItem = 0
+DISPID_SGRSTs_NewEnum = -4
+DISPID_SpeechGrammarRuleStateTransitions = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechGrammarRule'
+DISPID_SGRAttributes = 1
+DISPID_SGRInitialState = 2
+DISPID_SGRName = 3
+DISPID_SGRId = 4
+DISPID_SGRClear = 5
+DISPID_SGRAddResource = 6
+DISPID_SGRAddState = 7
+DISPID_SpeechGrammarRule = c_int  # enum
+
+# values for enumeration 'SpeechStreamSeekPositionType'
+SSSPTRelativeToStart = 0
+SSSPTRelativeToCurrentPosition = 1
+SSSPTRelativeToEnd = 2
+SpeechStreamSeekPositionType = c_int  # enum
+
+# values for enumeration 'SPWORDTYPE'
+eWORDTYPE_ADDED = 1
+eWORDTYPE_DELETED = 2
+SPWORDTYPE = c_int  # enum
+
+# values for enumeration 'SpeechDataKeyLocation'
+SDKLDefaultLocation = 0
+SDKLCurrentUser = 1
+SDKLLocalMachine = 2
+SDKLCurrentConfig = 5
+SpeechDataKeyLocation = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecognizerStatus'
+DISPID_SRSAudioStatus = 1
+DISPID_SRSCurrentStreamPosition = 2
+DISPID_SRSCurrentStreamNumber = 3
+DISPID_SRSNumberOfActiveRules = 4
+DISPID_SRSClsidEngine = 5
+DISPID_SRSSupportedLanguages = 6
+DISPID_SpeechRecognizerStatus = c_int  # enum
+
+# values for enumeration 'SPSHORTCUTTYPE'
+SPSHT_NotOverriden = -1
+SPSHT_Unknown = 0
+SPSHT_EMAIL = 4096
+SPSHT_OTHER = 8192
+SPPS_RESERVED1 = 12288
+SPPS_RESERVED2 = 16384
+SPPS_RESERVED3 = 20480
+SPPS_RESERVED4 = 61440
+SPSHORTCUTTYPE = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechGrammarRuleStateTransition'
+DISPID_SGRSTType = 1
+DISPID_SGRSTText = 2
+DISPID_SGRSTRule = 3
+DISPID_SGRSTWeight = 4
+DISPID_SGRSTPropertyName = 5
+DISPID_SGRSTPropertyId = 6
+DISPID_SGRSTPropertyValue = 7
+DISPID_SGRSTNextState = 8
+DISPID_SpeechGrammarRuleStateTransition = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechGrammarRuleState'
+DISPID_SGRSRule = 1
+DISPID_SGRSTransitions = 2
+DISPID_SGRSAddWordTransition = 3
+DISPID_SGRSAddRuleTransition = 4
+DISPID_SGRSAddSpecialTransition = 5
+DISPID_SpeechGrammarRuleState = c_int  # enum
+
+# values for enumeration 'SpeechGrammarState'
+SGSEnabled = 1
+SGSDisabled = 0
+SGSExclusive = 3
+SpeechGrammarState = c_int  # enum
+
+# values for enumeration 'SpeechLoadOption'
+SLOStatic = 0
+SLODynamic = 1
+SpeechLoadOption = c_int  # enum
+
+# values for enumeration 'SpeechRuleState'
+SGDSInactive = 0
+SGDSActive = 1
+SGDSActiveWithAutoPause = 3
+SGDSActiveUserDelimited = 4
+SpeechRuleState = c_int  # enum
+
+# values for enumeration 'SpeechWordPronounceable'
+SWPUnknownWordUnpronounceable = 0
+SWPUnknownWordPronounceable = 1
+SWPKnownWordPronounceable = 2
+SpeechWordPronounceable = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechGrammarRules'
+DISPID_SGRsCount = 1
+DISPID_SGRsDynamic = 2
+DISPID_SGRsAdd = 3
+DISPID_SGRsCommit = 4
+DISPID_SGRsCommitAndSave = 5
+DISPID_SGRsFindRule = 6
+DISPID_SGRsItem = 0
+DISPID_SGRs_NewEnum = -4
+DISPID_SpeechGrammarRules = c_int  # enum
+
 # values for enumeration 'SpeechVoiceSpeakFlags'
 SVSFDefault = 0
 SVSFlagsAsync = 1
@@ -431,6 +528,480 @@ SVSFParseMask = 384
 SVSFVoiceMask = 511
 SVSFUnusedFlags = -512
 SpeechVoiceSpeakFlags = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecoContext'
+DISPID_SRCRecognizer = 1
+DISPID_SRCAudioInInterferenceStatus = 2
+DISPID_SRCRequestedUIType = 3
+DISPID_SRCVoice = 4
+DISPID_SRAllowVoiceFormatMatchingOnNextSet = 5
+DISPID_SRCVoicePurgeEvent = 6
+DISPID_SRCEventInterests = 7
+DISPID_SRCCmdMaxAlternates = 8
+DISPID_SRCState = 9
+DISPID_SRCRetainedAudio = 10
+DISPID_SRCRetainedAudioFormat = 11
+DISPID_SRCPause = 12
+DISPID_SRCResume = 13
+DISPID_SRCCreateGrammar = 14
+DISPID_SRCCreateResultFromMemory = 15
+DISPID_SRCBookmark = 16
+DISPID_SRCSetAdaptationData = 17
+DISPID_SpeechRecoContext = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecoContextEvents'
+DISPID_SRCEStartStream = 1
+DISPID_SRCEEndStream = 2
+DISPID_SRCEBookmark = 3
+DISPID_SRCESoundStart = 4
+DISPID_SRCESoundEnd = 5
+DISPID_SRCEPhraseStart = 6
+DISPID_SRCERecognition = 7
+DISPID_SRCEHypothesis = 8
+DISPID_SRCEPropertyNumberChange = 9
+DISPID_SRCEPropertyStringChange = 10
+DISPID_SRCEFalseRecognition = 11
+DISPID_SRCEInterference = 12
+DISPID_SRCERequestUI = 13
+DISPID_SRCERecognizerStateChange = 14
+DISPID_SRCEAdaptation = 15
+DISPID_SRCERecognitionForOtherContext = 16
+DISPID_SRCEAudioLevel = 17
+DISPID_SRCEEnginePrivate = 18
+DISPID_SpeechRecoContextEvents = c_int  # enum
+
+# values for enumeration 'SpeechVisemeFeature'
+SVF_None = 0
+SVF_Stressed = 1
+SVF_Emphasis = 2
+SpeechVisemeFeature = c_int  # enum
+
+# values for enumeration '_SPAUDIOSTATE'
+SPAS_CLOSED = 0
+SPAS_STOP = 1
+SPAS_PAUSE = 2
+SPAS_RUN = 3
+_SPAUDIOSTATE = c_int  # enum
+
+# values for enumeration 'SpeechRuleAttributes'
+SRATopLevel = 1
+SRADefaultToActive = 2
+SRAExport = 4
+SRAImport = 8
+SRAInterpreter = 16
+SRADynamic = 32
+SRARoot = 64
+SpeechRuleAttributes = c_int  # enum
+
+# values for enumeration 'SPWAVEFORMATTYPE'
+SPWF_INPUT = 0
+SPWF_SRENGINE = 1
+SPWAVEFORMATTYPE = c_int  # enum
+
+# values for enumeration 'SpeechDiscardType'
+SDTProperty = 1
+SDTReplacement = 2
+SDTRule = 4
+SDTDisplayText = 8
+SDTLexicalForm = 16
+SDTPronunciation = 32
+SDTAudio = 64
+SDTAlternates = 128
+SDTAll = 255
+SpeechDiscardType = c_int  # enum
+
+# values for enumeration 'SpeechFormatType'
+SFTInput = 0
+SFTSREngine = 1
+SpeechFormatType = c_int  # enum
+
+# values for enumeration 'SPXMLRESULTOPTIONS'
+SPXRO_SML = 0
+SPXRO_Alternates_SML = 1
+SPXMLRESULTOPTIONS = c_int  # enum
+
+# values for enumeration 'SpeechRecoEvents'
+SREStreamEnd = 1
+SRESoundStart = 2
+SRESoundEnd = 4
+SREPhraseStart = 8
+SRERecognition = 16
+SREHypothesis = 32
+SREBookmark = 64
+SREPropertyNumChange = 128
+SREPropertyStringChange = 256
+SREFalseRecognition = 512
+SREInterference = 1024
+SRERequestUI = 2048
+SREStateChange = 4096
+SREAdaptation = 8192
+SREStreamStart = 16384
+SRERecoOtherContext = 32768
+SREAudioLevel = 65536
+SREPrivate = 262144
+SREAllEvents = 393215
+SpeechRecoEvents = c_int  # enum
+
+# values for enumeration 'SpeechRecoContextState'
+SRCS_Disabled = 0
+SRCS_Enabled = 1
+SpeechRecoContextState = c_int  # enum
+
+# values for enumeration 'DISPIDSPTSI'
+DISPIDSPTSI_ActiveOffset = 1
+DISPIDSPTSI_ActiveLength = 2
+DISPIDSPTSI_SelectionOffset = 3
+DISPIDSPTSI_SelectionLength = 4
+DISPIDSPTSI = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecoResult'
+DISPID_SRRRecoContext = 1
+DISPID_SRRTimes = 2
+DISPID_SRRAudioFormat = 3
+DISPID_SRRPhraseInfo = 4
+DISPID_SRRAlternates = 5
+DISPID_SRRAudio = 6
+DISPID_SRRSpeakAudio = 7
+DISPID_SRRSaveToMemory = 8
+DISPID_SRRDiscardResultInfo = 9
+DISPID_SpeechRecoResult = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechXMLRecoResult'
+DISPID_SRRGetXMLResult = 10
+DISPID_SRRGetXMLErrorInfo = 11
+DISPID_SpeechXMLRecoResult = c_int  # enum
+
+# values for enumeration 'SpeechRunState'
+SRSEDone = 1
+SRSEIsSpeaking = 2
+SpeechRunState = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecoResult2'
+DISPID_SRRSetTextFeedback = 12
+DISPID_SpeechRecoResult2 = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseBuilder'
+DISPID_SPPBRestorePhraseFromMemory = 1
+DISPID_SpeechPhraseBuilder = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechRecoResultTimes'
+DISPID_SRRTStreamTime = 1
+DISPID_SRRTLength = 2
+DISPID_SRRTTickCount = 3
+DISPID_SRRTOffsetFromStart = 4
+DISPID_SpeechRecoResultTimes = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseAlternate'
+DISPID_SPARecoResult = 1
+DISPID_SPAStartElementInResult = 2
+DISPID_SPANumberOfElementsInResult = 3
+DISPID_SPAPhraseInfo = 4
+DISPID_SPACommit = 5
+DISPID_SpeechPhraseAlternate = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseAlternates'
+DISPID_SPAsCount = 1
+DISPID_SPAsItem = 0
+DISPID_SPAs_NewEnum = -4
+DISPID_SpeechPhraseAlternates = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseInfo'
+DISPID_SPILanguageId = 1
+DISPID_SPIGrammarId = 2
+DISPID_SPIStartTime = 3
+DISPID_SPIAudioStreamPosition = 4
+DISPID_SPIAudioSizeBytes = 5
+DISPID_SPIRetainedSizeBytes = 6
+DISPID_SPIAudioSizeTime = 7
+DISPID_SPIRule = 8
+DISPID_SPIProperties = 9
+DISPID_SPIElements = 10
+DISPID_SPIReplacements = 11
+DISPID_SPIEngineId = 12
+DISPID_SPIEnginePrivateData = 13
+DISPID_SPISaveToMemory = 14
+DISPID_SPIGetText = 15
+DISPID_SPIGetDisplayAttributes = 16
+DISPID_SpeechPhraseInfo = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseElement'
+DISPID_SPEAudioTimeOffset = 1
+DISPID_SPEAudioSizeTime = 2
+DISPID_SPEAudioStreamOffset = 3
+DISPID_SPEAudioSizeBytes = 4
+DISPID_SPERetainedStreamOffset = 5
+DISPID_SPERetainedSizeBytes = 6
+DISPID_SPEDisplayText = 7
+DISPID_SPELexicalForm = 8
+DISPID_SPEPronunciation = 9
+DISPID_SPEDisplayAttributes = 10
+DISPID_SPERequiredConfidence = 11
+DISPID_SPEActualConfidence = 12
+DISPID_SPEEngineConfidence = 13
+DISPID_SpeechPhraseElement = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseElements'
+DISPID_SPEsCount = 1
+DISPID_SPEsItem = 0
+DISPID_SPEs_NewEnum = -4
+DISPID_SpeechPhraseElements = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseReplacement'
+DISPID_SPRDisplayAttributes = 1
+DISPID_SPRText = 2
+DISPID_SPRFirstElement = 3
+DISPID_SPRNumberOfElements = 4
+DISPID_SpeechPhraseReplacement = c_int  # enum
+
+# values for enumeration 'SpeechVoiceEvents'
+SVEStartInputStream = 2
+SVEEndInputStream = 4
+SVEVoiceChange = 8
+SVEBookmark = 16
+SVEWordBoundary = 32
+SVEPhoneme = 64
+SVESentenceBoundary = 128
+SVEViseme = 256
+SVEAudioLevel = 512
+SVEPrivate = 32768
+SVEAllEvents = 33790
+SpeechVoiceEvents = c_int  # enum
+
+# values for enumeration 'SpeechVoicePriority'
+SVPNormal = 0
+SVPAlert = 1
+SVPOver = 2
+SpeechVoicePriority = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseReplacements'
+DISPID_SPRsCount = 1
+DISPID_SPRsItem = 0
+DISPID_SPRs_NewEnum = -4
+DISPID_SpeechPhraseReplacements = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseProperty'
+DISPID_SPPName = 1
+DISPID_SPPId = 2
+DISPID_SPPValue = 3
+DISPID_SPPFirstElement = 4
+DISPID_SPPNumberOfElements = 5
+DISPID_SPPEngineConfidence = 6
+DISPID_SPPConfidence = 7
+DISPID_SPPParent = 8
+DISPID_SPPChildren = 9
+DISPID_SpeechPhraseProperty = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseProperties'
+DISPID_SPPsCount = 1
+DISPID_SPPsItem = 0
+DISPID_SPPs_NewEnum = -4
+DISPID_SpeechPhraseProperties = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseRule'
+DISPID_SPRuleName = 1
+DISPID_SPRuleId = 2
+DISPID_SPRuleFirstElement = 3
+DISPID_SPRuleNumberOfElements = 4
+DISPID_SPRuleParent = 5
+DISPID_SPRuleChildren = 6
+DISPID_SPRuleConfidence = 7
+DISPID_SPRuleEngineConfidence = 8
+DISPID_SpeechPhraseRule = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhraseRules'
+DISPID_SPRulesCount = 1
+DISPID_SPRulesItem = 0
+DISPID_SPRules_NewEnum = -4
+DISPID_SpeechPhraseRules = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechLexicon'
+DISPID_SLGenerationId = 1
+DISPID_SLGetWords = 2
+DISPID_SLAddPronunciation = 3
+DISPID_SLAddPronunciationByPhoneIds = 4
+DISPID_SLRemovePronunciation = 5
+DISPID_SLRemovePronunciationByPhoneIds = 6
+DISPID_SLGetPronunciations = 7
+DISPID_SLGetGenerationChange = 8
+DISPID_SpeechLexicon = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechLexiconWords'
+DISPID_SLWsCount = 1
+DISPID_SLWsItem = 0
+DISPID_SLWs_NewEnum = -4
+DISPID_SpeechLexiconWords = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechLexiconWord'
+DISPID_SLWLangId = 1
+DISPID_SLWType = 2
+DISPID_SLWWord = 3
+DISPID_SLWPronunciations = 4
+DISPID_SpeechLexiconWord = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechLexiconProns'
+DISPID_SLPsCount = 1
+DISPID_SLPsItem = 0
+DISPID_SLPs_NewEnum = -4
+DISPID_SpeechLexiconProns = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechLexiconPronunciation'
+DISPID_SLPType = 1
+DISPID_SLPLangId = 2
+DISPID_SLPPartOfSpeech = 3
+DISPID_SLPPhoneIds = 4
+DISPID_SLPSymbolic = 5
+DISPID_SpeechLexiconPronunciation = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechPhoneConverter'
+DISPID_SPCLangId = 1
+DISPID_SPCPhoneToId = 2
+DISPID_SPCIdToPhone = 3
+DISPID_SpeechPhoneConverter = c_int  # enum
+
+# values for enumeration 'SPDATAKEYLOCATION'
+SPDKL_DefaultLocation = 0
+SPDKL_CurrentUser = 1
+SPDKL_LocalMachine = 2
+SPDKL_CurrentConfig = 5
+SPDATAKEYLOCATION = c_int  # enum
+
+# values for enumeration 'SpeechTokenContext'
+STCInprocServer = 1
+STCInprocHandler = 2
+STCLocalServer = 4
+STCRemoteServer = 16
+STCAll = 23
+SpeechTokenContext = c_int  # enum
+
+# values for enumeration 'SpeechTokenShellFolder'
+STSF_AppData = 26
+STSF_LocalAppData = 28
+STSF_CommonAppData = 35
+STSF_FlagCreate = 32768
+SpeechTokenShellFolder = c_int  # enum
+
+# values for enumeration 'SpeechStreamFileMode'
+SSFMOpenForRead = 0
+SSFMOpenReadWrite = 1
+SSFMCreate = 2
+SSFMCreateForWrite = 3
+SpeechStreamFileMode = c_int  # enum
+
+# values for enumeration 'SPLOADOPTIONS'
+SPLO_STATIC = 0
+SPLO_DYNAMIC = 1
+SPLOADOPTIONS = c_int  # enum
+
+# values for enumeration 'SpeechBookmarkOptions'
+SBONone = 0
+SBOPause = 1
+SpeechBookmarkOptions = c_int  # enum
+
+# values for enumeration 'SpeechRecognitionType'
+SRTStandard = 0
+SRTAutopause = 1
+SRTEmulated = 2
+SRTSMLTimeout = 4
+SRTExtendableParse = 8
+SRTReSent = 16
+SpeechRecognitionType = c_int  # enum
+
+# values for enumeration 'SpeechGrammarWordType'
+SGDisplay = 0
+SGLexical = 1
+SGPronounciation = 2
+SGLexicalNoSpecialChars = 3
+SpeechGrammarWordType = c_int  # enum
+
+# values for enumeration 'SpeechAudioState'
+SASClosed = 0
+SASStop = 1
+SASPause = 2
+SASRun = 3
+SpeechAudioState = c_int  # enum
+
+# values for enumeration 'SpeechWordType'
+SWTAdded = 1
+SWTDeleted = 2
+SpeechWordType = c_int  # enum
+
+# values for enumeration 'SPFILEMODE'
+SPFM_OPEN_READONLY = 0
+SPFM_OPEN_READWRITE = 1
+SPFM_CREATE = 2
+SPFM_CREATE_ALWAYS = 3
+SPFM_NUM_MODES = 4
+SPFILEMODE = c_int  # enum
+
+# values for enumeration 'SpeechDisplayAttributes'
+SDA_No_Trailing_Space = 0
+SDA_One_Trailing_Space = 2
+SDA_Two_Trailing_Spaces = 4
+SDA_Consume_Leading_Spaces = 8
+SpeechDisplayAttributes = c_int  # enum
+
+# values for enumeration 'SpeechEngineConfidence'
+SECLowConfidence = -1
+SECNormalConfidence = 0
+SECHighConfidence = 1
+SpeechEngineConfidence = c_int  # enum
+
+# values for enumeration 'SPVPRIORITY'
+SPVPRI_NORMAL = 0
+SPVPRI_ALERT = 1
+SPVPRI_OVER = 2
+SPVPRIORITY = c_int  # enum
+
+# values for enumeration 'SPEVENTENUM'
+SPEI_UNDEFINED = 0
+SPEI_START_INPUT_STREAM = 1
+SPEI_END_INPUT_STREAM = 2
+SPEI_VOICE_CHANGE = 3
+SPEI_TTS_BOOKMARK = 4
+SPEI_WORD_BOUNDARY = 5
+SPEI_PHONEME = 6
+SPEI_SENTENCE_BOUNDARY = 7
+SPEI_VISEME = 8
+SPEI_TTS_AUDIO_LEVEL = 9
+SPEI_TTS_PRIVATE = 15
+SPEI_MIN_TTS = 1
+SPEI_MAX_TTS = 15
+SPEI_END_SR_STREAM = 34
+SPEI_SOUND_START = 35
+SPEI_SOUND_END = 36
+SPEI_PHRASE_START = 37
+SPEI_RECOGNITION = 38
+SPEI_HYPOTHESIS = 39
+SPEI_SR_BOOKMARK = 40
+SPEI_PROPERTY_NUM_CHANGE = 41
+SPEI_PROPERTY_STRING_CHANGE = 42
+SPEI_FALSE_RECOGNITION = 43
+SPEI_INTERFERENCE = 44
+SPEI_REQUEST_UI = 45
+SPEI_RECO_STATE_CHANGE = 46
+SPEI_ADAPTATION = 47
+SPEI_START_SR_STREAM = 48
+SPEI_RECO_OTHER_CONTEXT = 49
+SPEI_SR_AUDIO_LEVEL = 50
+SPEI_SR_RETAINEDAUDIO = 51
+SPEI_SR_PRIVATE = 52
+SPEI_ACTIVE_CATEGORY_CHANGED = 53
+SPEI_RESERVED5 = 54
+SPEI_RESERVED6 = 55
+SPEI_MIN_SR = 34
+SPEI_MAX_SR = 55
+SPEI_RESERVED1 = 30
+SPEI_RESERVED2 = 33
+SPEI_RESERVED3 = 63
+SPEVENTENUM = c_int  # enum
+
+# values for enumeration 'SPRECOSTATE'
+SPRST_INACTIVE = 0
+SPRST_ACTIVE = 1
+SPRST_ACTIVE_ALWAYS = 2
+SPRST_INACTIVE_WITH_PURGE = 3
+SPRST_NUM_STATES = 4
+SPRECOSTATE = c_int  # enum
 
 # values for enumeration 'SpeechAudioFormatType'
 SAFTDefault = -1
@@ -505,6 +1076,51 @@ SAFTGSM610_22kHzMono = 67
 SAFTGSM610_44kHzMono = 68
 SpeechAudioFormatType = c_int  # enum
 
+# values for enumeration 'SpeechGrammarRuleStateTransitionType'
+SGRSTTEpsilon = 0
+SGRSTTWord = 1
+SGRSTTRule = 2
+SGRSTTDictation = 3
+SGRSTTWildcard = 4
+SGRSTTTextBuffer = 5
+SpeechGrammarRuleStateTransitionType = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechDataKey'
+DISPID_SDKSetBinaryValue = 1
+DISPID_SDKGetBinaryValue = 2
+DISPID_SDKSetStringValue = 3
+DISPID_SDKGetStringValue = 4
+DISPID_SDKSetLongValue = 5
+DISPID_SDKGetlongValue = 6
+DISPID_SDKOpenKey = 7
+DISPID_SDKCreateKey = 8
+DISPID_SDKDeleteKey = 9
+DISPID_SDKDeleteValue = 10
+DISPID_SDKEnumKeys = 11
+DISPID_SDKEnumValues = 12
+DISPID_SpeechDataKey = c_int  # enum
+
+# values for enumeration 'DISPID_SpeechObjectToken'
+DISPID_SOTId = 1
+DISPID_SOTDataKey = 2
+DISPID_SOTCategory = 3
+DISPID_SOTGetDescription = 4
+DISPID_SOTSetId = 5
+DISPID_SOTGetAttribute = 6
+DISPID_SOTCreateInstance = 7
+DISPID_SOTRemove = 8
+DISPID_SOTGetStorageFileName = 9
+DISPID_SOTRemoveStorageFileName = 10
+DISPID_SOTIsUISupported = 11
+DISPID_SOTDisplayUI = 12
+DISPID_SOTMatchesAttributes = 13
+DISPID_SpeechObjectToken = c_int  # enum
+
+# values for enumeration 'SpeechRetainedAudioOptions'
+SRAONone = 0
+SRAORetainAudio = 1
+SpeechRetainedAudioOptions = c_int  # enum
+
 # values for enumeration 'DISPID_SpeechObjectTokenCategory'
 DISPID_SOTCId = 1
 DISPID_SOTCDefault = 2
@@ -520,371 +1136,11 @@ DISPID_SAFGetWaveFormatEx = 3
 DISPID_SAFSetWaveFormatEx = 4
 DISPID_SpeechAudioFormat = c_int  # enum
 
-# values for enumeration 'DISPID_SpeechRecoContextEvents'
-DISPID_SRCEStartStream = 1
-DISPID_SRCEEndStream = 2
-DISPID_SRCEBookmark = 3
-DISPID_SRCESoundStart = 4
-DISPID_SRCESoundEnd = 5
-DISPID_SRCEPhraseStart = 6
-DISPID_SRCERecognition = 7
-DISPID_SRCEHypothesis = 8
-DISPID_SRCEPropertyNumberChange = 9
-DISPID_SRCEPropertyStringChange = 10
-DISPID_SRCEFalseRecognition = 11
-DISPID_SRCEInterference = 12
-DISPID_SRCERequestUI = 13
-DISPID_SRCERecognizerStateChange = 14
-DISPID_SRCEAdaptation = 15
-DISPID_SRCERecognitionForOtherContext = 16
-DISPID_SRCEAudioLevel = 17
-DISPID_SRCEEnginePrivate = 18
-DISPID_SpeechRecoContextEvents = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechBaseStream'
-DISPID_SBSFormat = 1
-DISPID_SBSRead = 2
-DISPID_SBSWrite = 3
-DISPID_SBSSeek = 4
-DISPID_SpeechBaseStream = c_int  # enum
-
-# values for enumeration 'SPPARTOFSPEECH'
-SPPS_NotOverriden = -1
-SPPS_Unknown = 0
-SPPS_Noun = 4096
-SPPS_Verb = 8192
-SPPS_Modifier = 12288
-SPPS_Function = 16384
-SPPS_Interjection = 20480
-SPPS_Noncontent = 24576
-SPPS_LMA = 28672
-SPPS_SuppressWord = 61440
-SPPARTOFSPEECH = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechAudio'
-DISPID_SAStatus = 200
-DISPID_SABufferInfo = 201
-DISPID_SADefaultFormat = 202
-DISPID_SAVolume = 203
-DISPID_SABufferNotifySize = 204
-DISPID_SAEventHandle = 205
-DISPID_SASetState = 206
-DISPID_SpeechAudio = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechMMSysAudio'
-DISPID_SMSADeviceId = 300
-DISPID_SMSALineId = 301
-DISPID_SMSAMMHandle = 302
-DISPID_SpeechMMSysAudio = c_int  # enum
-
-# values for enumeration 'SpeechLoadOption'
-SLOStatic = 0
-SLODynamic = 1
-SpeechLoadOption = c_int  # enum
-
-# values for enumeration 'SPLEXICONTYPE'
-eLEXTYPE_USER = 1
-eLEXTYPE_APP = 2
-eLEXTYPE_VENDORLEXICON = 4
-eLEXTYPE_LETTERTOSOUND = 8
-eLEXTYPE_MORPHOLOGY = 16
-eLEXTYPE_RESERVED4 = 32
-eLEXTYPE_USER_SHORTCUT = 64
-eLEXTYPE_RESERVED6 = 128
-eLEXTYPE_RESERVED7 = 256
-eLEXTYPE_RESERVED8 = 512
-eLEXTYPE_RESERVED9 = 1024
-eLEXTYPE_RESERVED10 = 2048
-eLEXTYPE_PRIVATE1 = 4096
-eLEXTYPE_PRIVATE2 = 8192
-eLEXTYPE_PRIVATE3 = 16384
-eLEXTYPE_PRIVATE4 = 32768
-eLEXTYPE_PRIVATE5 = 65536
-eLEXTYPE_PRIVATE6 = 131072
-eLEXTYPE_PRIVATE7 = 262144
-eLEXTYPE_PRIVATE8 = 524288
-eLEXTYPE_PRIVATE9 = 1048576
-eLEXTYPE_PRIVATE10 = 2097152
-eLEXTYPE_PRIVATE11 = 4194304
-eLEXTYPE_PRIVATE12 = 8388608
-eLEXTYPE_PRIVATE13 = 16777216
-eLEXTYPE_PRIVATE14 = 33554432
-eLEXTYPE_PRIVATE15 = 67108864
-eLEXTYPE_PRIVATE16 = 134217728
-eLEXTYPE_PRIVATE17 = 268435456
-eLEXTYPE_PRIVATE18 = 536870912
-eLEXTYPE_PRIVATE19 = 1073741824
-eLEXTYPE_PRIVATE20 = -2147483648
-SPLEXICONTYPE = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechFileStream'
-DISPID_SFSOpen = 100
-DISPID_SFSClose = 101
-DISPID_SpeechFileStream = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechGrammarRule'
-DISPID_SGRAttributes = 1
-DISPID_SGRInitialState = 2
-DISPID_SGRName = 3
-DISPID_SGRId = 4
-DISPID_SGRClear = 5
-DISPID_SGRAddResource = 6
-DISPID_SGRAddState = 7
-DISPID_SpeechGrammarRule = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechCustomStream'
-DISPID_SCSBaseStream = 100
-DISPID_SpeechCustomStream = c_int  # enum
-
-# values for enumeration 'SpeechRecognizerState'
-SRSInactive = 0
-SRSActive = 1
-SRSActiveAlways = 2
-SRSInactiveWithPurge = 3
-SpeechRecognizerState = c_int  # enum
-
-# values for enumeration 'SpeechFormatType'
-SFTInput = 0
-SFTSREngine = 1
-SpeechFormatType = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechMemoryStream'
-DISPID_SMSSetData = 100
-DISPID_SMSGetData = 101
-DISPID_SpeechMemoryStream = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechAudioStatus'
-DISPID_SASFreeBufferSpace = 1
-DISPID_SASNonBlockingIO = 2
-DISPID_SASState = 3
-DISPID_SASCurrentSeekPosition = 4
-DISPID_SASCurrentDevicePosition = 5
-DISPID_SpeechAudioStatus = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechGrammarRules'
-DISPID_SGRsCount = 1
-DISPID_SGRsDynamic = 2
-DISPID_SGRsAdd = 3
-DISPID_SGRsCommit = 4
-DISPID_SGRsCommitAndSave = 5
-DISPID_SGRsFindRule = 6
-DISPID_SGRsItem = 0
-DISPID_SGRs_NewEnum = -4
-DISPID_SpeechGrammarRules = c_int  # enum
-
-# values for enumeration 'SpeechVisemeFeature'
-SVF_None = 0
-SVF_Stressed = 1
-SVF_Emphasis = 2
-SpeechVisemeFeature = c_int  # enum
-
-# values for enumeration 'SpeechRuleState'
-SGDSInactive = 0
-SGDSActive = 1
-SGDSActiveWithAutoPause = 3
-SGDSActiveUserDelimited = 4
-SpeechRuleState = c_int  # enum
-
-# values for enumeration 'SpeechBookmarkOptions'
-SBONone = 0
-SBOPause = 1
-SpeechBookmarkOptions = c_int  # enum
-
-# values for enumeration 'SpeechRecognitionType'
-SRTStandard = 0
-SRTAutopause = 1
-SRTEmulated = 2
-SRTSMLTimeout = 4
-SRTExtendableParse = 8
-SRTReSent = 16
-SpeechRecognitionType = c_int  # enum
-
-# values for enumeration 'SpeechInterference'
-SINone = 0
-SINoise = 1
-SINoSignal = 2
-SITooLoud = 3
-SITooQuiet = 4
-SITooFast = 5
-SITooSlow = 6
-SpeechInterference = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechAudioBufferInfo'
-DISPID_SABIMinNotification = 1
-DISPID_SABIBufferSize = 2
-DISPID_SABIEventBias = 3
-DISPID_SpeechAudioBufferInfo = c_int  # enum
-
-# values for enumeration 'SpeechVisemeType'
-SVP_0 = 0
-SVP_1 = 1
-SVP_2 = 2
-SVP_3 = 3
-SVP_4 = 4
-SVP_5 = 5
-SVP_6 = 6
-SVP_7 = 7
-SVP_8 = 8
-SVP_9 = 9
-SVP_10 = 10
-SVP_11 = 11
-SVP_12 = 12
-SVP_13 = 13
-SVP_14 = 14
-SVP_15 = 15
-SVP_16 = 16
-SVP_17 = 17
-SVP_18 = 18
-SVP_19 = 19
-SVP_20 = 20
-SVP_21 = 21
-SpeechVisemeType = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechGrammarRuleState'
-DISPID_SGRSRule = 1
-DISPID_SGRSTransitions = 2
-DISPID_SGRSAddWordTransition = 3
-DISPID_SGRSAddRuleTransition = 4
-DISPID_SGRSAddSpecialTransition = 5
-DISPID_SpeechGrammarRuleState = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechWaveFormatEx'
-DISPID_SWFEFormatTag = 1
-DISPID_SWFEChannels = 2
-DISPID_SWFESamplesPerSec = 3
-DISPID_SWFEAvgBytesPerSec = 4
-DISPID_SWFEBlockAlign = 5
-DISPID_SWFEBitsPerSample = 6
-DISPID_SWFEExtraData = 7
-DISPID_SpeechWaveFormatEx = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechGrammarRuleStateTransitions'
-DISPID_SGRSTsCount = 1
-DISPID_SGRSTsItem = 0
-DISPID_SGRSTs_NewEnum = -4
-DISPID_SpeechGrammarRuleStateTransitions = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechGrammarRuleStateTransition'
-DISPID_SGRSTType = 1
-DISPID_SGRSTText = 2
-DISPID_SGRSTRule = 3
-DISPID_SGRSTWeight = 4
-DISPID_SGRSTPropertyName = 5
-DISPID_SGRSTPropertyId = 6
-DISPID_SGRSTPropertyValue = 7
-DISPID_SGRSTNextState = 8
-DISPID_SpeechGrammarRuleStateTransition = c_int  # enum
-
-# values for enumeration '_SPAUDIOSTATE'
-SPAS_CLOSED = 0
-SPAS_STOP = 1
-SPAS_PAUSE = 2
-SPAS_RUN = 3
-_SPAUDIOSTATE = c_int  # enum
-
-# values for enumeration 'SpeechWordPronounceable'
-SWPUnknownWordUnpronounceable = 0
-SWPUnknownWordPronounceable = 1
-SWPKnownWordPronounceable = 2
-SpeechWordPronounceable = c_int  # enum
-
-# values for enumeration 'DISPIDSPTSI'
-DISPIDSPTSI_ActiveOffset = 1
-DISPIDSPTSI_ActiveLength = 2
-DISPIDSPTSI_SelectionOffset = 3
-DISPIDSPTSI_SelectionLength = 4
-DISPIDSPTSI = c_int  # enum
-
-# values for enumeration 'SpeechDiscardType'
-SDTProperty = 1
-SDTReplacement = 2
-SDTRule = 4
-SDTDisplayText = 8
-SDTLexicalForm = 16
-SDTPronunciation = 32
-SDTAudio = 64
-SDTAlternates = 128
-SDTAll = 255
-SpeechDiscardType = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechRecoResult'
-DISPID_SRRRecoContext = 1
-DISPID_SRRTimes = 2
-DISPID_SRRAudioFormat = 3
-DISPID_SRRPhraseInfo = 4
-DISPID_SRRAlternates = 5
-DISPID_SRRAudio = 6
-DISPID_SRRSpeakAudio = 7
-DISPID_SRRSaveToMemory = 8
-DISPID_SRRDiscardResultInfo = 9
-DISPID_SpeechRecoResult = c_int  # enum
-
-# values for enumeration 'SpeechDisplayAttributes'
-SDA_No_Trailing_Space = 0
-SDA_One_Trailing_Space = 2
-SDA_Two_Trailing_Spaces = 4
-SDA_Consume_Leading_Spaces = 8
-SpeechDisplayAttributes = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechXMLRecoResult'
-DISPID_SRRGetXMLResult = 10
-DISPID_SRRGetXMLErrorInfo = 11
-DISPID_SpeechXMLRecoResult = c_int  # enum
-
-# values for enumeration 'SPXMLRESULTOPTIONS'
-SPXRO_SML = 0
-SPXRO_Alternates_SML = 1
-SPXMLRESULTOPTIONS = c_int  # enum
-
-# values for enumeration 'SPRECOSTATE'
-SPRST_INACTIVE = 0
-SPRST_ACTIVE = 1
-SPRST_ACTIVE_ALWAYS = 2
-SPRST_INACTIVE_WITH_PURGE = 3
-SPRST_NUM_STATES = 4
-SPRECOSTATE = c_int  # enum
-
-# values for enumeration 'SPWAVEFORMATTYPE'
-SPWF_INPUT = 0
-SPWF_SRENGINE = 1
-SPWAVEFORMATTYPE = c_int  # enum
-
-# values for enumeration 'SPSEMANTICFORMAT'
-SPSMF_SAPI_PROPERTIES = 0
-SPSMF_SRGS_SEMANTICINTERPRETATION_MS = 1
-SPSMF_SRGS_SAPIPROPERTIES = 2
-SPSMF_UPS = 4
-SPSMF_SRGS_SEMANTICINTERPRETATION_W3C = 8
-SPSEMANTICFORMAT = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechRecoResult2'
-DISPID_SRRSetTextFeedback = 12
-DISPID_SpeechRecoResult2 = c_int  # enum
-
-# values for enumeration 'SPFILEMODE'
-SPFM_OPEN_READONLY = 0
-SPFM_OPEN_READWRITE = 1
-SPFM_CREATE = 2
-SPFM_CREATE_ALWAYS = 3
-SPFM_NUM_MODES = 4
-SPFILEMODE = c_int  # enum
-
-# values for enumeration 'SPWORDTYPE'
-eWORDTYPE_ADDED = 1
-eWORDTYPE_DELETED = 2
-SPWORDTYPE = c_int  # enum
-
-# values for enumeration 'SPGRAMMARWORDTYPE'
-SPWT_DISPLAY = 0
-SPWT_LEXICAL = 1
-SPWT_PRONUNCIATION = 2
-SPWT_LEXICAL_NO_SPECIAL_CHARS = 3
-SPGRAMMARWORDTYPE = c_int  # enum
-
-# values for enumeration 'SPLOADOPTIONS'
-SPLO_STATIC = 0
-SPLO_DYNAMIC = 1
-SPLOADOPTIONS = c_int  # enum
+# values for enumeration 'DISPID_SpeechObjectTokens'
+DISPID_SOTsCount = 1
+DISPID_SOTsItem = 0
+DISPID_SOTs_NewEnum = -4
+DISPID_SpeechObjectTokens = c_int  # enum
 
 # values for enumeration 'SPRULESTATE'
 SPRS_INACTIVE = 0
@@ -893,266 +1149,790 @@ SPRS_ACTIVE_WITH_AUTO_PAUSE = 3
 SPRS_ACTIVE_USER_DELIMITED = 4
 SPRULESTATE = c_int  # enum
 
-# values for enumeration 'SPWORDPRONOUNCEABLE'
-SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE = 0
-SPWP_UNKNOWN_WORD_PRONOUNCEABLE = 1
-SPWP_KNOWN_WORD_PRONOUNCEABLE = 2
-SPWORDPRONOUNCEABLE = c_int  # enum
-
-# values for enumeration 'SPGRAMMARSTATE'
-SPGS_DISABLED = 0
-SPGS_ENABLED = 1
-SPGS_EXCLUSIVE = 3
-SPGRAMMARSTATE = c_int  # enum
-
-# values for enumeration 'SPSHORTCUTTYPE'
-SPSHT_NotOverriden = -1
-SPSHT_Unknown = 0
-SPSHT_EMAIL = 4096
-SPSHT_OTHER = 8192
-SPPS_RESERVED1 = 12288
-SPPS_RESERVED2 = 16384
-SPPS_RESERVED3 = 20480
-SPPS_RESERVED4 = 61440
-SPSHORTCUTTYPE = c_int  # enum
-
-# values for enumeration 'SpeechEngineConfidence'
-SECLowConfidence = -1
-SECNormalConfidence = 0
-SECHighConfidence = 1
-SpeechEngineConfidence = c_int  # enum
-
-# values for enumeration 'SPVPRIORITY'
-SPVPRI_NORMAL = 0
-SPVPRI_ALERT = 1
-SPVPRI_OVER = 2
-SPVPRIORITY = c_int  # enum
-
-# values for enumeration 'SPEVENTENUM'
-SPEI_UNDEFINED = 0
-SPEI_START_INPUT_STREAM = 1
-SPEI_END_INPUT_STREAM = 2
-SPEI_VOICE_CHANGE = 3
-SPEI_TTS_BOOKMARK = 4
-SPEI_WORD_BOUNDARY = 5
-SPEI_PHONEME = 6
-SPEI_SENTENCE_BOUNDARY = 7
-SPEI_VISEME = 8
-SPEI_TTS_AUDIO_LEVEL = 9
-SPEI_TTS_PRIVATE = 15
-SPEI_MIN_TTS = 1
-SPEI_MAX_TTS = 15
-SPEI_END_SR_STREAM = 34
-SPEI_SOUND_START = 35
-SPEI_SOUND_END = 36
-SPEI_PHRASE_START = 37
-SPEI_RECOGNITION = 38
-SPEI_HYPOTHESIS = 39
-SPEI_SR_BOOKMARK = 40
-SPEI_PROPERTY_NUM_CHANGE = 41
-SPEI_PROPERTY_STRING_CHANGE = 42
-SPEI_FALSE_RECOGNITION = 43
-SPEI_INTERFERENCE = 44
-SPEI_REQUEST_UI = 45
-SPEI_RECO_STATE_CHANGE = 46
-SPEI_ADAPTATION = 47
-SPEI_START_SR_STREAM = 48
-SPEI_RECO_OTHER_CONTEXT = 49
-SPEI_SR_AUDIO_LEVEL = 50
-SPEI_SR_RETAINEDAUDIO = 51
-SPEI_SR_PRIVATE = 52
-SPEI_ACTIVE_CATEGORY_CHANGED = 53
-SPEI_RESERVED5 = 54
-SPEI_RESERVED6 = 55
-SPEI_MIN_SR = 34
-SPEI_MAX_SR = 55
-SPEI_RESERVED1 = 30
-SPEI_RESERVED2 = 33
-SPEI_RESERVED3 = 63
-SPEVENTENUM = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechRecoResultTimes'
-DISPID_SRRTStreamTime = 1
-DISPID_SRRTLength = 2
-DISPID_SRRTTickCount = 3
-DISPID_SRRTOffsetFromStart = 4
-DISPID_SpeechRecoResultTimes = c_int  # enum
-
-# values for enumeration 'SpeechRecoEvents'
-SREStreamEnd = 1
-SRESoundStart = 2
-SRESoundEnd = 4
-SREPhraseStart = 8
-SRERecognition = 16
-SREHypothesis = 32
-SREBookmark = 64
-SREPropertyNumChange = 128
-SREPropertyStringChange = 256
-SREFalseRecognition = 512
-SREInterference = 1024
-SRERequestUI = 2048
-SREStateChange = 4096
-SREAdaptation = 8192
-SREStreamStart = 16384
-SRERecoOtherContext = 32768
-SREAudioLevel = 65536
-SREPrivate = 262144
-SREAllEvents = 393215
-SpeechRecoEvents = c_int  # enum
-
-# values for enumeration 'SpeechRecoContextState'
-SRCS_Disabled = 0
-SRCS_Enabled = 1
-SpeechRecoContextState = c_int  # enum
-
-# values for enumeration 'SpeechRetainedAudioOptions'
-SRAONone = 0
-SRAORetainAudio = 1
-SpeechRetainedAudioOptions = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseBuilder'
-DISPID_SPPBRestorePhraseFromMemory = 1
-DISPID_SpeechPhraseBuilder = c_int  # enum
-
-# values for enumeration 'SPVISEMES'
-SP_VISEME_0 = 0
-SP_VISEME_1 = 1
-SP_VISEME_2 = 2
-SP_VISEME_3 = 3
-SP_VISEME_4 = 4
-SP_VISEME_5 = 5
-SP_VISEME_6 = 6
-SP_VISEME_7 = 7
-SP_VISEME_8 = 8
-SP_VISEME_9 = 9
-SP_VISEME_10 = 10
-SP_VISEME_11 = 11
-SP_VISEME_12 = 12
-SP_VISEME_13 = 13
-SP_VISEME_14 = 14
-SP_VISEME_15 = 15
-SP_VISEME_16 = 16
-SP_VISEME_17 = 17
-SP_VISEME_18 = 18
-SP_VISEME_19 = 19
-SP_VISEME_20 = 20
-SP_VISEME_21 = 21
-SPVISEMES = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseAlternate'
-DISPID_SPARecoResult = 1
-DISPID_SPAStartElementInResult = 2
-DISPID_SPANumberOfElementsInResult = 3
-DISPID_SPAPhraseInfo = 4
-DISPID_SPACommit = 5
-DISPID_SpeechPhraseAlternate = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseAlternates'
-DISPID_SPAsCount = 1
-DISPID_SPAsItem = 0
-DISPID_SPAs_NewEnum = -4
-DISPID_SpeechPhraseAlternates = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseInfo'
-DISPID_SPILanguageId = 1
-DISPID_SPIGrammarId = 2
-DISPID_SPIStartTime = 3
-DISPID_SPIAudioStreamPosition = 4
-DISPID_SPIAudioSizeBytes = 5
-DISPID_SPIRetainedSizeBytes = 6
-DISPID_SPIAudioSizeTime = 7
-DISPID_SPIRule = 8
-DISPID_SPIProperties = 9
-DISPID_SPIElements = 10
-DISPID_SPIReplacements = 11
-DISPID_SPIEngineId = 12
-DISPID_SPIEnginePrivateData = 13
-DISPID_SPISaveToMemory = 14
-DISPID_SPIGetText = 15
-DISPID_SPIGetDisplayAttributes = 16
-DISPID_SpeechPhraseInfo = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseElement'
-DISPID_SPEAudioTimeOffset = 1
-DISPID_SPEAudioSizeTime = 2
-DISPID_SPEAudioStreamOffset = 3
-DISPID_SPEAudioSizeBytes = 4
-DISPID_SPERetainedStreamOffset = 5
-DISPID_SPERetainedSizeBytes = 6
-DISPID_SPEDisplayText = 7
-DISPID_SPELexicalForm = 8
-DISPID_SPEPronunciation = 9
-DISPID_SPEDisplayAttributes = 10
-DISPID_SPERequiredConfidence = 11
-DISPID_SPEActualConfidence = 12
-DISPID_SPEEngineConfidence = 13
-DISPID_SpeechPhraseElement = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseElements'
-DISPID_SPEsCount = 1
-DISPID_SPEsItem = 0
-DISPID_SPEs_NewEnum = -4
-DISPID_SpeechPhraseElements = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseReplacement'
-DISPID_SPRDisplayAttributes = 1
-DISPID_SPRText = 2
-DISPID_SPRFirstElement = 3
-DISPID_SPRNumberOfElements = 4
-DISPID_SpeechPhraseReplacement = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseReplacements'
-DISPID_SPRsCount = 1
-DISPID_SPRsItem = 0
-DISPID_SPRs_NewEnum = -4
-DISPID_SpeechPhraseReplacements = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseProperty'
-DISPID_SPPName = 1
-DISPID_SPPId = 2
-DISPID_SPPValue = 3
-DISPID_SPPFirstElement = 4
-DISPID_SPPNumberOfElements = 5
-DISPID_SPPEngineConfidence = 6
-DISPID_SPPConfidence = 7
-DISPID_SPPParent = 8
-DISPID_SPPChildren = 9
-DISPID_SpeechPhraseProperty = c_int  # enum
-
-# values for enumeration 'SPINTERFERENCE'
-SPINTERFERENCE_NONE = 0
-SPINTERFERENCE_NOISE = 1
-SPINTERFERENCE_NOSIGNAL = 2
-SPINTERFERENCE_TOOLOUD = 3
-SPINTERFERENCE_TOOQUIET = 4
-SPINTERFERENCE_TOOFAST = 5
-SPINTERFERENCE_TOOSLOW = 6
-SPINTERFERENCE_LATENCY_WARNING = 7
-SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN = 8
-SPINTERFERENCE_LATENCY_TRUNCATE_END = 9
-SPINTERFERENCE = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseProperties'
-DISPID_SPPsCount = 1
-DISPID_SPPsItem = 0
-DISPID_SPPs_NewEnum = -4
-DISPID_SpeechPhraseProperties = c_int  # enum
-
-# values for enumeration 'DISPID_SpeechPhraseRule'
-DISPID_SPRuleName = 1
-DISPID_SPRuleId = 2
-DISPID_SPRuleFirstElement = 3
-DISPID_SPRuleNumberOfElements = 4
-DISPID_SPRuleParent = 5
-DISPID_SPRuleChildren = 6
-DISPID_SPRuleConfidence = 7
-DISPID_SPRuleEngineConfidence = 8
-DISPID_SpeechPhraseRule = c_int  # enum
-
 # aliases for enums
 SPAUDIOSTATE = _SPAUDIOSTATE
 SPSTREAMFORMATTYPE = SPWAVEFORMATTYPE
 
+
+SpeechTokenValueCLSID = 'CLSID'  # Constant BSTR
+
+
+class SpVoice(CoClass):
+    """SpVoice Class"""
+    _reg_clsid_ = GUID('{96749377-3391-11D2-9EE3-00C04F797396}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpeechVoice(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechVoice Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{269316D8-57BD-11D2-9EEE-00C04F797396}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Status(self) -> 'ISpeechVoiceStatus': ...
+        Status = hints.normal_property(_get_Status)
+        def _get_Voice(self) -> 'ISpeechObjectToken': ...
+        def _setref_Voice(self, Voice: hints.Incomplete) -> hints.Hresult: ...
+        Voice = hints.normal_property(_get_Voice, _setref_Voice)
+        def _get_AudioOutput(self) -> 'ISpeechObjectToken': ...
+        def _setref_AudioOutput(self, AudioOutput: hints.Incomplete) -> hints.Hresult: ...
+        AudioOutput = hints.normal_property(_get_AudioOutput, _setref_AudioOutput)
+        def _get_AudioOutputStream(self) -> 'ISpeechBaseStream': ...
+        def _setref_AudioOutputStream(self, AudioOutputStream: hints.Incomplete) -> hints.Hresult: ...
+        AudioOutputStream = hints.normal_property(_get_AudioOutputStream, _setref_AudioOutputStream)
+        def _get_Rate(self) -> hints.Incomplete: ...
+        def _set_Rate(self, Rate: hints.Incomplete) -> hints.Hresult: ...
+        Rate = hints.normal_property(_get_Rate, _set_Rate)
+        def _get_Volume(self) -> hints.Incomplete: ...
+        def _set_Volume(self, Volume: hints.Incomplete) -> hints.Hresult: ...
+        Volume = hints.normal_property(_get_Volume, _set_Volume)
+        def _get_AllowAudioOutputFormatChangesOnNextSet(self) -> hints.Incomplete: ...
+        def _set_AllowAudioOutputFormatChangesOnNextSet(self, Allow: hints.Incomplete) -> hints.Hresult: ...
+        AllowAudioOutputFormatChangesOnNextSet = hints.normal_property(_get_AllowAudioOutputFormatChangesOnNextSet, _set_AllowAudioOutputFormatChangesOnNextSet)
+        def _get_EventInterests(self) -> hints.Incomplete: ...
+        def _set_EventInterests(self, EventInterestFlags: hints.Incomplete) -> hints.Hresult: ...
+        EventInterests = hints.normal_property(_get_EventInterests, _set_EventInterests)
+        def _get_Priority(self) -> hints.Incomplete: ...
+        def _set_Priority(self, Priority: hints.Incomplete) -> hints.Hresult: ...
+        Priority = hints.normal_property(_get_Priority, _set_Priority)
+        def _get_AlertBoundary(self) -> hints.Incomplete: ...
+        def _set_AlertBoundary(self, Boundary: hints.Incomplete) -> hints.Hresult: ...
+        AlertBoundary = hints.normal_property(_get_AlertBoundary, _set_AlertBoundary)
+        def _get_SynchronousSpeakTimeout(self) -> hints.Incomplete: ...
+        def _set_SynchronousSpeakTimeout(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
+        SynchronousSpeakTimeout = hints.normal_property(_get_SynchronousSpeakTimeout, _set_SynchronousSpeakTimeout)
+        def Speak(self, Text: hints.Incomplete, Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def SpeakStream(self, Stream: hints.Incomplete, Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def Pause(self) -> hints.Hresult: ...
+        def Resume(self) -> hints.Hresult: ...
+        def Skip(self, Type: hints.Incomplete, NumItems: hints.Incomplete) -> hints.Incomplete: ...
+        def GetVoices(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
+        def GetAudioOutputs(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
+        def WaitUntilDone(self, msTimeout: hints.Incomplete) -> hints.Incomplete: ...
+        def SpeakCompleteEvent(self) -> hints.Incomplete: ...
+        def IsUISupported(self, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def DisplayUI(self, hWndParent: hints.Incomplete, Title: hints.Incomplete, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ...) -> hints.Hresult: ...
+
+
+class ISpNotifySource(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpNotifySource Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{5EFF4AEF-8487-11D2-961C-00C04F8EE628}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetNotifySink(self, pNotifySink: hints.Incomplete) -> hints.Hresult: ...
+        def SetNotifyWindowMessage(self, hWnd: hints.Incomplete, Msg: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def SetNotifyCallbackFunction(self, pfnCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def SetNotifyCallbackInterface(self, pSpCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def SetNotifyWin32Event(self) -> hints.Hresult: ...
+        def WaitForNotifyEvent(self, dwMilliseconds: hints.Incomplete) -> hints.Hresult: ...
+        def GetNotifyEventHandle(self) -> hints.Hresult: ...
+
+
+class ISpEventSource(ISpNotifySource):
+    """ISpEventSource Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{BE7A9CCE-5F9E-11D2-960F-00C04F8EE628}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetInterest(self, ullEventInterest: hints.Incomplete, ullQueuedInterest: hints.Incomplete) -> hints.Hresult: ...
+        def GetEvents(self, ulCount: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def GetInfo(self) -> hints.Incomplete: ...
+
+
+class ISpVoice(ISpEventSource):
+    """ISpVoice Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{6C44DF74-72B9-4992-A1EC-EF996E0422D4}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetOutput(self, pUnkOutput: hints.Incomplete, fAllowFormatChanges: hints.Incomplete) -> hints.Hresult: ...
+        def GetOutputObjectToken(self) -> 'ISpObjectToken': ...
+        def GetOutputStream(self) -> 'ISpStreamFormat': ...
+        def Pause(self) -> hints.Hresult: ...
+        def Resume(self) -> hints.Hresult: ...
+        def SetVoice(self, pToken: hints.Incomplete) -> hints.Hresult: ...
+        def GetVoice(self) -> 'ISpObjectToken': ...
+        def Speak(self, pwcs: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
+        def SpeakStream(self, pStream: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
+        def GetStatus(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def Skip(self, pItemType: hints.Incomplete, lNumItems: hints.Incomplete) -> hints.Incomplete: ...
+        def SetPriority(self, ePriority: hints.Incomplete) -> hints.Hresult: ...
+        def GetPriority(self) -> hints.Incomplete: ...
+        def SetAlertBoundary(self, eBoundary: hints.Incomplete) -> hints.Hresult: ...
+        def GetAlertBoundary(self) -> hints.Incomplete: ...
+        def SetRate(self, RateAdjust: hints.Incomplete) -> hints.Hresult: ...
+        def GetRate(self) -> hints.Incomplete: ...
+        def SetVolume(self, usVolume: hints.Incomplete) -> hints.Hresult: ...
+        def GetVolume(self) -> hints.Incomplete: ...
+        def WaitUntilDone(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
+        def SetSyncSpeakTimeout(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
+        def GetSyncSpeakTimeout(self) -> hints.Incomplete: ...
+        def SpeakCompleteEvent(self) -> hints.Hresult: ...
+        def IsUISupported(self, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete) -> hints.Incomplete: ...
+        def DisplayUI(self, hWndParent: hints.Incomplete, pszTitle: hints.Incomplete, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete) -> hints.Hresult: ...
+
+
+class ISpPhoneticAlphabetSelection(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpPhoneticAlphabetSelection Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{B2745EFD-42CE-48CA-81F1-A96E02538A90}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def IsAlphabetUPS(self) -> hints.Incomplete: ...
+        def SetAlphabetToUPS(self, fForceUPS: hints.Incomplete) -> hints.Hresult: ...
+
+
+class _ISpeechVoiceEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    _case_insensitive_ = True
+    _iid_ = GUID('{A372ACD1-3BEF-4BBD-8FFB-CB3E2B416AF8}')
+    _idlflags_ = []
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        def StartStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def EndStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def VoiceChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, VoiceObjectToken: hints.Incomplete) -> hints.Incomplete: ...
+        def Bookmark(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Bookmark: hints.Incomplete, BookmarkId: hints.Incomplete) -> hints.Incomplete: ...
+        def Word(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, CharacterPosition: hints.Incomplete, Length: hints.Incomplete) -> hints.Incomplete: ...
+        def Sentence(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, CharacterPosition: hints.Incomplete, Length: hints.Incomplete) -> hints.Incomplete: ...
+        def Phoneme(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Duration: hints.Incomplete, NextPhoneId: hints.Incomplete, Feature: hints.Incomplete, CurrentPhoneId: hints.Incomplete) -> hints.Incomplete: ...
+        def Viseme(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Duration: hints.Incomplete, NextVisemeId: hints.Incomplete, Feature: hints.Incomplete, CurrentVisemeId: hints.Incomplete) -> hints.Incomplete: ...
+        def AudioLevel(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, AudioLevel: hints.Incomplete) -> hints.Incomplete: ...
+        def EnginePrivate(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, EngineData: hints.Incomplete) -> hints.Incomplete: ...
+
+
+SpVoice._com_interfaces_ = [ISpeechVoice, ISpVoice, ISpPhoneticAlphabetSelection]
+SpVoice._outgoing_interfaces_ = [_ISpeechVoiceEvents]
+
+
+class __MIDL___MIDL_itf_sapi_0000_0020_0002(Structure):
+    pass
+
+
+__MIDL___MIDL_itf_sapi_0000_0020_0002._fields_ = [
+    ('bType', c_ubyte),
+    ('bReserved', c_ubyte),
+    ('usArrayIndex', c_ushort),
+]
+
+assert sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0002) == 4, sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0002)
+assert alignment(__MIDL___MIDL_itf_sapi_0000_0020_0002) == 2, alignment(__MIDL___MIDL_itf_sapi_0000_0020_0002)
+SpeechCategoryRecognizers = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Recognizers'  # Constant BSTR
+
+
+class SPVOICESTATUS(Structure):
+    pass
+
+
+SPVOICESTATUS._fields_ = [
+    ('ulCurrentStream', c_ulong),
+    ('ulLastStreamQueued', c_ulong),
+    ('hrLastResult', HRESULT),
+    ('dwRunningState', c_ulong),
+    ('ulInputWordPos', c_ulong),
+    ('ulInputWordLen', c_ulong),
+    ('ulInputSentPos', c_ulong),
+    ('ulInputSentLen', c_ulong),
+    ('lBookmarkId', c_int),
+    ('PhonemeId', c_ushort),
+    ('VisemeId', SPVISEMES),
+    ('dwReserved1', c_ulong),
+    ('dwReserved2', c_ulong),
+]
+
+assert sizeof(SPVOICESTATUS) == 52, sizeof(SPVOICESTATUS)
+assert alignment(SPVOICESTATUS) == 4, alignment(SPVOICESTATUS)
+
+
+class ISpGrammarBuilder(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpGrammarBuilder Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{8137828F-591A-4A42-BE58-49EA7EBAAC68}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def ResetGrammar(self, NewLanguage: hints.Incomplete) -> hints.Hresult: ...
+        def GetRule(self, pszRuleName: hints.Incomplete, dwRuleId: hints.Incomplete, dwAttributes: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Incomplete: ...
+        def ClearRule(self, hState: hints.Incomplete) -> hints.Hresult: ...
+        def CreateNewState(self, hState: hints.Incomplete) -> hints.Incomplete: ...
+        def AddWordTransition(self, hFromState: hints.Incomplete, hToState: hints.Incomplete, psz: hints.Incomplete, pszSeparators: hints.Incomplete, eWordType: hints.Incomplete, Weight: hints.Incomplete, pPropInfo: hints.Incomplete) -> hints.Hresult: ...
+        def AddRuleTransition(self, hFromState: hints.Incomplete, hToState: hints.Incomplete, hRule: hints.Incomplete, Weight: hints.Incomplete, pPropInfo: hints.Incomplete) -> hints.Hresult: ...
+        def AddResource(self, hRuleState: hints.Incomplete, pszResourceName: hints.Incomplete, pszResourceValue: hints.Incomplete) -> hints.Hresult: ...
+        def Commit(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
+
+
+class tagSPPROPERTYINFO(Structure):
+    pass
+
+
+SPPROPERTYINFO = tagSPPROPERTYINFO
+
+ISpGrammarBuilder._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'ResetGrammar',
+        (['in'], c_ushort, 'NewLanguage')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRule',
+        (['in'], WSTRING, 'pszRuleName'),
+        (['in'], c_ulong, 'dwRuleId'),
+        (['in'], c_ulong, 'dwAttributes'),
+        (['in'], c_int, 'fCreateIfNotExist'),
+        (['out'], POINTER(c_void_p), 'phInitialState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'ClearRule',
+        (['in'], c_void_p, 'hState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'CreateNewState',
+        (['in'], c_void_p, 'hState'),
+        (['out'], POINTER(c_void_p), 'phState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AddWordTransition',
+        (['in'], c_void_p, 'hFromState'),
+        (['in'], c_void_p, 'hToState'),
+        (['in'], WSTRING, 'psz'),
+        (['in'], WSTRING, 'pszSeparators'),
+        (['in'], SPGRAMMARWORDTYPE, 'eWordType'),
+        (['in'], c_float, 'Weight'),
+        (['in'], POINTER(SPPROPERTYINFO), 'pPropInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AddRuleTransition',
+        (['in'], c_void_p, 'hFromState'),
+        (['in'], c_void_p, 'hToState'),
+        (['in'], c_void_p, 'hRule'),
+        (['in'], c_float, 'Weight'),
+        (['in'], POINTER(SPPROPERTYINFO), 'pPropInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AddResource',
+        (['in'], c_void_p, 'hRuleState'),
+        (['in'], WSTRING, 'pszResourceName'),
+        (['in'], WSTRING, 'pszResourceValue')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Commit',
+        (['in'], c_ulong, 'dwReserved')
+    ),
+]
+
+################################################################
+# code template for ISpGrammarBuilder implementation
+# class ISpGrammarBuilder_Impl(object):
+#     def ResetGrammar(self, NewLanguage):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetRule(self, pszRuleName, dwRuleId, dwAttributes, fCreateIfNotExist):
+#         '-no docstring-'
+#         #return phInitialState
+#
+#     def ClearRule(self, hState):
+#         '-no docstring-'
+#         #return 
+#
+#     def CreateNewState(self, hState):
+#         '-no docstring-'
+#         #return phState
+#
+#     def AddWordTransition(self, hFromState, hToState, psz, pszSeparators, eWordType, Weight, pPropInfo):
+#         '-no docstring-'
+#         #return 
+#
+#     def AddRuleTransition(self, hFromState, hToState, hRule, Weight, pPropInfo):
+#         '-no docstring-'
+#         #return 
+#
+#     def AddResource(self, hRuleState, pszResourceName, pszResourceValue):
+#         '-no docstring-'
+#         #return 
+#
+#     def Commit(self, dwReserved):
+#         '-no docstring-'
+#         #return 
+#
+
+
+class SPPHRASE(Structure):
+    pass
+
+
+class SPPHRASERULE(Structure):
+    pass
+
+
+SPPHRASERULE._fields_ = [
+    ('pszName', WSTRING),
+    ('ulId', c_ulong),
+    ('ulFirstElement', c_ulong),
+    ('ulCountOfElements', c_ulong),
+    ('pNextSibling', POINTER(SPPHRASERULE)),
+    ('pFirstChild', POINTER(SPPHRASERULE)),
+    ('SREngineConfidence', c_float),
+    ('Confidence', c_char),
+]
+
+assert sizeof(SPPHRASERULE) == 48, sizeof(SPPHRASERULE)
+assert alignment(SPPHRASERULE) == 8, alignment(SPPHRASERULE)
+
+
+class SPPHRASEPROPERTY(Structure):
+    pass
+
+
+class SPPHRASEELEMENT(Structure):
+    pass
+
+
+class SPPHRASEREPLACEMENT(Structure):
+    pass
+
+
+class SPSEMANTICERRORINFO(Structure):
+    pass
+
+
+SPPHRASE._fields_ = [
+    ('cbSize', c_ulong),
+    ('LangId', c_ushort),
+    ('wHomophoneGroupId', c_ushort),
+    ('ullGrammarID', c_ulonglong),
+    ('ftStartTime', c_ulonglong),
+    ('ullAudioStreamPosition', c_ulonglong),
+    ('ulAudioSizeBytes', c_ulong),
+    ('ulRetainedSizeBytes', c_ulong),
+    ('ulAudioSizeTime', c_ulong),
+    ('Rule', SPPHRASERULE),
+    ('pProperties', POINTER(SPPHRASEPROPERTY)),
+    ('pElements', POINTER(SPPHRASEELEMENT)),
+    ('cReplacements', c_ulong),
+    ('pReplacements', POINTER(SPPHRASEREPLACEMENT)),
+    ('SREngineID', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+    ('ulSREnginePrivateDataSize', c_ulong),
+    ('pSREnginePrivateData', POINTER(c_ubyte)),
+    ('pSML', WSTRING),
+    ('pSemanticErrorInfo', POINTER(SPSEMANTICERRORINFO)),
+    ('SemanticTagFormat', SPSEMANTICFORMAT),
+]
+
+assert sizeof(SPPHRASE) == 184, sizeof(SPPHRASE)
+assert alignment(SPPHRASE) == 8, alignment(SPPHRASE)
+
+
+class ISpPhrase(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpPhrase Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{1A5C0354-B621-4B5A-8791-D306ED379E53}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetPhrase(self) -> hints.Incomplete: ...
+        def GetSerializedPhrase(self) -> hints.Incomplete: ...
+        def GetText(self, ulStart: hints.Incomplete, ulCount: hints.Incomplete, fUseTextReplacements: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def Discard(self, dwValueTypes: hints.Incomplete) -> hints.Hresult: ...
+
+
+class SPSERIALIZEDPHRASE(Structure):
+    pass
+
+
+ISpPhrase._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetPhrase',
+        (['out'], POINTER(POINTER(SPPHRASE)), 'ppCoMemPhrase')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetSerializedPhrase',
+        (['out'], POINTER(POINTER(SPSERIALIZEDPHRASE)), 'ppCoMemPhrase')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetText',
+        (['in'], c_ulong, 'ulStart'),
+        (['in'], c_ulong, 'ulCount'),
+        (['in'], c_int, 'fUseTextReplacements'),
+        (['out'], POINTER(WSTRING), 'ppszCoMemText'),
+        (['out', 'optional'], POINTER(c_ubyte), 'pbDisplayAttributes')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Discard',
+        (['in'], c_ulong, 'dwValueTypes')
+    ),
+]
+
+################################################################
+# code template for ISpPhrase implementation
+# class ISpPhrase_Impl(object):
+#     def GetPhrase(self):
+#         '-no docstring-'
+#         #return ppCoMemPhrase
+#
+#     def GetSerializedPhrase(self):
+#         '-no docstring-'
+#         #return ppCoMemPhrase
+#
+#     def GetText(self, ulStart, ulCount, fUseTextReplacements):
+#         '-no docstring-'
+#         #return ppszCoMemText, pbDisplayAttributes
+#
+#     def Discard(self, dwValueTypes):
+#         '-no docstring-'
+#         #return 
+#
+
+
+class _RemotableHandle(Structure):
+    pass
+
+
+class __MIDL_IWinTypes_0009(Union):
+    pass
+
+
+__MIDL_IWinTypes_0009._fields_ = [
+    ('hInproc', c_int),
+    ('hRemote', c_int),
+]
+
+assert sizeof(__MIDL_IWinTypes_0009) == 4, sizeof(__MIDL_IWinTypes_0009)
+assert alignment(__MIDL_IWinTypes_0009) == 4, alignment(__MIDL_IWinTypes_0009)
+
+_RemotableHandle._fields_ = [
+    ('fContext', c_int),
+    ('u', __MIDL_IWinTypes_0009),
+]
+
+assert sizeof(_RemotableHandle) == 8, sizeof(_RemotableHandle)
+assert alignment(_RemotableHandle) == 4, alignment(_RemotableHandle)
+
+
+class tagSTATSTG(Structure):
+    pass
+
+
+tagSTATSTG._fields_ = [
+    ('pwcsName', WSTRING),
+    ('Type', c_ulong),
+    ('cbSize', _ULARGE_INTEGER),
+    ('mtime', _FILETIME),
+    ('ctime', _FILETIME),
+    ('atime', _FILETIME),
+    ('grfMode', c_ulong),
+    ('grfLocksSupported', c_ulong),
+    ('clsid', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+    ('grfStateBits', c_ulong),
+    ('reserved', c_ulong),
+]
+
+assert sizeof(tagSTATSTG) == 80, sizeof(tagSTATSTG)
+assert alignment(tagSTATSTG) == 8, alignment(tagSTATSTG)
+SpeechCategoryAudioOut = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AudioOutput'  # Constant BSTR
+
+
+class ISpRecoResult(ISpPhrase):
+    """ISpRecoResult Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{20B053BE-E235-43CD-9A2A-8D17A48B7842}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetResultTimes(self) -> hints.Incomplete: ...
+        def GetAlternates(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete, ulRequestCount: hints.Incomplete) -> hints.Tuple['ISpPhraseAlt', hints.Incomplete]: ...
+        def GetAudio(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete) -> 'ISpStreamFormat': ...
+        def SpeakAudio(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
+        def Serialize(self) -> hints.Incomplete: ...
+        def ScaleAudio(self, pAudioFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
+        def GetRecoContext(self) -> 'ISpRecoContext': ...
+
+
+class SPRECORESULTTIMES(Structure):
+    pass
+
+
+class ISpPhraseAlt(ISpPhrase):
+    """ISpPhraseAlt Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{8FCEBC98-4E49-4067-9C6C-D86A0E092E3D}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetAltInfo(self) -> hints.Tuple['ISpPhrase', hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def Commit(self) -> hints.Hresult: ...
+
+
+class IStream(ISequentialStream):
+    _case_insensitive_ = True
+    _iid_ = GUID('{0000000C-0000-0000-C000-000000000046}')
+    _idlflags_ = []
+
+    if TYPE_CHECKING:  # commembers
+        def RemoteSeek(self, dlibMove: hints.Incomplete, dwOrigin: hints.Incomplete) -> hints.Incomplete: ...
+        def SetSize(self, libNewSize: hints.Incomplete) -> hints.Hresult: ...
+        def RemoteCopyTo(self, pstm: hints.Incomplete, cb: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def Commit(self, grfCommitFlags: hints.Incomplete) -> hints.Hresult: ...
+        def Revert(self) -> hints.Hresult: ...
+        def LockRegion(self, libOffset: hints.Incomplete, cb: hints.Incomplete, dwLockType: hints.Incomplete) -> hints.Hresult: ...
+        def UnlockRegion(self, libOffset: hints.Incomplete, cb: hints.Incomplete, dwLockType: hints.Incomplete) -> hints.Hresult: ...
+        def Stat(self, grfStatFlag: hints.Incomplete) -> hints.Incomplete: ...
+        def Clone(self) -> 'IStream': ...
+
+
+class ISpStreamFormat(IStream):
+    """ISpStreamFormat Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{BED530BE-2606-4F4D-A1C0-54C5CDA5566F}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetFormat(self, pguidFormatId: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class SPSERIALIZEDRESULT(Structure):
+    pass
+
+
+class WAVEFORMATEX(Structure):
+    pass
+
+
+class ISpRecoContext(ISpEventSource):
+    """ISpRecoContext Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{F740A62F-7C15-489E-8234-940A33D9272D}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetRecognizer(self) -> 'ISpRecognizer': ...
+        def CreateGrammar(self, ullGrammarID: hints.Incomplete) -> 'ISpRecoGrammar': ...
+        def GetStatus(self) -> hints.Incomplete: ...
+        def GetMaxAlternates(self, pcAlternates: hints.Incomplete) -> hints.Hresult: ...
+        def SetMaxAlternates(self, cAlternates: hints.Incomplete) -> hints.Hresult: ...
+        def SetAudioOptions(self, Options: hints.Incomplete, pAudioFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
+        def GetAudioOptions(self, pOptions: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def DeserializeResult(self, pSerializedResult: hints.Incomplete) -> 'ISpRecoResult': ...
+        def Bookmark(self, Options: hints.Incomplete, ullStreamPosition: hints.Incomplete, lparamEvent: hints.Incomplete) -> hints.Hresult: ...
+        def SetAdaptationData(self, pAdaptationData: hints.Incomplete, cch: hints.Incomplete) -> hints.Hresult: ...
+        def Pause(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
+        def Resume(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
+        def SetVoice(self, pVoice: hints.Incomplete, fAllowFormatChanges: hints.Incomplete) -> hints.Hresult: ...
+        def GetVoice(self) -> 'ISpVoice': ...
+        def SetVoicePurgeEvent(self, ullEventInterest: hints.Incomplete) -> hints.Hresult: ...
+        def GetVoicePurgeEvent(self) -> hints.Incomplete: ...
+        def SetContextState(self, eContextState: hints.Incomplete) -> hints.Hresult: ...
+        def GetContextState(self) -> hints.Incomplete: ...
+
+
+ISpRecoResult._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetResultTimes',
+        (['out'], POINTER(SPRECORESULTTIMES), 'pTimes')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetAlternates',
+        (['in'], c_ulong, 'ulStartElement'),
+        (['in'], c_ulong, 'cElements'),
+        (['in'], c_ulong, 'ulRequestCount'),
+        (['out'], POINTER(POINTER(ISpPhraseAlt)), 'ppPhrases'),
+        (['out'], POINTER(c_ulong), 'pcPhrasesReturned')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetAudio',
+        (['in'], c_ulong, 'ulStartElement'),
+        (['in'], c_ulong, 'cElements'),
+        (['out'], POINTER(POINTER(ISpStreamFormat)), 'ppStream')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SpeakAudio',
+        (['in'], c_ulong, 'ulStartElement'),
+        (['in'], c_ulong, 'cElements'),
+        (['in'], c_ulong, 'dwFlags'),
+        (['out'], POINTER(c_ulong), 'pulStreamNumber')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Serialize',
+        (
+            ['out'],
+            POINTER(POINTER(SPSERIALIZEDRESULT)),
+            'ppCoMemSerializedResult',
+        )
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'ScaleAudio',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pAudioFormatId',
+        ),
+        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecoContext',
+        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppRecoContext')
+    ),
+]
+
+################################################################
+# code template for ISpRecoResult implementation
+# class ISpRecoResult_Impl(object):
+#     def GetResultTimes(self):
+#         '-no docstring-'
+#         #return pTimes
+#
+#     def GetAlternates(self, ulStartElement, cElements, ulRequestCount):
+#         '-no docstring-'
+#         #return ppPhrases, pcPhrasesReturned
+#
+#     def GetAudio(self, ulStartElement, cElements):
+#         '-no docstring-'
+#         #return ppStream
+#
+#     def SpeakAudio(self, ulStartElement, cElements, dwFlags):
+#         '-no docstring-'
+#         #return pulStreamNumber
+#
+#     def Serialize(self):
+#         '-no docstring-'
+#         #return ppCoMemSerializedResult
+#
+#     def ScaleAudio(self, pAudioFormatId, pWaveFormatEx):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetRecoContext(self):
+#         '-no docstring-'
+#         #return ppRecoContext
+#
+
+
+class SpUnCompressedLexicon(CoClass):
+    """SpUnCompressedLexicon Class"""
+    _reg_clsid_ = GUID('{C9E37C15-DF92-4727-85D6-72E5EEB6995A}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpeechLexicon(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechLexicon Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{3DA7627A-C7AE-4B23-8708-638C50362C25}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_GenerationId(self) -> hints.Incomplete: ...
+        GenerationId = hints.normal_property(_get_GenerationId)
+        def GetWords(self, Flags: hints.Incomplete = ...) -> hints.Tuple[hints.Incomplete, 'ISpeechLexiconWords']: ...
+        def AddPronunciation(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., bstrPronunciation: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AddPronunciationByPhoneIds(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., PhoneIds: hints.Incomplete = ...) -> hints.Hresult: ...
+        def RemovePronunciation(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., bstrPronunciation: hints.Incomplete = ...) -> hints.Hresult: ...
+        def RemovePronunciationByPhoneIds(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., PhoneIds: hints.Incomplete = ...) -> hints.Hresult: ...
+        def GetPronunciations(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete = ..., TypeFlags: hints.Incomplete = ...) -> 'ISpeechLexiconPronunciations': ...
+        def GetGenerationChange(self, GenerationId: hints.Incomplete) -> hints.Tuple[hints.Incomplete, 'ISpeechLexiconWords']: ...
+
+
+class ISpLexicon(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpLexicon Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{DA41A7C2-5383-4DB2-916B-6C1719E3DB58}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetPronunciations(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, dwFlags: hints.Incomplete, pWordPronunciationList: hints.Incomplete) -> hints.Incomplete: ...
+        def AddPronunciation(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, ePartOfSpeech: hints.Incomplete, pszPronunciation: hints.Incomplete) -> hints.Hresult: ...
+        def RemovePronunciation(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, ePartOfSpeech: hints.Incomplete, pszPronunciation: hints.Incomplete) -> hints.Hresult: ...
+        def GetGeneration(self) -> hints.Incomplete: ...
+        def GetGenerationChange(self, dwFlags: hints.Incomplete, pdwGeneration: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def GetWords(self, dwFlags: hints.Incomplete, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+
+
+class ISpObjectWithToken(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpObjectWithToken Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{5B559F40-E952-11D2-BB91-00C04F8EE6C0}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetObjectToken(self, pToken: hints.Incomplete) -> hints.Hresult: ...
+        def GetObjectToken(self) -> 'ISpObjectToken': ...
+
+
+SpUnCompressedLexicon._com_interfaces_ = [ISpeechLexicon, ISpLexicon, ISpObjectWithToken, ISpPhoneticAlphabetSelection]
+
+SpeechRegistryLocalMachineRoot = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech'  # Constant BSTR
+
+SPSERIALIZEDRESULT._fields_ = [
+    ('ulSerializedSize', c_ulong),
+]
+
+assert sizeof(SPSERIALIZEDRESULT) == 4, sizeof(SPSERIALIZEDRESULT)
+assert alignment(SPSERIALIZEDRESULT) == 4, alignment(SPSERIALIZEDRESULT)
+
+
+class ISpeechLexiconWords(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechLexiconWords Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{8D199862-415E-47D5-AC4F-FAA608B424E6}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechLexiconWord': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _get__NewEnum(self) -> hints.Incomplete: ...
+        _NewEnum = hints.normal_property(_get__NewEnum)
+        __iter__ = hints.to_dunder_iter(_NewEnum)
 
 
 class ISpeechLexiconPronunciations(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -1174,122 +1954,1128 @@ class ISpeechLexiconPronunciations(comtypes.gen._00020430_0000_0000_C000_0000000
         __iter__ = hints.to_dunder_iter(_NewEnum)
 
 
-class ISpeechLexiconPronunciation(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechLexiconPronunciation Interface"""
+ISpeechLexicon._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('GenerationId'), 'hidden', 'propget'],
+        HRESULT,
+        'GenerationId',
+        (['out', 'retval'], POINTER(c_int), 'GenerationId')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('GetWords')],
+        HRESULT,
+        'GetWords',
+        (['in', 'optional'], SpeechLexiconType, 'Flags', 3),
+        (['out', 'optional'], POINTER(c_int), 'GenerationId', 0),
+        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWords)), 'Words')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('AddPronunciation')],
+        HRESULT,
+        'AddPronunciation',
+        (['in'], BSTR, 'bstrWord'),
+        (['in'], c_int, 'LangId'),
+        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
+        (['in', 'optional'], BSTR, 'bstrPronunciation', '')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AddPronunciationByPhoneIds'), 'hidden'],
+        HRESULT,
+        'AddPronunciationByPhoneIds',
+        (['in'], BSTR, 'bstrWord'),
+        (['in'], c_int, 'LangId'),
+        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
+        (['in', 'optional'], POINTER(VARIANT), 'PhoneIds')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('RemovePronunciation')],
+        HRESULT,
+        'RemovePronunciation',
+        (['in'], BSTR, 'bstrWord'),
+        (['in'], c_int, 'LangId'),
+        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
+        (['in', 'optional'], BSTR, 'bstrPronunciation', '')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('RemovePronunciationByPhoneIds'), 'hidden'],
+        HRESULT,
+        'RemovePronunciationByPhoneIds',
+        (['in'], BSTR, 'bstrWord'),
+        (['in'], c_int, 'LangId'),
+        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
+        (['in', 'optional'], POINTER(VARIANT), 'PhoneIds')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('GetPronunciations')],
+        HRESULT,
+        'GetPronunciations',
+        (['in'], BSTR, 'bstrWord'),
+        (['in', 'optional'], c_int, 'LangId', 0),
+        (['in', 'optional'], SpeechLexiconType, 'TypeFlags', 3),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechLexiconPronunciations)),
+            'ppPronunciations',
+        )
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('GetGenerationChange'), 'hidden'],
+        HRESULT,
+        'GetGenerationChange',
+        (['in', 'out'], POINTER(c_int), 'GenerationId'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWords)), 'ppWords')
+    ),
+]
+
+################################################################
+# code template for ISpeechLexicon implementation
+# class ISpeechLexicon_Impl(object):
+#     @property
+#     def GenerationId(self):
+#         'GenerationId'
+#         #return GenerationId
+#
+#     def GetWords(self, Flags):
+#         'GetWords'
+#         #return GenerationId, Words
+#
+#     def AddPronunciation(self, bstrWord, LangId, PartOfSpeech, bstrPronunciation):
+#         'AddPronunciation'
+#         #return 
+#
+#     def AddPronunciationByPhoneIds(self, bstrWord, LangId, PartOfSpeech, PhoneIds):
+#         'AddPronunciationByPhoneIds'
+#         #return 
+#
+#     def RemovePronunciation(self, bstrWord, LangId, PartOfSpeech, bstrPronunciation):
+#         'RemovePronunciation'
+#         #return 
+#
+#     def RemovePronunciationByPhoneIds(self, bstrWord, LangId, PartOfSpeech, PhoneIds):
+#         'RemovePronunciationByPhoneIds'
+#         #return 
+#
+#     def GetPronunciations(self, bstrWord, LangId, TypeFlags):
+#         'GetPronunciations'
+#         #return ppPronunciations
+#
+#     def GetGenerationChange(self):
+#         'GetGenerationChange'
+#         #return GenerationId, ppWords
+#
+
+SpeechPropertyAdaptationOn = 'AdaptationOn'  # Constant BSTR
+
+
+class SPBINARYGRAMMAR(Structure):
+    pass
+
+
+SPBINARYGRAMMAR._fields_ = [
+    ('ulTotalSerializedSize', c_ulong),
+]
+
+assert sizeof(SPBINARYGRAMMAR) == 4, sizeof(SPBINARYGRAMMAR)
+assert alignment(SPBINARYGRAMMAR) == 4, alignment(SPBINARYGRAMMAR)
+
+
+class ISpeechBaseStream(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechBaseStream Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{95252C5D-9E43-4F4A-9899-48EE73352F9F}')
+    _iid_ = GUID('{6450336F-7D49-4CED-8097-49D6DEE37294}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Format(self) -> 'ISpeechAudioFormat': ...
+        def _setref_Format(self, AudioFormat: hints.Incomplete) -> hints.Hresult: ...
+        Format = hints.normal_property(_get_Format, _setref_Format)
+        def Read(self, NumberOfBytes: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def Write(self, Buffer: hints.Incomplete) -> hints.Incomplete: ...
+        def Seek(self, Position: hints.Incomplete, Origin: hints.Incomplete = ...) -> hints.Incomplete: ...
+
+
+class ISpeechMemoryStream(ISpeechBaseStream):
+    """ISpeechMemoryStream Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{EEB14B68-808B-4ABE-A5EA-B51DA7588008}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def SetData(self, Data: hints.Incomplete) -> hints.Hresult: ...
+        def GetData(self) -> hints.Incomplete: ...
+
+
+class ISpeechAudioFormat(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechAudioFormat Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{E6E9C590-3E18-40E3-8299-061F98BDE7C7}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
         def _get_Type(self) -> hints.Incomplete: ...
-        Type = hints.normal_property(_get_Type)
-        def _get_LangId(self) -> hints.Incomplete: ...
-        LangId = hints.normal_property(_get_LangId)
-        def _get_PartOfSpeech(self) -> hints.Incomplete: ...
-        PartOfSpeech = hints.normal_property(_get_PartOfSpeech)
-        def _get_PhoneIds(self) -> hints.Incomplete: ...
-        PhoneIds = hints.normal_property(_get_PhoneIds)
-        def _get_Symbolic(self) -> hints.Incomplete: ...
-        Symbolic = hints.normal_property(_get_Symbolic)
+        def _set_Type(self, AudioFormat: hints.Incomplete) -> hints.Hresult: ...
+        Type = hints.normal_property(_get_Type, _set_Type)
+        def _get_Guid(self) -> hints.Incomplete: ...
+        def _set_Guid(self, Guid: hints.Incomplete) -> hints.Hresult: ...
+        Guid = hints.normal_property(_get_Guid, _set_Guid)
+        def GetWaveFormatEx(self) -> 'ISpeechWaveFormatEx': ...
+        def SetWaveFormatEx(self, SpeechWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
 
 
-ISpeechLexiconPronunciations._methods_ = [
+ISpeechBaseStream._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
+        [dispid(1), helpstring('Format'), 'propget'],
         HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
+        'Format',
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'AudioFormat')
     ),
     COMMETHOD(
-        [dispid(0), helpstring('Item')],
+        [dispid(1), helpstring('Format'), 'propputref'],
         HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechLexiconPronunciation)),
-            'Pronunciation',
-        )
+        'Format',
+        (['in'], POINTER(ISpeechAudioFormat), 'AudioFormat')
     ),
     COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
+        [dispid(2), helpstring('Read')],
         HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+        'Read',
+        (['out'], POINTER(VARIANT), 'Buffer'),
+        (['in'], c_int, 'NumberOfBytes'),
+        (['out', 'retval'], POINTER(c_int), 'BytesRead')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('Write')],
+        HRESULT,
+        'Write',
+        (['in'], VARIANT, 'Buffer'),
+        (['out', 'retval'], POINTER(c_int), 'BytesWritten')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Seek')],
+        HRESULT,
+        'Seek',
+        (['in'], VARIANT, 'Position'),
+        (['in', 'optional'], SpeechStreamSeekPositionType, 'Origin', 0),
+        (['out', 'retval'], POINTER(VARIANT), 'NewPosition')
     ),
 ]
 
 ################################################################
-# code template for ISpeechLexiconPronunciations implementation
-# class ISpeechLexiconPronunciations_Impl(object):
-#     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
+# code template for ISpeechBaseStream implementation
+# class ISpeechBaseStream_Impl(object):
+#     def Format(self, AudioFormat):
+#         'Format'
+#         #return 
 #
-#     def Item(self, Index):
-#         'Item'
-#         #return Pronunciation
+#     def Read(self, NumberOfBytes):
+#         'Read'
+#         #return Buffer, BytesRead
 #
-#     @property
-#     def _NewEnum(self):
-#         'Enumerates the tokens'
-#         #return EnumVARIANT
+#     def Write(self, Buffer):
+#         'Write'
+#         #return BytesWritten
+#
+#     def Seek(self, Position, Origin):
+#         'Seek'
+#         #return NewPosition
 #
 
+ISpeechMemoryStream._methods_ = [
+    COMMETHOD(
+        [dispid(100), helpstring('SetData')],
+        HRESULT,
+        'SetData',
+        (['in'], VARIANT, 'Data')
+    ),
+    COMMETHOD(
+        [dispid(101), helpstring('GetData')],
+        HRESULT,
+        'GetData',
+        (['out', 'retval'], POINTER(VARIANT), 'pData')
+    ),
+]
 
-class ISpRecoContext2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpRecoContext2 Interface"""
+################################################################
+# code template for ISpeechMemoryStream implementation
+# class ISpeechMemoryStream_Impl(object):
+#     def SetData(self, Data):
+#         'SetData'
+#         #return 
+#
+#     def GetData(self):
+#         'GetData'
+#         #return pData
+#
+
+tagSPPROPERTYINFO._fields_ = [
+    ('pszName', WSTRING),
+    ('ulId', c_ulong),
+    ('pszValue', WSTRING),
+    ('vValue', VARIANT),
+]
+
+assert sizeof(tagSPPROPERTYINFO) == 48, sizeof(tagSPPROPERTYINFO)
+assert alignment(tagSPPROPERTYINFO) == 8, alignment(tagSPPROPERTYINFO)
+
+
+class ISpeechObjectTokenCategory(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechObjectTokenCategory Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{BEAD311C-52FF-437F-9464-6B21054CA73D}')
+    _iid_ = GUID('{CA7EAC50-2D01-4145-86D4-5AE7D70F4469}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Id(self) -> hints.Incomplete: ...
+        Id = hints.normal_property(_get_Id)
+        def _get_Default(self) -> hints.Incomplete: ...
+        def _set_Default(self, TokenId: hints.Incomplete) -> hints.Hresult: ...
+        Default = hints.normal_property(_get_Default, _set_Default)
+        def SetId(self, Id: hints.Incomplete, CreateIfNotExist: hints.Incomplete = ...) -> hints.Hresult: ...
+        def GetDataKey(self, Location: hints.Incomplete = ...) -> 'ISpeechDataKey': ...
+        def EnumerateTokens(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
+
+
+class ISpeechDataKey(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechDataKey Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{CE17C09B-4EFA-44D5-A4C9-59D9585AB0CD}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def SetBinaryValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
+        def GetBinaryValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
+        def SetStringValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
+        def GetStringValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
+        def SetLongValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
+        def GetLongValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
+        def OpenKey(self, SubKeyName: hints.Incomplete) -> 'ISpeechDataKey': ...
+        def CreateKey(self, SubKeyName: hints.Incomplete) -> 'ISpeechDataKey': ...
+        def DeleteKey(self, SubKeyName: hints.Incomplete) -> hints.Hresult: ...
+        def DeleteValue(self, ValueName: hints.Incomplete) -> hints.Hresult: ...
+        def EnumKeys(self, Index: hints.Incomplete) -> hints.Incomplete: ...
+        def EnumValues(self, Index: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class ISpeechObjectTokens(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechObjectTokens Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{9285B776-2E7B-4BC0-B53E-580EB6FA967F}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechObjectToken': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _get__NewEnum(self) -> hints.Incomplete: ...
+        _NewEnum = hints.normal_property(_get__NewEnum)
+        __iter__ = hints.to_dunder_iter(_NewEnum)
+
+
+ISpeechObjectTokenCategory._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Id'), 'propget'],
+        HRESULT,
+        'Id',
+        (['out', 'retval'], POINTER(BSTR), 'Id')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Default'), 'propput'],
+        HRESULT,
+        'Default',
+        (['in'], BSTR, 'TokenId')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Default'), 'propget'],
+        HRESULT,
+        'Default',
+        (['out', 'retval'], POINTER(BSTR), 'TokenId')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SetId')],
+        HRESULT,
+        'SetId',
+        (['in'], BSTR, 'Id'),
+        (['in', 'optional'], VARIANT_BOOL, 'CreateIfNotExist', False)
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('GetDataKey'), 'hidden'],
+        HRESULT,
+        'GetDataKey',
+        (['in', 'optional'], SpeechDataKeyLocation, 'Location', 0),
+        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'DataKey')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('EnumerateTokens')],
+        HRESULT,
+        'EnumerateTokens',
+        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
+        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
+        (['out', 'retval'], POINTER(POINTER(ISpeechObjectTokens)), 'Tokens')
+    ),
+]
+
+################################################################
+# code template for ISpeechObjectTokenCategory implementation
+# class ISpeechObjectTokenCategory_Impl(object):
+#     @property
+#     def Id(self):
+#         'Id'
+#         #return Id
+#
+#     def _get(self):
+#         'Default'
+#         #return TokenId
+#     def _set(self, TokenId):
+#         'Default'
+#     Default = property(_get, _set, doc = _set.__doc__)
+#
+#     def SetId(self, Id, CreateIfNotExist):
+#         'SetId'
+#         #return 
+#
+#     def GetDataKey(self, Location):
+#         'GetDataKey'
+#         #return DataKey
+#
+#     def EnumerateTokens(self, RequiredAttributes, OptionalAttributes):
+#         'EnumerateTokens'
+#         #return Tokens
+#
+
+
+class ISpeechCustomStream(ISpeechBaseStream):
+    """ISpeechCustomStream Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{1A9E9F4F-104F-4DB8-A115-EFD7FD0C97AE}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_BaseStream(self) -> hints.Incomplete: ...
+        def _setref_BaseStream(self, ppUnkStream: hints.Incomplete) -> hints.Hresult: ...
+        BaseStream = hints.normal_property(_get_BaseStream, _setref_BaseStream)
+
+
+ISpeechCustomStream._methods_ = [
+    COMMETHOD(
+        [dispid(100), helpstring('BaseStream'), 'propget'],
+        HRESULT,
+        'BaseStream',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'ppUnkStream')
+    ),
+    COMMETHOD(
+        [dispid(100), helpstring('BaseStream'), 'propputref'],
+        HRESULT,
+        'BaseStream',
+        (['in'], POINTER(IUnknown), 'ppUnkStream')
+    ),
+]
+
+################################################################
+# code template for ISpeechCustomStream implementation
+# class ISpeechCustomStream_Impl(object):
+#     def BaseStream(self, ppUnkStream):
+#         'BaseStream'
+#         #return 
+#
+
+SPSERIALIZEDPHRASE._fields_ = [
+    ('ulSerializedSize', c_ulong),
+]
+
+assert sizeof(SPSERIALIZEDPHRASE) == 4, sizeof(SPSERIALIZEDPHRASE)
+assert alignment(SPSERIALIZEDPHRASE) == 4, alignment(SPSERIALIZEDPHRASE)
+
+
+class tagSPTEXTSELECTIONINFO(Structure):
+    pass
+
+
+tagSPTEXTSELECTIONINFO._fields_ = [
+    ('ulStartActiveOffset', c_ulong),
+    ('cchActiveChars', c_ulong),
+    ('ulStartSelection', c_ulong),
+    ('cchSelection', c_ulong),
+]
+
+assert sizeof(tagSPTEXTSELECTIONINFO) == 16, sizeof(tagSPTEXTSELECTIONINFO)
+assert alignment(tagSPTEXTSELECTIONINFO) == 4, alignment(tagSPTEXTSELECTIONINFO)
+
+
+class ISpeechRecoGrammar(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecoGrammar Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{B6D6F79F-2158-4E50-B5BC-9A9CCD852A09}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Id(self) -> hints.Incomplete: ...
+        Id = hints.normal_property(_get_Id)
+        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
+        RecoContext = hints.normal_property(_get_RecoContext)
+        def _get_State(self) -> hints.Incomplete: ...
+        def _set_State(self, State: hints.Incomplete) -> hints.Hresult: ...
+        State = hints.normal_property(_get_State, _set_State)
+        def _get_Rules(self) -> 'ISpeechGrammarRules': ...
+        Rules = hints.normal_property(_get_Rules)
+        def Reset(self, NewLanguage: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdLoadFromFile(self, FileName: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdLoadFromObject(self, ClassId: hints.Incomplete, GrammarName: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdLoadFromResource(self, hModule: hints.Incomplete, ResourceName: hints.Incomplete, ResourceType: hints.Incomplete, LanguageId: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdLoadFromMemory(self, GrammarData: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdLoadFromProprietaryGrammar(self, ProprietaryGuid: hints.Incomplete, ProprietaryString: hints.Incomplete, ProprietaryData: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def CmdSetRuleState(self, Name: hints.Incomplete, State: hints.Incomplete) -> hints.Hresult: ...
+        def CmdSetRuleIdState(self, RuleId: hints.Incomplete, State: hints.Incomplete) -> hints.Hresult: ...
+        def DictationLoad(self, TopicName: hints.Incomplete = ..., LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
+        def DictationUnload(self) -> hints.Hresult: ...
+        def DictationSetState(self, State: hints.Incomplete) -> hints.Hresult: ...
+        def SetWordSequenceData(self, Text: hints.Incomplete, TextLength: hints.Incomplete, Info: hints.Incomplete) -> hints.Hresult: ...
+        def SetTextSelection(self, Info: hints.Incomplete) -> hints.Hresult: ...
+        def IsPronounceable(self, Word: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class ISpeechRecoContext(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecoContext Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{580AA49D-7E1E-4809-B8E2-57DA806104B8}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Recognizer(self) -> 'ISpeechRecognizer': ...
+        Recognizer = hints.normal_property(_get_Recognizer)
+        def _get_AudioInputInterferenceStatus(self) -> hints.Incomplete: ...
+        AudioInputInterferenceStatus = hints.normal_property(_get_AudioInputInterferenceStatus)
+        def _get_RequestedUIType(self) -> hints.Incomplete: ...
+        RequestedUIType = hints.normal_property(_get_RequestedUIType)
+        def _get_Voice(self) -> 'ISpeechVoice': ...
+        def _setref_Voice(self, Voice: hints.Incomplete) -> hints.Hresult: ...
+        Voice = hints.normal_property(_get_Voice, _setref_Voice)
+        def _get_AllowVoiceFormatMatchingOnNextSet(self) -> hints.Incomplete: ...
+        def _set_AllowVoiceFormatMatchingOnNextSet(self, pAllow: hints.Incomplete) -> hints.Hresult: ...
+        AllowVoiceFormatMatchingOnNextSet = hints.normal_property(_get_AllowVoiceFormatMatchingOnNextSet, _set_AllowVoiceFormatMatchingOnNextSet)
+        def _get_VoicePurgeEvent(self) -> hints.Incomplete: ...
+        def _set_VoicePurgeEvent(self, EventInterest: hints.Incomplete) -> hints.Hresult: ...
+        VoicePurgeEvent = hints.normal_property(_get_VoicePurgeEvent, _set_VoicePurgeEvent)
+        def _get_EventInterests(self) -> hints.Incomplete: ...
+        def _set_EventInterests(self, EventInterest: hints.Incomplete) -> hints.Hresult: ...
+        EventInterests = hints.normal_property(_get_EventInterests, _set_EventInterests)
+        def _get_CmdMaxAlternates(self) -> hints.Incomplete: ...
+        def _set_CmdMaxAlternates(self, MaxAlternates: hints.Incomplete) -> hints.Hresult: ...
+        CmdMaxAlternates = hints.normal_property(_get_CmdMaxAlternates, _set_CmdMaxAlternates)
+        def _get_State(self) -> hints.Incomplete: ...
+        def _set_State(self, State: hints.Incomplete) -> hints.Hresult: ...
+        State = hints.normal_property(_get_State, _set_State)
+        def _get_RetainedAudio(self) -> hints.Incomplete: ...
+        def _set_RetainedAudio(self, Option: hints.Incomplete) -> hints.Hresult: ...
+        RetainedAudio = hints.normal_property(_get_RetainedAudio, _set_RetainedAudio)
+        def _get_RetainedAudioFormat(self) -> 'ISpeechAudioFormat': ...
+        def _setref_RetainedAudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
+        RetainedAudioFormat = hints.normal_property(_get_RetainedAudioFormat, _setref_RetainedAudioFormat)
+        def Pause(self) -> hints.Hresult: ...
+        def Resume(self) -> hints.Hresult: ...
+        def CreateGrammar(self, GrammarId: hints.Incomplete = ...) -> 'ISpeechRecoGrammar': ...
+        def CreateResultFromMemory(self, ResultBlock: hints.Incomplete) -> 'ISpeechRecoResult': ...
+        def Bookmark(self, Options: hints.Incomplete, StreamPos: hints.Incomplete, BookmarkId: hints.Incomplete) -> hints.Hresult: ...
+        def SetAdaptationData(self, AdaptationString: hints.Incomplete) -> hints.Hresult: ...
+
+
+class ISpeechGrammarRules(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechGrammarRules Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{6FFA3B44-FC2D-40D1-8AFC-32911C7F1AD1}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def FindRule(self, RuleNameOrId: hints.Incomplete) -> 'ISpeechGrammarRule': ...
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechGrammarRule': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _get__NewEnum(self) -> hints.Incomplete: ...
+        _NewEnum = hints.normal_property(_get__NewEnum)
+        __iter__ = hints.to_dunder_iter(_NewEnum)
+        def _get_Dynamic(self) -> hints.Incomplete: ...
+        Dynamic = hints.normal_property(_get_Dynamic)
+        def Add(self, RuleName: hints.Incomplete, Attributes: hints.Incomplete, RuleId: hints.Incomplete = ...) -> 'ISpeechGrammarRule': ...
+        def Commit(self) -> hints.Hresult: ...
+        def CommitAndSave(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+
+
+class ISpeechTextSelectionInformation(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechTextSelectionInformation Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{3B9C7E7A-6EEE-4DED-9092-11657279ADBE}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_ActiveOffset(self) -> hints.Incomplete: ...
+        def _set_ActiveOffset(self, ActiveOffset: hints.Incomplete) -> hints.Hresult: ...
+        ActiveOffset = hints.normal_property(_get_ActiveOffset, _set_ActiveOffset)
+        def _get_ActiveLength(self) -> hints.Incomplete: ...
+        def _set_ActiveLength(self, ActiveLength: hints.Incomplete) -> hints.Hresult: ...
+        ActiveLength = hints.normal_property(_get_ActiveLength, _set_ActiveLength)
+        def _get_SelectionOffset(self) -> hints.Incomplete: ...
+        def _set_SelectionOffset(self, SelectionOffset: hints.Incomplete) -> hints.Hresult: ...
+        SelectionOffset = hints.normal_property(_get_SelectionOffset, _set_SelectionOffset)
+        def _get_SelectionLength(self) -> hints.Incomplete: ...
+        def _set_SelectionLength(self, SelectionLength: hints.Incomplete) -> hints.Hresult: ...
+        SelectionLength = hints.normal_property(_get_SelectionLength, _set_SelectionLength)
+
+
+ISpeechRecoGrammar._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Id'), 'propget'],
+        HRESULT,
+        'Id',
+        (['out', 'retval'], POINTER(VARIANT), 'Id')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('RecoContext'), 'propget'],
+        HRESULT,
+        'RecoContext',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('State'), 'propput'],
+        HRESULT,
+        'State',
+        (['in'], SpeechGrammarState, 'State')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('State'), 'propget'],
+        HRESULT,
+        'State',
+        (['out', 'retval'], POINTER(SpeechGrammarState), 'State')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Rules'), 'propget'],
+        HRESULT,
+        'Rules',
+        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRules)), 'Rules')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('Reset')],
+        HRESULT,
+        'Reset',
+        (['in', 'optional'], c_int, 'NewLanguage', 0)
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('CmdLoadFromFile')],
+        HRESULT,
+        'CmdLoadFromFile',
+        (['in'], BSTR, 'FileName'),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('CmdLoadFromObject')],
+        HRESULT,
+        'CmdLoadFromObject',
+        (['in'], BSTR, 'ClassId'),
+        (['in'], BSTR, 'GrammarName'),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('CmdLoadFromResource')],
+        HRESULT,
+        'CmdLoadFromResource',
+        (['in'], c_int, 'hModule'),
+        (['in'], VARIANT, 'ResourceName'),
+        (['in'], VARIANT, 'ResourceType'),
+        (['in'], c_int, 'LanguageId'),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(10), helpstring('CmdLoadFromMemory')],
+        HRESULT,
+        'CmdLoadFromMemory',
+        (['in'], VARIANT, 'GrammarData'),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(11), helpstring('CmdLoadFromProprietaryGrammar')],
+        HRESULT,
+        'CmdLoadFromProprietaryGrammar',
+        (['in'], BSTR, 'ProprietaryGuid'),
+        (['in'], BSTR, 'ProprietaryString'),
+        (['in'], VARIANT, 'ProprietaryData'),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(12), helpstring('CmdSetRuleState')],
+        HRESULT,
+        'CmdSetRuleState',
+        (['in'], BSTR, 'Name'),
+        (['in'], SpeechRuleState, 'State')
+    ),
+    COMMETHOD(
+        [dispid(13), helpstring('CmdSetRuleIdState')],
+        HRESULT,
+        'CmdSetRuleIdState',
+        (['in'], c_int, 'RuleId'),
+        (['in'], SpeechRuleState, 'State')
+    ),
+    COMMETHOD(
+        [dispid(14), helpstring('DictationLoad')],
+        HRESULT,
+        'DictationLoad',
+        (['in', 'optional'], BSTR, 'TopicName', ''),
+        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
+    ),
+    COMMETHOD(
+        [dispid(15), helpstring('DictationUnload')],
+        HRESULT,
+        'DictationUnload',
+    ),
+    COMMETHOD(
+        [dispid(16), helpstring('DictationSetState')],
+        HRESULT,
+        'DictationSetState',
+        (['in'], SpeechRuleState, 'State')
+    ),
+    COMMETHOD(
+        [dispid(17), helpstring('SetWordSequenceData')],
+        HRESULT,
+        'SetWordSequenceData',
+        (['in'], BSTR, 'Text'),
+        (['in'], c_int, 'TextLength'),
+        (['in'], POINTER(ISpeechTextSelectionInformation), 'Info')
+    ),
+    COMMETHOD(
+        [dispid(18), helpstring('SetTextSelection')],
+        HRESULT,
+        'SetTextSelection',
+        (['in'], POINTER(ISpeechTextSelectionInformation), 'Info')
+    ),
+    COMMETHOD(
+        [dispid(19), helpstring('IsPronounceable')],
+        HRESULT,
+        'IsPronounceable',
+        (['in'], BSTR, 'Word'),
+        (
+            ['out', 'retval'],
+            POINTER(SpeechWordPronounceable),
+            'WordPronounceable',
+        )
+    ),
+]
+
+################################################################
+# code template for ISpeechRecoGrammar implementation
+# class ISpeechRecoGrammar_Impl(object):
+#     @property
+#     def Id(self):
+#         'Id'
+#         #return Id
+#
+#     @property
+#     def RecoContext(self):
+#         'RecoContext'
+#         #return RecoContext
+#
+#     def _get(self):
+#         'State'
+#         #return State
+#     def _set(self, State):
+#         'State'
+#     State = property(_get, _set, doc = _set.__doc__)
+#
+#     @property
+#     def Rules(self):
+#         'Rules'
+#         #return Rules
+#
+#     def Reset(self, NewLanguage):
+#         'Reset'
+#         #return 
+#
+#     def CmdLoadFromFile(self, FileName, LoadOption):
+#         'CmdLoadFromFile'
+#         #return 
+#
+#     def CmdLoadFromObject(self, ClassId, GrammarName, LoadOption):
+#         'CmdLoadFromObject'
+#         #return 
+#
+#     def CmdLoadFromResource(self, hModule, ResourceName, ResourceType, LanguageId, LoadOption):
+#         'CmdLoadFromResource'
+#         #return 
+#
+#     def CmdLoadFromMemory(self, GrammarData, LoadOption):
+#         'CmdLoadFromMemory'
+#         #return 
+#
+#     def CmdLoadFromProprietaryGrammar(self, ProprietaryGuid, ProprietaryString, ProprietaryData, LoadOption):
+#         'CmdLoadFromProprietaryGrammar'
+#         #return 
+#
+#     def CmdSetRuleState(self, Name, State):
+#         'CmdSetRuleState'
+#         #return 
+#
+#     def CmdSetRuleIdState(self, RuleId, State):
+#         'CmdSetRuleIdState'
+#         #return 
+#
+#     def DictationLoad(self, TopicName, LoadOption):
+#         'DictationLoad'
+#         #return 
+#
+#     def DictationUnload(self):
+#         'DictationUnload'
+#         #return 
+#
+#     def DictationSetState(self, State):
+#         'DictationSetState'
+#         #return 
+#
+#     def SetWordSequenceData(self, Text, TextLength, Info):
+#         'SetWordSequenceData'
+#         #return 
+#
+#     def SetTextSelection(self, Info):
+#         'SetTextSelection'
+#         #return 
+#
+#     def IsPronounceable(self, Word):
+#         'IsPronounceable'
+#         #return WordPronounceable
+#
+
+
+class ISpShortcut(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpShortcut Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{3DF681E2-EA56-11D9-8BDE-F66BAD1E3F3A}')
     _idlflags_ = ['restricted']
 
     if TYPE_CHECKING:  # commembers
-        def SetGrammarOptions(self, eGrammarOptions: hints.Incomplete) -> hints.Hresult: ...
-        def GetGrammarOptions(self) -> hints.Incomplete: ...
-        def SetAdaptationData2(self, pAdaptationData: hints.Incomplete, cch: hints.Incomplete, pTopicName: hints.Incomplete, eAdaptationSettings: hints.Incomplete, eRelevance: hints.Incomplete) -> hints.Hresult: ...
+        def AddShortcut(self, pszDisplay: hints.Incomplete, LangId: hints.Incomplete, pszSpoken: hints.Incomplete, shType: hints.Incomplete) -> hints.Hresult: ...
+        def RemoveShortcut(self, pszDisplay: hints.Incomplete, LangId: hints.Incomplete, pszSpoken: hints.Incomplete, shType: hints.Incomplete) -> hints.Hresult: ...
+        def GetShortcuts(self, LangId: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Incomplete: ...
+        def GetGeneration(self) -> hints.Incomplete: ...
+        def GetWordsFromGenerationChange(self, pdwGeneration: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def GetWords(self, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def GetShortcutsForGeneration(self, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def GetGenerationChange(self, pdwGeneration: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
 
 
-ISpRecoContext2._methods_ = [
+class SPSHORTCUTPAIRLIST(Structure):
+    pass
+
+
+class SPWORDLIST(Structure):
+    pass
+
+
+ISpShortcut._methods_ = [
     COMMETHOD(
         [],
         HRESULT,
-        'SetGrammarOptions',
-        (['in'], c_ulong, 'eGrammarOptions')
+        'AddShortcut',
+        (['in'], WSTRING, 'pszDisplay'),
+        (['in'], c_ushort, 'LangId'),
+        (['in'], WSTRING, 'pszSpoken'),
+        (['in'], SPSHORTCUTTYPE, 'shType')
     ),
     COMMETHOD(
         [],
         HRESULT,
-        'GetGrammarOptions',
-        (['out'], POINTER(c_ulong), 'peGrammarOptions')
+        'RemoveShortcut',
+        (['in'], WSTRING, 'pszDisplay'),
+        (['in'], c_ushort, 'LangId'),
+        (['in'], WSTRING, 'pszSpoken'),
+        (['in'], SPSHORTCUTTYPE, 'shType')
     ),
     COMMETHOD(
         [],
         HRESULT,
-        'SetAdaptationData2',
-        (['in'], WSTRING, 'pAdaptationData'),
-        (['in'], c_ulong, 'cch'),
-        (['in'], WSTRING, 'pTopicName'),
-        (['in'], c_ulong, 'eAdaptationSettings'),
-        (['in'], SPADAPTATIONRELEVANCE, 'eRelevance')
+        'GetShortcuts',
+        (['in'], c_ushort, 'LangId'),
+        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGeneration',
+        (['out'], POINTER(c_ulong), 'pdwGeneration')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetWordsFromGenerationChange',
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetWords',
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
+        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetShortcutsForGeneration',
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
+        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGenerationChange',
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
     ),
 ]
 
 ################################################################
-# code template for ISpRecoContext2 implementation
-# class ISpRecoContext2_Impl(object):
-#     def SetGrammarOptions(self, eGrammarOptions):
+# code template for ISpShortcut implementation
+# class ISpShortcut_Impl(object):
+#     def AddShortcut(self, pszDisplay, LangId, pszSpoken, shType):
 #         '-no docstring-'
 #         #return 
 #
-#     def GetGrammarOptions(self):
-#         '-no docstring-'
-#         #return peGrammarOptions
-#
-#     def SetAdaptationData2(self, pAdaptationData, cch, pTopicName, eAdaptationSettings, eRelevance):
+#     def RemoveShortcut(self, pszDisplay, LangId, pszSpoken, shType):
 #         '-no docstring-'
 #         #return 
 #
+#     def GetShortcuts(self, LangId):
+#         '-no docstring-'
+#         #return pShortcutpairList
+#
+#     def GetGeneration(self):
+#         '-no docstring-'
+#         #return pdwGeneration
+#
+#     def GetWordsFromGenerationChange(self):
+#         '-no docstring-'
+#         #return pdwGeneration, pWordList
+#
+#     def GetWords(self):
+#         '-no docstring-'
+#         #return pdwGeneration, pdwCookie, pWordList
+#
+#     def GetShortcutsForGeneration(self):
+#         '-no docstring-'
+#         #return pdwGeneration, pdwCookie, pShortcutpairList
+#
+#     def GetGenerationChange(self):
+#         '-no docstring-'
+#         #return pdwGeneration, pShortcutpairList
+#
+
+
+class SPWORDPRONUNCIATIONLIST(Structure):
+    pass
+
+
+ISpLexicon._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetPronunciations',
+        (['in'], WSTRING, 'pszWord'),
+        (['in'], c_ushort, 'LangId'),
+        (['in'], c_ulong, 'dwFlags'),
+        (
+            ['in', 'out'],
+            POINTER(SPWORDPRONUNCIATIONLIST),
+            'pWordPronunciationList',
+        )
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AddPronunciation',
+        (['in'], WSTRING, 'pszWord'),
+        (['in'], c_ushort, 'LangId'),
+        (['in'], SPPARTOFSPEECH, 'ePartOfSpeech'),
+        (['in'], WSTRING, 'pszPronunciation')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'RemovePronunciation',
+        (['in'], WSTRING, 'pszWord'),
+        (['in'], c_ushort, 'LangId'),
+        (['in'], SPPARTOFSPEECH, 'ePartOfSpeech'),
+        (['in'], WSTRING, 'pszPronunciation')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGeneration',
+        (['out'], POINTER(c_ulong), 'pdwGeneration')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGenerationChange',
+        (['in'], c_ulong, 'dwFlags'),
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetWords',
+        (['in'], c_ulong, 'dwFlags'),
+        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
+        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
+        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
+    ),
+]
+
+################################################################
+# code template for ISpLexicon implementation
+# class ISpLexicon_Impl(object):
+#     def GetPronunciations(self, pszWord, LangId, dwFlags):
+#         '-no docstring-'
+#         #return pWordPronunciationList
+#
+#     def AddPronunciation(self, pszWord, LangId, ePartOfSpeech, pszPronunciation):
+#         '-no docstring-'
+#         #return 
+#
+#     def RemovePronunciation(self, pszWord, LangId, ePartOfSpeech, pszPronunciation):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetGeneration(self):
+#         '-no docstring-'
+#         #return pdwGeneration
+#
+#     def GetGenerationChange(self, dwFlags):
+#         '-no docstring-'
+#         #return pdwGeneration, pWordList
+#
+#     def GetWords(self, dwFlags):
+#         '-no docstring-'
+#         #return pdwGeneration, pdwCookie, pWordList
+#
+
+
+class SpObjectTokenCategory(CoClass):
+    """SpObjectTokenCategory Class"""
+    _reg_clsid_ = GUID('{A910187F-0C7A-45AC-92CC-59EDAFB77B53}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpDataKey(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpDataKey Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{14056581-E16C-11D2-BB90-00C04F8EE6C0}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetData(self, pszValueName: hints.Incomplete, cbData: hints.Incomplete, pData: hints.Incomplete) -> hints.Hresult: ...
+        def GetData(self, pszValueName: hints.Incomplete, pcbData: hints.Incomplete) -> hints.Incomplete: ...
+        def SetStringValue(self, pszValueName: hints.Incomplete, pszValue: hints.Incomplete) -> hints.Hresult: ...
+        def GetStringValue(self, pszValueName: hints.Incomplete) -> hints.Incomplete: ...
+        def SetDWORD(self, pszValueName: hints.Incomplete, dwValue: hints.Incomplete) -> hints.Hresult: ...
+        def GetDWORD(self, pszValueName: hints.Incomplete) -> hints.Incomplete: ...
+        def OpenKey(self, pszSubKeyName: hints.Incomplete) -> 'ISpDataKey': ...
+        def CreateKey(self, pszSubKey: hints.Incomplete) -> 'ISpDataKey': ...
+        def DeleteKey(self, pszSubKey: hints.Incomplete) -> hints.Hresult: ...
+        def DeleteValue(self, pszValueName: hints.Incomplete) -> hints.Hresult: ...
+        def EnumKeys(self, Index: hints.Incomplete) -> hints.Incomplete: ...
+        def EnumValues(self, Index: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class ISpObjectTokenCategory(ISpDataKey):
+    """ISpObjectTokenCategory"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{2D3D3845-39AF-4850-BBF9-40B49780011D}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetId(self, pszCategoryId: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Hresult: ...
+        def GetId(self) -> hints.Incomplete: ...
+        def GetDataKey(self, spdkl: hints.Incomplete) -> 'ISpDataKey': ...
+        def EnumTokens(self, pzsReqAttribs: hints.Incomplete, pszOptAttribs: hints.Incomplete) -> 'IEnumSpObjectTokens': ...
+        def SetDefaultTokenId(self, pszTokenId: hints.Incomplete) -> hints.Hresult: ...
+        def GetDefaultTokenId(self) -> hints.Incomplete: ...
+
+
+SpObjectTokenCategory._com_interfaces_ = [ISpeechObjectTokenCategory, ISpObjectTokenCategory]
+
+SPRECORESULTTIMES._fields_ = [
+    ('ftStreamTime', _FILETIME),
+    ('ullLength', c_ulonglong),
+    ('dwTickCount', c_ulong),
+    ('ullStart', c_ulonglong),
+]
+
+assert sizeof(SPRECORESULTTIMES) == 32, sizeof(SPRECORESULTTIMES)
+assert alignment(SPRECORESULTTIMES) == 8, alignment(SPRECORESULTTIMES)
+
+
+class SpObjectToken(CoClass):
+    """SpObjectToken Class"""
+    _reg_clsid_ = GUID('{EF411752-3736-4CB4-9C8C-8EF4CCB58EFE}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpeechObjectToken(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechObjectToken Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{C74A3ADC-B727-4500-A84A-B526721C8B8C}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Id(self) -> hints.Incomplete: ...
+        Id = hints.normal_property(_get_Id)
+        def _get_DataKey(self) -> 'ISpeechDataKey': ...
+        DataKey = hints.normal_property(_get_DataKey)
+        def _get_Category(self) -> 'ISpeechObjectTokenCategory': ...
+        Category = hints.normal_property(_get_Category)
+        def GetDescription(self, Locale: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def SetId(self, Id: hints.Incomplete, CategoryID: hints.Incomplete = ..., CreateIfNotExist: hints.Incomplete = ...) -> hints.Hresult: ...
+        def GetAttribute(self, AttributeName: hints.Incomplete) -> hints.Incomplete: ...
+        def CreateInstance(self, pUnkOuter: hints.Incomplete = ..., ClsContext: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def Remove(self, ObjectStorageCLSID: hints.Incomplete) -> hints.Hresult: ...
+        def GetStorageFileName(self, ObjectStorageCLSID: hints.Incomplete, KeyName: hints.Incomplete, FileName: hints.Incomplete, Folder: hints.Incomplete) -> hints.Incomplete: ...
+        def RemoveStorageFileName(self, ObjectStorageCLSID: hints.Incomplete, KeyName: hints.Incomplete, DeleteFile: hints.Incomplete) -> hints.Hresult: ...
+        def IsUISupported(self, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ..., Object: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def DisplayUI(self, hWnd: hints.Incomplete, Title: hints.Incomplete, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ..., Object: hints.Incomplete = ...) -> hints.Hresult: ...
+        def MatchesAttributes(self, Attributes: hints.Incomplete) -> hints.Incomplete: ...
+
+
+class ISpObjectToken(ISpDataKey):
+    """ISpObjectToken Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{14056589-E16C-11D2-BB90-00C04F8EE6C0}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetId(self, pszCategoryId: hints.Incomplete, pszTokenId: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Hresult: ...
+        def GetId(self) -> hints.Incomplete: ...
+        def GetCategory(self) -> 'ISpObjectTokenCategory': ...
+        def CreateInstance(self, pUnkOuter: hints.Incomplete, dwClsContext: hints.Incomplete, riid: hints.Incomplete) -> hints.Incomplete: ...
+        def GetStorageFileName(self, clsidCaller: hints.Incomplete, pszValueName: hints.Incomplete, pszFileNameSpecifier: hints.Incomplete, nFolder: hints.Incomplete) -> hints.Incomplete: ...
+        def RemoveStorageFileName(self, clsidCaller: hints.Incomplete, pszKeyName: hints.Incomplete, fDeleteFile: hints.Incomplete) -> hints.Hresult: ...
+        def Remove(self, pclsidCaller: hints.Incomplete) -> hints.Hresult: ...
+        def IsUISupported(self, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete, punkObject: hints.Incomplete) -> hints.Incomplete: ...
+        def DisplayUI(self, hWndParent: hints.Incomplete, pszTitle: hints.Incomplete, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete, punkObject: hints.Incomplete) -> hints.Hresult: ...
+        def MatchesAttributes(self, pszAttributes: hints.Incomplete) -> hints.Incomplete: ...
+
+
+SpObjectToken._com_interfaces_ = [ISpeechObjectToken, ISpObjectToken]
+
+SpeechRegistryUserRoot = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech'  # Constant BSTR
 
 
 class SpInprocRecognizer(CoClass):
@@ -1419,29 +3205,68 @@ class ISpSerializeState(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 SpInprocRecognizer._com_interfaces_ = [ISpeechRecognizer, ISpRecognizer, ISpRecognizer2, ISpRecognizer3, ISpSerializeState]
 
 
-class ISpeechGrammarRules(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechGrammarRules Interface"""
+class SPRECOGNIZERSTATUS(Structure):
+    pass
+
+
+class SPAUDIOSTATUS(Structure):
+    pass
+
+
+SPAUDIOSTATUS._fields_ = [
+    ('cbFreeBuffSpace', c_int),
+    ('cbNonBlockingIO', c_ulong),
+    ('State', SPAUDIOSTATE),
+    ('CurSeekPos', c_ulonglong),
+    ('CurDevicePos', c_ulonglong),
+    ('dwAudioLevel', c_ulong),
+    ('dwReserved2', c_ulong),
+]
+
+assert sizeof(SPAUDIOSTATUS) == 40, sizeof(SPAUDIOSTATUS)
+assert alignment(SPAUDIOSTATUS) == 8, alignment(SPAUDIOSTATUS)
+
+SPRECOGNIZERSTATUS._fields_ = [
+    ('AudioStatus', SPAUDIOSTATUS),
+    ('ullRecognitionStreamPos', c_ulonglong),
+    ('ulStreamNumber', c_ulong),
+    ('ulNumActive', c_ulong),
+    ('ClsidEngine', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+    ('cLangIDs', c_ulong),
+    ('aLangID', c_ushort * 20),
+    ('ullRecognitionStreamTime', c_ulonglong),
+]
+
+assert sizeof(SPRECOGNIZERSTATUS) == 128, sizeof(SPRECOGNIZERSTATUS)
+assert alignment(SPRECOGNIZERSTATUS) == 8, alignment(SPRECOGNIZERSTATUS)
+
+
+class ISpRecoCategory(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpRecoCategory Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{6FFA3B44-FC2D-40D1-8AFC-32911C7F1AD1}')
-    _idlflags_ = ['dual', 'oleautomation']
+    _iid_ = GUID('{DA0CD0F9-14A2-4F09-8C2A-85CC48979345}')
+    _idlflags_ = ['restricted']
 
     if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def FindRule(self, RuleNameOrId: hints.Incomplete) -> 'ISpeechGrammarRule': ...
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechGrammarRule': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _get__NewEnum(self) -> hints.Incomplete: ...
-        _NewEnum = hints.normal_property(_get__NewEnum)
-        __iter__ = hints.to_dunder_iter(_NewEnum)
-        def _get_Dynamic(self) -> hints.Incomplete: ...
-        Dynamic = hints.normal_property(_get_Dynamic)
-        def Add(self, RuleName: hints.Incomplete, Attributes: hints.Incomplete, RuleId: hints.Incomplete = ...) -> 'ISpeechGrammarRule': ...
-        def Commit(self) -> hints.Hresult: ...
-        def CommitAndSave(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def GetType(self) -> hints.Incomplete: ...
+
+
+ISpRecoCategory._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetType',
+        (['out'], POINTER(SPCATEGORYTYPE), 'peCategoryType')
+    ),
+]
+
+################################################################
+# code template for ISpRecoCategory implementation
+# class ISpRecoCategory_Impl(object):
+#     def GetType(self):
+#         '-no docstring-'
+#         #return peCategoryType
+#
 
 
 class ISpeechGrammarRule(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -1556,481 +3381,154 @@ ISpeechGrammarRules._methods_ = [
 #
 
 
-class SPSERIALIZEDRESULT(Structure):
+class SpNotifyTranslator(CoClass):
+    """SpNotify"""
+    _reg_clsid_ = GUID('{E2AE5372-5D40-11D2-960E-00C04F8EE628}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpNotifySink(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpNotifySink Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{259684DC-37C3-11D2-9603-00C04F8EE628}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def Notify(self) -> hints.Hresult: ...
+
+
+class ISpNotifyTranslator(ISpNotifySink):
+    """ISpNotifyTranslator Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{ACA16614-5D3D-11D2-960E-00C04F8EE628}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def InitWindowMessage(self, hWnd: hints.Incomplete, Msg: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def InitCallback(self, pfnCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def InitSpNotifyCallback(self, pSpCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
+        def InitWin32Event(self, hEvent: hints.Incomplete, fCloseHandleOnRelease: hints.Incomplete) -> hints.Hresult: ...
+        def Wait(self, dwMilliseconds: hints.Incomplete) -> hints.Hresult: ...
+        def GetEventHandle(self) -> hints.Hresult: ...
+
+
+SpNotifyTranslator._com_interfaces_ = [ISpNotifyTranslator]
+
+
+class __MIDL___MIDL_itf_sapi_0000_0020_0001(Union):
     pass
 
 
-SPSERIALIZEDRESULT._fields_ = [
-    ('ulSerializedSize', c_ulong),
+__MIDL___MIDL_itf_sapi_0000_0020_0001._fields_ = [
+    ('ulId', c_ulong),
+    ('__MIDL____MIDL_itf_sapi_0000_00200000', __MIDL___MIDL_itf_sapi_0000_0020_0002),
 ]
 
-assert sizeof(SPSERIALIZEDRESULT) == 4, sizeof(SPSERIALIZEDRESULT)
-assert alignment(SPSERIALIZEDRESULT) == 4, alignment(SPSERIALIZEDRESULT)
-
-ISpeechLexiconPronunciation._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Type'), 'propget'],
-        HRESULT,
-        'Type',
-        (['out', 'retval'], POINTER(SpeechLexiconType), 'LexiconType')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('LangId'), 'propget'],
-        HRESULT,
-        'LangId',
-        (['out', 'retval'], POINTER(c_int), 'LangId')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('PartOfSpeech'), 'propget'],
-        HRESULT,
-        'PartOfSpeech',
-        (['out', 'retval'], POINTER(SpeechPartOfSpeech), 'PartOfSpeech')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('PhoneIds'), 'propget'],
-        HRESULT,
-        'PhoneIds',
-        (['out', 'retval'], POINTER(VARIANT), 'PhoneIds')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('Symbolic'), 'propget'],
-        HRESULT,
-        'Symbolic',
-        (['out', 'retval'], POINTER(BSTR), 'Symbolic')
-    ),
-]
-
-################################################################
-# code template for ISpeechLexiconPronunciation implementation
-# class ISpeechLexiconPronunciation_Impl(object):
-#     @property
-#     def Type(self):
-#         'Type'
-#         #return LexiconType
-#
-#     @property
-#     def LangId(self):
-#         'LangId'
-#         #return LangId
-#
-#     @property
-#     def PartOfSpeech(self):
-#         'PartOfSpeech'
-#         #return PartOfSpeech
-#
-#     @property
-#     def PhoneIds(self):
-#         'PhoneIds'
-#         #return PhoneIds
-#
-#     @property
-#     def Symbolic(self):
-#         'Symbolic'
-#         #return Symbolic
-#
+assert sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0001) == 4, sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0001)
+assert alignment(__MIDL___MIDL_itf_sapi_0000_0020_0001) == 4, alignment(__MIDL___MIDL_itf_sapi_0000_0020_0001)
 
 
-class ISpPhrase(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpPhrase Interface"""
+class ISpeechRecoResult(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecoResult Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{1A5C0354-B621-4B5A-8791-D306ED379E53}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetPhrase(self) -> hints.Incomplete: ...
-        def GetSerializedPhrase(self) -> hints.Incomplete: ...
-        def GetText(self, ulStart: hints.Incomplete, ulCount: hints.Incomplete, fUseTextReplacements: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def Discard(self, dwValueTypes: hints.Incomplete) -> hints.Hresult: ...
-
-
-class ISpRecoResult(ISpPhrase):
-    """ISpRecoResult Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{20B053BE-E235-43CD-9A2A-8D17A48B7842}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetResultTimes(self) -> hints.Incomplete: ...
-        def GetAlternates(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete, ulRequestCount: hints.Incomplete) -> hints.Tuple['ISpPhraseAlt', hints.Incomplete]: ...
-        def GetAudio(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete) -> 'ISpStreamFormat': ...
-        def SpeakAudio(self, ulStartElement: hints.Incomplete, cElements: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
-        def Serialize(self) -> hints.Incomplete: ...
-        def ScaleAudio(self, pAudioFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
-        def GetRecoContext(self) -> 'ISpRecoContext': ...
-
-
-class SPPHRASE(Structure):
-    pass
-
-
-class SPSERIALIZEDPHRASE(Structure):
-    pass
-
-
-ISpPhrase._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetPhrase',
-        (['out'], POINTER(POINTER(SPPHRASE)), 'ppCoMemPhrase')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetSerializedPhrase',
-        (['out'], POINTER(POINTER(SPSERIALIZEDPHRASE)), 'ppCoMemPhrase')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetText',
-        (['in'], c_ulong, 'ulStart'),
-        (['in'], c_ulong, 'ulCount'),
-        (['in'], c_int, 'fUseTextReplacements'),
-        (['out'], POINTER(WSTRING), 'ppszCoMemText'),
-        (['out', 'optional'], POINTER(c_ubyte), 'pbDisplayAttributes')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Discard',
-        (['in'], c_ulong, 'dwValueTypes')
-    ),
-]
-
-################################################################
-# code template for ISpPhrase implementation
-# class ISpPhrase_Impl(object):
-#     def GetPhrase(self):
-#         '-no docstring-'
-#         #return ppCoMemPhrase
-#
-#     def GetSerializedPhrase(self):
-#         '-no docstring-'
-#         #return ppCoMemPhrase
-#
-#     def GetText(self, ulStart, ulCount, fUseTextReplacements):
-#         '-no docstring-'
-#         #return ppszCoMemText, pbDisplayAttributes
-#
-#     def Discard(self, dwValueTypes):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class SPRECORESULTTIMES(Structure):
-    pass
-
-
-class ISpPhraseAlt(ISpPhrase):
-    """ISpPhraseAlt Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{8FCEBC98-4E49-4067-9C6C-D86A0E092E3D}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetAltInfo(self) -> hints.Tuple['ISpPhrase', hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def Commit(self) -> hints.Hresult: ...
-
-
-class IStream(ISequentialStream):
-    _case_insensitive_ = True
-    _iid_ = GUID('{0000000C-0000-0000-C000-000000000046}')
-    _idlflags_ = []
-
-    if TYPE_CHECKING:  # commembers
-        def RemoteSeek(self, dlibMove: hints.Incomplete, dwOrigin: hints.Incomplete) -> hints.Incomplete: ...
-        def SetSize(self, libNewSize: hints.Incomplete) -> hints.Hresult: ...
-        def RemoteCopyTo(self, pstm: hints.Incomplete, cb: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def Commit(self, grfCommitFlags: hints.Incomplete) -> hints.Hresult: ...
-        def Revert(self) -> hints.Hresult: ...
-        def LockRegion(self, libOffset: hints.Incomplete, cb: hints.Incomplete, dwLockType: hints.Incomplete) -> hints.Hresult: ...
-        def UnlockRegion(self, libOffset: hints.Incomplete, cb: hints.Incomplete, dwLockType: hints.Incomplete) -> hints.Hresult: ...
-        def Stat(self, grfStatFlag: hints.Incomplete) -> hints.Incomplete: ...
-        def Clone(self) -> 'IStream': ...
-
-
-class ISpStreamFormat(IStream):
-    """ISpStreamFormat Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{BED530BE-2606-4F4D-A1C0-54C5CDA5566F}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetFormat(self, pguidFormatId: hints.Incomplete) -> hints.Incomplete: ...
-
-
-class WAVEFORMATEX(Structure):
-    pass
-
-
-class ISpNotifySource(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpNotifySource Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{5EFF4AEF-8487-11D2-961C-00C04F8EE628}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetNotifySink(self, pNotifySink: hints.Incomplete) -> hints.Hresult: ...
-        def SetNotifyWindowMessage(self, hWnd: hints.Incomplete, Msg: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def SetNotifyCallbackFunction(self, pfnCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def SetNotifyCallbackInterface(self, pSpCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def SetNotifyWin32Event(self) -> hints.Hresult: ...
-        def WaitForNotifyEvent(self, dwMilliseconds: hints.Incomplete) -> hints.Hresult: ...
-        def GetNotifyEventHandle(self) -> hints.Hresult: ...
-
-
-class ISpEventSource(ISpNotifySource):
-    """ISpEventSource Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{BE7A9CCE-5F9E-11D2-960F-00C04F8EE628}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetInterest(self, ullEventInterest: hints.Incomplete, ullQueuedInterest: hints.Incomplete) -> hints.Hresult: ...
-        def GetEvents(self, ulCount: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def GetInfo(self) -> hints.Incomplete: ...
-
-
-class ISpRecoContext(ISpEventSource):
-    """ISpRecoContext Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{F740A62F-7C15-489E-8234-940A33D9272D}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetRecognizer(self) -> 'ISpRecognizer': ...
-        def CreateGrammar(self, ullGrammarID: hints.Incomplete) -> 'ISpRecoGrammar': ...
-        def GetStatus(self) -> hints.Incomplete: ...
-        def GetMaxAlternates(self, pcAlternates: hints.Incomplete) -> hints.Hresult: ...
-        def SetMaxAlternates(self, cAlternates: hints.Incomplete) -> hints.Hresult: ...
-        def SetAudioOptions(self, Options: hints.Incomplete, pAudioFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
-        def GetAudioOptions(self, pOptions: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def DeserializeResult(self, pSerializedResult: hints.Incomplete) -> 'ISpRecoResult': ...
-        def Bookmark(self, Options: hints.Incomplete, ullStreamPosition: hints.Incomplete, lparamEvent: hints.Incomplete) -> hints.Hresult: ...
-        def SetAdaptationData(self, pAdaptationData: hints.Incomplete, cch: hints.Incomplete) -> hints.Hresult: ...
-        def Pause(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
-        def Resume(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
-        def SetVoice(self, pVoice: hints.Incomplete, fAllowFormatChanges: hints.Incomplete) -> hints.Hresult: ...
-        def GetVoice(self) -> 'ISpVoice': ...
-        def SetVoicePurgeEvent(self, ullEventInterest: hints.Incomplete) -> hints.Hresult: ...
-        def GetVoicePurgeEvent(self) -> hints.Incomplete: ...
-        def SetContextState(self, eContextState: hints.Incomplete) -> hints.Hresult: ...
-        def GetContextState(self) -> hints.Incomplete: ...
-
-
-ISpRecoResult._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetResultTimes',
-        (['out'], POINTER(SPRECORESULTTIMES), 'pTimes')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetAlternates',
-        (['in'], c_ulong, 'ulStartElement'),
-        (['in'], c_ulong, 'cElements'),
-        (['in'], c_ulong, 'ulRequestCount'),
-        (['out'], POINTER(POINTER(ISpPhraseAlt)), 'ppPhrases'),
-        (['out'], POINTER(c_ulong), 'pcPhrasesReturned')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetAudio',
-        (['in'], c_ulong, 'ulStartElement'),
-        (['in'], c_ulong, 'cElements'),
-        (['out'], POINTER(POINTER(ISpStreamFormat)), 'ppStream')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SpeakAudio',
-        (['in'], c_ulong, 'ulStartElement'),
-        (['in'], c_ulong, 'cElements'),
-        (['in'], c_ulong, 'dwFlags'),
-        (['out'], POINTER(c_ulong), 'pulStreamNumber')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Serialize',
-        (
-            ['out'],
-            POINTER(POINTER(SPSERIALIZEDRESULT)),
-            'ppCoMemSerializedResult',
-        )
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'ScaleAudio',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pAudioFormatId',
-        ),
-        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecoContext',
-        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppRecoContext')
-    ),
-]
-
-################################################################
-# code template for ISpRecoResult implementation
-# class ISpRecoResult_Impl(object):
-#     def GetResultTimes(self):
-#         '-no docstring-'
-#         #return pTimes
-#
-#     def GetAlternates(self, ulStartElement, cElements, ulRequestCount):
-#         '-no docstring-'
-#         #return ppPhrases, pcPhrasesReturned
-#
-#     def GetAudio(self, ulStartElement, cElements):
-#         '-no docstring-'
-#         #return ppStream
-#
-#     def SpeakAudio(self, ulStartElement, cElements, dwFlags):
-#         '-no docstring-'
-#         #return pulStreamNumber
-#
-#     def Serialize(self):
-#         '-no docstring-'
-#         #return ppCoMemSerializedResult
-#
-#     def ScaleAudio(self, pAudioFormatId, pWaveFormatEx):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetRecoContext(self):
-#         '-no docstring-'
-#         #return ppRecoContext
-#
-
-SPRECORESULTTIMES._fields_ = [
-    ('ftStreamTime', _FILETIME),
-    ('ullLength', c_ulonglong),
-    ('dwTickCount', c_ulong),
-    ('ullStart', c_ulonglong),
-]
-
-assert sizeof(SPRECORESULTTIMES) == 32, sizeof(SPRECORESULTTIMES)
-assert alignment(SPRECORESULTTIMES) == 8, alignment(SPRECORESULTTIMES)
-
-
-class ISpeechGrammarRuleState(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechGrammarRuleState Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{D4286F2C-EE67-45AE-B928-28D695362EDA}')
+    _iid_ = GUID('{ED2879CF-CED9-4EE6-A534-DE0191D5468D}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_Rule(self) -> 'ISpeechGrammarRule': ...
-        Rule = hints.normal_property(_get_Rule)
-        def _get_Transitions(self) -> 'ISpeechGrammarRuleStateTransitions': ...
-        Transitions = hints.normal_property(_get_Transitions)
-        def AddWordTransition(self, DestState: hints.Incomplete, Words: hints.Incomplete, Separators: hints.Incomplete = ..., Type: hints.Incomplete = ..., PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AddRuleTransition(self, DestinationState: hints.Incomplete, Rule: hints.Incomplete, PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AddSpecialTransition(self, DestinationState: hints.Incomplete, Type: hints.Incomplete, PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
+        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
+        RecoContext = hints.normal_property(_get_RecoContext)
+        def _get_Times(self) -> 'ISpeechRecoResultTimes': ...
+        Times = hints.normal_property(_get_Times)
+        def _get_AudioFormat(self) -> 'ISpeechAudioFormat': ...
+        def _setref_AudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
+        AudioFormat = hints.normal_property(_get_AudioFormat, _setref_AudioFormat)
+        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
+        PhraseInfo = hints.normal_property(_get_PhraseInfo)
+        def Alternates(self, RequestCount: hints.Incomplete, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechPhraseAlternates': ...
+        def Audio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechMemoryStream': ...
+        def SpeakAudio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def SaveToMemory(self) -> hints.Incomplete: ...
+        def DiscardResultInfo(self, ValueTypes: hints.Incomplete) -> hints.Hresult: ...
 
 
-ISpeechGrammarRule._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('RuleAttributes'), 'propget'],
-        HRESULT,
-        'Attributes',
-        (['out', 'retval'], POINTER(SpeechRuleAttributes), 'Attributes')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('InitialState'), 'propget'],
-        HRESULT,
-        'InitialState',
-        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRuleState)), 'State')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('Name'), 'propget'],
-        HRESULT,
-        'Name',
-        (['out', 'retval'], POINTER(BSTR), 'Name')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Id'), 'propget'],
-        HRESULT,
-        'Id',
-        (['out', 'retval'], POINTER(c_int), 'Id')
-    ),
-    COMMETHOD([dispid(5), helpstring('Clear')], HRESULT, 'Clear'),
-    COMMETHOD(
-        [dispid(6), helpstring('AddResource')],
-        HRESULT,
-        'AddResource',
-        (['in'], BSTR, 'ResourceName'),
-        (['in'], BSTR, 'ResourceValue')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('AddState')],
-        HRESULT,
-        'AddState',
-        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRuleState)), 'State')
-    ),
-]
-
-################################################################
-# code template for ISpeechGrammarRule implementation
-# class ISpeechGrammarRule_Impl(object):
-#     @property
-#     def Attributes(self):
-#         'RuleAttributes'
-#         #return Attributes
-#
-#     @property
-#     def InitialState(self):
-#         'InitialState'
-#         #return State
-#
-#     @property
-#     def Name(self):
-#         'Name'
-#         #return Name
-#
-#     @property
-#     def Id(self):
-#         'Id'
-#         #return Id
-#
-#     def Clear(self):
-#         'Clear'
-#         #return 
-#
-#     def AddResource(self, ResourceName, ResourceValue):
-#         'AddResource'
-#         #return 
-#
-#     def AddState(self):
-#         'AddState'
-#         #return State
-#
-
-
-class ISpeechObjectTokens(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechObjectTokens Interface"""
+class ISpeechRecoResult2(ISpeechRecoResult):
+    """ISpeechRecoResult2 Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{9285B776-2E7B-4BC0-B53E-580EB6FA967F}')
+    _iid_ = GUID('{8E0A246D-D3C8-45DE-8657-04290C458C3C}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def SetTextFeedback(self, Feedback: hints.Incomplete, WasSuccessful: hints.Incomplete) -> hints.Hresult: ...
+
+
+class ISpeechRecoResultTimes(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecoResultTimes Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{62B3B8FB-F6E7-41BE-BDCB-056B1C29EFC0}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_StreamTime(self) -> hints.Incomplete: ...
+        StreamTime = hints.normal_property(_get_StreamTime)
+        def _get_Length(self) -> hints.Incomplete: ...
+        Length = hints.normal_property(_get_Length)
+        def _get_TickCount(self) -> hints.Incomplete: ...
+        TickCount = hints.normal_property(_get_TickCount)
+        def _get_OffsetFromStart(self) -> hints.Incomplete: ...
+        OffsetFromStart = hints.normal_property(_get_OffsetFromStart)
+
+
+class ISpeechPhraseInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseInfo Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{961559CF-4E67-4662-8BF0-D93F1FCD61B3}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_LanguageId(self) -> hints.Incomplete: ...
+        LanguageId = hints.normal_property(_get_LanguageId)
+        def _get_GrammarId(self) -> hints.Incomplete: ...
+        GrammarId = hints.normal_property(_get_GrammarId)
+        def _get_StartTime(self) -> hints.Incomplete: ...
+        StartTime = hints.normal_property(_get_StartTime)
+        def _get_AudioStreamPosition(self) -> hints.Incomplete: ...
+        AudioStreamPosition = hints.normal_property(_get_AudioStreamPosition)
+        def _get_AudioSizeBytes(self) -> hints.Incomplete: ...
+        AudioSizeBytes = hints.normal_property(_get_AudioSizeBytes)
+        def _get_RetainedSizeBytes(self) -> hints.Incomplete: ...
+        RetainedSizeBytes = hints.normal_property(_get_RetainedSizeBytes)
+        def _get_AudioSizeTime(self) -> hints.Incomplete: ...
+        AudioSizeTime = hints.normal_property(_get_AudioSizeTime)
+        def _get_Rule(self) -> 'ISpeechPhraseRule': ...
+        Rule = hints.normal_property(_get_Rule)
+        def _get_Properties(self) -> 'ISpeechPhraseProperties': ...
+        Properties = hints.normal_property(_get_Properties)
+        def _get_Elements(self) -> 'ISpeechPhraseElements': ...
+        Elements = hints.normal_property(_get_Elements)
+        def _get_Replacements(self) -> 'ISpeechPhraseReplacements': ...
+        Replacements = hints.normal_property(_get_Replacements)
+        def _get_EngineId(self) -> hints.Incomplete: ...
+        EngineId = hints.normal_property(_get_EngineId)
+        def _get_EnginePrivateData(self) -> hints.Incomplete: ...
+        EnginePrivateData = hints.normal_property(_get_EnginePrivateData)
+        def SaveToMemory(self) -> hints.Incomplete: ...
+        def GetText(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., UseReplacements: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def GetDisplayAttributes(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., UseReplacements: hints.Incomplete = ...) -> hints.Incomplete: ...
+
+
+class ISpeechPhraseAlternates(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseAlternates Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{B238B6D5-F276-4C3D-A6C1-2974801C3CC2}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
         def _get_Count(self) -> hints.Incomplete: ...
         Count = hints.normal_property(_get_Count)
         __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechObjectToken': ...
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseAlternate': ...
         __call__ = hints.to_dunder_call(Item)
         __getitem__ = hints.to_dunder_getitem(Item)
         __setitem__ = hints.to_dunder_setitem(Item)
@@ -2039,69 +3537,456 @@ class ISpeechObjectTokens(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2
         __iter__ = hints.to_dunder_iter(_NewEnum)
 
 
-class ISpeechObjectToken(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechObjectToken Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{C74A3ADC-B727-4500-A84A-B526721C8B8C}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Id(self) -> hints.Incomplete: ...
-        Id = hints.normal_property(_get_Id)
-        def _get_DataKey(self) -> 'ISpeechDataKey': ...
-        DataKey = hints.normal_property(_get_DataKey)
-        def _get_Category(self) -> 'ISpeechObjectTokenCategory': ...
-        Category = hints.normal_property(_get_Category)
-        def GetDescription(self, Locale: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def SetId(self, Id: hints.Incomplete, CategoryID: hints.Incomplete = ..., CreateIfNotExist: hints.Incomplete = ...) -> hints.Hresult: ...
-        def GetAttribute(self, AttributeName: hints.Incomplete) -> hints.Incomplete: ...
-        def CreateInstance(self, pUnkOuter: hints.Incomplete = ..., ClsContext: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def Remove(self, ObjectStorageCLSID: hints.Incomplete) -> hints.Hresult: ...
-        def GetStorageFileName(self, ObjectStorageCLSID: hints.Incomplete, KeyName: hints.Incomplete, FileName: hints.Incomplete, Folder: hints.Incomplete) -> hints.Incomplete: ...
-        def RemoveStorageFileName(self, ObjectStorageCLSID: hints.Incomplete, KeyName: hints.Incomplete, DeleteFile: hints.Incomplete) -> hints.Hresult: ...
-        def IsUISupported(self, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ..., Object: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def DisplayUI(self, hWnd: hints.Incomplete, Title: hints.Incomplete, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ..., Object: hints.Incomplete = ...) -> hints.Hresult: ...
-        def MatchesAttributes(self, Attributes: hints.Incomplete) -> hints.Incomplete: ...
-
-
-ISpeechObjectTokens._methods_ = [
+ISpeechRecoResult._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
+        [dispid(1), helpstring('RecoContext'), 'propget'],
         HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
+        'RecoContext',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
     ),
     COMMETHOD(
-        [dispid(0), helpstring('Item')],
+        [dispid(2), helpstring('Times'), 'propget'],
         HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Token')
+        'Times',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResultTimes)), 'Times')
     ),
     COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
+        [dispid(3), helpstring('AudioFormat'), 'propputref'],
         HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'ppEnumVARIANT')
+        'AudioFormat',
+        (['in'], POINTER(ISpeechAudioFormat), 'Format')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('AudioFormat'), 'propget'],
+        HRESULT,
+        'AudioFormat',
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('PhraseInfo'), 'propget'],
+        HRESULT,
+        'PhraseInfo',
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('Alternates')],
+        HRESULT,
+        'Alternates',
+        (['in'], c_int, 'RequestCount'),
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechPhraseAlternates)),
+            'Alternates',
+        )
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('Audio')],
+        HRESULT,
+        'Audio',
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
+        (['out', 'retval'], POINTER(POINTER(ISpeechMemoryStream)), 'Stream')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('SpeakAudio')],
+        HRESULT,
+        'SpeakAudio',
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
+        (['in', 'optional'], SpeechVoiceSpeakFlags, 'Flags', 0),
+        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('SaveToMemory')],
+        HRESULT,
+        'SaveToMemory',
+        (['out', 'retval'], POINTER(VARIANT), 'ResultBlock')
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('DiscardResultInfo')],
+        HRESULT,
+        'DiscardResultInfo',
+        (['in'], SpeechDiscardType, 'ValueTypes')
     ),
 ]
 
 ################################################################
-# code template for ISpeechObjectTokens implementation
-# class ISpeechObjectTokens_Impl(object):
+# code template for ISpeechRecoResult implementation
+# class ISpeechRecoResult_Impl(object):
 #     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
-#
-#     def Item(self, Index):
-#         'Item'
-#         #return Token
+#     def RecoContext(self):
+#         'RecoContext'
+#         #return RecoContext
 #
 #     @property
-#     def _NewEnum(self):
-#         'Enumerates the tokens'
-#         #return ppEnumVARIANT
+#     def Times(self):
+#         'Times'
+#         #return Times
+#
+#     @property
+#     def AudioFormat(self, Format):
+#         'AudioFormat'
+#         #return 
+#
+#     @property
+#     def PhraseInfo(self):
+#         'PhraseInfo'
+#         #return PhraseInfo
+#
+#     def Alternates(self, RequestCount, StartElement, Elements):
+#         'Alternates'
+#         #return Alternates
+#
+#     def Audio(self, StartElement, Elements):
+#         'Audio'
+#         #return Stream
+#
+#     def SpeakAudio(self, StartElement, Elements, Flags):
+#         'SpeakAudio'
+#         #return StreamNumber
+#
+#     def SaveToMemory(self):
+#         'SaveToMemory'
+#         #return ResultBlock
+#
+#     def DiscardResultInfo(self, ValueTypes):
+#         'DiscardResultInfo'
+#         #return 
+#
+
+ISpeechRecoResult2._methods_ = [
+    COMMETHOD(
+        [dispid(12), helpstring('DiscardResultInfo')],
+        HRESULT,
+        'SetTextFeedback',
+        (['in'], BSTR, 'Feedback'),
+        (['in'], VARIANT_BOOL, 'WasSuccessful')
+    ),
+]
+
+################################################################
+# code template for ISpeechRecoResult2 implementation
+# class ISpeechRecoResult2_Impl(object):
+#     def SetTextFeedback(self, Feedback, WasSuccessful):
+#         'DiscardResultInfo'
+#         #return 
+#
+
+
+class ISpeechRecognizerStatus(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecognizerStatus Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{BFF9E781-53EC-484E-BB8A-0E1B5551E35C}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_AudioStatus(self) -> 'ISpeechAudioStatus': ...
+        AudioStatus = hints.normal_property(_get_AudioStatus)
+        def _get_CurrentStreamPosition(self) -> hints.Incomplete: ...
+        CurrentStreamPosition = hints.normal_property(_get_CurrentStreamPosition)
+        def _get_CurrentStreamNumber(self) -> hints.Incomplete: ...
+        CurrentStreamNumber = hints.normal_property(_get_CurrentStreamNumber)
+        def _get_NumberOfActiveRules(self) -> hints.Incomplete: ...
+        NumberOfActiveRules = hints.normal_property(_get_NumberOfActiveRules)
+        def _get_ClsidEngine(self) -> hints.Incomplete: ...
+        ClsidEngine = hints.normal_property(_get_ClsidEngine)
+        def _get_SupportedLanguages(self) -> hints.Incomplete: ...
+        SupportedLanguages = hints.normal_property(_get_SupportedLanguages)
+
+
+ISpeechRecognizer._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Recognizer'), 'propputref'],
+        HRESULT,
+        'Recognizer',
+        (['in'], POINTER(ISpeechObjectToken), 'Recognizer')
+    ),
+    COMMETHOD(
+        [dispid(1), helpstring('Recognizer'), 'propget'],
+        HRESULT,
+        'Recognizer',
+        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Recognizer')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('AllowAudioInputFormatChangesOnNextSet'), 'hidden', 'propput'],
+        HRESULT,
+        'AllowAudioInputFormatChangesOnNextSet',
+        (['in'], VARIANT_BOOL, 'Allow')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('AllowAudioInputFormatChangesOnNextSet'), 'hidden', 'propget'],
+        HRESULT,
+        'AllowAudioInputFormatChangesOnNextSet',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Allow')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('AudioInput'), 'propputref'],
+        HRESULT,
+        'AudioInput',
+        (['in', 'optional'], POINTER(ISpeechObjectToken), 'AudioInput', 0)
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('AudioInput'), 'propget'],
+        HRESULT,
+        'AudioInput',
+        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'AudioInput')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AudioInputStream'), 'propputref'],
+        HRESULT,
+        'AudioInputStream',
+        (['in', 'optional'], POINTER(ISpeechBaseStream), 'AudioInputStream', 0)
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AudioInputStream'), 'propget'],
+        HRESULT,
+        'AudioInputStream',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechBaseStream)),
+            'AudioInputStream',
+        )
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('IsShared'), 'propget'],
+        HRESULT,
+        'IsShared',
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Shared')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('State'), 'propput'],
+        HRESULT,
+        'State',
+        (['in'], SpeechRecognizerState, 'State')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('State'), 'propget'],
+        HRESULT,
+        'State',
+        (['out', 'retval'], POINTER(SpeechRecognizerState), 'State')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('Status'), 'propget'],
+        HRESULT,
+        'Status',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecognizerStatus)), 'Status')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('Profile'), 'propputref'],
+        HRESULT,
+        'Profile',
+        (['in', 'optional'], POINTER(ISpeechObjectToken), 'Profile', 0)
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('Profile'), 'propget'],
+        HRESULT,
+        'Profile',
+        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Profile')
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('EmulateRecognition')],
+        HRESULT,
+        'EmulateRecognition',
+        (['in'], VARIANT, 'TextElements'),
+        (['in', 'optional'], POINTER(VARIANT), 'ElementDisplayAttributes'),
+        (['in', 'optional'], c_int, 'LanguageId', 0)
+    ),
+    COMMETHOD(
+        [dispid(10), helpstring('CreateRecoContext')],
+        HRESULT,
+        'CreateRecoContext',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'NewContext')
+    ),
+    COMMETHOD(
+        [dispid(11), helpstring('GetFormat')],
+        HRESULT,
+        'GetFormat',
+        (['in'], SpeechFormatType, 'Type'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
+    ),
+    COMMETHOD(
+        [dispid(12), helpstring('SetPropertyNumber'), 'hidden'],
+        HRESULT,
+        'SetPropertyNumber',
+        (['in'], BSTR, 'Name'),
+        (['in'], c_int, 'Value'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
+    ),
+    COMMETHOD(
+        [dispid(13), helpstring('GetPropertyNumber'), 'hidden'],
+        HRESULT,
+        'GetPropertyNumber',
+        (['in'], BSTR, 'Name'),
+        (['in', 'out'], POINTER(c_int), 'Value'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
+    ),
+    COMMETHOD(
+        [dispid(14), helpstring('SetPropertyString'), 'hidden'],
+        HRESULT,
+        'SetPropertyString',
+        (['in'], BSTR, 'Name'),
+        (['in'], BSTR, 'Value'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
+    ),
+    COMMETHOD(
+        [dispid(15), helpstring('GetPropertyString'), 'hidden'],
+        HRESULT,
+        'GetPropertyString',
+        (['in'], BSTR, 'Name'),
+        (['in', 'out'], POINTER(BSTR), 'Value'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
+    ),
+    COMMETHOD(
+        [dispid(16), helpstring('IsUISupported')],
+        HRESULT,
+        'IsUISupported',
+        (['in'], BSTR, 'TypeOfUI'),
+        (['in', 'optional'], POINTER(VARIANT), 'ExtraData'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
+    ),
+    COMMETHOD(
+        [dispid(17), helpstring('DisplayUI')],
+        HRESULT,
+        'DisplayUI',
+        (['in'], c_int, 'hWndParent'),
+        (['in'], BSTR, 'Title'),
+        (['in'], BSTR, 'TypeOfUI'),
+        (['in', 'optional'], POINTER(VARIANT), 'ExtraData')
+    ),
+    COMMETHOD(
+        [dispid(18), helpstring('GetRecognizers')],
+        HRESULT,
+        'GetRecognizers',
+        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
+        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechObjectTokens)),
+            'ObjectTokens',
+        )
+    ),
+    COMMETHOD(
+        [dispid(19), helpstring('GetAudioInputs')],
+        HRESULT,
+        'GetAudioInputs',
+        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
+        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechObjectTokens)),
+            'ObjectTokens',
+        )
+    ),
+    COMMETHOD(
+        [dispid(20), helpstring('GetProfiles')],
+        HRESULT,
+        'GetProfiles',
+        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
+        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechObjectTokens)),
+            'ObjectTokens',
+        )
+    ),
+]
+
+################################################################
+# code template for ISpeechRecognizer implementation
+# class ISpeechRecognizer_Impl(object):
+#     @property
+#     def Recognizer(self, Recognizer):
+#         'Recognizer'
+#         #return 
+#
+#     def _get(self):
+#         'AllowAudioInputFormatChangesOnNextSet'
+#         #return Allow
+#     def _set(self, Allow):
+#         'AllowAudioInputFormatChangesOnNextSet'
+#     AllowAudioInputFormatChangesOnNextSet = property(_get, _set, doc = _set.__doc__)
+#
+#     @property
+#     def AudioInput(self, AudioInput):
+#         'AudioInput'
+#         #return 
+#
+#     @property
+#     def AudioInputStream(self, AudioInputStream):
+#         'AudioInputStream'
+#         #return 
+#
+#     @property
+#     def IsShared(self):
+#         'IsShared'
+#         #return Shared
+#
+#     def _get(self):
+#         'State'
+#         #return State
+#     def _set(self, State):
+#         'State'
+#     State = property(_get, _set, doc = _set.__doc__)
+#
+#     @property
+#     def Status(self):
+#         'Status'
+#         #return Status
+#
+#     @property
+#     def Profile(self, Profile):
+#         'Profile'
+#         #return 
+#
+#     def EmulateRecognition(self, TextElements, ElementDisplayAttributes, LanguageId):
+#         'EmulateRecognition'
+#         #return 
+#
+#     def CreateRecoContext(self):
+#         'CreateRecoContext'
+#         #return NewContext
+#
+#     def GetFormat(self, Type):
+#         'GetFormat'
+#         #return Format
+#
+#     def SetPropertyNumber(self, Name, Value):
+#         'SetPropertyNumber'
+#         #return Supported
+#
+#     def GetPropertyNumber(self, Name):
+#         'GetPropertyNumber'
+#         #return Value, Supported
+#
+#     def SetPropertyString(self, Name, Value):
+#         'SetPropertyString'
+#         #return Supported
+#
+#     def GetPropertyString(self, Name):
+#         'GetPropertyString'
+#         #return Value, Supported
+#
+#     def IsUISupported(self, TypeOfUI, ExtraData):
+#         'IsUISupported'
+#         #return Supported
+#
+#     def DisplayUI(self, hWndParent, Title, TypeOfUI, ExtraData):
+#         'DisplayUI'
+#         #return 
+#
+#     def GetRecognizers(self, RequiredAttributes, OptionalAttributes):
+#         'GetRecognizers'
+#         #return ObjectTokens
+#
+#     def GetAudioInputs(self, RequiredAttributes, OptionalAttributes):
+#         'GetAudioInputs'
+#         #return ObjectTokens
+#
+#     def GetProfiles(self, RequiredAttributes, OptionalAttributes):
+#         'GetProfiles'
+#         #return ObjectTokens
 #
 
 ISpPhraseAlt._methods_ = [
@@ -2130,104 +4015,57 @@ ISpPhraseAlt._methods_ = [
 #
 
 
-class ISpeechGrammarRuleStateTransitions(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechGrammarRuleStateTransitions Interface"""
+class ISpeechXMLRecoResult(ISpeechRecoResult):
+    """ISpeechXMLRecoResult Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{EABCE657-75BC-44A2-AA7F-C56476742963}')
+    _iid_ = GUID('{AAEC54AF-8F85-4924-944D-B79D39D72E19}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechGrammarRuleStateTransition': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _get__NewEnum(self) -> hints.Incomplete: ...
-        _NewEnum = hints.normal_property(_get__NewEnum)
-        __iter__ = hints.to_dunder_iter(_NewEnum)
+        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
+        def GetXMLErrorInfo(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
 
 
-ISpeechGrammarRuleState._methods_ = [
+ISpeechXMLRecoResult._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Rule'), 'propget'],
+        [dispid(10), helpstring('GetXMLResult')],
         HRESULT,
-        'Rule',
-        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRule)), 'Rule')
+        'GetXMLResult',
+        (['in'], SPXMLRESULTOPTIONS, 'Options'),
+        (['out', 'retval'], POINTER(BSTR), 'pResult')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('Transitions'), 'propget'],
+        [dispid(11), helpstring('GetXMLErrorInfo')],
         HRESULT,
-        'Transitions',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechGrammarRuleStateTransitions)),
-            'Transitions',
-        )
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AddWordTransition')],
-        HRESULT,
-        'AddWordTransition',
-        (['in'], POINTER(ISpeechGrammarRuleState), 'DestState'),
-        (['in'], BSTR, 'Words'),
-        (['in', 'optional'], BSTR, 'Separators', ' '),
-        (['in', 'optional'], SpeechGrammarWordType, 'Type', 1),
-        (['in', 'optional'], BSTR, 'PropertyName', ''),
-        (['in', 'optional'], c_int, 'PropertyId', 0),
-        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
-        (['in', 'optional'], c_float, 'Weight', 1.0)
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AddRuleTransition')],
-        HRESULT,
-        'AddRuleTransition',
-        (['in'], POINTER(ISpeechGrammarRuleState), 'DestinationState'),
-        (['in'], POINTER(ISpeechGrammarRule), 'Rule'),
-        (['in', 'optional'], BSTR, 'PropertyName', ''),
-        (['in', 'optional'], c_int, 'PropertyId', 0),
-        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
-        (['in', 'optional'], c_float, 'Weight', 1.0)
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('AddSpecialTransition')],
-        HRESULT,
-        'AddSpecialTransition',
-        (['in'], POINTER(ISpeechGrammarRuleState), 'DestinationState'),
-        (['in'], SpeechSpecialTransitionType, 'Type'),
-        (['in', 'optional'], BSTR, 'PropertyName', ''),
-        (['in', 'optional'], c_int, 'PropertyId', 0),
-        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
-        (['in', 'optional'], c_float, 'Weight', 1.0)
+        'GetXMLErrorInfo',
+        (['out'], POINTER(c_int), 'LineNumber'),
+        (['out'], POINTER(BSTR), 'ScriptLine'),
+        (['out'], POINTER(BSTR), 'Source'),
+        (['out'], POINTER(BSTR), 'Description'),
+        (['out'], POINTER(c_int), 'ResultCode'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'IsError')
     ),
 ]
 
 ################################################################
-# code template for ISpeechGrammarRuleState implementation
-# class ISpeechGrammarRuleState_Impl(object):
-#     @property
-#     def Rule(self):
-#         'Rule'
-#         #return Rule
+# code template for ISpeechXMLRecoResult implementation
+# class ISpeechXMLRecoResult_Impl(object):
+#     def GetXMLResult(self, Options):
+#         'GetXMLResult'
+#         #return pResult
 #
-#     @property
-#     def Transitions(self):
-#         'Transitions'
-#         #return Transitions
+#     def GetXMLErrorInfo(self):
+#         'GetXMLErrorInfo'
+#         #return LineNumber, ScriptLine, Source, Description, ResultCode, IsError
 #
-#     def AddWordTransition(self, DestState, Words, Separators, Type, PropertyName, PropertyId, PropertyValue, Weight):
-#         'AddWordTransition'
-#         #return 
-#
-#     def AddRuleTransition(self, DestinationState, Rule, PropertyName, PropertyId, PropertyValue, Weight):
-#         'AddRuleTransition'
-#         #return 
-#
-#     def AddSpecialTransition(self, DestinationState, Type, PropertyName, PropertyId, PropertyValue, Weight):
-#         'AddSpecialTransition'
-#         #return 
-#
+
+
+class SpPhoneConverter(CoClass):
+    """SpPhoneConverter Class"""
+    _reg_clsid_ = GUID('{9185F743-1143-4C28-86B5-BFF14F20E5C8}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
 
 
 class ISpeechPhoneConverter(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -2243,6 +4081,354 @@ class ISpeechPhoneConverter(comtypes.gen._00020430_0000_0000_C000_000000000046_0
         def PhoneToId(self, Phonemes: hints.Incomplete) -> hints.Incomplete: ...
         def IdToPhone(self, IdArray: hints.Incomplete) -> hints.Incomplete: ...
 
+
+class ISpPhoneConverter(ISpObjectWithToken):
+    """ISpPhoneConverter Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{8445C581-0CAC-4A38-ABFE-9B2CE2826455}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def PhoneToId(self, pszPhone: hints.Incomplete) -> hints.Incomplete: ...
+        def IdToPhone(self, pId: hints.Incomplete) -> hints.Incomplete: ...
+
+
+SpPhoneConverter._com_interfaces_ = [ISpeechPhoneConverter, ISpPhoneConverter, ISpPhoneticAlphabetSelection]
+
+
+class SpPhraseInfoBuilder(CoClass):
+    """SpPhraseInfoBuilder Class"""
+    _reg_clsid_ = GUID('{C23FC28D-C55F-4720-8B32-91F73C2BD5D1}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpeechPhraseInfoBuilder(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseInfoBuilder Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{3B151836-DF3A-4E0A-846C-D2ADC9334333}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def RestorePhraseFromMemory(self, PhraseInMemory: hints.Incomplete) -> 'ISpeechPhraseInfo': ...
+
+
+SpPhraseInfoBuilder._com_interfaces_ = [ISpeechPhraseInfoBuilder]
+
+SpeechPropertyComplexResponseSpeed = 'ComplexResponseSpeed'  # Constant BSTR
+
+ISpeechPhraseInfoBuilder._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('RestorePhraseFromMemory')],
+        HRESULT,
+        'RestorePhraseFromMemory',
+        (['in'], POINTER(VARIANT), 'PhraseInMemory'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
+    ),
+]
+
+################################################################
+# code template for ISpeechPhraseInfoBuilder implementation
+# class ISpeechPhraseInfoBuilder_Impl(object):
+#     def RestorePhraseFromMemory(self, PhraseInMemory):
+#         'RestorePhraseFromMemory'
+#         #return PhraseInfo
+#
+
+ISpObjectWithToken._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetObjectToken',
+        (['in'], POINTER(ISpObjectToken), 'pToken')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetObjectToken',
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
+    ),
+]
+
+################################################################
+# code template for ISpObjectWithToken implementation
+# class ISpObjectWithToken_Impl(object):
+#     def SetObjectToken(self, pToken):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetObjectToken(self):
+#         '-no docstring-'
+#         #return ppToken
+#
+
+ISpPhoneConverter._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'PhoneToId',
+        (['in'], WSTRING, 'pszPhone'),
+        (['out'], POINTER(c_ushort), 'pId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'IdToPhone',
+        (['in'], WSTRING, 'pId'),
+        (['out'], POINTER(c_ushort), 'pszPhone')
+    ),
+]
+
+################################################################
+# code template for ISpPhoneConverter implementation
+# class ISpPhoneConverter_Impl(object):
+#     def PhoneToId(self, pszPhone):
+#         '-no docstring-'
+#         #return pId
+#
+#     def IdToPhone(self, pId):
+#         '-no docstring-'
+#         #return pszPhone
+#
+
+SpeechPropertyResponseSpeed = 'ResponseSpeed'  # Constant BSTR
+
+
+class Library(object):
+    """Microsoft Speech Object Library"""
+    name = 'SpeechLib'
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class SPWORDPRONUNCIATION(Structure):
+    pass
+
+
+SPWORDPRONUNCIATIONLIST._fields_ = [
+    ('ulSize', c_ulong),
+    ('pvBuffer', POINTER(c_ubyte)),
+    ('pFirstWordPronunciation', POINTER(SPWORDPRONUNCIATION)),
+]
+
+assert sizeof(SPWORDPRONUNCIATIONLIST) == 24, sizeof(SPWORDPRONUNCIATIONLIST)
+assert alignment(SPWORDPRONUNCIATIONLIST) == 8, alignment(SPWORDPRONUNCIATIONLIST)
+
+
+class SpSharedRecoContext(CoClass):
+    """SpSharedRecoContext Class"""
+    _reg_clsid_ = GUID('{47206204-5ECA-11D2-960F-00C04F8EE628}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpRecoContext2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpRecoContext2 Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{BEAD311C-52FF-437F-9464-6B21054CA73D}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetGrammarOptions(self, eGrammarOptions: hints.Incomplete) -> hints.Hresult: ...
+        def GetGrammarOptions(self) -> hints.Incomplete: ...
+        def SetAdaptationData2(self, pAdaptationData: hints.Incomplete, cch: hints.Incomplete, pTopicName: hints.Incomplete, eAdaptationSettings: hints.Incomplete, eRelevance: hints.Incomplete) -> hints.Hresult: ...
+
+
+class _ISpeechRecoContextEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    _case_insensitive_ = True
+    _iid_ = GUID('{7B8FCB42-0E9D-4F00-A048-7B04D6179D3D}')
+    _idlflags_ = []
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        def StartStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def EndStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, StreamReleased: hints.Incomplete) -> hints.Incomplete: ...
+        def Bookmark(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, BookmarkId: hints.Incomplete, Options: hints.Incomplete) -> hints.Incomplete: ...
+        def SoundStart(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def SoundEnd(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def PhraseStart(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def Recognition(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, RecognitionType: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
+        def Hypothesis(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
+        def PropertyNumberChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, PropertyName: hints.Incomplete, NewNumberValue: hints.Incomplete) -> hints.Incomplete: ...
+        def PropertyStringChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, PropertyName: hints.Incomplete, NewStringValue: hints.Incomplete) -> hints.Incomplete: ...
+        def FalseRecognition(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
+        def Interference(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Interference: hints.Incomplete) -> hints.Incomplete: ...
+        def RequestUI(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, UIType: hints.Incomplete) -> hints.Incomplete: ...
+        def RecognizerStateChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, NewState: hints.Incomplete) -> hints.Incomplete: ...
+        def Adaptation(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def RecognitionForOtherContext(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
+        def AudioLevel(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, AudioLevel: hints.Incomplete) -> hints.Incomplete: ...
+        def EnginePrivate(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, EngineData: hints.Incomplete) -> hints.Incomplete: ...
+
+
+SpSharedRecoContext._com_interfaces_ = [ISpeechRecoContext, ISpRecoContext, ISpRecoContext2, ISpPhoneticAlphabetSelection]
+SpSharedRecoContext._outgoing_interfaces_ = [_ISpeechRecoContextEvents]
+
+
+class SPWORD(Structure):
+    pass
+
+
+SPWORDLIST._fields_ = [
+    ('ulSize', c_ulong),
+    ('pvBuffer', POINTER(c_ubyte)),
+    ('pFirstWord', POINTER(SPWORD)),
+]
+
+assert sizeof(SPWORDLIST) == 24, sizeof(SPWORDLIST)
+assert alignment(SPWORDLIST) == 8, alignment(SPWORDLIST)
+
+ISpeechDataKey._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('SetBinaryValue')],
+        HRESULT,
+        'SetBinaryValue',
+        (['in'], BSTR, 'ValueName'),
+        (['in'], VARIANT, 'Value')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('GetBinaryValue')],
+        HRESULT,
+        'GetBinaryValue',
+        (['in'], BSTR, 'ValueName'),
+        (['out', 'retval'], POINTER(VARIANT), 'Value')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SetStringValue')],
+        HRESULT,
+        'SetStringValue',
+        (['in'], BSTR, 'ValueName'),
+        (['in'], BSTR, 'Value')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('GetStringValue')],
+        HRESULT,
+        'GetStringValue',
+        (['in'], BSTR, 'ValueName'),
+        (['out', 'retval'], POINTER(BSTR), 'Value')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('SetLongValue')],
+        HRESULT,
+        'SetLongValue',
+        (['in'], BSTR, 'ValueName'),
+        (['in'], c_int, 'Value')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('GetlongValue')],
+        HRESULT,
+        'GetLongValue',
+        (['in'], BSTR, 'ValueName'),
+        (['out', 'retval'], POINTER(c_int), 'Value')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('OpenKey')],
+        HRESULT,
+        'OpenKey',
+        (['in'], BSTR, 'SubKeyName'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'SubKey')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('CreateKey')],
+        HRESULT,
+        'CreateKey',
+        (['in'], BSTR, 'SubKeyName'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'SubKey')
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('DeleteKey')],
+        HRESULT,
+        'DeleteKey',
+        (['in'], BSTR, 'SubKeyName')
+    ),
+    COMMETHOD(
+        [dispid(10), helpstring('DeleteValue')],
+        HRESULT,
+        'DeleteValue',
+        (['in'], BSTR, 'ValueName')
+    ),
+    COMMETHOD(
+        [dispid(11), helpstring('EnumKeys')],
+        HRESULT,
+        'EnumKeys',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(BSTR), 'SubKeyName')
+    ),
+    COMMETHOD(
+        [dispid(12), helpstring('EnumValues')],
+        HRESULT,
+        'EnumValues',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(BSTR), 'ValueName')
+    ),
+]
+
+################################################################
+# code template for ISpeechDataKey implementation
+# class ISpeechDataKey_Impl(object):
+#     def SetBinaryValue(self, ValueName, Value):
+#         'SetBinaryValue'
+#         #return 
+#
+#     def GetBinaryValue(self, ValueName):
+#         'GetBinaryValue'
+#         #return Value
+#
+#     def SetStringValue(self, ValueName, Value):
+#         'SetStringValue'
+#         #return 
+#
+#     def GetStringValue(self, ValueName):
+#         'GetStringValue'
+#         #return Value
+#
+#     def SetLongValue(self, ValueName, Value):
+#         'SetLongValue'
+#         #return 
+#
+#     def GetLongValue(self, ValueName):
+#         'GetlongValue'
+#         #return Value
+#
+#     def OpenKey(self, SubKeyName):
+#         'OpenKey'
+#         #return SubKey
+#
+#     def CreateKey(self, SubKeyName):
+#         'CreateKey'
+#         #return SubKey
+#
+#     def DeleteKey(self, SubKeyName):
+#         'DeleteKey'
+#         #return 
+#
+#     def DeleteValue(self, ValueName):
+#         'DeleteValue'
+#         #return 
+#
+#     def EnumKeys(self, Index):
+#         'EnumKeys'
+#         #return SubKeyName
+#
+#     def EnumValues(self, Index):
+#         'EnumValues'
+#         #return ValueName
+#
+
+
+class SPAUDIOBUFFERINFO(Structure):
+    pass
+
+
+SPAUDIOBUFFERINFO._fields_ = [
+    ('ulMsMinNotification', c_ulong),
+    ('ulMsBufferSize', c_ulong),
+    ('ulMsEventBias', c_ulong),
+]
+
+assert sizeof(SPAUDIOBUFFERINFO) == 12, sizeof(SPAUDIOBUFFERINFO)
+assert alignment(SPAUDIOBUFFERINFO) == 4, alignment(SPAUDIOBUFFERINFO)
 
 ISpeechPhoneConverter._methods_ = [
     COMMETHOD(
@@ -2291,873 +4477,6 @@ ISpeechPhoneConverter._methods_ = [
 #         'IdToPhone'
 #         #return Phonemes
 #
-
-
-class SpNotifyTranslator(CoClass):
-    """SpNotify"""
-    _reg_clsid_ = GUID('{E2AE5372-5D40-11D2-960E-00C04F8EE628}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpNotifySink(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpNotifySink Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{259684DC-37C3-11D2-9603-00C04F8EE628}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def Notify(self) -> hints.Hresult: ...
-
-
-class ISpNotifyTranslator(ISpNotifySink):
-    """ISpNotifyTranslator Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{ACA16614-5D3D-11D2-960E-00C04F8EE628}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def InitWindowMessage(self, hWnd: hints.Incomplete, Msg: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def InitCallback(self, pfnCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def InitSpNotifyCallback(self, pSpCallback: hints.Incomplete, wParam: hints.Incomplete, lParam: hints.Incomplete) -> hints.Hresult: ...
-        def InitWin32Event(self, hEvent: hints.Incomplete, fCloseHandleOnRelease: hints.Incomplete) -> hints.Hresult: ...
-        def Wait(self, dwMilliseconds: hints.Incomplete) -> hints.Hresult: ...
-        def GetEventHandle(self) -> hints.Hresult: ...
-
-
-SpNotifyTranslator._com_interfaces_ = [ISpNotifyTranslator]
-
-ISpNotifySink._methods_ = [
-    COMMETHOD([], HRESULT, 'Notify'),
-]
-
-################################################################
-# code template for ISpNotifySink implementation
-# class ISpNotifySink_Impl(object):
-#     def Notify(self):
-#         '-no docstring-'
-#         #return 
-#
-
-ISpNotifyTranslator._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'InitWindowMessage',
-        (['in'], wireHWND, 'hWnd'),
-        (['in'], c_uint, 'Msg'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'InitCallback',
-        (['in'], POINTER(c_void_p), 'pfnCallback'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'InitSpNotifyCallback',
-        (['in'], POINTER(c_void_p), 'pSpCallback'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'InitWin32Event',
-        (['in'], c_void_p, 'hEvent'),
-        (['in'], c_int, 'fCloseHandleOnRelease')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Wait',
-        (['in'], c_ulong, 'dwMilliseconds')
-    ),
-    COMMETHOD([], c_void_p, 'GetEventHandle'),
-]
-
-################################################################
-# code template for ISpNotifyTranslator implementation
-# class ISpNotifyTranslator_Impl(object):
-#     def InitWindowMessage(self, hWnd, Msg, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def InitCallback(self, pfnCallback, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def InitSpNotifyCallback(self, pSpCallback, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def InitWin32Event(self, hEvent, fCloseHandleOnRelease):
-#         '-no docstring-'
-#         #return 
-#
-#     def Wait(self, dwMilliseconds):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetEventHandle(self):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class ISpeechGrammarRuleStateTransition(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechGrammarRuleStateTransition Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{CAFD1DB1-41D1-4A06-9863-E2E81DA17A9A}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Type(self) -> hints.Incomplete: ...
-        Type = hints.normal_property(_get_Type)
-        def _get_Text(self) -> hints.Incomplete: ...
-        Text = hints.normal_property(_get_Text)
-        def _get_Rule(self) -> 'ISpeechGrammarRule': ...
-        Rule = hints.normal_property(_get_Rule)
-        def _get_Weight(self) -> hints.Incomplete: ...
-        Weight = hints.normal_property(_get_Weight)
-        def _get_PropertyName(self) -> hints.Incomplete: ...
-        PropertyName = hints.normal_property(_get_PropertyName)
-        def _get_PropertyId(self) -> hints.Incomplete: ...
-        PropertyId = hints.normal_property(_get_PropertyId)
-        def _get_PropertyValue(self) -> hints.Incomplete: ...
-        PropertyValue = hints.normal_property(_get_PropertyValue)
-        def _get_NextState(self) -> 'ISpeechGrammarRuleState': ...
-        NextState = hints.normal_property(_get_NextState)
-
-
-ISpeechGrammarRuleStateTransitions._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
-        HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
-    ),
-    COMMETHOD(
-        [dispid(0), helpstring('Item')],
-        HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechGrammarRuleStateTransition)),
-            'Transition',
-        )
-    ),
-    COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the transitions'), 'restricted', 'propget'],
-        HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
-    ),
-]
-
-################################################################
-# code template for ISpeechGrammarRuleStateTransitions implementation
-# class ISpeechGrammarRuleStateTransitions_Impl(object):
-#     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
-#
-#     def Item(self, Index):
-#         'Item'
-#         #return Transition
-#
-#     @property
-#     def _NewEnum(self):
-#         'Enumerates the transitions'
-#         #return EnumVARIANT
-#
-
-
-class SpObjectTokenCategory(CoClass):
-    """SpObjectTokenCategory Class"""
-    _reg_clsid_ = GUID('{A910187F-0C7A-45AC-92CC-59EDAFB77B53}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpeechObjectTokenCategory(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechObjectTokenCategory Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{CA7EAC50-2D01-4145-86D4-5AE7D70F4469}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Id(self) -> hints.Incomplete: ...
-        Id = hints.normal_property(_get_Id)
-        def _get_Default(self) -> hints.Incomplete: ...
-        def _set_Default(self, TokenId: hints.Incomplete) -> hints.Hresult: ...
-        Default = hints.normal_property(_get_Default, _set_Default)
-        def SetId(self, Id: hints.Incomplete, CreateIfNotExist: hints.Incomplete = ...) -> hints.Hresult: ...
-        def GetDataKey(self, Location: hints.Incomplete = ...) -> 'ISpeechDataKey': ...
-        def EnumerateTokens(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
-
-
-class ISpDataKey(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpDataKey Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{14056581-E16C-11D2-BB90-00C04F8EE6C0}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetData(self, pszValueName: hints.Incomplete, cbData: hints.Incomplete, pData: hints.Incomplete) -> hints.Hresult: ...
-        def GetData(self, pszValueName: hints.Incomplete, pcbData: hints.Incomplete) -> hints.Incomplete: ...
-        def SetStringValue(self, pszValueName: hints.Incomplete, pszValue: hints.Incomplete) -> hints.Hresult: ...
-        def GetStringValue(self, pszValueName: hints.Incomplete) -> hints.Incomplete: ...
-        def SetDWORD(self, pszValueName: hints.Incomplete, dwValue: hints.Incomplete) -> hints.Hresult: ...
-        def GetDWORD(self, pszValueName: hints.Incomplete) -> hints.Incomplete: ...
-        def OpenKey(self, pszSubKeyName: hints.Incomplete) -> 'ISpDataKey': ...
-        def CreateKey(self, pszSubKey: hints.Incomplete) -> 'ISpDataKey': ...
-        def DeleteKey(self, pszSubKey: hints.Incomplete) -> hints.Hresult: ...
-        def DeleteValue(self, pszValueName: hints.Incomplete) -> hints.Hresult: ...
-        def EnumKeys(self, Index: hints.Incomplete) -> hints.Incomplete: ...
-        def EnumValues(self, Index: hints.Incomplete) -> hints.Incomplete: ...
-
-
-class ISpObjectTokenCategory(ISpDataKey):
-    """ISpObjectTokenCategory"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{2D3D3845-39AF-4850-BBF9-40B49780011D}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetId(self, pszCategoryId: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Hresult: ...
-        def GetId(self) -> hints.Incomplete: ...
-        def GetDataKey(self, spdkl: hints.Incomplete) -> 'ISpDataKey': ...
-        def EnumTokens(self, pzsReqAttribs: hints.Incomplete, pszOptAttribs: hints.Incomplete) -> 'IEnumSpObjectTokens': ...
-        def SetDefaultTokenId(self, pszTokenId: hints.Incomplete) -> hints.Hresult: ...
-        def GetDefaultTokenId(self) -> hints.Incomplete: ...
-
-
-SpObjectTokenCategory._com_interfaces_ = [ISpeechObjectTokenCategory, ISpObjectTokenCategory]
-
-
-class ISpeechBaseStream(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechBaseStream Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{6450336F-7D49-4CED-8097-49D6DEE37294}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Format(self) -> 'ISpeechAudioFormat': ...
-        def _setref_Format(self, AudioFormat: hints.Incomplete) -> hints.Hresult: ...
-        Format = hints.normal_property(_get_Format, _setref_Format)
-        def Read(self, NumberOfBytes: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def Write(self, Buffer: hints.Incomplete) -> hints.Incomplete: ...
-        def Seek(self, Position: hints.Incomplete, Origin: hints.Incomplete = ...) -> hints.Incomplete: ...
-
-
-class ISpeechFileStream(ISpeechBaseStream):
-    """ISpeechFileStream Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{AF67F125-AB39-4E93-B4A2-CC2E66E182A7}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def Open(self, FileName: hints.Incomplete, FileMode: hints.Incomplete = ..., DoEvents: hints.Incomplete = ...) -> hints.Hresult: ...
-        def Close(self) -> hints.Hresult: ...
-
-
-class ISpeechAudioFormat(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechAudioFormat Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{E6E9C590-3E18-40E3-8299-061F98BDE7C7}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Type(self) -> hints.Incomplete: ...
-        def _set_Type(self, AudioFormat: hints.Incomplete) -> hints.Hresult: ...
-        Type = hints.normal_property(_get_Type, _set_Type)
-        def _get_Guid(self) -> hints.Incomplete: ...
-        def _set_Guid(self, Guid: hints.Incomplete) -> hints.Hresult: ...
-        Guid = hints.normal_property(_get_Guid, _set_Guid)
-        def GetWaveFormatEx(self) -> 'ISpeechWaveFormatEx': ...
-        def SetWaveFormatEx(self, SpeechWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
-
-
-ISpeechBaseStream._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Format'), 'propget'],
-        HRESULT,
-        'Format',
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'AudioFormat')
-    ),
-    COMMETHOD(
-        [dispid(1), helpstring('Format'), 'propputref'],
-        HRESULT,
-        'Format',
-        (['in'], POINTER(ISpeechAudioFormat), 'AudioFormat')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Read')],
-        HRESULT,
-        'Read',
-        (['out'], POINTER(VARIANT), 'Buffer'),
-        (['in'], c_int, 'NumberOfBytes'),
-        (['out', 'retval'], POINTER(c_int), 'BytesRead')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('Write')],
-        HRESULT,
-        'Write',
-        (['in'], VARIANT, 'Buffer'),
-        (['out', 'retval'], POINTER(c_int), 'BytesWritten')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Seek')],
-        HRESULT,
-        'Seek',
-        (['in'], VARIANT, 'Position'),
-        (['in', 'optional'], SpeechStreamSeekPositionType, 'Origin', 0),
-        (['out', 'retval'], POINTER(VARIANT), 'NewPosition')
-    ),
-]
-
-################################################################
-# code template for ISpeechBaseStream implementation
-# class ISpeechBaseStream_Impl(object):
-#     def Format(self, AudioFormat):
-#         'Format'
-#         #return 
-#
-#     def Read(self, NumberOfBytes):
-#         'Read'
-#         #return Buffer, BytesRead
-#
-#     def Write(self, Buffer):
-#         'Write'
-#         #return BytesWritten
-#
-#     def Seek(self, Position, Origin):
-#         'Seek'
-#         #return NewPosition
-#
-
-ISpeechFileStream._methods_ = [
-    COMMETHOD(
-        [dispid(100), helpstring('Open')],
-        HRESULT,
-        'Open',
-        (['in'], BSTR, 'FileName'),
-        (['in', 'optional'], SpeechStreamFileMode, 'FileMode', 0),
-        (['in', 'optional'], VARIANT_BOOL, 'DoEvents', False)
-    ),
-    COMMETHOD([dispid(101), helpstring('Close')], HRESULT, 'Close'),
-]
-
-################################################################
-# code template for ISpeechFileStream implementation
-# class ISpeechFileStream_Impl(object):
-#     def Open(self, FileName, FileMode, DoEvents):
-#         'Open'
-#         #return 
-#
-#     def Close(self):
-#         'Close'
-#         #return 
-#
-
-
-class ISpeechMemoryStream(ISpeechBaseStream):
-    """ISpeechMemoryStream Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{EEB14B68-808B-4ABE-A5EA-B51DA7588008}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def SetData(self, Data: hints.Incomplete) -> hints.Hresult: ...
-        def GetData(self) -> hints.Incomplete: ...
-
-
-ISpeechMemoryStream._methods_ = [
-    COMMETHOD(
-        [dispid(100), helpstring('SetData')],
-        HRESULT,
-        'SetData',
-        (['in'], VARIANT, 'Data')
-    ),
-    COMMETHOD(
-        [dispid(101), helpstring('GetData')],
-        HRESULT,
-        'GetData',
-        (['out', 'retval'], POINTER(VARIANT), 'pData')
-    ),
-]
-
-################################################################
-# code template for ISpeechMemoryStream implementation
-# class ISpeechMemoryStream_Impl(object):
-#     def SetData(self, Data):
-#         'SetData'
-#         #return 
-#
-#     def GetData(self):
-#         'GetData'
-#         #return pData
-#
-
-SpeechRegistryUserRoot = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech'  # Constant BSTR
-SpeechCategoryAudioOut = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AudioOutput'  # Constant BSTR
-SpeechCategoryVoices = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices'  # Constant BSTR
-SpeechCategoryRecognizers = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Recognizers'  # Constant BSTR
-SpeechCategoryAppLexicons = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AppLexicons'  # Constant BSTR
-SpeechCategoryPhoneConverters = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\PhoneConverters'  # Constant BSTR
-SpeechCategoryRecoProfiles = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech\\RecoProfiles'  # Constant BSTR
-SpeechTokenIdUserLexicon = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech\\CurrentUserLexicon'  # Constant BSTR
-
-ISpDataKey._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetData',
-        (['in'], WSTRING, 'pszValueName'),
-        (['in'], c_ulong, 'cbData'),
-        (['in'], POINTER(c_ubyte), 'pData')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetData',
-        (['in'], WSTRING, 'pszValueName'),
-        (['in'], POINTER(c_ulong), 'pcbData'),
-        (['out'], POINTER(c_ubyte), 'pData')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetStringValue',
-        (['in'], WSTRING, 'pszValueName'),
-        (['in'], WSTRING, 'pszValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetStringValue',
-        (['in'], WSTRING, 'pszValueName'),
-        (['out'], POINTER(WSTRING), 'ppszValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetDWORD',
-        (['in'], WSTRING, 'pszValueName'),
-        (['in'], c_ulong, 'dwValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetDWORD',
-        (['in'], WSTRING, 'pszValueName'),
-        (['out'], POINTER(c_ulong), 'pdwValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'OpenKey',
-        (['in'], WSTRING, 'pszSubKeyName'),
-        (['out'], POINTER(POINTER(ISpDataKey)), 'ppSubKey')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'CreateKey',
-        (['in'], WSTRING, 'pszSubKey'),
-        (['out'], POINTER(POINTER(ISpDataKey)), 'ppSubKey')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'DeleteKey',
-        (['in'], WSTRING, 'pszSubKey')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'DeleteValue',
-        (['in'], WSTRING, 'pszValueName')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EnumKeys',
-        (['in'], c_ulong, 'Index'),
-        (['out'], POINTER(WSTRING), 'ppszSubKeyName')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EnumValues',
-        (['in'], c_ulong, 'Index'),
-        (['out'], POINTER(WSTRING), 'ppszValueName')
-    ),
-]
-
-################################################################
-# code template for ISpDataKey implementation
-# class ISpDataKey_Impl(object):
-#     def SetData(self, pszValueName, cbData, pData):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetData(self, pszValueName, pcbData):
-#         '-no docstring-'
-#         #return pData
-#
-#     def SetStringValue(self, pszValueName, pszValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetStringValue(self, pszValueName):
-#         '-no docstring-'
-#         #return ppszValue
-#
-#     def SetDWORD(self, pszValueName, dwValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetDWORD(self, pszValueName):
-#         '-no docstring-'
-#         #return pdwValue
-#
-#     def OpenKey(self, pszSubKeyName):
-#         '-no docstring-'
-#         #return ppSubKey
-#
-#     def CreateKey(self, pszSubKey):
-#         '-no docstring-'
-#         #return ppSubKey
-#
-#     def DeleteKey(self, pszSubKey):
-#         '-no docstring-'
-#         #return 
-#
-#     def DeleteValue(self, pszValueName):
-#         '-no docstring-'
-#         #return 
-#
-#     def EnumKeys(self, Index):
-#         '-no docstring-'
-#         #return ppszSubKeyName
-#
-#     def EnumValues(self, Index):
-#         '-no docstring-'
-#         #return ppszValueName
-#
-
-
-class IEnumSpObjectTokens(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """IEnumSpObjectTokens Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{06B64F9E-7FDA-11D2-B4F2-00C04F797396}')
-    _idlflags_ = ['restricted']
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        item, fetched = self.Next(1)
-        if fetched:
-            return item
-        raise StopIteration
-
-    def __getitem__(self, index):
-        self.Reset()
-        self.Skip(index)
-        item, fetched = self.Next(1)
-        if fetched:
-            return item
-        raise IndexError(index)
-
-    if TYPE_CHECKING:  # commembers
-        def Next(self, celt: hints.Incomplete) -> hints.Tuple['ISpObjectToken', hints.Incomplete]: ...
-        def Skip(self, celt: hints.Incomplete) -> hints.Hresult: ...
-        def Reset(self) -> hints.Hresult: ...
-        def Clone(self) -> 'IEnumSpObjectTokens': ...
-        def Item(self, Index: hints.Incomplete) -> 'ISpObjectToken': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def GetCount(self) -> hints.Incomplete: ...
-
-
-ISpObjectTokenCategory._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetId',
-        (['in'], WSTRING, 'pszCategoryId'),
-        (['in'], c_int, 'fCreateIfNotExist')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetId',
-        (['out'], POINTER(WSTRING), 'ppszCoMemCategoryId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetDataKey',
-        (['in'], SPDATAKEYLOCATION, 'spdkl'),
-        (['out'], POINTER(POINTER(ISpDataKey)), 'ppDataKey')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EnumTokens',
-        (['in'], WSTRING, 'pzsReqAttribs'),
-        (['in'], WSTRING, 'pszOptAttribs'),
-        (['out'], POINTER(POINTER(IEnumSpObjectTokens)), 'ppEnum')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetDefaultTokenId',
-        (['in'], WSTRING, 'pszTokenId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetDefaultTokenId',
-        (['out'], POINTER(WSTRING), 'ppszCoMemTokenId')
-    ),
-]
-
-################################################################
-# code template for ISpObjectTokenCategory implementation
-# class ISpObjectTokenCategory_Impl(object):
-#     def SetId(self, pszCategoryId, fCreateIfNotExist):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetId(self):
-#         '-no docstring-'
-#         #return ppszCoMemCategoryId
-#
-#     def GetDataKey(self, spdkl):
-#         '-no docstring-'
-#         #return ppDataKey
-#
-#     def EnumTokens(self, pzsReqAttribs, pszOptAttribs):
-#         '-no docstring-'
-#         #return ppEnum
-#
-#     def SetDefaultTokenId(self, pszTokenId):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetDefaultTokenId(self):
-#         '-no docstring-'
-#         #return ppszCoMemTokenId
-#
-
-SpeechTokenValueCLSID = 'CLSID'  # Constant BSTR
-SpeechTokenKeyFiles = 'Files'  # Constant BSTR
-
-
-class _RemotableHandle(Structure):
-    pass
-
-
-class __MIDL_IWinTypes_0009(Union):
-    pass
-
-
-__MIDL_IWinTypes_0009._fields_ = [
-    ('hInproc', c_int),
-    ('hRemote', c_int),
-]
-
-assert sizeof(__MIDL_IWinTypes_0009) == 4, sizeof(__MIDL_IWinTypes_0009)
-assert alignment(__MIDL_IWinTypes_0009) == 4, alignment(__MIDL_IWinTypes_0009)
-
-_RemotableHandle._fields_ = [
-    ('fContext', c_int),
-    ('u', __MIDL_IWinTypes_0009),
-]
-
-assert sizeof(_RemotableHandle) == 8, sizeof(_RemotableHandle)
-assert alignment(_RemotableHandle) == 4, alignment(_RemotableHandle)
-
-ISpeechGrammarRuleStateTransition._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Type'), 'propget'],
-        HRESULT,
-        'Type',
-        (
-            ['out', 'retval'],
-            POINTER(SpeechGrammarRuleStateTransitionType),
-            'Type',
-        )
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Text'), 'propget'],
-        HRESULT,
-        'Text',
-        (['out', 'retval'], POINTER(BSTR), 'Text')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('Rule'), 'propget'],
-        HRESULT,
-        'Rule',
-        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRule)), 'Rule')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Weight'), 'propget'],
-        HRESULT,
-        'Weight',
-        (['out', 'retval'], POINTER(VARIANT), 'Weight')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('PropertyName'), 'propget'],
-        HRESULT,
-        'PropertyName',
-        (['out', 'retval'], POINTER(BSTR), 'PropertyName')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('PropertyId'), 'propget'],
-        HRESULT,
-        'PropertyId',
-        (['out', 'retval'], POINTER(c_int), 'PropertyId')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('PropertyValue'), 'propget'],
-        HRESULT,
-        'PropertyValue',
-        (['out', 'retval'], POINTER(VARIANT), 'PropertyValue')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('NextState'), 'propget'],
-        HRESULT,
-        'NextState',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechGrammarRuleState)),
-            'NextState',
-        )
-    ),
-]
-
-################################################################
-# code template for ISpeechGrammarRuleStateTransition implementation
-# class ISpeechGrammarRuleStateTransition_Impl(object):
-#     @property
-#     def Type(self):
-#         'Type'
-#         #return Type
-#
-#     @property
-#     def Text(self):
-#         'Text'
-#         #return Text
-#
-#     @property
-#     def Rule(self):
-#         'Rule'
-#         #return Rule
-#
-#     @property
-#     def Weight(self):
-#         'Weight'
-#         #return Weight
-#
-#     @property
-#     def PropertyName(self):
-#         'PropertyName'
-#         #return PropertyName
-#
-#     @property
-#     def PropertyId(self):
-#         'PropertyId'
-#         #return PropertyId
-#
-#     @property
-#     def PropertyValue(self):
-#         'PropertyValue'
-#         #return PropertyValue
-#
-#     @property
-#     def NextState(self):
-#         'NextState'
-#         #return NextState
-#
-
-SpeechTokenKeyUI = 'UI'  # Constant BSTR
-SpeechTokenKeyAttributes = 'Attributes'  # Constant BSTR
-SpeechPropertyResourceUsage = 'ResourceUsage'  # Constant BSTR
-SpeechVoiceCategoryTTSRate = 'DefaultTTSRate'  # Constant BSTR
-SpeechPropertyHighConfidenceThreshold = 'HighConfidenceThreshold'  # Constant BSTR
-SpeechPropertyNormalConfidenceThreshold = 'NormalConfidenceThreshold'  # Constant BSTR
-SpeechPropertyLowConfidenceThreshold = 'LowConfidenceThreshold'  # Constant BSTR
-SpeechPropertyResponseSpeed = 'ResponseSpeed'  # Constant BSTR
-SpeechPropertyComplexResponseSpeed = 'ComplexResponseSpeed'  # Constant BSTR
-SpeechPropertyAdaptationOn = 'AdaptationOn'  # Constant BSTR
-SpeechDictationTopicSpelling = 'Spelling'  # Constant BSTR
-SpeechGrammarTagDictation = '*'  # Constant BSTR
-SpeechGrammarTagWildcard = '...'  # Constant BSTR
-SpeechGrammarTagUnlimitedDictation = '*+'  # Constant BSTR
-SpeechEngineProperties = 'EngineProperties'  # Constant BSTR
-SpeechAddRemoveWord = 'AddRemoveWord'  # Constant BSTR
-SpeechUserTraining = 'UserTraining'  # Constant BSTR
-SpeechMicTraining = 'MicTraining'  # Constant BSTR
-SpeechRecoProfileProperties = 'RecoProfileProperties'  # Constant BSTR
-SpeechAudioProperties = 'AudioProperties'  # Constant BSTR
-SpeechAudioVolume = 'AudioVolume'  # Constant BSTR
-SpeechVoiceSkipTypeSentence = 'Sentence'  # Constant BSTR
-SpeechAudioFormatGUIDWave = '{C31ADBAE-527F-4ff5-A230-F62BB61FF70C}'  # Constant BSTR
-SpeechAudioFormatGUIDText = '{7CEEF9F9-3D13-11d2-9EE7-00C04F797396}'  # Constant BSTR
-Speech_Max_Word_Length = 128  # Constant c_int
-Speech_Default_Weight = 1.0  # Constant c_float
-
-ISpRecognizer2._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EmulateRecognitionEx',
-        (['in'], POINTER(ISpPhrase), 'pPhrase'),
-        (['in'], c_ulong, 'dwCompareFlags')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetTrainingState',
-        (['in'], c_int, 'fDoingTraining'),
-        (['in'], c_int, 'fAdaptFromTrainingData')
-    ),
-    COMMETHOD([], HRESULT, 'ResetAcousticModelAdaptation'),
-]
-
-################################################################
-# code template for ISpRecognizer2 implementation
-# class ISpRecognizer2_Impl(object):
-#     def EmulateRecognitionEx(self, pPhrase, dwCompareFlags):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetTrainingState(self, fDoingTraining, fAdaptFromTrainingData):
-#         '-no docstring-'
-#         #return 
-#
-#     def ResetAcousticModelAdaptation(self):
-#         '-no docstring-'
-#         #return 
-#
-
-Speech_Max_Pron_Length = 384  # Constant c_int
-Speech_StreamPos_Asap = 0  # Constant c_int
 
 
 class ISpeechVoiceStatus(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -3332,655 +4651,275 @@ ISpeechVoiceStatus._methods_ = [
 #         #return VisemeId
 #
 
-Speech_StreamPos_RealTime = -1  # Constant c_int
-SpeechAllElements = -1  # Constant c_int
+SpeechVoiceCategoryTTSRate = 'DefaultTTSRate'  # Constant BSTR
 
-
-class ISpeechWaveFormatEx(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechWaveFormatEx Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{7A1EF0D5-1581-4741-88E4-209A49F11A10}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_FormatTag(self) -> hints.Incomplete: ...
-        def _set_FormatTag(self, FormatTag: hints.Incomplete) -> hints.Hresult: ...
-        FormatTag = hints.normal_property(_get_FormatTag, _set_FormatTag)
-        def _get_Channels(self) -> hints.Incomplete: ...
-        def _set_Channels(self, Channels: hints.Incomplete) -> hints.Hresult: ...
-        Channels = hints.normal_property(_get_Channels, _set_Channels)
-        def _get_SamplesPerSec(self) -> hints.Incomplete: ...
-        def _set_SamplesPerSec(self, SamplesPerSec: hints.Incomplete) -> hints.Hresult: ...
-        SamplesPerSec = hints.normal_property(_get_SamplesPerSec, _set_SamplesPerSec)
-        def _get_AvgBytesPerSec(self) -> hints.Incomplete: ...
-        def _set_AvgBytesPerSec(self, AvgBytesPerSec: hints.Incomplete) -> hints.Hresult: ...
-        AvgBytesPerSec = hints.normal_property(_get_AvgBytesPerSec, _set_AvgBytesPerSec)
-        def _get_BlockAlign(self) -> hints.Incomplete: ...
-        def _set_BlockAlign(self, BlockAlign: hints.Incomplete) -> hints.Hresult: ...
-        BlockAlign = hints.normal_property(_get_BlockAlign, _set_BlockAlign)
-        def _get_BitsPerSample(self) -> hints.Incomplete: ...
-        def _set_BitsPerSample(self, BitsPerSample: hints.Incomplete) -> hints.Hresult: ...
-        BitsPerSample = hints.normal_property(_get_BitsPerSample, _set_BitsPerSample)
-        def _get_ExtraData(self) -> hints.Incomplete: ...
-        def _set_ExtraData(self, ExtraData: hints.Incomplete) -> hints.Hresult: ...
-        ExtraData = hints.normal_property(_get_ExtraData, _set_ExtraData)
-
-
-ISpeechWaveFormatEx._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('FormatTag'), 'propget'],
-        HRESULT,
-        'FormatTag',
-        (['out', 'retval'], POINTER(c_short), 'FormatTag')
-    ),
-    COMMETHOD(
-        [dispid(1), helpstring('FormatTag'), 'propput'],
-        HRESULT,
-        'FormatTag',
-        (['in'], c_short, 'FormatTag')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Channels'), 'propget'],
-        HRESULT,
-        'Channels',
-        (['out', 'retval'], POINTER(c_short), 'Channels')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Channels'), 'propput'],
-        HRESULT,
-        'Channels',
-        (['in'], c_short, 'Channels')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('SamplesPerSec'), 'propget'],
-        HRESULT,
-        'SamplesPerSec',
-        (['out', 'retval'], POINTER(c_int), 'SamplesPerSec')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('SamplesPerSec'), 'propput'],
-        HRESULT,
-        'SamplesPerSec',
-        (['in'], c_int, 'SamplesPerSec')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AvgBytesPerSec'), 'propget'],
-        HRESULT,
-        'AvgBytesPerSec',
-        (['out', 'retval'], POINTER(c_int), 'AvgBytesPerSec')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AvgBytesPerSec'), 'propput'],
-        HRESULT,
-        'AvgBytesPerSec',
-        (['in'], c_int, 'AvgBytesPerSec')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('BlockAlign'), 'propget'],
-        HRESULT,
-        'BlockAlign',
-        (['out', 'retval'], POINTER(c_short), 'BlockAlign')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('BlockAlign'), 'propput'],
-        HRESULT,
-        'BlockAlign',
-        (['in'], c_short, 'BlockAlign')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('BitsPerSample'), 'propget'],
-        HRESULT,
-        'BitsPerSample',
-        (['out', 'retval'], POINTER(c_short), 'BitsPerSample')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('BitsPerSample'), 'propput'],
-        HRESULT,
-        'BitsPerSample',
-        (['in'], c_short, 'BitsPerSample')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('ExtraData'), 'propget'],
-        HRESULT,
-        'ExtraData',
-        (['out', 'retval'], POINTER(VARIANT), 'ExtraData')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('ExtraData'), 'propput'],
-        HRESULT,
-        'ExtraData',
-        (['in'], VARIANT, 'ExtraData')
-    ),
+SPPHRASEPROPERTY._fields_ = [
+    ('pszName', WSTRING),
+    ('__MIDL____MIDL_itf_sapi_0000_00200001', __MIDL___MIDL_itf_sapi_0000_0020_0001),
+    ('pszValue', WSTRING),
+    ('vValue', VARIANT),
+    ('ulFirstElement', c_ulong),
+    ('ulCountOfElements', c_ulong),
+    ('pNextSibling', POINTER(SPPHRASEPROPERTY)),
+    ('pFirstChild', POINTER(SPPHRASEPROPERTY)),
+    ('SREngineConfidence', c_float),
+    ('Confidence', c_char),
 ]
 
-################################################################
-# code template for ISpeechWaveFormatEx implementation
-# class ISpeechWaveFormatEx_Impl(object):
-#     def _get(self):
-#         'FormatTag'
-#         #return FormatTag
-#     def _set(self, FormatTag):
-#         'FormatTag'
-#     FormatTag = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'Channels'
-#         #return Channels
-#     def _set(self, Channels):
-#         'Channels'
-#     Channels = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'SamplesPerSec'
-#         #return SamplesPerSec
-#     def _set(self, SamplesPerSec):
-#         'SamplesPerSec'
-#     SamplesPerSec = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'AvgBytesPerSec'
-#         #return AvgBytesPerSec
-#     def _set(self, AvgBytesPerSec):
-#         'AvgBytesPerSec'
-#     AvgBytesPerSec = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'BlockAlign'
-#         #return BlockAlign
-#     def _set(self, BlockAlign):
-#         'BlockAlign'
-#     BlockAlign = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'BitsPerSample'
-#         #return BitsPerSample
-#     def _set(self, BitsPerSample):
-#         'BitsPerSample'
-#     BitsPerSample = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'ExtraData'
-#         #return ExtraData
-#     def _set(self, ExtraData):
-#         'ExtraData'
-#     ExtraData = property(_get, _set, doc = _set.__doc__)
-#
+assert sizeof(SPPHRASEPROPERTY) == 80, sizeof(SPPHRASEPROPERTY)
+assert alignment(SPPHRASEPROPERTY) == 8, alignment(SPPHRASEPROPERTY)
 
 
-class ISpeechCustomStream(ISpeechBaseStream):
-    """ISpeechCustomStream Interface"""
+class SpCompressedLexicon(CoClass):
+    """SpCompressedLexicon Class"""
+    _reg_clsid_ = GUID('{90903716-2F42-11D3-9C26-00C04F8EF87C}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpCompressedLexicon._com_interfaces_ = [ISpLexicon, ISpObjectWithToken]
+
+
+class ISpeechRecoResultDispatch(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechRecoResultDispatch Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{1A9E9F4F-104F-4DB8-A115-EFD7FD0C97AE}')
-    _idlflags_ = ['dual', 'oleautomation']
+    _iid_ = GUID('{6D60EB64-ACED-40A6-BBF3-4E557F71DEE2}')
+    _idlflags_ = ['hidden', 'dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_BaseStream(self) -> hints.Incomplete: ...
-        def _setref_BaseStream(self, ppUnkStream: hints.Incomplete) -> hints.Hresult: ...
-        BaseStream = hints.normal_property(_get_BaseStream, _setref_BaseStream)
+        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
+        RecoContext = hints.normal_property(_get_RecoContext)
+        def _get_Times(self) -> 'ISpeechRecoResultTimes': ...
+        Times = hints.normal_property(_get_Times)
+        def _get_AudioFormat(self) -> 'ISpeechAudioFormat': ...
+        def _setref_AudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
+        AudioFormat = hints.normal_property(_get_AudioFormat, _setref_AudioFormat)
+        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
+        PhraseInfo = hints.normal_property(_get_PhraseInfo)
+        def Alternates(self, RequestCount: hints.Incomplete, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechPhraseAlternates': ...
+        def Audio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechMemoryStream': ...
+        def SpeakAudio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
+        def SaveToMemory(self) -> hints.Incomplete: ...
+        def DiscardResultInfo(self, ValueTypes: hints.Incomplete) -> hints.Hresult: ...
+        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
+        def GetXMLErrorInfo(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def SetTextFeedback(self, Feedback: hints.Incomplete, WasSuccessful: hints.Incomplete) -> hints.Hresult: ...
 
 
-ISpeechCustomStream._methods_ = [
+ISpeechRecoResultDispatch._methods_ = [
     COMMETHOD(
-        [dispid(100), helpstring('BaseStream'), 'propget'],
+        [dispid(1), helpstring('RecoContext'), 'propget'],
         HRESULT,
-        'BaseStream',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'ppUnkStream')
+        'RecoContext',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
     ),
     COMMETHOD(
-        [dispid(100), helpstring('BaseStream'), 'propputref'],
+        [dispid(2), helpstring('Times'), 'propget'],
         HRESULT,
-        'BaseStream',
-        (['in'], POINTER(IUnknown), 'ppUnkStream')
-    ),
-]
-
-################################################################
-# code template for ISpeechCustomStream implementation
-# class ISpeechCustomStream_Impl(object):
-#     def BaseStream(self, ppUnkStream):
-#         'BaseStream'
-#         #return 
-#
-
-
-class ISpRecoCategory(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpRecoCategory Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{DA0CD0F9-14A2-4F09-8C2A-85CC48979345}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetType(self) -> hints.Incomplete: ...
-
-
-ISpRecognizer3._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetCategory',
-        (['in'], SPCATEGORYTYPE, 'categoryType'),
-        (['out'], POINTER(POINTER(ISpRecoCategory)), 'ppCategory')
+        'Times',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResultTimes)), 'Times')
     ),
     COMMETHOD(
-        [],
+        [dispid(3), helpstring('AudioFormat'), 'propputref'],
         HRESULT,
-        'SetActiveCategory',
-        (['in'], POINTER(ISpRecoCategory), 'pCategory')
+        'AudioFormat',
+        (['in'], POINTER(ISpeechAudioFormat), 'Format')
     ),
     COMMETHOD(
-        [],
+        [dispid(3), helpstring('AudioFormat'), 'propget'],
         HRESULT,
-        'GetActiveCategory',
-        (['out'], POINTER(POINTER(ISpRecoCategory)), 'ppCategory')
-    ),
-]
-
-################################################################
-# code template for ISpRecognizer3 implementation
-# class ISpRecognizer3_Impl(object):
-#     def GetCategory(self, categoryType):
-#         '-no docstring-'
-#         #return ppCategory
-#
-#     def SetActiveCategory(self, pCategory):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetActiveCategory(self):
-#         '-no docstring-'
-#         #return ppCategory
-#
-
-ISpSerializeState._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetSerializedState',
-        (['out'], POINTER(POINTER(c_ubyte)), 'ppbData'),
-        (['out'], POINTER(c_ulong), 'pulSize'),
-        (['in'], c_ulong, 'dwReserved')
+        'AudioFormat',
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
     ),
     COMMETHOD(
-        [],
+        [dispid(4), helpstring('PhraseInfo'), 'propget'],
         HRESULT,
-        'SetSerializedState',
-        (['in'], POINTER(c_ubyte), 'pbData'),
-        (['in'], c_ulong, 'ulSize'),
-        (['in'], c_ulong, 'dwReserved')
-    ),
-]
-
-################################################################
-# code template for ISpSerializeState implementation
-# class ISpSerializeState_Impl(object):
-#     def GetSerializedState(self, dwReserved):
-#         '-no docstring-'
-#         #return ppbData, pulSize
-#
-#     def SetSerializedState(self, pbData, ulSize, dwReserved):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class ISpeechAudio(ISpeechBaseStream):
-    """ISpeechAudio Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{CFF8E175-019E-11D3-A08E-00C04F8EF9B5}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Status(self) -> 'ISpeechAudioStatus': ...
-        Status = hints.normal_property(_get_Status)
-        def _get_BufferInfo(self) -> 'ISpeechAudioBufferInfo': ...
-        BufferInfo = hints.normal_property(_get_BufferInfo)
-        def _get_DefaultFormat(self) -> 'ISpeechAudioFormat': ...
-        DefaultFormat = hints.normal_property(_get_DefaultFormat)
-        def _get_Volume(self) -> hints.Incomplete: ...
-        def _set_Volume(self, Volume: hints.Incomplete) -> hints.Hresult: ...
-        Volume = hints.normal_property(_get_Volume, _set_Volume)
-        def _get_BufferNotifySize(self) -> hints.Incomplete: ...
-        def _set_BufferNotifySize(self, BufferNotifySize: hints.Incomplete) -> hints.Hresult: ...
-        BufferNotifySize = hints.normal_property(_get_BufferNotifySize, _set_BufferNotifySize)
-        def _get_EventHandle(self) -> hints.Incomplete: ...
-        EventHandle = hints.normal_property(_get_EventHandle)
-        def SetState(self, State: hints.Incomplete) -> hints.Hresult: ...
-
-
-class ISpeechAudioStatus(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechAudioStatus Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{C62D9C91-7458-47F6-862D-1EF86FB0B278}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_FreeBufferSpace(self) -> hints.Incomplete: ...
-        FreeBufferSpace = hints.normal_property(_get_FreeBufferSpace)
-        def _get_NonBlockingIO(self) -> hints.Incomplete: ...
-        NonBlockingIO = hints.normal_property(_get_NonBlockingIO)
-        def _get_State(self) -> hints.Incomplete: ...
-        State = hints.normal_property(_get_State)
-        def _get_CurrentSeekPosition(self) -> hints.Incomplete: ...
-        CurrentSeekPosition = hints.normal_property(_get_CurrentSeekPosition)
-        def _get_CurrentDevicePosition(self) -> hints.Incomplete: ...
-        CurrentDevicePosition = hints.normal_property(_get_CurrentDevicePosition)
-
-
-class ISpeechAudioBufferInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechAudioBufferInfo Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{11B103D8-1142-4EDF-A093-82FB3915F8CC}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_MinNotification(self) -> hints.Incomplete: ...
-        def _set_MinNotification(self, MinNotification: hints.Incomplete) -> hints.Hresult: ...
-        MinNotification = hints.normal_property(_get_MinNotification, _set_MinNotification)
-        def _get_BufferSize(self) -> hints.Incomplete: ...
-        def _set_BufferSize(self, BufferSize: hints.Incomplete) -> hints.Hresult: ...
-        BufferSize = hints.normal_property(_get_BufferSize, _set_BufferSize)
-        def _get_EventBias(self) -> hints.Incomplete: ...
-        def _set_EventBias(self, EventBias: hints.Incomplete) -> hints.Hresult: ...
-        EventBias = hints.normal_property(_get_EventBias, _set_EventBias)
-
-
-ISpeechAudio._methods_ = [
-    COMMETHOD(
-        [dispid(200), helpstring('Status'), 'propget'],
-        HRESULT,
-        'Status',
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioStatus)), 'Status')
+        'PhraseInfo',
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
     ),
     COMMETHOD(
-        [dispid(201), helpstring('BufferInfo'), 'propget'],
+        [dispid(5), helpstring('Alternates')],
         HRESULT,
-        'BufferInfo',
+        'Alternates',
+        (['in'], c_int, 'RequestCount'),
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
         (
             ['out', 'retval'],
-            POINTER(POINTER(ISpeechAudioBufferInfo)),
-            'BufferInfo',
+            POINTER(POINTER(ISpeechPhraseAlternates)),
+            'Alternates',
         )
     ),
     COMMETHOD(
-        [dispid(202), helpstring('DefaultFormat'), 'propget'],
+        [dispid(6), helpstring('Audio')],
         HRESULT,
-        'DefaultFormat',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechAudioFormat)),
-            'StreamFormat',
-        )
+        'Audio',
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
+        (['out', 'retval'], POINTER(POINTER(ISpeechMemoryStream)), 'Stream')
     ),
     COMMETHOD(
-        [dispid(203), helpstring('Volume'), 'propget'],
+        [dispid(7), helpstring('SpeakAudio')],
         HRESULT,
-        'Volume',
-        (['out', 'retval'], POINTER(c_int), 'Volume')
+        'SpeakAudio',
+        (['in', 'optional'], c_int, 'StartElement', 0),
+        (['in', 'optional'], c_int, 'Elements', -1),
+        (['in', 'optional'], SpeechVoiceSpeakFlags, 'Flags', 0),
+        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
     ),
     COMMETHOD(
-        [dispid(203), helpstring('Volume'), 'propput'],
+        [dispid(8), helpstring('SaveToMemory')],
         HRESULT,
-        'Volume',
-        (['in'], c_int, 'Volume')
+        'SaveToMemory',
+        (['out', 'retval'], POINTER(VARIANT), 'ResultBlock')
     ),
     COMMETHOD(
-        [dispid(204), helpstring('BufferNotifySize'), 'propget'],
+        [dispid(9), helpstring('DiscardResultInfo')],
         HRESULT,
-        'BufferNotifySize',
-        (['out', 'retval'], POINTER(c_int), 'BufferNotifySize')
+        'DiscardResultInfo',
+        (['in'], SpeechDiscardType, 'ValueTypes')
     ),
     COMMETHOD(
-        [dispid(204), helpstring('BufferNotifySize'), 'propput'],
+        [dispid(10), helpstring('GetXMLResult')],
         HRESULT,
-        'BufferNotifySize',
-        (['in'], c_int, 'BufferNotifySize')
+        'GetXMLResult',
+        (['in'], SPXMLRESULTOPTIONS, 'Options'),
+        (['out', 'retval'], POINTER(BSTR), 'pResult')
     ),
     COMMETHOD(
-        [dispid(205), helpstring('EventHandle'), 'hidden', 'propget'],
+        [dispid(11), helpstring('GetXMLErrorInfo')],
         HRESULT,
-        'EventHandle',
-        (['out', 'retval'], POINTER(c_int), 'EventHandle')
+        'GetXMLErrorInfo',
+        (['out'], POINTER(c_int), 'LineNumber'),
+        (['out'], POINTER(BSTR), 'ScriptLine'),
+        (['out'], POINTER(BSTR), 'Source'),
+        (['out'], POINTER(BSTR), 'Description'),
+        (['out'], POINTER(HRESULT), 'ResultCode'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'IsError')
     ),
     COMMETHOD(
-        [dispid(206), helpstring('SetState'), 'hidden'],
+        [dispid(12), helpstring('SetTextFeedback')],
         HRESULT,
-        'SetState',
-        (['in'], SpeechAudioState, 'State')
+        'SetTextFeedback',
+        (['in'], BSTR, 'Feedback'),
+        (['in'], VARIANT_BOOL, 'WasSuccessful')
     ),
 ]
 
 ################################################################
-# code template for ISpeechAudio implementation
-# class ISpeechAudio_Impl(object):
+# code template for ISpeechRecoResultDispatch implementation
+# class ISpeechRecoResultDispatch_Impl(object):
 #     @property
-#     def Status(self):
-#         'Status'
-#         #return Status
-#
-#     @property
-#     def BufferInfo(self):
-#         'BufferInfo'
-#         #return BufferInfo
+#     def RecoContext(self):
+#         'RecoContext'
+#         #return RecoContext
 #
 #     @property
-#     def DefaultFormat(self):
-#         'DefaultFormat'
-#         #return StreamFormat
-#
-#     def _get(self):
-#         'Volume'
-#         #return Volume
-#     def _set(self, Volume):
-#         'Volume'
-#     Volume = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'BufferNotifySize'
-#         #return BufferNotifySize
-#     def _set(self, BufferNotifySize):
-#         'BufferNotifySize'
-#     BufferNotifySize = property(_get, _set, doc = _set.__doc__)
+#     def Times(self):
+#         'Times'
+#         #return Times
 #
 #     @property
-#     def EventHandle(self):
-#         'EventHandle'
-#         #return EventHandle
+#     def AudioFormat(self, Format):
+#         'AudioFormat'
+#         #return 
 #
-#     def SetState(self, State):
-#         'SetState'
+#     @property
+#     def PhraseInfo(self):
+#         'PhraseInfo'
+#         #return PhraseInfo
+#
+#     def Alternates(self, RequestCount, StartElement, Elements):
+#         'Alternates'
+#         #return Alternates
+#
+#     def Audio(self, StartElement, Elements):
+#         'Audio'
+#         #return Stream
+#
+#     def SpeakAudio(self, StartElement, Elements, Flags):
+#         'SpeakAudio'
+#         #return StreamNumber
+#
+#     def SaveToMemory(self):
+#         'SaveToMemory'
+#         #return ResultBlock
+#
+#     def DiscardResultInfo(self, ValueTypes):
+#         'DiscardResultInfo'
+#         #return 
+#
+#     def GetXMLResult(self, Options):
+#         'GetXMLResult'
+#         #return pResult
+#
+#     def GetXMLErrorInfo(self):
+#         'GetXMLErrorInfo'
+#         #return LineNumber, ScriptLine, Source, Description, ResultCode, IsError
+#
+#     def SetTextFeedback(self, Feedback, WasSuccessful):
+#         'SetTextFeedback'
 #         #return 
 #
 
-
-class ISpeechMMSysAudio(ISpeechAudio):
-    """ISpeechMMSysAudio Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{3C76AF6D-1FD7-4831-81D1-3B71D5A13C44}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_DeviceId(self) -> hints.Incomplete: ...
-        def _set_DeviceId(self, DeviceId: hints.Incomplete) -> hints.Hresult: ...
-        DeviceId = hints.normal_property(_get_DeviceId, _set_DeviceId)
-        def _get_LineId(self) -> hints.Incomplete: ...
-        def _set_LineId(self, LineId: hints.Incomplete) -> hints.Hresult: ...
-        LineId = hints.normal_property(_get_LineId, _set_LineId)
-        def _get_MMHandle(self) -> hints.Incomplete: ...
-        MMHandle = hints.normal_property(_get_MMHandle)
-
-
-ISpeechMMSysAudio._methods_ = [
-    COMMETHOD(
-        [dispid(300), helpstring('DeviceId'), 'propget'],
-        HRESULT,
-        'DeviceId',
-        (['out', 'retval'], POINTER(c_int), 'DeviceId')
-    ),
-    COMMETHOD(
-        [dispid(300), helpstring('DeviceId'), 'propput'],
-        HRESULT,
-        'DeviceId',
-        (['in'], c_int, 'DeviceId')
-    ),
-    COMMETHOD(
-        [dispid(301), helpstring('LineId'), 'propget'],
-        HRESULT,
-        'LineId',
-        (['out', 'retval'], POINTER(c_int), 'LineId')
-    ),
-    COMMETHOD(
-        [dispid(301), helpstring('LineId'), 'propput'],
-        HRESULT,
-        'LineId',
-        (['in'], c_int, 'LineId')
-    ),
-    COMMETHOD(
-        [dispid(302), helpstring('MMHandle'), 'hidden', 'propget'],
-        HRESULT,
-        'MMHandle',
-        (['out', 'retval'], POINTER(c_int), 'Handle')
-    ),
+SPWORDPRONUNCIATION._fields_ = [
+    ('pNextWordPronunciation', POINTER(SPWORDPRONUNCIATION)),
+    ('eLexiconType', SPLEXICONTYPE),
+    ('LangId', c_ushort),
+    ('wPronunciationFlags', c_ushort),
+    ('ePartOfSpeech', SPPARTOFSPEECH),
+    ('szPronunciation', c_ushort * 1),
 ]
 
-################################################################
-# code template for ISpeechMMSysAudio implementation
-# class ISpeechMMSysAudio_Impl(object):
-#     def _get(self):
-#         'DeviceId'
-#         #return DeviceId
-#     def _set(self, DeviceId):
-#         'DeviceId'
-#     DeviceId = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'LineId'
-#         #return LineId
-#     def _set(self, LineId):
-#         'LineId'
-#     LineId = property(_get, _set, doc = _set.__doc__)
-#
-#     @property
-#     def MMHandle(self):
-#         'MMHandle'
-#         #return Handle
-#
+assert sizeof(SPWORDPRONUNCIATION) == 24, sizeof(SPWORDPRONUNCIATION)
+assert alignment(SPWORDPRONUNCIATION) == 8, alignment(SPWORDPRONUNCIATION)
 
-ISpeechAudioBufferInfo._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('MinNotification'), 'propget'],
-        HRESULT,
-        'MinNotification',
-        (['out', 'retval'], POINTER(c_int), 'MinNotification')
-    ),
-    COMMETHOD(
-        [dispid(1), helpstring('MinNotification'), 'propput'],
-        HRESULT,
-        'MinNotification',
-        (['in'], c_int, 'MinNotification')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('BufferSize'), 'propget'],
-        HRESULT,
-        'BufferSize',
-        (['out', 'retval'], POINTER(c_int), 'BufferSize')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('BufferSize'), 'propput'],
-        HRESULT,
-        'BufferSize',
-        (['in'], c_int, 'BufferSize')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('EventBias'), 'propget'],
-        HRESULT,
-        'EventBias',
-        (['out', 'retval'], POINTER(c_int), 'EventBias')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('EventBias'), 'propput'],
-        HRESULT,
-        'EventBias',
-        (['in'], c_int, 'EventBias')
-    ),
+
+class SpShortcut(CoClass):
+    """SpShortcut Class"""
+    _reg_clsid_ = GUID('{0D722F1A-9FCF-4E62-96D8-6DF8F01A26AA}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpShortcut._com_interfaces_ = [ISpShortcut, ISpObjectWithToken]
+
+
+class SPSHORTCUTPAIR(Structure):
+    pass
+
+
+SPSHORTCUTPAIRLIST._fields_ = [
+    ('ulSize', c_ulong),
+    ('pvBuffer', POINTER(c_ubyte)),
+    ('pFirstShortcutPair', POINTER(SPSHORTCUTPAIR)),
 ]
 
-################################################################
-# code template for ISpeechAudioBufferInfo implementation
-# class ISpeechAudioBufferInfo_Impl(object):
-#     def _get(self):
-#         'MinNotification'
-#         #return MinNotification
-#     def _set(self, MinNotification):
-#         'MinNotification'
-#     MinNotification = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'BufferSize'
-#         #return BufferSize
-#     def _set(self, BufferSize):
-#         'BufferSize'
-#     BufferSize = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'EventBias'
-#         #return EventBias
-#     def _set(self, EventBias):
-#         'EventBias'
-#     EventBias = property(_get, _set, doc = _set.__doc__)
-#
+assert sizeof(SPSHORTCUTPAIRLIST) == 24, sizeof(SPSHORTCUTPAIRLIST)
+assert alignment(SPSHORTCUTPAIRLIST) == 8, alignment(SPSHORTCUTPAIRLIST)
 
 
-class ISpeechVoice(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechVoice Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{269316D8-57BD-11D2-9EEE-00C04F797396}')
-    _idlflags_ = ['dual', 'oleautomation']
+class SpAudioFormat(CoClass):
+    """SpAudioFormat Class"""
+    _reg_clsid_ = GUID('{9EF96870-E160-4792-820D-48CF0649E4EC}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
 
-    if TYPE_CHECKING:  # commembers
-        def _get_Status(self) -> 'ISpeechVoiceStatus': ...
-        Status = hints.normal_property(_get_Status)
-        def _get_Voice(self) -> 'ISpeechObjectToken': ...
-        def _setref_Voice(self, Voice: hints.Incomplete) -> hints.Hresult: ...
-        Voice = hints.normal_property(_get_Voice, _setref_Voice)
-        def _get_AudioOutput(self) -> 'ISpeechObjectToken': ...
-        def _setref_AudioOutput(self, AudioOutput: hints.Incomplete) -> hints.Hresult: ...
-        AudioOutput = hints.normal_property(_get_AudioOutput, _setref_AudioOutput)
-        def _get_AudioOutputStream(self) -> 'ISpeechBaseStream': ...
-        def _setref_AudioOutputStream(self, AudioOutputStream: hints.Incomplete) -> hints.Hresult: ...
-        AudioOutputStream = hints.normal_property(_get_AudioOutputStream, _setref_AudioOutputStream)
-        def _get_Rate(self) -> hints.Incomplete: ...
-        def _set_Rate(self, Rate: hints.Incomplete) -> hints.Hresult: ...
-        Rate = hints.normal_property(_get_Rate, _set_Rate)
-        def _get_Volume(self) -> hints.Incomplete: ...
-        def _set_Volume(self, Volume: hints.Incomplete) -> hints.Hresult: ...
-        Volume = hints.normal_property(_get_Volume, _set_Volume)
-        def _get_AllowAudioOutputFormatChangesOnNextSet(self) -> hints.Incomplete: ...
-        def _set_AllowAudioOutputFormatChangesOnNextSet(self, Allow: hints.Incomplete) -> hints.Hresult: ...
-        AllowAudioOutputFormatChangesOnNextSet = hints.normal_property(_get_AllowAudioOutputFormatChangesOnNextSet, _set_AllowAudioOutputFormatChangesOnNextSet)
-        def _get_EventInterests(self) -> hints.Incomplete: ...
-        def _set_EventInterests(self, EventInterestFlags: hints.Incomplete) -> hints.Hresult: ...
-        EventInterests = hints.normal_property(_get_EventInterests, _set_EventInterests)
-        def _get_Priority(self) -> hints.Incomplete: ...
-        def _set_Priority(self, Priority: hints.Incomplete) -> hints.Hresult: ...
-        Priority = hints.normal_property(_get_Priority, _set_Priority)
-        def _get_AlertBoundary(self) -> hints.Incomplete: ...
-        def _set_AlertBoundary(self, Boundary: hints.Incomplete) -> hints.Hresult: ...
-        AlertBoundary = hints.normal_property(_get_AlertBoundary, _set_AlertBoundary)
-        def _get_SynchronousSpeakTimeout(self) -> hints.Incomplete: ...
-        def _set_SynchronousSpeakTimeout(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
-        SynchronousSpeakTimeout = hints.normal_property(_get_SynchronousSpeakTimeout, _set_SynchronousSpeakTimeout)
-        def Speak(self, Text: hints.Incomplete, Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def SpeakStream(self, Stream: hints.Incomplete, Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def Pause(self) -> hints.Hresult: ...
-        def Resume(self) -> hints.Hresult: ...
-        def Skip(self, Type: hints.Incomplete, NumItems: hints.Incomplete) -> hints.Incomplete: ...
-        def GetVoices(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
-        def GetAudioOutputs(self, RequiredAttributes: hints.Incomplete = ..., OptionalAttributes: hints.Incomplete = ...) -> 'ISpeechObjectTokens': ...
-        def WaitUntilDone(self, msTimeout: hints.Incomplete) -> hints.Incomplete: ...
-        def SpeakCompleteEvent(self) -> hints.Incomplete: ...
-        def IsUISupported(self, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def DisplayUI(self, hWndParent: hints.Incomplete, Title: hints.Incomplete, TypeOfUI: hints.Incomplete, ExtraData: hints.Incomplete = ...) -> hints.Hresult: ...
 
+SpAudioFormat._com_interfaces_ = [ISpeechAudioFormat]
+
+SPPHRASEREPLACEMENT._fields_ = [
+    ('bDisplayAttributes', c_ubyte),
+    ('pszReplacementText', WSTRING),
+    ('ulFirstElement', c_ulong),
+    ('ulCountOfElements', c_ulong),
+]
+
+assert sizeof(SPPHRASEREPLACEMENT) == 24, sizeof(SPPHRASEREPLACEMENT)
+assert alignment(SPPHRASEREPLACEMENT) == 8, alignment(SPPHRASEREPLACEMENT)
 
 ISpeechVoice._methods_ = [
     COMMETHOD(
@@ -4317,989 +5256,752 @@ ISpeechVoice._methods_ = [
 #         #return 
 #
 
-ISpRecoCategory._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetType',
-        (['out'], POINTER(SPCATEGORYTYPE), 'peCategoryType')
+SPSEMANTICERRORINFO._fields_ = [
+    ('ulLineNumber', c_ulong),
+    ('pszScriptLine', WSTRING),
+    ('pszSource', WSTRING),
+    ('pszDescription', WSTRING),
+    ('hrResultCode', HRESULT),
+]
+
+assert sizeof(SPSEMANTICERRORINFO) == 40, sizeof(SPSEMANTICERRORINFO)
+assert alignment(SPSEMANTICERRORINFO) == 8, alignment(SPSEMANTICERRORINFO)
+
+_ISpeechVoiceEvents._disp_methods_ = [
+    DISPMETHOD(
+        [dispid(1), helpstring('StartStream')],
+        None,
+        'StartStream',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition')
+    ),
+    DISPMETHOD(
+        [dispid(2), helpstring('EndStream')],
+        None,
+        'EndStream',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition')
+    ),
+    DISPMETHOD(
+        [dispid(3), helpstring('VoiceChange')],
+        None,
+        'VoiceChange',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], POINTER(ISpeechObjectToken), 'VoiceObjectToken')
+    ),
+    DISPMETHOD(
+        [dispid(4), helpstring('Bookmark')],
+        None,
+        'Bookmark',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], BSTR, 'Bookmark'),
+        (['in'], c_int, 'BookmarkId')
+    ),
+    DISPMETHOD(
+        [dispid(5), helpstring('Word')],
+        None,
+        'Word',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], c_int, 'CharacterPosition'),
+        (['in'], c_int, 'Length')
+    ),
+    DISPMETHOD(
+        [dispid(7), helpstring('Sentence')],
+        None,
+        'Sentence',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], c_int, 'CharacterPosition'),
+        (['in'], c_int, 'Length')
+    ),
+    DISPMETHOD(
+        [dispid(6), helpstring('Phoneme')],
+        None,
+        'Phoneme',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], c_int, 'Duration'),
+        (['in'], c_short, 'NextPhoneId'),
+        (['in'], SpeechVisemeFeature, 'Feature'),
+        (['in'], c_short, 'CurrentPhoneId')
+    ),
+    DISPMETHOD(
+        [dispid(8), helpstring('Viseme')],
+        None,
+        'Viseme',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], c_int, 'Duration'),
+        (['in'], SpeechVisemeType, 'NextVisemeId'),
+        (['in'], SpeechVisemeFeature, 'Feature'),
+        (['in'], SpeechVisemeType, 'CurrentVisemeId')
+    ),
+    DISPMETHOD(
+        [dispid(9), helpstring('AudioLevel')],
+        None,
+        'AudioLevel',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], VARIANT, 'StreamPosition'),
+        (['in'], c_int, 'AudioLevel')
+    ),
+    DISPMETHOD(
+        [dispid(10), helpstring('EnginePrivate')],
+        None,
+        'EnginePrivate',
+        (['in'], c_int, 'StreamNumber'),
+        (['in'], c_int, 'StreamPosition'),
+        (['in'], VARIANT, 'EngineData')
     ),
 ]
 
-################################################################
-# code template for ISpRecoCategory implementation
-# class ISpRecoCategory_Impl(object):
-#     def GetType(self):
-#         '-no docstring-'
-#         #return peCategoryType
-#
-
-ISpeechAudioFormat._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Type'), 'propget'],
-        HRESULT,
-        'Type',
-        (['out', 'retval'], POINTER(SpeechAudioFormatType), 'AudioFormat')
-    ),
-    COMMETHOD(
-        [dispid(1), helpstring('Type'), 'propput'],
-        HRESULT,
-        'Type',
-        (['in'], SpeechAudioFormatType, 'AudioFormat')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Guid'), 'hidden', 'propget'],
-        HRESULT,
-        'Guid',
-        (['out', 'retval'], POINTER(BSTR), 'Guid')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Guid'), 'hidden', 'propput'],
-        HRESULT,
-        'Guid',
-        (['in'], BSTR, 'Guid')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('GetWaveFormatEx'), 'hidden'],
-        HRESULT,
-        'GetWaveFormatEx',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechWaveFormatEx)),
-            'SpeechWaveFormatEx',
-        )
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('SetWaveFormatEx'), 'hidden'],
-        HRESULT,
-        'SetWaveFormatEx',
-        (['in'], POINTER(ISpeechWaveFormatEx), 'SpeechWaveFormatEx')
-    ),
-]
-
-################################################################
-# code template for ISpeechAudioFormat implementation
-# class ISpeechAudioFormat_Impl(object):
-#     def _get(self):
-#         'Type'
-#         #return AudioFormat
-#     def _set(self, AudioFormat):
-#         'Type'
-#     Type = property(_get, _set, doc = _set.__doc__)
-#
-#     def _get(self):
-#         'Guid'
-#         #return Guid
-#     def _set(self, Guid):
-#         'Guid'
-#     Guid = property(_get, _set, doc = _set.__doc__)
-#
-#     def GetWaveFormatEx(self):
-#         'GetWaveFormatEx'
-#         #return SpeechWaveFormatEx
-#
-#     def SetWaveFormatEx(self, SpeechWaveFormatEx):
-#         'SetWaveFormatEx'
-#         #return 
-#
-
-ISpeechAudioStatus._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('FreeBufferSpace'), 'propget'],
-        HRESULT,
-        'FreeBufferSpace',
-        (['out', 'retval'], POINTER(c_int), 'FreeBufferSpace')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('NonBlockingIO'), 'propget'],
-        HRESULT,
-        'NonBlockingIO',
-        (['out', 'retval'], POINTER(c_int), 'NonBlockingIO')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('State'), 'propget'],
-        HRESULT,
-        'State',
-        (['out', 'retval'], POINTER(SpeechAudioState), 'State')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('CurrentSeekPosition'), 'propget'],
-        HRESULT,
-        'CurrentSeekPosition',
-        (['out', 'retval'], POINTER(VARIANT), 'CurrentSeekPosition')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('CurrentDevicePosition'), 'propget'],
-        HRESULT,
-        'CurrentDevicePosition',
-        (['out', 'retval'], POINTER(VARIANT), 'CurrentDevicePosition')
-    ),
-]
-
-################################################################
-# code template for ISpeechAudioStatus implementation
-# class ISpeechAudioStatus_Impl(object):
-#     @property
-#     def FreeBufferSpace(self):
-#         'FreeBufferSpace'
-#         #return FreeBufferSpace
-#
-#     @property
-#     def NonBlockingIO(self):
-#         'NonBlockingIO'
-#         #return NonBlockingIO
-#
-#     @property
-#     def State(self):
-#         'State'
-#         #return State
-#
-#     @property
-#     def CurrentSeekPosition(self):
-#         'CurrentSeekPosition'
-#         #return CurrentSeekPosition
-#
-#     @property
-#     def CurrentDevicePosition(self):
-#         'CurrentDevicePosition'
-#         #return CurrentDevicePosition
-#
-
-
-class SpLexicon(CoClass):
-    """SpLexicon Class"""
-    _reg_clsid_ = GUID('{0655E396-25D0-11D3-9C26-00C04F8EF87C}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpeechLexicon(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechLexicon Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{3DA7627A-C7AE-4B23-8708-638C50362C25}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_GenerationId(self) -> hints.Incomplete: ...
-        GenerationId = hints.normal_property(_get_GenerationId)
-        def GetWords(self, Flags: hints.Incomplete = ...) -> hints.Tuple[hints.Incomplete, 'ISpeechLexiconWords']: ...
-        def AddPronunciation(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., bstrPronunciation: hints.Incomplete = ...) -> hints.Hresult: ...
-        def AddPronunciationByPhoneIds(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., PhoneIds: hints.Incomplete = ...) -> hints.Hresult: ...
-        def RemovePronunciation(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., bstrPronunciation: hints.Incomplete = ...) -> hints.Hresult: ...
-        def RemovePronunciationByPhoneIds(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete, PartOfSpeech: hints.Incomplete = ..., PhoneIds: hints.Incomplete = ...) -> hints.Hresult: ...
-        def GetPronunciations(self, bstrWord: hints.Incomplete, LangId: hints.Incomplete = ..., TypeFlags: hints.Incomplete = ...) -> 'ISpeechLexiconPronunciations': ...
-        def GetGenerationChange(self, GenerationId: hints.Incomplete) -> hints.Tuple[hints.Incomplete, 'ISpeechLexiconWords']: ...
-
-
-class ISpLexicon(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpLexicon Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{DA41A7C2-5383-4DB2-916B-6C1719E3DB58}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetPronunciations(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, dwFlags: hints.Incomplete, pWordPronunciationList: hints.Incomplete) -> hints.Incomplete: ...
-        def AddPronunciation(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, ePartOfSpeech: hints.Incomplete, pszPronunciation: hints.Incomplete) -> hints.Hresult: ...
-        def RemovePronunciation(self, pszWord: hints.Incomplete, LangId: hints.Incomplete, ePartOfSpeech: hints.Incomplete, pszPronunciation: hints.Incomplete) -> hints.Hresult: ...
-        def GetGeneration(self) -> hints.Incomplete: ...
-        def GetGenerationChange(self, dwFlags: hints.Incomplete, pdwGeneration: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def GetWords(self, dwFlags: hints.Incomplete, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-
-
-class ISpPhoneticAlphabetSelection(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpPhoneticAlphabetSelection Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{B2745EFD-42CE-48CA-81F1-A96E02538A90}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def IsAlphabetUPS(self) -> hints.Incomplete: ...
-        def SetAlphabetToUPS(self, fForceUPS: hints.Incomplete) -> hints.Hresult: ...
-
-
-SpLexicon._com_interfaces_ = [ISpeechLexicon, ISpLexicon, ISpPhoneticAlphabetSelection]
-
-
-class SpObjectToken(CoClass):
-    """SpObjectToken Class"""
-    _reg_clsid_ = GUID('{EF411752-3736-4CB4-9C8C-8EF4CCB58EFE}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpObjectToken(ISpDataKey):
-    """ISpObjectToken Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{14056589-E16C-11D2-BB90-00C04F8EE6C0}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetId(self, pszCategoryId: hints.Incomplete, pszTokenId: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Hresult: ...
-        def GetId(self) -> hints.Incomplete: ...
-        def GetCategory(self) -> 'ISpObjectTokenCategory': ...
-        def CreateInstance(self, pUnkOuter: hints.Incomplete, dwClsContext: hints.Incomplete, riid: hints.Incomplete) -> hints.Incomplete: ...
-        def GetStorageFileName(self, clsidCaller: hints.Incomplete, pszValueName: hints.Incomplete, pszFileNameSpecifier: hints.Incomplete, nFolder: hints.Incomplete) -> hints.Incomplete: ...
-        def RemoveStorageFileName(self, clsidCaller: hints.Incomplete, pszKeyName: hints.Incomplete, fDeleteFile: hints.Incomplete) -> hints.Hresult: ...
-        def Remove(self, pclsidCaller: hints.Incomplete) -> hints.Hresult: ...
-        def IsUISupported(self, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete, punkObject: hints.Incomplete) -> hints.Incomplete: ...
-        def DisplayUI(self, hWndParent: hints.Incomplete, pszTitle: hints.Incomplete, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete, punkObject: hints.Incomplete) -> hints.Hresult: ...
-        def MatchesAttributes(self, pszAttributes: hints.Incomplete) -> hints.Incomplete: ...
-
-
-SpObjectToken._com_interfaces_ = [ISpeechObjectToken, ISpObjectToken]
-
-IEnumSpObjectTokens._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Next',
-        (['in'], c_ulong, 'celt'),
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'pelt'),
-        (['out'], POINTER(c_ulong), 'pceltFetched')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Skip',
-        (['in'], c_ulong, 'celt')
-    ),
-    COMMETHOD([], HRESULT, 'Reset'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Clone',
-        (['out'], POINTER(POINTER(IEnumSpObjectTokens)), 'ppEnum')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Item',
-        (['in'], c_ulong, 'Index'),
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetCount',
-        (['out'], POINTER(c_ulong), 'pCount')
-    ),
-]
-
-################################################################
-# code template for IEnumSpObjectTokens implementation
-# class IEnumSpObjectTokens_Impl(object):
-#     def Next(self, celt):
-#         '-no docstring-'
-#         #return pelt, pceltFetched
-#
-#     def Skip(self, celt):
-#         '-no docstring-'
-#         #return 
-#
-#     def Reset(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def Clone(self):
-#         '-no docstring-'
-#         #return ppEnum
-#
-#     def Item(self, Index):
-#         '-no docstring-'
-#         #return ppToken
-#
-#     def GetCount(self):
-#         '-no docstring-'
-#         #return pCount
-#
-
-
-class SpSharedRecognizer(CoClass):
-    """SpSharedRecognizer Class"""
-    _reg_clsid_ = GUID('{3BEE4890-4FE9-4A37-8C1E-5E7E12791C1F}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpSharedRecognizer._com_interfaces_ = [ISpeechRecognizer, ISpRecognizer, ISpRecognizer2, ISpRecognizer3, ISpSerializeState]
-
-ISpObjectToken._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetId',
-        ([], WSTRING, 'pszCategoryId'),
-        (['in'], WSTRING, 'pszTokenId'),
-        (['in'], c_int, 'fCreateIfNotExist')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetId',
-        (['out'], POINTER(WSTRING), 'ppszCoMemTokenId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetCategory',
-        (['out'], POINTER(POINTER(ISpObjectTokenCategory)), 'ppTokenCategory')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'CreateInstance',
-        (['in'], POINTER(IUnknown), 'pUnkOuter'),
-        (['in'], c_ulong, 'dwClsContext'),
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'riid',
-        ),
-        (['out'], POINTER(c_void_p), 'ppvObject')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetStorageFileName',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'clsidCaller',
-        ),
-        (['in'], WSTRING, 'pszValueName'),
-        (['in'], WSTRING, 'pszFileNameSpecifier'),
-        (['in'], c_ulong, 'nFolder'),
-        (['out'], POINTER(WSTRING), 'ppszFilePath')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'RemoveStorageFileName',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'clsidCaller',
-        ),
-        (['in'], WSTRING, 'pszKeyName'),
-        (['in'], c_int, 'fDeleteFile')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Remove',
-        (
-            [],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pclsidCaller',
-        )
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'IsUISupported',
-        (['in'], WSTRING, 'pszTypeOfUI'),
-        (['in'], c_void_p, 'pvExtraData'),
-        (['in'], c_ulong, 'cbExtraData'),
-        (['in'], POINTER(IUnknown), 'punkObject'),
-        (['out'], POINTER(c_int), 'pfSupported')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'DisplayUI',
-        (['in'], wireHWND, 'hWndParent'),
-        (['in'], WSTRING, 'pszTitle'),
-        (['in'], WSTRING, 'pszTypeOfUI'),
-        (['in'], c_void_p, 'pvExtraData'),
-        (['in'], c_ulong, 'cbExtraData'),
-        (['in'], POINTER(IUnknown), 'punkObject')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'MatchesAttributes',
-        (['in'], WSTRING, 'pszAttributes'),
-        (['out'], POINTER(c_int), 'pfMatches')
-    ),
-]
-
-################################################################
-# code template for ISpObjectToken implementation
-# class ISpObjectToken_Impl(object):
-#     def SetId(self, pszCategoryId, pszTokenId, fCreateIfNotExist):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetId(self):
-#         '-no docstring-'
-#         #return ppszCoMemTokenId
-#
-#     def GetCategory(self):
-#         '-no docstring-'
-#         #return ppTokenCategory
-#
-#     def CreateInstance(self, pUnkOuter, dwClsContext, riid):
-#         '-no docstring-'
-#         #return ppvObject
-#
-#     def GetStorageFileName(self, clsidCaller, pszValueName, pszFileNameSpecifier, nFolder):
-#         '-no docstring-'
-#         #return ppszFilePath
-#
-#     def RemoveStorageFileName(self, clsidCaller, pszKeyName, fDeleteFile):
-#         '-no docstring-'
-#         #return 
-#
-#     def Remove(self, pclsidCaller):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsUISupported(self, pszTypeOfUI, pvExtraData, cbExtraData, punkObject):
-#         '-no docstring-'
-#         #return pfSupported
-#
-#     def DisplayUI(self, hWndParent, pszTitle, pszTypeOfUI, pvExtraData, cbExtraData, punkObject):
-#         '-no docstring-'
-#         #return 
-#
-#     def MatchesAttributes(self, pszAttributes):
-#         '-no docstring-'
-#         #return pfMatches
-#
-
-
-class SPWORDPRONUNCIATIONLIST(Structure):
-    pass
-
-
-class SPWORDLIST(Structure):
-    pass
-
-
-ISpLexicon._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetPronunciations',
-        (['in'], WSTRING, 'pszWord'),
-        (['in'], c_ushort, 'LangId'),
-        (['in'], c_ulong, 'dwFlags'),
-        (
-            ['in', 'out'],
-            POINTER(SPWORDPRONUNCIATIONLIST),
-            'pWordPronunciationList',
-        )
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddPronunciation',
-        (['in'], WSTRING, 'pszWord'),
-        (['in'], c_ushort, 'LangId'),
-        (['in'], SPPARTOFSPEECH, 'ePartOfSpeech'),
-        (['in'], WSTRING, 'pszPronunciation')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'RemovePronunciation',
-        (['in'], WSTRING, 'pszWord'),
-        (['in'], c_ushort, 'LangId'),
-        (['in'], SPPARTOFSPEECH, 'ePartOfSpeech'),
-        (['in'], WSTRING, 'pszPronunciation')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGeneration',
-        (['out'], POINTER(c_ulong), 'pdwGeneration')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGenerationChange',
-        (['in'], c_ulong, 'dwFlags'),
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetWords',
-        (['in'], c_ulong, 'dwFlags'),
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
-        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
-    ),
-]
-
-################################################################
-# code template for ISpLexicon implementation
-# class ISpLexicon_Impl(object):
-#     def GetPronunciations(self, pszWord, LangId, dwFlags):
-#         '-no docstring-'
-#         #return pWordPronunciationList
-#
-#     def AddPronunciation(self, pszWord, LangId, ePartOfSpeech, pszPronunciation):
-#         '-no docstring-'
-#         #return 
-#
-#     def RemovePronunciation(self, pszWord, LangId, ePartOfSpeech, pszPronunciation):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetGeneration(self):
-#         '-no docstring-'
-#         #return pdwGeneration
-#
-#     def GetGenerationChange(self, dwFlags):
-#         '-no docstring-'
-#         #return pdwGeneration, pWordList
-#
-#     def GetWords(self, dwFlags):
-#         '-no docstring-'
-#         #return pdwGeneration, pdwCookie, pWordList
-#
-
-
-class SPWORDPRONUNCIATION(Structure):
-    pass
-
-
-SPWORDPRONUNCIATIONLIST._fields_ = [
-    ('ulSize', c_ulong),
-    ('pvBuffer', POINTER(c_ubyte)),
+SPWORD._fields_ = [
+    ('pNextWord', POINTER(SPWORD)),
+    ('LangId', c_ushort),
+    ('wReserved', c_ushort),
+    ('eWordType', SPWORDTYPE),
+    ('pszWord', WSTRING),
     ('pFirstWordPronunciation', POINTER(SPWORDPRONUNCIATION)),
 ]
 
-assert sizeof(SPWORDPRONUNCIATIONLIST) == 24, sizeof(SPWORDPRONUNCIATIONLIST)
-assert alignment(SPWORDPRONUNCIATIONLIST) == 8, alignment(SPWORDPRONUNCIATIONLIST)
+assert sizeof(SPWORD) == 32, sizeof(SPWORD)
+assert alignment(SPWORD) == 8, alignment(SPWORD)
 
-SPWORDPRONUNCIATION._fields_ = [
-    ('pNextWordPronunciation', POINTER(SPWORDPRONUNCIATION)),
-    ('eLexiconType', SPLEXICONTYPE),
-    ('LangId', c_ushort),
-    ('wPronunciationFlags', c_ushort),
-    ('ePartOfSpeech', SPPARTOFSPEECH),
-    ('szPronunciation', c_ushort * 1),
+
+class ISpPhoneticAlphabetConverter(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpPhoneticAlphabetConverter Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{133ADCD4-19B4-4020-9FDC-842E78253B17}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetLangId(self) -> hints.Incomplete: ...
+        def SetLangId(self, LangId: hints.Incomplete) -> hints.Hresult: ...
+        def SAPI2UPS(self, pszSAPIId: hints.Incomplete, cMaxLength: hints.Incomplete) -> hints.Incomplete: ...
+        def UPS2SAPI(self, pszUPSId: hints.Incomplete, cMaxLength: hints.Incomplete) -> hints.Incomplete: ...
+        def GetMaxConvertLength(self, cSrcLength: hints.Incomplete, bSAPI2UPS: hints.Incomplete) -> hints.Incomplete: ...
+
+
+ISpPhoneticAlphabetConverter._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetLangId',
+        (['out'], POINTER(c_ushort), 'pLangID')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetLangId',
+        (['in'], c_ushort, 'LangId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SAPI2UPS',
+        (['in'], POINTER(c_ushort), 'pszSAPIId'),
+        (['out'], POINTER(c_ushort), 'pszUPSId'),
+        (['in'], c_ulong, 'cMaxLength')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'UPS2SAPI',
+        (['in'], POINTER(c_ushort), 'pszUPSId'),
+        (['out'], POINTER(c_ushort), 'pszSAPIId'),
+        (['in'], c_ulong, 'cMaxLength')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetMaxConvertLength',
+        (['in'], c_ulong, 'cSrcLength'),
+        (['in'], c_int, 'bSAPI2UPS'),
+        (['out'], POINTER(c_ulong), 'pcMaxDestLength')
+    ),
 ]
 
-assert sizeof(SPWORDPRONUNCIATION) == 24, sizeof(SPWORDPRONUNCIATION)
-assert alignment(SPWORDPRONUNCIATION) == 8, alignment(SPWORDPRONUNCIATION)
+################################################################
+# code template for ISpPhoneticAlphabetConverter implementation
+# class ISpPhoneticAlphabetConverter_Impl(object):
+#     def GetLangId(self):
+#         '-no docstring-'
+#         #return pLangID
+#
+#     def SetLangId(self, LangId):
+#         '-no docstring-'
+#         #return 
+#
+#     def SAPI2UPS(self, pszSAPIId, cMaxLength):
+#         '-no docstring-'
+#         #return pszUPSId
+#
+#     def UPS2SAPI(self, pszUPSId, cMaxLength):
+#         '-no docstring-'
+#         #return pszSAPIId
+#
+#     def GetMaxConvertLength(self, cSrcLength, bSAPI2UPS):
+#         '-no docstring-'
+#         #return pcMaxDestLength
+#
 
 
-class ISpeechRecognizerStatus(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecognizerStatus Interface"""
+class SpPhoneticAlphabetConverter(CoClass):
+    """SpPhoneticAlphabetConverter Class"""
+    _reg_clsid_ = GUID('{4F414126-DFE3-4629-99EE-797978317EAD}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpPhoneticAlphabetConverter._com_interfaces_ = [ISpPhoneticAlphabetConverter]
+
+SpeechPropertyResourceUsage = 'ResourceUsage'  # Constant BSTR
+
+
+class SpMMAudioEnum(CoClass):
+    """SpMMAudioEnum Class"""
+    _reg_clsid_ = GUID('{AB1890A0-E91F-11D2-BB91-00C04F8EE6C0}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class IEnumSpObjectTokens(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """IEnumSpObjectTokens Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{BFF9E781-53EC-484E-BB8A-0E1B5551E35C}')
-    _idlflags_ = ['dual', 'oleautomation']
+    _iid_ = GUID('{06B64F9E-7FDA-11D2-B4F2-00C04F797396}')
+    _idlflags_ = ['restricted']
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        item, fetched = self.Next(1)
+        if fetched:
+            return item
+        raise StopIteration
+
+    def __getitem__(self, index):
+        self.Reset()
+        self.Skip(index)
+        item, fetched = self.Next(1)
+        if fetched:
+            return item
+        raise IndexError(index)
 
     if TYPE_CHECKING:  # commembers
-        def _get_AudioStatus(self) -> 'ISpeechAudioStatus': ...
-        AudioStatus = hints.normal_property(_get_AudioStatus)
-        def _get_CurrentStreamPosition(self) -> hints.Incomplete: ...
-        CurrentStreamPosition = hints.normal_property(_get_CurrentStreamPosition)
-        def _get_CurrentStreamNumber(self) -> hints.Incomplete: ...
-        CurrentStreamNumber = hints.normal_property(_get_CurrentStreamNumber)
-        def _get_NumberOfActiveRules(self) -> hints.Incomplete: ...
-        NumberOfActiveRules = hints.normal_property(_get_NumberOfActiveRules)
-        def _get_ClsidEngine(self) -> hints.Incomplete: ...
-        ClsidEngine = hints.normal_property(_get_ClsidEngine)
-        def _get_SupportedLanguages(self) -> hints.Incomplete: ...
-        SupportedLanguages = hints.normal_property(_get_SupportedLanguages)
+        def Next(self, celt: hints.Incomplete) -> hints.Tuple['ISpObjectToken', hints.Incomplete]: ...
+        def Skip(self, celt: hints.Incomplete) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> 'IEnumSpObjectTokens': ...
+        def Item(self, Index: hints.Incomplete) -> 'ISpObjectToken': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def GetCount(self) -> hints.Incomplete: ...
 
 
-class ISpeechRecoContext(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecoContext Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{580AA49D-7E1E-4809-B8E2-57DA806104B8}')
-    _idlflags_ = ['dual', 'oleautomation']
+SpMMAudioEnum._com_interfaces_ = [IEnumSpObjectTokens]
 
-    if TYPE_CHECKING:  # commembers
-        def _get_Recognizer(self) -> 'ISpeechRecognizer': ...
-        Recognizer = hints.normal_property(_get_Recognizer)
-        def _get_AudioInputInterferenceStatus(self) -> hints.Incomplete: ...
-        AudioInputInterferenceStatus = hints.normal_property(_get_AudioInputInterferenceStatus)
-        def _get_RequestedUIType(self) -> hints.Incomplete: ...
-        RequestedUIType = hints.normal_property(_get_RequestedUIType)
-        def _get_Voice(self) -> 'ISpeechVoice': ...
-        def _setref_Voice(self, Voice: hints.Incomplete) -> hints.Hresult: ...
-        Voice = hints.normal_property(_get_Voice, _setref_Voice)
-        def _get_AllowVoiceFormatMatchingOnNextSet(self) -> hints.Incomplete: ...
-        def _set_AllowVoiceFormatMatchingOnNextSet(self, pAllow: hints.Incomplete) -> hints.Hresult: ...
-        AllowVoiceFormatMatchingOnNextSet = hints.normal_property(_get_AllowVoiceFormatMatchingOnNextSet, _set_AllowVoiceFormatMatchingOnNextSet)
-        def _get_VoicePurgeEvent(self) -> hints.Incomplete: ...
-        def _set_VoicePurgeEvent(self, EventInterest: hints.Incomplete) -> hints.Hresult: ...
-        VoicePurgeEvent = hints.normal_property(_get_VoicePurgeEvent, _set_VoicePurgeEvent)
-        def _get_EventInterests(self) -> hints.Incomplete: ...
-        def _set_EventInterests(self, EventInterest: hints.Incomplete) -> hints.Hresult: ...
-        EventInterests = hints.normal_property(_get_EventInterests, _set_EventInterests)
-        def _get_CmdMaxAlternates(self) -> hints.Incomplete: ...
-        def _set_CmdMaxAlternates(self, MaxAlternates: hints.Incomplete) -> hints.Hresult: ...
-        CmdMaxAlternates = hints.normal_property(_get_CmdMaxAlternates, _set_CmdMaxAlternates)
-        def _get_State(self) -> hints.Incomplete: ...
-        def _set_State(self, State: hints.Incomplete) -> hints.Hresult: ...
-        State = hints.normal_property(_get_State, _set_State)
-        def _get_RetainedAudio(self) -> hints.Incomplete: ...
-        def _set_RetainedAudio(self, Option: hints.Incomplete) -> hints.Hresult: ...
-        RetainedAudio = hints.normal_property(_get_RetainedAudio, _set_RetainedAudio)
-        def _get_RetainedAudioFormat(self) -> 'ISpeechAudioFormat': ...
-        def _setref_RetainedAudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
-        RetainedAudioFormat = hints.normal_property(_get_RetainedAudioFormat, _setref_RetainedAudioFormat)
-        def Pause(self) -> hints.Hresult: ...
-        def Resume(self) -> hints.Hresult: ...
-        def CreateGrammar(self, GrammarId: hints.Incomplete = ...) -> 'ISpeechRecoGrammar': ...
-        def CreateResultFromMemory(self, ResultBlock: hints.Incomplete) -> 'ISpeechRecoResult': ...
-        def Bookmark(self, Options: hints.Incomplete, StreamPos: hints.Incomplete, BookmarkId: hints.Incomplete) -> hints.Hresult: ...
-        def SetAdaptationData(self, AdaptationString: hints.Incomplete) -> hints.Hresult: ...
+SPSHORTCUTPAIR._fields_ = [
+    ('pNextSHORTCUTPAIR', POINTER(SPSHORTCUTPAIR)),
+    ('LangId', c_ushort),
+    ('shType', SPSHORTCUTTYPE),
+    ('pszDisplay', WSTRING),
+    ('pszSpoken', WSTRING),
+]
 
+assert sizeof(SPSHORTCUTPAIR) == 32, sizeof(SPSHORTCUTPAIR)
+assert alignment(SPSHORTCUTPAIR) == 8, alignment(SPSHORTCUTPAIR)
+SpeechTokenKeyAttributes = 'Attributes'  # Constant BSTR
+SpeechTokenKeyFiles = 'Files'  # Constant BSTR
 
-ISpeechRecognizer._methods_ = [
+ISpeechObjectToken._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Recognizer'), 'propputref'],
+        [dispid(1), helpstring('Id'), 'propget'],
         HRESULT,
-        'Recognizer',
-        (['in'], POINTER(ISpeechObjectToken), 'Recognizer')
+        'Id',
+        (['out', 'retval'], POINTER(BSTR), 'ObjectId')
     ),
     COMMETHOD(
-        [dispid(1), helpstring('Recognizer'), 'propget'],
+        [dispid(2), helpstring('DataKey'), 'hidden', 'propget'],
         HRESULT,
-        'Recognizer',
-        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Recognizer')
+        'DataKey',
+        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'DataKey')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('AllowAudioInputFormatChangesOnNextSet'), 'hidden', 'propput'],
+        [dispid(3), helpstring('Category'), 'propget'],
         HRESULT,
-        'AllowAudioInputFormatChangesOnNextSet',
-        (['in'], VARIANT_BOOL, 'Allow')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('AllowAudioInputFormatChangesOnNextSet'), 'hidden', 'propget'],
-        HRESULT,
-        'AllowAudioInputFormatChangesOnNextSet',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Allow')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioInput'), 'propputref'],
-        HRESULT,
-        'AudioInput',
-        (['in', 'optional'], POINTER(ISpeechObjectToken), 'AudioInput', 0)
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioInput'), 'propget'],
-        HRESULT,
-        'AudioInput',
-        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'AudioInput')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AudioInputStream'), 'propputref'],
-        HRESULT,
-        'AudioInputStream',
-        (['in', 'optional'], POINTER(ISpeechBaseStream), 'AudioInputStream', 0)
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AudioInputStream'), 'propget'],
-        HRESULT,
-        'AudioInputStream',
+        'Category',
         (
             ['out', 'retval'],
-            POINTER(POINTER(ISpeechBaseStream)),
-            'AudioInputStream',
+            POINTER(POINTER(ISpeechObjectTokenCategory)),
+            'Category',
         )
     ),
     COMMETHOD(
-        [dispid(5), helpstring('IsShared'), 'propget'],
+        [dispid(4), helpstring('GetDescription')],
         HRESULT,
-        'IsShared',
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Shared')
+        'GetDescription',
+        (['in', 'optional'], c_int, 'Locale', 0),
+        (['out', 'retval'], POINTER(BSTR), 'Description')
     ),
     COMMETHOD(
-        [dispid(6), helpstring('State'), 'propput'],
+        [dispid(5), helpstring('SetId'), 'hidden'],
         HRESULT,
-        'State',
-        (['in'], SpeechRecognizerState, 'State')
+        'SetId',
+        (['in'], BSTR, 'Id'),
+        (['in', 'optional'], BSTR, 'CategoryID', ''),
+        (['in', 'optional'], VARIANT_BOOL, 'CreateIfNotExist', False)
     ),
     COMMETHOD(
-        [dispid(6), helpstring('State'), 'propget'],
+        [dispid(6), helpstring('GetAttribute')],
         HRESULT,
-        'State',
-        (['out', 'retval'], POINTER(SpeechRecognizerState), 'State')
+        'GetAttribute',
+        (['in'], BSTR, 'AttributeName'),
+        (['out', 'retval'], POINTER(BSTR), 'AttributeValue')
     ),
     COMMETHOD(
-        [dispid(7), helpstring('Status'), 'propget'],
+        [dispid(7), helpstring('CreateInstance')],
         HRESULT,
-        'Status',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecognizerStatus)), 'Status')
+        'CreateInstance',
+        (['in', 'optional'], POINTER(IUnknown), 'pUnkOuter'),
+        (['in', 'optional'], SpeechTokenContext, 'ClsContext', 23),
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'Object')
     ),
     COMMETHOD(
-        [dispid(8), helpstring('Profile'), 'propputref'],
+        [dispid(8), helpstring('Remove'), 'hidden'],
         HRESULT,
-        'Profile',
-        (['in', 'optional'], POINTER(ISpeechObjectToken), 'Profile', 0)
+        'Remove',
+        (['in'], BSTR, 'ObjectStorageCLSID')
     ),
     COMMETHOD(
-        [dispid(8), helpstring('Profile'), 'propget'],
+        [dispid(9), helpstring('GetStorageFileName'), 'hidden'],
         HRESULT,
-        'Profile',
-        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Profile')
+        'GetStorageFileName',
+        (['in'], BSTR, 'ObjectStorageCLSID'),
+        (['in'], BSTR, 'KeyName'),
+        (['in'], BSTR, 'FileName'),
+        (['in'], SpeechTokenShellFolder, 'Folder'),
+        (['out', 'retval'], POINTER(BSTR), 'FilePath')
     ),
     COMMETHOD(
-        [dispid(9), helpstring('EmulateRecognition')],
+        [dispid(10), helpstring('RemoveStorageFileName'), 'hidden'],
         HRESULT,
-        'EmulateRecognition',
-        (['in'], VARIANT, 'TextElements'),
-        (['in', 'optional'], POINTER(VARIANT), 'ElementDisplayAttributes'),
-        (['in', 'optional'], c_int, 'LanguageId', 0)
+        'RemoveStorageFileName',
+        (['in'], BSTR, 'ObjectStorageCLSID'),
+        (['in'], BSTR, 'KeyName'),
+        (['in'], VARIANT_BOOL, 'DeleteFile')
     ),
     COMMETHOD(
-        [dispid(10), helpstring('CreateRecoContext')],
-        HRESULT,
-        'CreateRecoContext',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'NewContext')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('GetFormat')],
-        HRESULT,
-        'GetFormat',
-        (['in'], SpeechFormatType, 'Type'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('SetPropertyNumber'), 'hidden'],
-        HRESULT,
-        'SetPropertyNumber',
-        (['in'], BSTR, 'Name'),
-        (['in'], c_int, 'Value'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
-    ),
-    COMMETHOD(
-        [dispid(13), helpstring('GetPropertyNumber'), 'hidden'],
-        HRESULT,
-        'GetPropertyNumber',
-        (['in'], BSTR, 'Name'),
-        (['in', 'out'], POINTER(c_int), 'Value'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
-    ),
-    COMMETHOD(
-        [dispid(14), helpstring('SetPropertyString'), 'hidden'],
-        HRESULT,
-        'SetPropertyString',
-        (['in'], BSTR, 'Name'),
-        (['in'], BSTR, 'Value'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
-    ),
-    COMMETHOD(
-        [dispid(15), helpstring('GetPropertyString'), 'hidden'],
-        HRESULT,
-        'GetPropertyString',
-        (['in'], BSTR, 'Name'),
-        (['in', 'out'], POINTER(BSTR), 'Value'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
-    ),
-    COMMETHOD(
-        [dispid(16), helpstring('IsUISupported')],
+        [dispid(11), helpstring('IsUISupported'), 'hidden'],
         HRESULT,
         'IsUISupported',
         (['in'], BSTR, 'TypeOfUI'),
         (['in', 'optional'], POINTER(VARIANT), 'ExtraData'),
+        (['in', 'optional'], POINTER(IUnknown), 'Object'),
         (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
     ),
     COMMETHOD(
-        [dispid(17), helpstring('DisplayUI')],
+        [dispid(12), helpstring('DisplayUI'), 'hidden'],
         HRESULT,
         'DisplayUI',
-        (['in'], c_int, 'hWndParent'),
+        (['in'], c_int, 'hWnd'),
         (['in'], BSTR, 'Title'),
         (['in'], BSTR, 'TypeOfUI'),
-        (['in', 'optional'], POINTER(VARIANT), 'ExtraData')
+        (['in', 'optional'], POINTER(VARIANT), 'ExtraData'),
+        (['in', 'optional'], POINTER(IUnknown), 'Object')
     ),
     COMMETHOD(
-        [dispid(18), helpstring('GetRecognizers')],
+        [dispid(13), helpstring('MatchesAttributes')],
         HRESULT,
-        'GetRecognizers',
-        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
-        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechObjectTokens)),
-            'ObjectTokens',
-        )
-    ),
-    COMMETHOD(
-        [dispid(19), helpstring('GetAudioInputs')],
-        HRESULT,
-        'GetAudioInputs',
-        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
-        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechObjectTokens)),
-            'ObjectTokens',
-        )
-    ),
-    COMMETHOD(
-        [dispid(20), helpstring('GetProfiles')],
-        HRESULT,
-        'GetProfiles',
-        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
-        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechObjectTokens)),
-            'ObjectTokens',
-        )
+        'MatchesAttributes',
+        (['in'], BSTR, 'Attributes'),
+        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Matches')
     ),
 ]
 
 ################################################################
-# code template for ISpeechRecognizer implementation
-# class ISpeechRecognizer_Impl(object):
+# code template for ISpeechObjectToken implementation
+# class ISpeechObjectToken_Impl(object):
 #     @property
-#     def Recognizer(self, Recognizer):
-#         'Recognizer'
+#     def Id(self):
+#         'Id'
+#         #return ObjectId
+#
+#     @property
+#     def DataKey(self):
+#         'DataKey'
+#         #return DataKey
+#
+#     @property
+#     def Category(self):
+#         'Category'
+#         #return Category
+#
+#     def GetDescription(self, Locale):
+#         'GetDescription'
+#         #return Description
+#
+#     def SetId(self, Id, CategoryID, CreateIfNotExist):
+#         'SetId'
 #         #return 
 #
-#     def _get(self):
-#         'AllowAudioInputFormatChangesOnNextSet'
-#         #return Allow
-#     def _set(self, Allow):
-#         'AllowAudioInputFormatChangesOnNextSet'
-#     AllowAudioInputFormatChangesOnNextSet = property(_get, _set, doc = _set.__doc__)
+#     def GetAttribute(self, AttributeName):
+#         'GetAttribute'
+#         #return AttributeValue
 #
-#     @property
-#     def AudioInput(self, AudioInput):
-#         'AudioInput'
+#     def CreateInstance(self, pUnkOuter, ClsContext):
+#         'CreateInstance'
+#         #return Object
+#
+#     def Remove(self, ObjectStorageCLSID):
+#         'Remove'
 #         #return 
 #
-#     @property
-#     def AudioInputStream(self, AudioInputStream):
-#         'AudioInputStream'
+#     def GetStorageFileName(self, ObjectStorageCLSID, KeyName, FileName, Folder):
+#         'GetStorageFileName'
+#         #return FilePath
+#
+#     def RemoveStorageFileName(self, ObjectStorageCLSID, KeyName, DeleteFile):
+#         'RemoveStorageFileName'
 #         #return 
 #
-#     @property
-#     def IsShared(self):
-#         'IsShared'
-#         #return Shared
-#
-#     def _get(self):
-#         'State'
-#         #return State
-#     def _set(self, State):
-#         'State'
-#     State = property(_get, _set, doc = _set.__doc__)
-#
-#     @property
-#     def Status(self):
-#         'Status'
-#         #return Status
-#
-#     @property
-#     def Profile(self, Profile):
-#         'Profile'
-#         #return 
-#
-#     def EmulateRecognition(self, TextElements, ElementDisplayAttributes, LanguageId):
-#         'EmulateRecognition'
-#         #return 
-#
-#     def CreateRecoContext(self):
-#         'CreateRecoContext'
-#         #return NewContext
-#
-#     def GetFormat(self, Type):
-#         'GetFormat'
-#         #return Format
-#
-#     def SetPropertyNumber(self, Name, Value):
-#         'SetPropertyNumber'
-#         #return Supported
-#
-#     def GetPropertyNumber(self, Name):
-#         'GetPropertyNumber'
-#         #return Value, Supported
-#
-#     def SetPropertyString(self, Name, Value):
-#         'SetPropertyString'
-#         #return Supported
-#
-#     def GetPropertyString(self, Name):
-#         'GetPropertyString'
-#         #return Value, Supported
-#
-#     def IsUISupported(self, TypeOfUI, ExtraData):
+#     def IsUISupported(self, TypeOfUI, ExtraData, Object):
 #         'IsUISupported'
 #         #return Supported
 #
-#     def DisplayUI(self, hWndParent, Title, TypeOfUI, ExtraData):
+#     def DisplayUI(self, hWnd, Title, TypeOfUI, ExtraData, Object):
 #         'DisplayUI'
 #         #return 
 #
-#     def GetRecognizers(self, RequiredAttributes, OptionalAttributes):
-#         'GetRecognizers'
-#         #return ObjectTokens
-#
-#     def GetAudioInputs(self, RequiredAttributes, OptionalAttributes):
-#         'GetAudioInputs'
-#         #return ObjectTokens
-#
-#     def GetProfiles(self, RequiredAttributes, OptionalAttributes):
-#         'GetProfiles'
-#         #return ObjectTokens
+#     def MatchesAttributes(self, Attributes):
+#         'MatchesAttributes'
+#         #return Matches
 #
 
 
-class _ISpeechRecoContextEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+class ISpeechFileStream(ISpeechBaseStream):
+    """ISpeechFileStream Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{7B8FCB42-0E9D-4F00-A048-7B04D6179D3D}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        def StartStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def EndStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, StreamReleased: hints.Incomplete) -> hints.Incomplete: ...
-        def Bookmark(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, BookmarkId: hints.Incomplete, Options: hints.Incomplete) -> hints.Incomplete: ...
-        def SoundStart(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def SoundEnd(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def PhraseStart(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def Recognition(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, RecognitionType: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
-        def Hypothesis(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
-        def PropertyNumberChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, PropertyName: hints.Incomplete, NewNumberValue: hints.Incomplete) -> hints.Incomplete: ...
-        def PropertyStringChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, PropertyName: hints.Incomplete, NewStringValue: hints.Incomplete) -> hints.Incomplete: ...
-        def FalseRecognition(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Result: hints.Incomplete) -> hints.Incomplete: ...
-        def Interference(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Interference: hints.Incomplete) -> hints.Incomplete: ...
-        def RequestUI(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, UIType: hints.Incomplete) -> hints.Incomplete: ...
-        def RecognizerStateChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, NewState: hints.Incomplete) -> hints.Incomplete: ...
-        def Adaptation(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def RecognitionForOtherContext(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def AudioLevel(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, AudioLevel: hints.Incomplete) -> hints.Incomplete: ...
-        def EnginePrivate(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, EngineData: hints.Incomplete) -> hints.Incomplete: ...
-
-
-class ISpeechRecoResult(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecoResult Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{ED2879CF-CED9-4EE6-A534-DE0191D5468D}')
+    _iid_ = GUID('{AF67F125-AB39-4E93-B4A2-CC2E66E182A7}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
-        RecoContext = hints.normal_property(_get_RecoContext)
-        def _get_Times(self) -> 'ISpeechRecoResultTimes': ...
-        Times = hints.normal_property(_get_Times)
-        def _get_AudioFormat(self) -> 'ISpeechAudioFormat': ...
-        def _setref_AudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
-        AudioFormat = hints.normal_property(_get_AudioFormat, _setref_AudioFormat)
-        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
-        PhraseInfo = hints.normal_property(_get_PhraseInfo)
-        def Alternates(self, RequestCount: hints.Incomplete, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechPhraseAlternates': ...
-        def Audio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechMemoryStream': ...
-        def SpeakAudio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def SaveToMemory(self) -> hints.Incomplete: ...
-        def DiscardResultInfo(self, ValueTypes: hints.Incomplete) -> hints.Hresult: ...
+        def Open(self, FileName: hints.Incomplete, FileMode: hints.Incomplete = ..., DoEvents: hints.Incomplete = ...) -> hints.Hresult: ...
+        def Close(self) -> hints.Hresult: ...
 
+
+ISpeechFileStream._methods_ = [
+    COMMETHOD(
+        [dispid(100), helpstring('Open')],
+        HRESULT,
+        'Open',
+        (['in'], BSTR, 'FileName'),
+        (['in', 'optional'], SpeechStreamFileMode, 'FileMode', 0),
+        (['in', 'optional'], VARIANT_BOOL, 'DoEvents', False)
+    ),
+    COMMETHOD([dispid(101), helpstring('Close')], HRESULT, 'Close'),
+]
+
+################################################################
+# code template for ISpeechFileStream implementation
+# class ISpeechFileStream_Impl(object):
+#     def Open(self, FileName, FileMode, DoEvents):
+#         'Open'
+#         #return 
+#
+#     def Close(self):
+#         'Close'
+#         #return 
+#
+
+
+class SpNullPhoneConverter(CoClass):
+    """SpNullPhoneConverter Class"""
+    _reg_clsid_ = GUID('{455F24E9-7396-4A16-9715-7C0FDBE3EFE3}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpNullPhoneConverter._com_interfaces_ = [ISpPhoneConverter]
+
+WAVEFORMATEX._fields_ = [
+    ('wFormatTag', c_ushort),
+    ('nChannels', c_ushort),
+    ('nSamplesPerSec', c_ulong),
+    ('nAvgBytesPerSec', c_ulong),
+    ('nBlockAlign', c_ushort),
+    ('wBitsPerSample', c_ushort),
+    ('cbSize', c_ushort),
+]
+
+assert sizeof(WAVEFORMATEX) == 20, sizeof(WAVEFORMATEX)
+assert alignment(WAVEFORMATEX) == 4, alignment(WAVEFORMATEX)
+SpeechPropertyHighConfidenceThreshold = 'HighConfidenceThreshold'  # Constant BSTR
+
+
+class SPEVENTSOURCEINFO(Structure):
+    pass
+
+
+SPEVENTSOURCEINFO._fields_ = [
+    ('ullEventInterest', c_ulonglong),
+    ('ullQueuedInterest', c_ulonglong),
+    ('ulCount', c_ulong),
+]
+
+assert sizeof(SPEVENTSOURCEINFO) == 24, sizeof(SPEVENTSOURCEINFO)
+assert alignment(SPEVENTSOURCEINFO) == 8, alignment(SPEVENTSOURCEINFO)
+SpeechTokenKeyUI = 'UI'  # Constant BSTR
+
+
+class SpTextSelectionInformation(CoClass):
+    """SpTextSelectionInformation Class"""
+    _reg_clsid_ = GUID('{0F92030A-CBFD-4AB8-A164-FF5985547FF6}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpTextSelectionInformation._com_interfaces_ = [ISpeechTextSelectionInformation]
+
+
+class ISpRecoGrammar2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpRecoGrammar2 Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{4B37BC9E-9ED6-44A3-93D3-18F022B79EC3}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetRules(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def LoadCmdFromFile2(self, pszFileName: hints.Incomplete, Options: hints.Incomplete, pszSharingUri: hints.Incomplete, pszBaseUri: hints.Incomplete) -> hints.Hresult: ...
+        def LoadCmdFromMemory2(self, pGrammar: hints.Incomplete, Options: hints.Incomplete, pszSharingUri: hints.Incomplete, pszBaseUri: hints.Incomplete) -> hints.Hresult: ...
+        def SetRulePriority(self, pszRuleName: hints.Incomplete, ulRuleId: hints.Incomplete, nRulePriority: hints.Incomplete) -> hints.Hresult: ...
+        def SetRuleWeight(self, pszRuleName: hints.Incomplete, ulRuleId: hints.Incomplete, flWeight: hints.Incomplete) -> hints.Hresult: ...
+        def SetDictationWeight(self, flWeight: hints.Incomplete) -> hints.Hresult: ...
+        def SetGrammarLoader(self, pLoader: hints.Incomplete) -> hints.Hresult: ...
+        def SetSMLSecurityManager(self, pSMLSecurityManager: hints.Incomplete) -> hints.Hresult: ...
+
+
+class SPRULE(Structure):
+    pass
+
+
+class ISpeechResourceLoader(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechResourceLoader Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{B9AC5783-FCD0-4B21-B119-B4F8DA8FD2C3}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def LoadResource(self, bstrResourceUri: hints.Incomplete, fAlwaysReload: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def GetLocalCopy(self, bstrResourceUri: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
+        def ReleaseLocalCopy(self, pbstrLocalPath: hints.Incomplete) -> hints.Hresult: ...
+
+
+class IInternetSecurityManager(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """IInternetSecurityManager Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{79EAC9EE-BAF9-11CE-8C82-00AA004BA90B}')
+    _idlflags_ = []
+
+    if TYPE_CHECKING:  # commembers
+        def SetSecuritySite(self, pSite: hints.Incomplete) -> hints.Hresult: ...
+        def GetSecuritySite(self) -> 'IInternetSecurityMgrSite': ...
+        def MapUrlToZone(self, pwszUrl: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
+        def GetSecurityId(self, pwszUrl: hints.Incomplete, pcbSecurityId: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def ProcessUrlAction(self, pwszUrl: hints.Incomplete, dwAction: hints.Incomplete, cbPolicy: hints.Incomplete, pContext: hints.Incomplete, cbContext: hints.Incomplete, dwFlags: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Incomplete: ...
+        def QueryCustomPolicy(self, pwszUrl: hints.Incomplete, guidKey: hints.Incomplete, pContext: hints.Incomplete, cbContext: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def SetZoneMapping(self, dwZone: hints.Incomplete, lpszPattern: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Hresult: ...
+        def GetZoneMappings(self, dwZone: hints.Incomplete, dwFlags: hints.Incomplete) -> 'IEnumString': ...
+
+
+ISpRecoGrammar2._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRules',
+        (['out'], POINTER(POINTER(SPRULE)), 'ppCoMemRules'),
+        (['out'], POINTER(c_uint), 'puNumRules')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromFile2',
+        (['in'], WSTRING, 'pszFileName'),
+        (['in'], SPLOADOPTIONS, 'Options'),
+        (['in'], WSTRING, 'pszSharingUri'),
+        (['in'], WSTRING, 'pszBaseUri')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromMemory2',
+        (['in'], POINTER(SPBINARYGRAMMAR), 'pGrammar'),
+        (['in'], SPLOADOPTIONS, 'Options'),
+        (['in'], WSTRING, 'pszSharingUri'),
+        (['in'], WSTRING, 'pszBaseUri')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRulePriority',
+        (['in'], WSTRING, 'pszRuleName'),
+        (['in'], c_ulong, 'ulRuleId'),
+        (['in'], c_int, 'nRulePriority')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRuleWeight',
+        (['in'], WSTRING, 'pszRuleName'),
+        (['in'], c_ulong, 'ulRuleId'),
+        (['in'], c_float, 'flWeight')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetDictationWeight',
+        (['in'], c_float, 'flWeight')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetGrammarLoader',
+        (['in'], POINTER(ISpeechResourceLoader), 'pLoader')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetSMLSecurityManager',
+        (['in'], POINTER(IInternetSecurityManager), 'pSMLSecurityManager')
+    ),
+]
+
+################################################################
+# code template for ISpRecoGrammar2 implementation
+# class ISpRecoGrammar2_Impl(object):
+#     def GetRules(self):
+#         '-no docstring-'
+#         #return ppCoMemRules, puNumRules
+#
+#     def LoadCmdFromFile2(self, pszFileName, Options, pszSharingUri, pszBaseUri):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadCmdFromMemory2(self, pGrammar, Options, pszSharingUri, pszBaseUri):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetRulePriority(self, pszRuleName, ulRuleId, nRulePriority):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetRuleWeight(self, pszRuleName, ulRuleId, flWeight):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetDictationWeight(self, flWeight):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetGrammarLoader(self, pLoader):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetSMLSecurityManager(self, pSMLSecurityManager):
+#         '-no docstring-'
+#         #return 
+#
+
+SPPHRASEELEMENT._fields_ = [
+    ('ulAudioTimeOffset', c_ulong),
+    ('ulAudioSizeTime', c_ulong),
+    ('ulAudioStreamOffset', c_ulong),
+    ('ulAudioSizeBytes', c_ulong),
+    ('ulRetainedStreamOffset', c_ulong),
+    ('ulRetainedSizeBytes', c_ulong),
+    ('pszDisplayText', WSTRING),
+    ('pszLexicalForm', WSTRING),
+    ('pszPronunciation', POINTER(c_ushort)),
+    ('bDisplayAttributes', c_ubyte),
+    ('RequiredConfidence', c_char),
+    ('ActualConfidence', c_char),
+    ('reserved', c_ubyte),
+    ('SREngineConfidence', c_float),
+]
+
+assert sizeof(SPPHRASEELEMENT) == 56, sizeof(SPPHRASEELEMENT)
+assert alignment(SPPHRASEELEMENT) == 8, alignment(SPPHRASEELEMENT)
+
+
+class ISpXMLRecoResult(ISpRecoResult):
+    """ISpXMLRecoResult Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{AE39362B-45A8-4074-9B9E-CCF49AA2D0B6}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
+        def GetXMLErrorInfo(self) -> hints.Incomplete: ...
+
+
+ISpXMLRecoResult._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetXMLResult',
+        (['out'], POINTER(WSTRING), 'ppszCoMemXMLResult'),
+        (['in'], SPXMLRESULTOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetXMLErrorInfo',
+        (['out'], POINTER(SPSEMANTICERRORINFO), 'pSemanticErrorInfo')
+    ),
+]
+
+################################################################
+# code template for ISpXMLRecoResult implementation
+# class ISpXMLRecoResult_Impl(object):
+#     def GetXMLResult(self, Options):
+#         '-no docstring-'
+#         #return ppszCoMemXMLResult
+#
+#     def GetXMLErrorInfo(self):
+#         '-no docstring-'
+#         #return pSemanticErrorInfo
+#
+
+
+class SpStream(CoClass):
+    """SpStream Class"""
+    _reg_clsid_ = GUID('{715D9C59-4442-11D2-9605-00C04F8EE628}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+class ISpStream(ISpStreamFormat):
+    """ISpStream Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{12E3CCA9-7518-44C5-A5E7-BA5A79CB929E}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetBaseStream(self, pStream: hints.Incomplete, rguidFormat: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
+        def GetBaseStream(self) -> 'IStream': ...
+        def BindToFile(self, pszFileName: hints.Incomplete, eMode: hints.Incomplete, pFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete, ullEventInterest: hints.Incomplete) -> hints.Hresult: ...
+        def Close(self) -> hints.Hresult: ...
+
+
+SpStream._com_interfaces_ = [ISpStream]
 
 _ISpeechRecoContextEvents._disp_methods_ = [
     DISPMETHOD(
@@ -5446,265 +6148,409 @@ _ISpeechRecoContextEvents._disp_methods_ = [
     ),
 ]
 
+SpeechCategoryAppLexicons = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AppLexicons'  # Constant BSTR
 
-class ISpeechTextSelectionInformation(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechTextSelectionInformation Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{3B9C7E7A-6EEE-4DED-9092-11657279ADBE}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_ActiveOffset(self) -> hints.Incomplete: ...
-        def _set_ActiveOffset(self, ActiveOffset: hints.Incomplete) -> hints.Hresult: ...
-        ActiveOffset = hints.normal_property(_get_ActiveOffset, _set_ActiveOffset)
-        def _get_ActiveLength(self) -> hints.Incomplete: ...
-        def _set_ActiveLength(self, ActiveLength: hints.Incomplete) -> hints.Hresult: ...
-        ActiveLength = hints.normal_property(_get_ActiveLength, _set_ActiveLength)
-        def _get_SelectionOffset(self) -> hints.Incomplete: ...
-        def _set_SelectionOffset(self, SelectionOffset: hints.Incomplete) -> hints.Hresult: ...
-        SelectionOffset = hints.normal_property(_get_SelectionOffset, _set_SelectionOffset)
-        def _get_SelectionLength(self) -> hints.Incomplete: ...
-        def _set_SelectionLength(self, SelectionLength: hints.Incomplete) -> hints.Hresult: ...
-        SelectionLength = hints.normal_property(_get_SelectionLength, _set_SelectionLength)
-
-
-ISpeechTextSelectionInformation._methods_ = [
+ISpDataKey._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('ActiveOffset'), 'propput'],
+        [],
         HRESULT,
-        'ActiveOffset',
-        (['in'], c_int, 'ActiveOffset')
+        'SetData',
+        (['in'], WSTRING, 'pszValueName'),
+        (['in'], c_ulong, 'cbData'),
+        (['in'], POINTER(c_ubyte), 'pData')
     ),
     COMMETHOD(
-        [dispid(1), helpstring('ActiveOffset'), 'propget'],
+        [],
         HRESULT,
-        'ActiveOffset',
-        (['out', 'retval'], POINTER(c_int), 'ActiveOffset')
+        'GetData',
+        (['in'], WSTRING, 'pszValueName'),
+        (['in'], POINTER(c_ulong), 'pcbData'),
+        (['out'], POINTER(c_ubyte), 'pData')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('ActiveLength'), 'propput'],
+        [],
         HRESULT,
-        'ActiveLength',
-        (['in'], c_int, 'ActiveLength')
+        'SetStringValue',
+        (['in'], WSTRING, 'pszValueName'),
+        (['in'], WSTRING, 'pszValue')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('ActiveLength'), 'propget'],
+        [],
         HRESULT,
-        'ActiveLength',
-        (['out', 'retval'], POINTER(c_int), 'ActiveLength')
+        'GetStringValue',
+        (['in'], WSTRING, 'pszValueName'),
+        (['out'], POINTER(WSTRING), 'ppszValue')
     ),
     COMMETHOD(
-        [dispid(3), helpstring('SelectionOffset'), 'propput'],
+        [],
         HRESULT,
-        'SelectionOffset',
-        (['in'], c_int, 'SelectionOffset')
+        'SetDWORD',
+        (['in'], WSTRING, 'pszValueName'),
+        (['in'], c_ulong, 'dwValue')
     ),
     COMMETHOD(
-        [dispid(3), helpstring('SelectionOffset'), 'propget'],
+        [],
         HRESULT,
-        'SelectionOffset',
-        (['out', 'retval'], POINTER(c_int), 'SelectionOffset')
+        'GetDWORD',
+        (['in'], WSTRING, 'pszValueName'),
+        (['out'], POINTER(c_ulong), 'pdwValue')
     ),
     COMMETHOD(
-        [dispid(4), helpstring('SelectionLength'), 'propput'],
+        [],
         HRESULT,
-        'SelectionLength',
-        (['in'], c_int, 'SelectionLength')
+        'OpenKey',
+        (['in'], WSTRING, 'pszSubKeyName'),
+        (['out'], POINTER(POINTER(ISpDataKey)), 'ppSubKey')
     ),
     COMMETHOD(
-        [dispid(4), helpstring('SelectionLength'), 'propget'],
+        [],
         HRESULT,
-        'SelectionLength',
-        (['out', 'retval'], POINTER(c_int), 'SelectionLength')
+        'CreateKey',
+        (['in'], WSTRING, 'pszSubKey'),
+        (['out'], POINTER(POINTER(ISpDataKey)), 'ppSubKey')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'DeleteKey',
+        (['in'], WSTRING, 'pszSubKey')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'DeleteValue',
+        (['in'], WSTRING, 'pszValueName')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EnumKeys',
+        (['in'], c_ulong, 'Index'),
+        (['out'], POINTER(WSTRING), 'ppszSubKeyName')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EnumValues',
+        (['in'], c_ulong, 'Index'),
+        (['out'], POINTER(WSTRING), 'ppszValueName')
     ),
 ]
 
 ################################################################
-# code template for ISpeechTextSelectionInformation implementation
-# class ISpeechTextSelectionInformation_Impl(object):
-#     def _get(self):
-#         'ActiveOffset'
-#         #return ActiveOffset
-#     def _set(self, ActiveOffset):
-#         'ActiveOffset'
-#     ActiveOffset = property(_get, _set, doc = _set.__doc__)
+# code template for ISpDataKey implementation
+# class ISpDataKey_Impl(object):
+#     def SetData(self, pszValueName, cbData, pData):
+#         '-no docstring-'
+#         #return 
 #
-#     def _get(self):
-#         'ActiveLength'
-#         #return ActiveLength
-#     def _set(self, ActiveLength):
-#         'ActiveLength'
-#     ActiveLength = property(_get, _set, doc = _set.__doc__)
+#     def GetData(self, pszValueName, pcbData):
+#         '-no docstring-'
+#         #return pData
 #
-#     def _get(self):
-#         'SelectionOffset'
-#         #return SelectionOffset
-#     def _set(self, SelectionOffset):
-#         'SelectionOffset'
-#     SelectionOffset = property(_get, _set, doc = _set.__doc__)
+#     def SetStringValue(self, pszValueName, pszValue):
+#         '-no docstring-'
+#         #return 
 #
-#     def _get(self):
-#         'SelectionLength'
-#         #return SelectionLength
-#     def _set(self, SelectionLength):
-#         'SelectionLength'
-#     SelectionLength = property(_get, _set, doc = _set.__doc__)
+#     def GetStringValue(self, pszValueName):
+#         '-no docstring-'
+#         #return ppszValue
+#
+#     def SetDWORD(self, pszValueName, dwValue):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetDWORD(self, pszValueName):
+#         '-no docstring-'
+#         #return pdwValue
+#
+#     def OpenKey(self, pszSubKeyName):
+#         '-no docstring-'
+#         #return ppSubKey
+#
+#     def CreateKey(self, pszSubKey):
+#         '-no docstring-'
+#         #return ppSubKey
+#
+#     def DeleteKey(self, pszSubKey):
+#         '-no docstring-'
+#         #return 
+#
+#     def DeleteValue(self, pszValueName):
+#         '-no docstring-'
+#         #return 
+#
+#     def EnumKeys(self, Index):
+#         '-no docstring-'
+#         #return ppszSubKeyName
+#
+#     def EnumValues(self, Index):
+#         '-no docstring-'
+#         #return ppszValueName
 #
 
-
-class _ISpeechVoiceEvents(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    _case_insensitive_ = True
-    _iid_ = GUID('{A372ACD1-3BEF-4BBD-8FFB-CB3E2B416AF8}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        def StartStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def EndStream(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete) -> hints.Incomplete: ...
-        def VoiceChange(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, VoiceObjectToken: hints.Incomplete) -> hints.Incomplete: ...
-        def Bookmark(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Bookmark: hints.Incomplete, BookmarkId: hints.Incomplete) -> hints.Incomplete: ...
-        def Word(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, CharacterPosition: hints.Incomplete, Length: hints.Incomplete) -> hints.Incomplete: ...
-        def Sentence(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, CharacterPosition: hints.Incomplete, Length: hints.Incomplete) -> hints.Incomplete: ...
-        def Phoneme(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Duration: hints.Incomplete, NextPhoneId: hints.Incomplete, Feature: hints.Incomplete, CurrentPhoneId: hints.Incomplete) -> hints.Incomplete: ...
-        def Viseme(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, Duration: hints.Incomplete, NextVisemeId: hints.Incomplete, Feature: hints.Incomplete, CurrentVisemeId: hints.Incomplete) -> hints.Incomplete: ...
-        def AudioLevel(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, AudioLevel: hints.Incomplete) -> hints.Incomplete: ...
-        def EnginePrivate(self, StreamNumber: hints.Incomplete, StreamPosition: hints.Incomplete, EngineData: hints.Incomplete) -> hints.Incomplete: ...
-
-
-_ISpeechVoiceEvents._disp_methods_ = [
-    DISPMETHOD(
-        [dispid(1), helpstring('StartStream')],
-        None,
-        'StartStream',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition')
+ISpObjectToken._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetId',
+        ([], WSTRING, 'pszCategoryId'),
+        (['in'], WSTRING, 'pszTokenId'),
+        (['in'], c_int, 'fCreateIfNotExist')
     ),
-    DISPMETHOD(
-        [dispid(2), helpstring('EndStream')],
-        None,
-        'EndStream',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetId',
+        (['out'], POINTER(WSTRING), 'ppszCoMemTokenId')
     ),
-    DISPMETHOD(
-        [dispid(3), helpstring('VoiceChange')],
-        None,
-        'VoiceChange',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], POINTER(ISpeechObjectToken), 'VoiceObjectToken')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetCategory',
+        (['out'], POINTER(POINTER(ISpObjectTokenCategory)), 'ppTokenCategory')
     ),
-    DISPMETHOD(
-        [dispid(4), helpstring('Bookmark')],
-        None,
-        'Bookmark',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], BSTR, 'Bookmark'),
-        (['in'], c_int, 'BookmarkId')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'CreateInstance',
+        (['in'], POINTER(IUnknown), 'pUnkOuter'),
+        (['in'], c_ulong, 'dwClsContext'),
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'riid',
+        ),
+        (['out'], POINTER(c_void_p), 'ppvObject')
     ),
-    DISPMETHOD(
-        [dispid(5), helpstring('Word')],
-        None,
-        'Word',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], c_int, 'CharacterPosition'),
-        (['in'], c_int, 'Length')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetStorageFileName',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'clsidCaller',
+        ),
+        (['in'], WSTRING, 'pszValueName'),
+        (['in'], WSTRING, 'pszFileNameSpecifier'),
+        (['in'], c_ulong, 'nFolder'),
+        (['out'], POINTER(WSTRING), 'ppszFilePath')
     ),
-    DISPMETHOD(
-        [dispid(7), helpstring('Sentence')],
-        None,
-        'Sentence',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], c_int, 'CharacterPosition'),
-        (['in'], c_int, 'Length')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'RemoveStorageFileName',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'clsidCaller',
+        ),
+        (['in'], WSTRING, 'pszKeyName'),
+        (['in'], c_int, 'fDeleteFile')
     ),
-    DISPMETHOD(
-        [dispid(6), helpstring('Phoneme')],
-        None,
-        'Phoneme',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], c_int, 'Duration'),
-        (['in'], c_short, 'NextPhoneId'),
-        (['in'], SpeechVisemeFeature, 'Feature'),
-        (['in'], c_short, 'CurrentPhoneId')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Remove',
+        (
+            [],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pclsidCaller',
+        )
     ),
-    DISPMETHOD(
-        [dispid(8), helpstring('Viseme')],
-        None,
-        'Viseme',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], c_int, 'Duration'),
-        (['in'], SpeechVisemeType, 'NextVisemeId'),
-        (['in'], SpeechVisemeFeature, 'Feature'),
-        (['in'], SpeechVisemeType, 'CurrentVisemeId')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'IsUISupported',
+        (['in'], WSTRING, 'pszTypeOfUI'),
+        (['in'], c_void_p, 'pvExtraData'),
+        (['in'], c_ulong, 'cbExtraData'),
+        (['in'], POINTER(IUnknown), 'punkObject'),
+        (['out'], POINTER(c_int), 'pfSupported')
     ),
-    DISPMETHOD(
-        [dispid(9), helpstring('AudioLevel')],
-        None,
-        'AudioLevel',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], VARIANT, 'StreamPosition'),
-        (['in'], c_int, 'AudioLevel')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'DisplayUI',
+        (['in'], wireHWND, 'hWndParent'),
+        (['in'], WSTRING, 'pszTitle'),
+        (['in'], WSTRING, 'pszTypeOfUI'),
+        (['in'], c_void_p, 'pvExtraData'),
+        (['in'], c_ulong, 'cbExtraData'),
+        (['in'], POINTER(IUnknown), 'punkObject')
     ),
-    DISPMETHOD(
-        [dispid(10), helpstring('EnginePrivate')],
-        None,
-        'EnginePrivate',
-        (['in'], c_int, 'StreamNumber'),
-        (['in'], c_int, 'StreamPosition'),
-        (['in'], VARIANT, 'EngineData')
+    COMMETHOD(
+        [],
+        HRESULT,
+        'MatchesAttributes',
+        (['in'], WSTRING, 'pszAttributes'),
+        (['out'], POINTER(c_int), 'pfMatches')
     ),
 ]
 
+################################################################
+# code template for ISpObjectToken implementation
+# class ISpObjectToken_Impl(object):
+#     def SetId(self, pszCategoryId, pszTokenId, fCreateIfNotExist):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetId(self):
+#         '-no docstring-'
+#         #return ppszCoMemTokenId
+#
+#     def GetCategory(self):
+#         '-no docstring-'
+#         #return ppTokenCategory
+#
+#     def CreateInstance(self, pUnkOuter, dwClsContext, riid):
+#         '-no docstring-'
+#         #return ppvObject
+#
+#     def GetStorageFileName(self, clsidCaller, pszValueName, pszFileNameSpecifier, nFolder):
+#         '-no docstring-'
+#         #return ppszFilePath
+#
+#     def RemoveStorageFileName(self, clsidCaller, pszKeyName, fDeleteFile):
+#         '-no docstring-'
+#         #return 
+#
+#     def Remove(self, pclsidCaller):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsUISupported(self, pszTypeOfUI, pvExtraData, cbExtraData, punkObject):
+#         '-no docstring-'
+#         #return pfSupported
+#
+#     def DisplayUI(self, hWndParent, pszTitle, pszTypeOfUI, pvExtraData, cbExtraData, punkObject):
+#         '-no docstring-'
+#         #return 
+#
+#     def MatchesAttributes(self, pszAttributes):
+#         '-no docstring-'
+#         #return pfMatches
+#
 
-class Library(object):
-    """Microsoft Speech Object Library"""
-    name = 'SpeechLib'
+
+class SpMMAudioIn(CoClass):
+    """SpMMAudioIn Class"""
+    _reg_clsid_ = GUID('{CF3D2E50-53F2-11D2-960C-00C04F8EE628}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
     _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
 
 
-class ISpeechPhraseReplacements(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseReplacements Interface"""
+class ISpeechAudio(ISpeechBaseStream):
+    """ISpeechAudio Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{38BC662F-2257-4525-959E-2069D2596C05}')
+    _iid_ = GUID('{CFF8E175-019E-11D3-A08E-00C04F8EF9B5}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseReplacement': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _get__NewEnum(self) -> hints.Incomplete: ...
-        _NewEnum = hints.normal_property(_get__NewEnum)
-        __iter__ = hints.to_dunder_iter(_NewEnum)
+        def _get_Status(self) -> 'ISpeechAudioStatus': ...
+        Status = hints.normal_property(_get_Status)
+        def _get_BufferInfo(self) -> 'ISpeechAudioBufferInfo': ...
+        BufferInfo = hints.normal_property(_get_BufferInfo)
+        def _get_DefaultFormat(self) -> 'ISpeechAudioFormat': ...
+        DefaultFormat = hints.normal_property(_get_DefaultFormat)
+        def _get_Volume(self) -> hints.Incomplete: ...
+        def _set_Volume(self, Volume: hints.Incomplete) -> hints.Hresult: ...
+        Volume = hints.normal_property(_get_Volume, _set_Volume)
+        def _get_BufferNotifySize(self) -> hints.Incomplete: ...
+        def _set_BufferNotifySize(self, BufferNotifySize: hints.Incomplete) -> hints.Hresult: ...
+        BufferNotifySize = hints.normal_property(_get_BufferNotifySize, _set_BufferNotifySize)
+        def _get_EventHandle(self) -> hints.Incomplete: ...
+        EventHandle = hints.normal_property(_get_EventHandle)
+        def SetState(self, State: hints.Incomplete) -> hints.Hresult: ...
 
 
-class ISpeechPhraseReplacement(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseReplacement Interface"""
+class ISpeechMMSysAudio(ISpeechAudio):
+    """ISpeechMMSysAudio Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{2890A410-53A7-4FB5-94EC-06D4998E3D02}')
+    _iid_ = GUID('{3C76AF6D-1FD7-4831-81D1-3B71D5A13C44}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_DisplayAttributes(self) -> hints.Incomplete: ...
-        DisplayAttributes = hints.normal_property(_get_DisplayAttributes)
-        def _get_Text(self) -> hints.Incomplete: ...
-        Text = hints.normal_property(_get_Text)
-        def _get_FirstElement(self) -> hints.Incomplete: ...
-        FirstElement = hints.normal_property(_get_FirstElement)
-        def _get_NumberOfElements(self) -> hints.Incomplete: ...
-        NumberOfElements = hints.normal_property(_get_NumberOfElements)
+        def _get_DeviceId(self) -> hints.Incomplete: ...
+        def _set_DeviceId(self, DeviceId: hints.Incomplete) -> hints.Hresult: ...
+        DeviceId = hints.normal_property(_get_DeviceId, _set_DeviceId)
+        def _get_LineId(self) -> hints.Incomplete: ...
+        def _set_LineId(self, LineId: hints.Incomplete) -> hints.Hresult: ...
+        LineId = hints.normal_property(_get_LineId, _set_LineId)
+        def _get_MMHandle(self) -> hints.Incomplete: ...
+        MMHandle = hints.normal_property(_get_MMHandle)
 
 
-ISpeechPhraseReplacements._methods_ = [
+class ISpEventSink(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """ISpEventSink Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{BE7A9CC9-5F9E-11D2-960F-00C04F8EE628}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def AddEvents(self, pEventArray: hints.Incomplete, ulCount: hints.Incomplete) -> hints.Hresult: ...
+        def GetEventInterest(self) -> hints.Incomplete: ...
+
+
+class ISpAudio(ISpStreamFormat):
+    """ISpAudio Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{C05C768F-FAE8-4EC2-8E07-338321C12452}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def SetState(self, NewState: hints.Incomplete, ullReserved: hints.Incomplete) -> hints.Hresult: ...
+        def SetFormat(self, rguidFmtId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
+        def GetStatus(self) -> hints.Incomplete: ...
+        def SetBufferInfo(self, pBuffInfo: hints.Incomplete) -> hints.Hresult: ...
+        def GetBufferInfo(self) -> hints.Incomplete: ...
+        def GetDefaultFormat(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def EventHandle(self) -> hints.Hresult: ...
+        def GetVolumeLevel(self) -> hints.Incomplete: ...
+        def SetVolumeLevel(self, Level: hints.Incomplete) -> hints.Hresult: ...
+        def GetBufferNotifySize(self) -> hints.Incomplete: ...
+        def SetBufferNotifySize(self, cbSize: hints.Incomplete) -> hints.Hresult: ...
+
+
+class ISpMMSysAudio(ISpAudio):
+    """ISpMMSysAudio Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{15806F6E-1D70-4B48-98E6-3B1A007509AB}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetDeviceId(self) -> hints.Incomplete: ...
+        def SetDeviceId(self, uDeviceId: hints.Incomplete) -> hints.Hresult: ...
+        def GetMMHandle(self) -> hints.Incomplete: ...
+        def GetLineId(self) -> hints.Incomplete: ...
+        def SetLineId(self, uLineId: hints.Incomplete) -> hints.Hresult: ...
+
+
+SpMMAudioIn._com_interfaces_ = [ISpeechMMSysAudio, ISpEventSource, ISpEventSink, ISpObjectWithToken, ISpMMSysAudio]
+
+
+class ISpeechLexiconPronunciation(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechLexiconPronunciation Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{95252C5D-9E43-4F4A-9899-48EE73352F9F}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Type(self) -> hints.Incomplete: ...
+        Type = hints.normal_property(_get_Type)
+        def _get_LangId(self) -> hints.Incomplete: ...
+        LangId = hints.normal_property(_get_LangId)
+        def _get_PartOfSpeech(self) -> hints.Incomplete: ...
+        PartOfSpeech = hints.normal_property(_get_PartOfSpeech)
+        def _get_PhoneIds(self) -> hints.Incomplete: ...
+        PhoneIds = hints.normal_property(_get_PhoneIds)
+        def _get_Symbolic(self) -> hints.Incomplete: ...
+        Symbolic = hints.normal_property(_get_Symbolic)
+
+
+ISpeechLexiconPronunciations._methods_ = [
     COMMETHOD(
         [dispid(1), helpstring('Count'), 'propget'],
         HRESULT,
@@ -5716,7 +6562,11 @@ ISpeechPhraseReplacements._methods_ = [
         HRESULT,
         'Item',
         (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseReplacement)), 'Reps')
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechLexiconPronunciation)),
+            'Pronunciation',
+        )
     ),
     COMMETHOD(
         [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
@@ -5727,8 +6577,8 @@ ISpeechPhraseReplacements._methods_ = [
 ]
 
 ################################################################
-# code template for ISpeechPhraseReplacements implementation
-# class ISpeechPhraseReplacements_Impl(object):
+# code template for ISpeechLexiconPronunciations implementation
+# class ISpeechLexiconPronunciations_Impl(object):
 #     @property
 #     def Count(self):
 #         'Count'
@@ -5736,7 +6586,7 @@ ISpeechPhraseReplacements._methods_ = [
 #
 #     def Item(self, Index):
 #         'Item'
-#         #return Reps
+#         #return Pronunciation
 #
 #     @property
 #     def _NewEnum(self):
@@ -5767,36 +6617,228 @@ class ISpResourceManager(IServiceProvider):
 SpResourceManager._com_interfaces_ = [ISpResourceManager]
 
 
-class SPAUDIOSTATUS(Structure):
+class ISpeechPhraseAlternate(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseAlternate Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{27864A2A-2B9F-4CB8-92D3-0D2722FD1E73}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_RecoResult(self) -> 'ISpeechRecoResult': ...
+        RecoResult = hints.normal_property(_get_RecoResult)
+        def _get_StartElementInResult(self) -> hints.Incomplete: ...
+        StartElementInResult = hints.normal_property(_get_StartElementInResult)
+        def _get_NumberOfElementsInResult(self) -> hints.Incomplete: ...
+        NumberOfElementsInResult = hints.normal_property(_get_NumberOfElementsInResult)
+        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
+        PhraseInfo = hints.normal_property(_get_PhraseInfo)
+        def Commit(self) -> hints.Hresult: ...
+
+
+ISpeechPhraseAlternate._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('RecoResult'), 'propget'],
+        HRESULT,
+        'RecoResult',
+        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResult)), 'RecoResult')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('StartElementInResult'), 'propget'],
+        HRESULT,
+        'StartElementInResult',
+        (['out', 'retval'], POINTER(c_int), 'StartElement')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('NumberOfElementsInResult'), 'propget'],
+        HRESULT,
+        'NumberOfElementsInResult',
+        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Phrase'), 'propget'],
+        HRESULT,
+        'PhraseInfo',
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
+    ),
+    COMMETHOD([dispid(5), helpstring('Commit')], HRESULT, 'Commit'),
+]
+
+################################################################
+# code template for ISpeechPhraseAlternate implementation
+# class ISpeechPhraseAlternate_Impl(object):
+#     @property
+#     def RecoResult(self):
+#         'RecoResult'
+#         #return RecoResult
+#
+#     @property
+#     def StartElementInResult(self):
+#         'StartElementInResult'
+#         #return StartElement
+#
+#     @property
+#     def NumberOfElementsInResult(self):
+#         'NumberOfElementsInResult'
+#         #return NumberOfElements
+#
+#     @property
+#     def PhraseInfo(self):
+#         'Phrase'
+#         #return PhraseInfo
+#
+#     def Commit(self):
+#         'Commit'
+#         #return 
+#
+
+
+class SpMMAudioOut(CoClass):
+    """SpMMAudioOut Class"""
+    _reg_clsid_ = GUID('{A8C680EB-3D32-11D2-9EE7-00C04F797396}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpMMAudioOut._com_interfaces_ = [ISpeechMMSysAudio, ISpEventSource, ISpEventSink, ISpObjectWithToken, ISpMMSysAudio]
+
+
+class ISpeechGrammarRuleState(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechGrammarRuleState Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{D4286F2C-EE67-45AE-B928-28D695362EDA}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Rule(self) -> 'ISpeechGrammarRule': ...
+        Rule = hints.normal_property(_get_Rule)
+        def _get_Transitions(self) -> 'ISpeechGrammarRuleStateTransitions': ...
+        Transitions = hints.normal_property(_get_Transitions)
+        def AddWordTransition(self, DestState: hints.Incomplete, Words: hints.Incomplete, Separators: hints.Incomplete = ..., Type: hints.Incomplete = ..., PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AddRuleTransition(self, DestinationState: hints.Incomplete, Rule: hints.Incomplete, PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
+        def AddSpecialTransition(self, DestinationState: hints.Incomplete, Type: hints.Incomplete, PropertyName: hints.Incomplete = ..., PropertyId: hints.Incomplete = ..., PropertyValue: hints.Incomplete = ..., Weight: hints.Incomplete = ...) -> hints.Hresult: ...
+
+
+ISpeechGrammarRule._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('RuleAttributes'), 'propget'],
+        HRESULT,
+        'Attributes',
+        (['out', 'retval'], POINTER(SpeechRuleAttributes), 'Attributes')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('InitialState'), 'propget'],
+        HRESULT,
+        'InitialState',
+        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRuleState)), 'State')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('Name'), 'propget'],
+        HRESULT,
+        'Name',
+        (['out', 'retval'], POINTER(BSTR), 'Name')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Id'), 'propget'],
+        HRESULT,
+        'Id',
+        (['out', 'retval'], POINTER(c_int), 'Id')
+    ),
+    COMMETHOD([dispid(5), helpstring('Clear')], HRESULT, 'Clear'),
+    COMMETHOD(
+        [dispid(6), helpstring('AddResource')],
+        HRESULT,
+        'AddResource',
+        (['in'], BSTR, 'ResourceName'),
+        (['in'], BSTR, 'ResourceValue')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('AddState')],
+        HRESULT,
+        'AddState',
+        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRuleState)), 'State')
+    ),
+]
+
+################################################################
+# code template for ISpeechGrammarRule implementation
+# class ISpeechGrammarRule_Impl(object):
+#     @property
+#     def Attributes(self):
+#         'RuleAttributes'
+#         #return Attributes
+#
+#     @property
+#     def InitialState(self):
+#         'InitialState'
+#         #return State
+#
+#     @property
+#     def Name(self):
+#         'Name'
+#         #return Name
+#
+#     @property
+#     def Id(self):
+#         'Id'
+#         #return Id
+#
+#     def Clear(self):
+#         'Clear'
+#         #return 
+#
+#     def AddResource(self, ResourceName, ResourceValue):
+#         'AddResource'
+#         #return 
+#
+#     def AddState(self):
+#         'AddState'
+#         #return State
+#
+
+SpeechCategoryPhoneConverters = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\PhoneConverters'  # Constant BSTR
+
+
+class SPEVENT(Structure):
     pass
 
 
-SPAUDIOSTATUS._fields_ = [
-    ('cbFreeBuffSpace', c_int),
-    ('cbNonBlockingIO', c_ulong),
-    ('State', SPAUDIOSTATE),
-    ('CurSeekPos', c_ulonglong),
-    ('CurDevicePos', c_ulonglong),
-    ('dwAudioLevel', c_ulong),
-    ('dwReserved2', c_ulong),
+ISpEventSink._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'AddEvents',
+        (['in'], POINTER(SPEVENT), 'pEventArray'),
+        (['in'], c_ulong, 'ulCount')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetEventInterest',
+        (['out'], POINTER(c_ulonglong), 'pullEventInterest')
+    ),
 ]
 
-assert sizeof(SPAUDIOSTATUS) == 40, sizeof(SPAUDIOSTATUS)
-assert alignment(SPAUDIOSTATUS) == 8, alignment(SPAUDIOSTATUS)
+################################################################
+# code template for ISpEventSink implementation
+# class ISpEventSink_Impl(object):
+#     def AddEvents(self, pEventArray, ulCount):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetEventInterest(self):
+#         '-no docstring-'
+#         #return pullEventInterest
+#
 
-
-class SPAUDIOBUFFERINFO(Structure):
-    pass
-
-
-SPAUDIOBUFFERINFO._fields_ = [
-    ('ulMsMinNotification', c_ulong),
-    ('ulMsBufferSize', c_ulong),
-    ('ulMsEventBias', c_ulong),
+SPRULE._fields_ = [
+    ('pszRuleName', WSTRING),
+    ('ulRuleId', c_ulong),
+    ('dwAttributes', c_ulong),
 ]
 
-assert sizeof(SPAUDIOBUFFERINFO) == 12, sizeof(SPAUDIOBUFFERINFO)
-assert alignment(SPAUDIOBUFFERINFO) == 4, alignment(SPAUDIOBUFFERINFO)
+assert sizeof(SPRULE) == 16, sizeof(SPRULE)
+assert alignment(SPRULE) == 8, alignment(SPRULE)
 
 ISpResourceManager._methods_ = [
     COMMETHOD(
@@ -5847,241 +6889,17 @@ ISpResourceManager._methods_ = [
 #
 
 
-class IInternetSecurityManager(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """IInternetSecurityManager Interface"""
+class ISpeechGrammarRuleStateTransitions(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechGrammarRuleStateTransitions Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{79EAC9EE-BAF9-11CE-8C82-00AA004BA90B}')
-    _idlflags_ = []
-
-    if TYPE_CHECKING:  # commembers
-        def SetSecuritySite(self, pSite: hints.Incomplete) -> hints.Hresult: ...
-        def GetSecuritySite(self) -> 'IInternetSecurityMgrSite': ...
-        def MapUrlToZone(self, pwszUrl: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
-        def GetSecurityId(self, pwszUrl: hints.Incomplete, pcbSecurityId: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def ProcessUrlAction(self, pwszUrl: hints.Incomplete, dwAction: hints.Incomplete, cbPolicy: hints.Incomplete, pContext: hints.Incomplete, cbContext: hints.Incomplete, dwFlags: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Incomplete: ...
-        def QueryCustomPolicy(self, pwszUrl: hints.Incomplete, guidKey: hints.Incomplete, pContext: hints.Incomplete, cbContext: hints.Incomplete, dwReserved: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def SetZoneMapping(self, dwZone: hints.Incomplete, lpszPattern: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Hresult: ...
-        def GetZoneMappings(self, dwZone: hints.Incomplete, dwFlags: hints.Incomplete) -> 'IEnumString': ...
-
-
-class IInternetSecurityMgrSite(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """IInternetSecurityMgrSite Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{79EAC9ED-BAF9-11CE-8C82-00AA004BA90B}')
-    _idlflags_ = []
-
-    if TYPE_CHECKING:  # commembers
-        def GetWindow(self) -> hints.Incomplete: ...
-        def EnableModeless(self, fEnable: hints.Incomplete) -> hints.Hresult: ...
-
-
-class IEnumString(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    _case_insensitive_ = True
-    _iid_ = GUID('{00000101-0000-0000-C000-000000000046}')
-    _idlflags_ = []
-
-    if TYPE_CHECKING:  # commembers
-        def RemoteNext(self, celt: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def Skip(self, celt: hints.Incomplete) -> hints.Hresult: ...
-        def Reset(self) -> hints.Hresult: ...
-        def Clone(self) -> 'IEnumString': ...
-
-
-IInternetSecurityManager._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetSecuritySite',
-        (['in'], POINTER(IInternetSecurityMgrSite), 'pSite')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetSecuritySite',
-        (['out'], POINTER(POINTER(IInternetSecurityMgrSite)), 'ppSite')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'MapUrlToZone',
-        (['in'], WSTRING, 'pwszUrl'),
-        (['out'], POINTER(c_ulong), 'pdwZone'),
-        (['in'], c_ulong, 'dwFlags')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetSecurityId',
-        (['in'], WSTRING, 'pwszUrl'),
-        (['out'], POINTER(c_ubyte), 'pbSecurityId'),
-        (['in', 'out'], POINTER(c_ulong), 'pcbSecurityId'),
-        (['in'], ULONG_PTR, 'dwReserved')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'ProcessUrlAction',
-        (['in'], WSTRING, 'pwszUrl'),
-        (['in'], c_ulong, 'dwAction'),
-        (['out'], POINTER(c_ubyte), 'pPolicy'),
-        (['in'], c_ulong, 'cbPolicy'),
-        (['in'], POINTER(c_ubyte), 'pContext'),
-        (['in'], c_ulong, 'cbContext'),
-        (['in'], c_ulong, 'dwFlags'),
-        (['in'], c_ulong, 'dwReserved')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'QueryCustomPolicy',
-        (['in'], WSTRING, 'pwszUrl'),
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'guidKey',
-        ),
-        (['out'], POINTER(POINTER(c_ubyte)), 'ppPolicy'),
-        (['out'], POINTER(c_ulong), 'pcbPolicy'),
-        (['in'], POINTER(c_ubyte), 'pContext'),
-        (['in'], c_ulong, 'cbContext'),
-        (['in'], c_ulong, 'dwReserved')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetZoneMapping',
-        (['in'], c_ulong, 'dwZone'),
-        (['in'], WSTRING, 'lpszPattern'),
-        (['in'], c_ulong, 'dwFlags')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetZoneMappings',
-        (['in'], c_ulong, 'dwZone'),
-        (['out'], POINTER(POINTER(IEnumString)), 'ppenumString'),
-        (['in'], c_ulong, 'dwFlags')
-    ),
-]
-
-################################################################
-# code template for IInternetSecurityManager implementation
-# class IInternetSecurityManager_Impl(object):
-#     def SetSecuritySite(self, pSite):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetSecuritySite(self):
-#         '-no docstring-'
-#         #return ppSite
-#
-#     def MapUrlToZone(self, pwszUrl, dwFlags):
-#         '-no docstring-'
-#         #return pdwZone
-#
-#     def GetSecurityId(self, pwszUrl, dwReserved):
-#         '-no docstring-'
-#         #return pbSecurityId, pcbSecurityId
-#
-#     def ProcessUrlAction(self, pwszUrl, dwAction, cbPolicy, pContext, cbContext, dwFlags, dwReserved):
-#         '-no docstring-'
-#         #return pPolicy
-#
-#     def QueryCustomPolicy(self, pwszUrl, guidKey, pContext, cbContext, dwReserved):
-#         '-no docstring-'
-#         #return ppPolicy, pcbPolicy
-#
-#     def SetZoneMapping(self, dwZone, lpszPattern, dwFlags):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetZoneMappings(self, dwZone, dwFlags):
-#         '-no docstring-'
-#         #return ppenumString
-#
-
-
-class SPPHRASEREPLACEMENT(Structure):
-    pass
-
-
-SPPHRASEREPLACEMENT._fields_ = [
-    ('bDisplayAttributes', c_ubyte),
-    ('pszReplacementText', WSTRING),
-    ('ulFirstElement', c_ulong),
-    ('ulCountOfElements', c_ulong),
-]
-
-assert sizeof(SPPHRASEREPLACEMENT) == 24, sizeof(SPPHRASEREPLACEMENT)
-assert alignment(SPPHRASEREPLACEMENT) == 8, alignment(SPPHRASEREPLACEMENT)
-
-
-class ISpeechRecoResultTimes(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecoResultTimes Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{62B3B8FB-F6E7-41BE-BDCB-056B1C29EFC0}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_StreamTime(self) -> hints.Incomplete: ...
-        StreamTime = hints.normal_property(_get_StreamTime)
-        def _get_Length(self) -> hints.Incomplete: ...
-        Length = hints.normal_property(_get_Length)
-        def _get_TickCount(self) -> hints.Incomplete: ...
-        TickCount = hints.normal_property(_get_TickCount)
-        def _get_OffsetFromStart(self) -> hints.Incomplete: ...
-        OffsetFromStart = hints.normal_property(_get_OffsetFromStart)
-
-
-class ISpeechPhraseInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseInfo Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{961559CF-4E67-4662-8BF0-D93F1FCD61B3}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_LanguageId(self) -> hints.Incomplete: ...
-        LanguageId = hints.normal_property(_get_LanguageId)
-        def _get_GrammarId(self) -> hints.Incomplete: ...
-        GrammarId = hints.normal_property(_get_GrammarId)
-        def _get_StartTime(self) -> hints.Incomplete: ...
-        StartTime = hints.normal_property(_get_StartTime)
-        def _get_AudioStreamPosition(self) -> hints.Incomplete: ...
-        AudioStreamPosition = hints.normal_property(_get_AudioStreamPosition)
-        def _get_AudioSizeBytes(self) -> hints.Incomplete: ...
-        AudioSizeBytes = hints.normal_property(_get_AudioSizeBytes)
-        def _get_RetainedSizeBytes(self) -> hints.Incomplete: ...
-        RetainedSizeBytes = hints.normal_property(_get_RetainedSizeBytes)
-        def _get_AudioSizeTime(self) -> hints.Incomplete: ...
-        AudioSizeTime = hints.normal_property(_get_AudioSizeTime)
-        def _get_Rule(self) -> 'ISpeechPhraseRule': ...
-        Rule = hints.normal_property(_get_Rule)
-        def _get_Properties(self) -> 'ISpeechPhraseProperties': ...
-        Properties = hints.normal_property(_get_Properties)
-        def _get_Elements(self) -> 'ISpeechPhraseElements': ...
-        Elements = hints.normal_property(_get_Elements)
-        def _get_Replacements(self) -> 'ISpeechPhraseReplacements': ...
-        Replacements = hints.normal_property(_get_Replacements)
-        def _get_EngineId(self) -> hints.Incomplete: ...
-        EngineId = hints.normal_property(_get_EngineId)
-        def _get_EnginePrivateData(self) -> hints.Incomplete: ...
-        EnginePrivateData = hints.normal_property(_get_EnginePrivateData)
-        def SaveToMemory(self) -> hints.Incomplete: ...
-        def GetText(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., UseReplacements: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def GetDisplayAttributes(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., UseReplacements: hints.Incomplete = ...) -> hints.Incomplete: ...
-
-
-class ISpeechPhraseAlternates(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseAlternates Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{B238B6D5-F276-4C3D-A6C1-2974801C3CC2}')
+    _iid_ = GUID('{EABCE657-75BC-44A2-AA7F-C56476742963}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
         def _get_Count(self) -> hints.Incomplete: ...
         Count = hints.normal_property(_get_Count)
         __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseAlternate': ...
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechGrammarRuleStateTransition': ...
         __call__ = hints.to_dunder_call(Item)
         __getitem__ = hints.to_dunder_getitem(Item)
         __setitem__ = hints.to_dunder_setitem(Item)
@@ -6090,214 +6908,85 @@ class ISpeechPhraseAlternates(comtypes.gen._00020430_0000_0000_C000_000000000046
         __iter__ = hints.to_dunder_iter(_NewEnum)
 
 
-ISpeechRecoResult._methods_ = [
+ISpeechGrammarRuleState._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('RecoContext'), 'propget'],
+        [dispid(1), helpstring('Rule'), 'propget'],
         HRESULT,
-        'RecoContext',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
+        'Rule',
+        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRule)), 'Rule')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('Times'), 'propget'],
+        [dispid(2), helpstring('Transitions'), 'propget'],
         HRESULT,
-        'Times',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResultTimes)), 'Times')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioFormat'), 'propputref'],
-        HRESULT,
-        'AudioFormat',
-        (['in'], POINTER(ISpeechAudioFormat), 'Format')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioFormat'), 'propget'],
-        HRESULT,
-        'AudioFormat',
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('PhraseInfo'), 'propget'],
-        HRESULT,
-        'PhraseInfo',
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('Alternates')],
-        HRESULT,
-        'Alternates',
-        (['in'], c_int, 'RequestCount'),
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
+        'Transitions',
         (
             ['out', 'retval'],
-            POINTER(POINTER(ISpeechPhraseAlternates)),
-            'Alternates',
+            POINTER(POINTER(ISpeechGrammarRuleStateTransitions)),
+            'Transitions',
         )
     ),
     COMMETHOD(
-        [dispid(6), helpstring('Audio')],
+        [dispid(3), helpstring('AddWordTransition')],
         HRESULT,
-        'Audio',
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
-        (['out', 'retval'], POINTER(POINTER(ISpeechMemoryStream)), 'Stream')
+        'AddWordTransition',
+        (['in'], POINTER(ISpeechGrammarRuleState), 'DestState'),
+        (['in'], BSTR, 'Words'),
+        (['in', 'optional'], BSTR, 'Separators', ' '),
+        (['in', 'optional'], SpeechGrammarWordType, 'Type', 1),
+        (['in', 'optional'], BSTR, 'PropertyName', ''),
+        (['in', 'optional'], c_int, 'PropertyId', 0),
+        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
+        (['in', 'optional'], c_float, 'Weight', 1.0)
     ),
     COMMETHOD(
-        [dispid(7), helpstring('SpeakAudio')],
+        [dispid(4), helpstring('AddRuleTransition')],
         HRESULT,
-        'SpeakAudio',
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
-        (['in', 'optional'], SpeechVoiceSpeakFlags, 'Flags', 0),
-        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
+        'AddRuleTransition',
+        (['in'], POINTER(ISpeechGrammarRuleState), 'DestinationState'),
+        (['in'], POINTER(ISpeechGrammarRule), 'Rule'),
+        (['in', 'optional'], BSTR, 'PropertyName', ''),
+        (['in', 'optional'], c_int, 'PropertyId', 0),
+        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
+        (['in', 'optional'], c_float, 'Weight', 1.0)
     ),
     COMMETHOD(
-        [dispid(8), helpstring('SaveToMemory')],
+        [dispid(5), helpstring('AddSpecialTransition')],
         HRESULT,
-        'SaveToMemory',
-        (['out', 'retval'], POINTER(VARIANT), 'ResultBlock')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('DiscardResultInfo')],
-        HRESULT,
-        'DiscardResultInfo',
-        (['in'], SpeechDiscardType, 'ValueTypes')
+        'AddSpecialTransition',
+        (['in'], POINTER(ISpeechGrammarRuleState), 'DestinationState'),
+        (['in'], SpeechSpecialTransitionType, 'Type'),
+        (['in', 'optional'], BSTR, 'PropertyName', ''),
+        (['in', 'optional'], c_int, 'PropertyId', 0),
+        (['in', 'optional'], POINTER(VARIANT), 'PropertyValue'),
+        (['in', 'optional'], c_float, 'Weight', 1.0)
     ),
 ]
 
 ################################################################
-# code template for ISpeechRecoResult implementation
-# class ISpeechRecoResult_Impl(object):
+# code template for ISpeechGrammarRuleState implementation
+# class ISpeechGrammarRuleState_Impl(object):
 #     @property
-#     def RecoContext(self):
-#         'RecoContext'
-#         #return RecoContext
+#     def Rule(self):
+#         'Rule'
+#         #return Rule
 #
 #     @property
-#     def Times(self):
-#         'Times'
-#         #return Times
+#     def Transitions(self):
+#         'Transitions'
+#         #return Transitions
 #
-#     @property
-#     def AudioFormat(self, Format):
-#         'AudioFormat'
+#     def AddWordTransition(self, DestState, Words, Separators, Type, PropertyName, PropertyId, PropertyValue, Weight):
+#         'AddWordTransition'
 #         #return 
 #
-#     @property
-#     def PhraseInfo(self):
-#         'PhraseInfo'
-#         #return PhraseInfo
-#
-#     def Alternates(self, RequestCount, StartElement, Elements):
-#         'Alternates'
-#         #return Alternates
-#
-#     def Audio(self, StartElement, Elements):
-#         'Audio'
-#         #return Stream
-#
-#     def SpeakAudio(self, StartElement, Elements, Flags):
-#         'SpeakAudio'
-#         #return StreamNumber
-#
-#     def SaveToMemory(self):
-#         'SaveToMemory'
-#         #return ResultBlock
-#
-#     def DiscardResultInfo(self, ValueTypes):
-#         'DiscardResultInfo'
+#     def AddRuleTransition(self, DestinationState, Rule, PropertyName, PropertyId, PropertyValue, Weight):
+#         'AddRuleTransition'
 #         #return 
 #
-
-IInternetSecurityMgrSite._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetWindow',
-        (['out'], POINTER(wireHWND), 'phwnd')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EnableModeless',
-        (['in'], c_int, 'fEnable')
-    ),
-]
-
-################################################################
-# code template for IInternetSecurityMgrSite implementation
-# class IInternetSecurityMgrSite_Impl(object):
-#     def GetWindow(self):
-#         '-no docstring-'
-#         #return phwnd
-#
-#     def EnableModeless(self, fEnable):
-#         '-no docstring-'
+#     def AddSpecialTransition(self, DestinationState, Type, PropertyName, PropertyId, PropertyValue, Weight):
+#         'AddSpecialTransition'
 #         #return 
 #
-
-ISpeechPhraseReplacement._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('DisplayAttributes'), 'propget'],
-        HRESULT,
-        'DisplayAttributes',
-        (
-            ['out', 'retval'],
-            POINTER(SpeechDisplayAttributes),
-            'DisplayAttributes',
-        )
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Text'), 'propget'],
-        HRESULT,
-        'Text',
-        (['out', 'retval'], POINTER(BSTR), 'Text')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('FirstElement'), 'propget'],
-        HRESULT,
-        'FirstElement',
-        (['out', 'retval'], POINTER(c_int), 'FirstElement')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('NumElements'), 'propget'],
-        HRESULT,
-        'NumberOfElements',
-        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
-    ),
-]
-
-################################################################
-# code template for ISpeechPhraseReplacement implementation
-# class ISpeechPhraseReplacement_Impl(object):
-#     @property
-#     def DisplayAttributes(self):
-#         'DisplayAttributes'
-#         #return DisplayAttributes
-#
-#     @property
-#     def Text(self):
-#         'Text'
-#         #return Text
-#
-#     @property
-#     def FirstElement(self):
-#         'FirstElement'
-#         #return FirstElement
-#
-#     @property
-#     def NumberOfElements(self):
-#         'NumElements'
-#         #return NumberOfElements
-#
-
-
-class SpStreamFormatConverter(CoClass):
-    """FormatConverter Class"""
-    _reg_clsid_ = GUID('{7013943A-E2EC-11D2-A086-00C04F8EF9B5}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
 
 
 class ISpStreamFormatConverter(ISpStreamFormat):
@@ -6313,563 +7002,6 @@ class ISpStreamFormatConverter(ISpStreamFormat):
         def ResetSeekPosition(self) -> hints.Hresult: ...
         def ScaleConvertedToBaseOffset(self, ullOffsetConvertedStream: hints.Incomplete) -> hints.Incomplete: ...
         def ScaleBaseToConvertedOffset(self, ullOffsetBaseStream: hints.Incomplete) -> hints.Incomplete: ...
-
-
-SpStreamFormatConverter._com_interfaces_ = [ISpStreamFormatConverter]
-
-ISpPhoneticAlphabetSelection._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'IsAlphabetUPS',
-        (['out'], POINTER(c_int), 'pfIsUPS')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetAlphabetToUPS',
-        (['in'], c_int, 'fForceUPS')
-    ),
-]
-
-################################################################
-# code template for ISpPhoneticAlphabetSelection implementation
-# class ISpPhoneticAlphabetSelection_Impl(object):
-#     def IsAlphabetUPS(self):
-#         '-no docstring-'
-#         #return pfIsUPS
-#
-#     def SetAlphabetToUPS(self, fForceUPS):
-#         '-no docstring-'
-#         #return 
-#
-
-ISpNotifySource._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetNotifySink',
-        (['in'], POINTER(ISpNotifySink), 'pNotifySink')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetNotifyWindowMessage',
-        (['in'], wireHWND, 'hWnd'),
-        (['in'], c_uint, 'Msg'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetNotifyCallbackFunction',
-        (['in'], POINTER(c_void_p), 'pfnCallback'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetNotifyCallbackInterface',
-        (['in'], POINTER(c_void_p), 'pSpCallback'),
-        (['in'], UINT_PTR, 'wParam'),
-        (['in'], LONG_PTR, 'lParam')
-    ),
-    COMMETHOD([], HRESULT, 'SetNotifyWin32Event'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'WaitForNotifyEvent',
-        (['in'], c_ulong, 'dwMilliseconds')
-    ),
-    COMMETHOD([], c_void_p, 'GetNotifyEventHandle'),
-]
-
-################################################################
-# code template for ISpNotifySource implementation
-# class ISpNotifySource_Impl(object):
-#     def SetNotifySink(self, pNotifySink):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetNotifyWindowMessage(self, hWnd, Msg, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetNotifyCallbackFunction(self, pfnCallback, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetNotifyCallbackInterface(self, pSpCallback, wParam, lParam):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetNotifyWin32Event(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def WaitForNotifyEvent(self, dwMilliseconds):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetNotifyEventHandle(self):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class SPEVENT(Structure):
-    pass
-
-
-class SPEVENTSOURCEINFO(Structure):
-    pass
-
-
-ISpEventSource._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetInterest',
-        (['in'], c_ulonglong, 'ullEventInterest'),
-        (['in'], c_ulonglong, 'ullQueuedInterest')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetEvents',
-        (['in'], c_ulong, 'ulCount'),
-        (['out'], POINTER(SPEVENT), 'pEventArray'),
-        (['out'], POINTER(c_ulong), 'pulFetched')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetInfo',
-        (['out'], POINTER(SPEVENTSOURCEINFO), 'pInfo')
-    ),
-]
-
-################################################################
-# code template for ISpEventSource implementation
-# class ISpEventSource_Impl(object):
-#     def SetInterest(self, ullEventInterest, ullQueuedInterest):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetEvents(self, ulCount):
-#         '-no docstring-'
-#         #return pEventArray, pulFetched
-#
-#     def GetInfo(self):
-#         '-no docstring-'
-#         #return pInfo
-#
-
-
-class ISpGrammarBuilder(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpGrammarBuilder Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{8137828F-591A-4A42-BE58-49EA7EBAAC68}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def ResetGrammar(self, NewLanguage: hints.Incomplete) -> hints.Hresult: ...
-        def GetRule(self, pszRuleName: hints.Incomplete, dwRuleId: hints.Incomplete, dwAttributes: hints.Incomplete, fCreateIfNotExist: hints.Incomplete) -> hints.Incomplete: ...
-        def ClearRule(self, hState: hints.Incomplete) -> hints.Hresult: ...
-        def CreateNewState(self, hState: hints.Incomplete) -> hints.Incomplete: ...
-        def AddWordTransition(self, hFromState: hints.Incomplete, hToState: hints.Incomplete, psz: hints.Incomplete, pszSeparators: hints.Incomplete, eWordType: hints.Incomplete, Weight: hints.Incomplete, pPropInfo: hints.Incomplete) -> hints.Hresult: ...
-        def AddRuleTransition(self, hFromState: hints.Incomplete, hToState: hints.Incomplete, hRule: hints.Incomplete, Weight: hints.Incomplete, pPropInfo: hints.Incomplete) -> hints.Hresult: ...
-        def AddResource(self, hRuleState: hints.Incomplete, pszResourceName: hints.Incomplete, pszResourceValue: hints.Incomplete) -> hints.Hresult: ...
-        def Commit(self, dwReserved: hints.Incomplete) -> hints.Hresult: ...
-
-
-class ISpRecoGrammar(ISpGrammarBuilder):
-    """ISpRecoGrammar Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{2177DB29-7F45-47D0-8554-067E91C80502}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetGrammarId(self) -> hints.Incomplete: ...
-        def GetRecoContext(self) -> 'ISpRecoContext': ...
-        def LoadCmdFromFile(self, pszFileName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def LoadCmdFromObject(self, rcid: hints.Incomplete, pszGrammarName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def LoadCmdFromResource(self, hModule: hints.Incomplete, pszResourceName: hints.Incomplete, pszResourceType: hints.Incomplete, wLanguage: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def LoadCmdFromMemory(self, pGrammar: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def LoadCmdFromProprietaryGrammar(self, rguidParam: hints.Incomplete, pszStringParam: hints.Incomplete, pvDataPrarm: hints.Incomplete, cbDataSize: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def SetRuleState(self, pszName: hints.Incomplete, pReserved: hints.Incomplete, NewState: hints.Incomplete) -> hints.Hresult: ...
-        def SetRuleIdState(self, ulRuleId: hints.Incomplete, NewState: hints.Incomplete) -> hints.Hresult: ...
-        def LoadDictation(self, pszTopicName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
-        def UnloadDictation(self) -> hints.Hresult: ...
-        def SetDictationState(self, NewState: hints.Incomplete) -> hints.Hresult: ...
-        def SetWordSequenceData(self, pText: hints.Incomplete, cchText: hints.Incomplete, pInfo: hints.Incomplete) -> hints.Hresult: ...
-        def SetTextSelection(self, pInfo: hints.Incomplete) -> hints.Hresult: ...
-        def IsPronounceable(self, pszWord: hints.Incomplete) -> hints.Incomplete: ...
-        def SetGrammarState(self, eGrammarState: hints.Incomplete) -> hints.Hresult: ...
-        def SaveCmd(self, pStream: hints.Incomplete) -> hints.Incomplete: ...
-        def GetGrammarState(self) -> hints.Incomplete: ...
-
-
-class SPRECOCONTEXTSTATUS(Structure):
-    pass
-
-
-class ISpVoice(ISpEventSource):
-    """ISpVoice Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{6C44DF74-72B9-4992-A1EC-EF996E0422D4}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetOutput(self, pUnkOutput: hints.Incomplete, fAllowFormatChanges: hints.Incomplete) -> hints.Hresult: ...
-        def GetOutputObjectToken(self) -> 'ISpObjectToken': ...
-        def GetOutputStream(self) -> 'ISpStreamFormat': ...
-        def Pause(self) -> hints.Hresult: ...
-        def Resume(self) -> hints.Hresult: ...
-        def SetVoice(self, pToken: hints.Incomplete) -> hints.Hresult: ...
-        def GetVoice(self) -> 'ISpObjectToken': ...
-        def Speak(self, pwcs: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
-        def SpeakStream(self, pStream: hints.Incomplete, dwFlags: hints.Incomplete) -> hints.Incomplete: ...
-        def GetStatus(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def Skip(self, pItemType: hints.Incomplete, lNumItems: hints.Incomplete) -> hints.Incomplete: ...
-        def SetPriority(self, ePriority: hints.Incomplete) -> hints.Hresult: ...
-        def GetPriority(self) -> hints.Incomplete: ...
-        def SetAlertBoundary(self, eBoundary: hints.Incomplete) -> hints.Hresult: ...
-        def GetAlertBoundary(self) -> hints.Incomplete: ...
-        def SetRate(self, RateAdjust: hints.Incomplete) -> hints.Hresult: ...
-        def GetRate(self) -> hints.Incomplete: ...
-        def SetVolume(self, usVolume: hints.Incomplete) -> hints.Hresult: ...
-        def GetVolume(self) -> hints.Incomplete: ...
-        def WaitUntilDone(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
-        def SetSyncSpeakTimeout(self, msTimeout: hints.Incomplete) -> hints.Hresult: ...
-        def GetSyncSpeakTimeout(self) -> hints.Incomplete: ...
-        def SpeakCompleteEvent(self) -> hints.Hresult: ...
-        def IsUISupported(self, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete) -> hints.Incomplete: ...
-        def DisplayUI(self, hWndParent: hints.Incomplete, pszTitle: hints.Incomplete, pszTypeOfUI: hints.Incomplete, pvExtraData: hints.Incomplete, cbExtraData: hints.Incomplete) -> hints.Hresult: ...
-
-
-ISpRecoContext._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecognizer',
-        (['out'], POINTER(POINTER(ISpRecognizer)), 'ppRecognizer')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'CreateGrammar',
-        (['in'], c_ulonglong, 'ullGrammarID'),
-        (['out'], POINTER(POINTER(ISpRecoGrammar)), 'ppGrammar')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetStatus',
-        (['out'], POINTER(SPRECOCONTEXTSTATUS), 'pStatus')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetMaxAlternates',
-        (['in'], POINTER(c_ulong), 'pcAlternates')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetMaxAlternates',
-        (['in'], c_ulong, 'cAlternates')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetAudioOptions',
-        (['in'], SPAUDIOOPTIONS, 'Options'),
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pAudioFormatId',
-        ),
-        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetAudioOptions',
-        (['in'], POINTER(SPAUDIOOPTIONS), 'pOptions'),
-        (
-            ['out'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pAudioFormatId',
-        ),
-        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWFEX')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'DeserializeResult',
-        (['in'], POINTER(SPSERIALIZEDRESULT), 'pSerializedResult'),
-        (['out'], POINTER(POINTER(ISpRecoResult)), 'ppResult')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Bookmark',
-        (['in'], SPBOOKMARKOPTIONS, 'Options'),
-        (['in'], c_ulonglong, 'ullStreamPosition'),
-        (['in'], LONG_PTR, 'lparamEvent')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetAdaptationData',
-        (['in'], WSTRING, 'pAdaptationData'),
-        (['in'], c_ulong, 'cch')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Pause',
-        (['in'], c_ulong, 'dwReserved')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Resume',
-        (['in'], c_ulong, 'dwReserved')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetVoice',
-        (['in'], POINTER(ISpVoice), 'pVoice'),
-        (['in'], c_int, 'fAllowFormatChanges')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetVoice',
-        (['out'], POINTER(POINTER(ISpVoice)), 'ppVoice')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetVoicePurgeEvent',
-        (['in'], c_ulonglong, 'ullEventInterest')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetVoicePurgeEvent',
-        (['out'], POINTER(c_ulonglong), 'pullEventInterest')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetContextState',
-        (['in'], SPCONTEXTSTATE, 'eContextState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetContextState',
-        (['out'], POINTER(SPCONTEXTSTATE), 'peContextState')
-    ),
-]
-
-################################################################
-# code template for ISpRecoContext implementation
-# class ISpRecoContext_Impl(object):
-#     def GetRecognizer(self):
-#         '-no docstring-'
-#         #return ppRecognizer
-#
-#     def CreateGrammar(self, ullGrammarID):
-#         '-no docstring-'
-#         #return ppGrammar
-#
-#     def GetStatus(self):
-#         '-no docstring-'
-#         #return pStatus
-#
-#     def GetMaxAlternates(self, pcAlternates):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetMaxAlternates(self, cAlternates):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetAudioOptions(self, Options, pAudioFormatId, pWaveFormatEx):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetAudioOptions(self, pOptions):
-#         '-no docstring-'
-#         #return pAudioFormatId, ppCoMemWFEX
-#
-#     def DeserializeResult(self, pSerializedResult):
-#         '-no docstring-'
-#         #return ppResult
-#
-#     def Bookmark(self, Options, ullStreamPosition, lparamEvent):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetAdaptationData(self, pAdaptationData, cch):
-#         '-no docstring-'
-#         #return 
-#
-#     def Pause(self, dwReserved):
-#         '-no docstring-'
-#         #return 
-#
-#     def Resume(self, dwReserved):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetVoice(self, pVoice, fAllowFormatChanges):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetVoice(self):
-#         '-no docstring-'
-#         #return ppVoice
-#
-#     def SetVoicePurgeEvent(self, ullEventInterest):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetVoicePurgeEvent(self):
-#         '-no docstring-'
-#         #return pullEventInterest
-#
-#     def SetContextState(self, eContextState):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetContextState(self):
-#         '-no docstring-'
-#         #return peContextState
-#
-
-ISpeechRecoResultTimes._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('StreamTime'), 'propget'],
-        HRESULT,
-        'StreamTime',
-        (['out', 'retval'], POINTER(VARIANT), 'Time')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Length'), 'propget'],
-        HRESULT,
-        'Length',
-        (['out', 'retval'], POINTER(VARIANT), 'Length')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('TickCount'), 'propget'],
-        HRESULT,
-        'TickCount',
-        (['out', 'retval'], POINTER(c_int), 'TickCount')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Start'), 'propget'],
-        HRESULT,
-        'OffsetFromStart',
-        (['out', 'retval'], POINTER(VARIANT), 'OffsetFromStart')
-    ),
-]
-
-################################################################
-# code template for ISpeechRecoResultTimes implementation
-# class ISpeechRecoResultTimes_Impl(object):
-#     @property
-#     def StreamTime(self):
-#         'StreamTime'
-#         #return Time
-#
-#     @property
-#     def Length(self):
-#         'Length'
-#         #return Length
-#
-#     @property
-#     def TickCount(self):
-#         'TickCount'
-#         #return TickCount
-#
-#     @property
-#     def OffsetFromStart(self):
-#         'Start'
-#         #return OffsetFromStart
-#
-
-
-class SPSEMANTICERRORINFO(Structure):
-    pass
-
-
-SPSEMANTICERRORINFO._fields_ = [
-    ('ulLineNumber', c_ulong),
-    ('pszScriptLine', WSTRING),
-    ('pszSource', WSTRING),
-    ('pszDescription', WSTRING),
-    ('hrResultCode', HRESULT),
-]
-
-assert sizeof(SPSEMANTICERRORINFO) == 40, sizeof(SPSEMANTICERRORINFO)
-assert alignment(SPSEMANTICERRORINFO) == 8, alignment(SPSEMANTICERRORINFO)
-
-
-class ISpeechXMLRecoResult(ISpeechRecoResult):
-    """ISpeechXMLRecoResult Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{AAEC54AF-8F85-4924-944D-B79D39D72E19}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
-        def GetXMLErrorInfo(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-
-
-ISpeechXMLRecoResult._methods_ = [
-    COMMETHOD(
-        [dispid(10), helpstring('GetXMLResult')],
-        HRESULT,
-        'GetXMLResult',
-        (['in'], SPXMLRESULTOPTIONS, 'Options'),
-        (['out', 'retval'], POINTER(BSTR), 'pResult')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('GetXMLErrorInfo')],
-        HRESULT,
-        'GetXMLErrorInfo',
-        (['out'], POINTER(c_int), 'LineNumber'),
-        (['out'], POINTER(BSTR), 'ScriptLine'),
-        (['out'], POINTER(BSTR), 'Source'),
-        (['out'], POINTER(BSTR), 'Description'),
-        (['out'], POINTER(c_int), 'ResultCode'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'IsError')
-    ),
-]
-
-################################################################
-# code template for ISpeechXMLRecoResult implementation
-# class ISpeechXMLRecoResult_Impl(object):
-#     def GetXMLResult(self, Options):
-#         'GetXMLResult'
-#         #return pResult
-#
-#     def GetXMLErrorInfo(self):
-#         'GetXMLErrorInfo'
-#         #return LineNumber, ScriptLine, Source, Description, ResultCode, IsError
-#
-
-
-class tagSTATSTG(Structure):
-    pass
 
 
 IStream._methods_ = [
@@ -7068,478 +7200,513 @@ ISpStreamFormatConverter._methods_ = [
 #
 
 
-class SPWORD(Structure):
-    pass
-
-
-SPWORDLIST._fields_ = [
-    ('ulSize', c_ulong),
-    ('pvBuffer', POINTER(c_ubyte)),
-    ('pFirstWord', POINTER(SPWORD)),
-]
-
-assert sizeof(SPWORDLIST) == 24, sizeof(SPWORDLIST)
-assert alignment(SPWORDLIST) == 8, alignment(SPWORDLIST)
-
-ISpProperties._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetPropertyNum',
-        (['in'], WSTRING, 'pName'),
-        (['in'], c_int, 'lValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetPropertyNum',
-        (['in'], WSTRING, 'pName'),
-        (['out'], POINTER(c_int), 'plValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetPropertyString',
-        (['in'], WSTRING, 'pName'),
-        (['in'], WSTRING, 'pValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetPropertyString',
-        (['in'], WSTRING, 'pName'),
-        (['out'], POINTER(WSTRING), 'ppCoMemValue')
-    ),
-]
-
-################################################################
-# code template for ISpProperties implementation
-# class ISpProperties_Impl(object):
-#     def SetPropertyNum(self, pName, lValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetPropertyNum(self, pName):
-#         '-no docstring-'
-#         #return plValue
-#
-#     def SetPropertyString(self, pName, pValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetPropertyString(self, pName):
-#         '-no docstring-'
-#         #return ppCoMemValue
-#
-
-
-class SPRECOGNIZERSTATUS(Structure):
-    pass
-
-
-ISpRecognizer._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRecognizer',
-        (['in'], POINTER(ISpObjectToken), 'pRecognizer')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecognizer',
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppRecognizer')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetInput',
-        (['in'], POINTER(IUnknown), 'pUnkInput'),
-        (['in'], c_int, 'fAllowFormatChanges')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetInputObjectToken',
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetInputStream',
-        (['out'], POINTER(POINTER(ISpStreamFormat)), 'ppStream')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'CreateRecoContext',
-        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppNewCtxt')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecoProfile',
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRecoProfile',
-        (['in'], POINTER(ISpObjectToken), 'pToken')
-    ),
-    COMMETHOD([], HRESULT, 'IsSharedInstance'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecoState',
-        (['out'], POINTER(SPRECOSTATE), 'pState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRecoState',
-        (['in'], SPRECOSTATE, 'NewState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetStatus',
-        (['out'], POINTER(SPRECOGNIZERSTATUS), 'pStatus')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetFormat',
-        (['in'], SPSTREAMFORMATTYPE, 'WaveFormatType'),
-        (
-            ['out'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pFormatId',
-        ),
-        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWFEX')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'IsUISupported',
-        (['in'], WSTRING, 'pszTypeOfUI'),
-        (['in'], c_void_p, 'pvExtraData'),
-        (['in'], c_ulong, 'cbExtraData'),
-        (['out'], POINTER(c_int), 'pfSupported')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'DisplayUI',
-        (['in'], wireHWND, 'hWndParent'),
-        (['in'], WSTRING, 'pszTitle'),
-        (['in'], WSTRING, 'pszTypeOfUI'),
-        (['in'], c_void_p, 'pvExtraData'),
-        (['in'], c_ulong, 'cbExtraData')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'EmulateRecognition',
-        (['in'], POINTER(ISpPhrase), 'pPhrase')
-    ),
-]
-
-################################################################
-# code template for ISpRecognizer implementation
-# class ISpRecognizer_Impl(object):
-#     def SetRecognizer(self, pRecognizer):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetRecognizer(self):
-#         '-no docstring-'
-#         #return ppRecognizer
-#
-#     def SetInput(self, pUnkInput, fAllowFormatChanges):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetInputObjectToken(self):
-#         '-no docstring-'
-#         #return ppToken
-#
-#     def GetInputStream(self):
-#         '-no docstring-'
-#         #return ppStream
-#
-#     def CreateRecoContext(self):
-#         '-no docstring-'
-#         #return ppNewCtxt
-#
-#     def GetRecoProfile(self):
-#         '-no docstring-'
-#         #return ppToken
-#
-#     def SetRecoProfile(self, pToken):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsSharedInstance(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetRecoState(self):
-#         '-no docstring-'
-#         #return pState
-#
-#     def SetRecoState(self, NewState):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetStatus(self):
-#         '-no docstring-'
-#         #return pStatus
-#
-#     def GetFormat(self, WaveFormatType):
-#         '-no docstring-'
-#         #return pFormatId, ppCoMemWFEX
-#
-#     def IsUISupported(self, pszTypeOfUI, pvExtraData, cbExtraData):
-#         '-no docstring-'
-#         #return pfSupported
-#
-#     def DisplayUI(self, hWndParent, pszTitle, pszTypeOfUI, pvExtraData, cbExtraData):
-#         '-no docstring-'
-#         #return 
-#
-#     def EmulateRecognition(self, pPhrase):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class ISpeechPhraseAlternate(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseAlternate Interface"""
+class IInternetSecurityMgrSite(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    """IInternetSecurityMgrSite Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{27864A2A-2B9F-4CB8-92D3-0D2722FD1E73}')
+    _iid_ = GUID('{79EAC9ED-BAF9-11CE-8C82-00AA004BA90B}')
+    _idlflags_ = []
+
+    if TYPE_CHECKING:  # commembers
+        def GetWindow(self) -> hints.Incomplete: ...
+        def EnableModeless(self, fEnable: hints.Incomplete) -> hints.Hresult: ...
+
+
+class IEnumString(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+    _case_insensitive_ = True
+    _iid_ = GUID('{00000101-0000-0000-C000-000000000046}')
+    _idlflags_ = []
+
+    if TYPE_CHECKING:  # commembers
+        def RemoteNext(self, celt: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def Skip(self, celt: hints.Incomplete) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> 'IEnumString': ...
+
+
+IInternetSecurityManager._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetSecuritySite',
+        (['in'], POINTER(IInternetSecurityMgrSite), 'pSite')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetSecuritySite',
+        (['out'], POINTER(POINTER(IInternetSecurityMgrSite)), 'ppSite')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'MapUrlToZone',
+        (['in'], WSTRING, 'pwszUrl'),
+        (['out'], POINTER(c_ulong), 'pdwZone'),
+        (['in'], c_ulong, 'dwFlags')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetSecurityId',
+        (['in'], WSTRING, 'pwszUrl'),
+        (['out'], POINTER(c_ubyte), 'pbSecurityId'),
+        (['in', 'out'], POINTER(c_ulong), 'pcbSecurityId'),
+        (['in'], ULONG_PTR, 'dwReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'ProcessUrlAction',
+        (['in'], WSTRING, 'pwszUrl'),
+        (['in'], c_ulong, 'dwAction'),
+        (['out'], POINTER(c_ubyte), 'pPolicy'),
+        (['in'], c_ulong, 'cbPolicy'),
+        (['in'], POINTER(c_ubyte), 'pContext'),
+        (['in'], c_ulong, 'cbContext'),
+        (['in'], c_ulong, 'dwFlags'),
+        (['in'], c_ulong, 'dwReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'QueryCustomPolicy',
+        (['in'], WSTRING, 'pwszUrl'),
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'guidKey',
+        ),
+        (['out'], POINTER(POINTER(c_ubyte)), 'ppPolicy'),
+        (['out'], POINTER(c_ulong), 'pcbPolicy'),
+        (['in'], POINTER(c_ubyte), 'pContext'),
+        (['in'], c_ulong, 'cbContext'),
+        (['in'], c_ulong, 'dwReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetZoneMapping',
+        (['in'], c_ulong, 'dwZone'),
+        (['in'], WSTRING, 'lpszPattern'),
+        (['in'], c_ulong, 'dwFlags')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetZoneMappings',
+        (['in'], c_ulong, 'dwZone'),
+        (['out'], POINTER(POINTER(IEnumString)), 'ppenumString'),
+        (['in'], c_ulong, 'dwFlags')
+    ),
+]
+
+################################################################
+# code template for IInternetSecurityManager implementation
+# class IInternetSecurityManager_Impl(object):
+#     def SetSecuritySite(self, pSite):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetSecuritySite(self):
+#         '-no docstring-'
+#         #return ppSite
+#
+#     def MapUrlToZone(self, pwszUrl, dwFlags):
+#         '-no docstring-'
+#         #return pdwZone
+#
+#     def GetSecurityId(self, pwszUrl, dwReserved):
+#         '-no docstring-'
+#         #return pbSecurityId, pcbSecurityId
+#
+#     def ProcessUrlAction(self, pwszUrl, dwAction, cbPolicy, pContext, cbContext, dwFlags, dwReserved):
+#         '-no docstring-'
+#         #return pPolicy
+#
+#     def QueryCustomPolicy(self, pwszUrl, guidKey, pContext, cbContext, dwReserved):
+#         '-no docstring-'
+#         #return ppPolicy, pcbPolicy
+#
+#     def SetZoneMapping(self, dwZone, lpszPattern, dwFlags):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetZoneMappings(self, dwZone, dwFlags):
+#         '-no docstring-'
+#         #return ppenumString
+#
+
+ISpeechResourceLoader._methods_ = [
+    COMMETHOD(
+        [dispid(1)],
+        HRESULT,
+        'LoadResource',
+        (['in'], BSTR, 'bstrResourceUri'),
+        (['in'], VARIANT_BOOL, 'fAlwaysReload'),
+        (['out'], POINTER(POINTER(IUnknown)), 'pStream'),
+        (['out'], POINTER(BSTR), 'pbstrMIMEType'),
+        (['out'], POINTER(VARIANT_BOOL), 'pfModified'),
+        (['out'], POINTER(BSTR), 'pbstrRedirectUrl')
+    ),
+    COMMETHOD(
+        [dispid(2)],
+        HRESULT,
+        'GetLocalCopy',
+        (['in'], BSTR, 'bstrResourceUri'),
+        (['out'], POINTER(BSTR), 'pbstrLocalPath'),
+        (['out'], POINTER(BSTR), 'pbstrMIMEType'),
+        (['out'], POINTER(BSTR), 'pbstrRedirectUrl')
+    ),
+    COMMETHOD(
+        [dispid(3)],
+        HRESULT,
+        'ReleaseLocalCopy',
+        (['in'], BSTR, 'pbstrLocalPath')
+    ),
+]
+
+################################################################
+# code template for ISpeechResourceLoader implementation
+# class ISpeechResourceLoader_Impl(object):
+#     def LoadResource(self, bstrResourceUri, fAlwaysReload):
+#         '-no docstring-'
+#         #return pStream, pbstrMIMEType, pfModified, pbstrRedirectUrl
+#
+#     def GetLocalCopy(self, bstrResourceUri):
+#         '-no docstring-'
+#         #return pbstrLocalPath, pbstrMIMEType, pbstrRedirectUrl
+#
+#     def ReleaseLocalCopy(self, pbstrLocalPath):
+#         '-no docstring-'
+#         #return 
+#
+
+ISpNotifySource._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetNotifySink',
+        (['in'], POINTER(ISpNotifySink), 'pNotifySink')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetNotifyWindowMessage',
+        (['in'], wireHWND, 'hWnd'),
+        (['in'], c_uint, 'Msg'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetNotifyCallbackFunction',
+        (['in'], POINTER(c_void_p), 'pfnCallback'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetNotifyCallbackInterface',
+        (['in'], POINTER(c_void_p), 'pSpCallback'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD([], HRESULT, 'SetNotifyWin32Event'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'WaitForNotifyEvent',
+        (['in'], c_ulong, 'dwMilliseconds')
+    ),
+    COMMETHOD([], c_void_p, 'GetNotifyEventHandle'),
+]
+
+################################################################
+# code template for ISpNotifySource implementation
+# class ISpNotifySource_Impl(object):
+#     def SetNotifySink(self, pNotifySink):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetNotifyWindowMessage(self, hWnd, Msg, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetNotifyCallbackFunction(self, pfnCallback, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetNotifyCallbackInterface(self, pSpCallback, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetNotifyWin32Event(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def WaitForNotifyEvent(self, dwMilliseconds):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetNotifyEventHandle(self):
+#         '-no docstring-'
+#         #return 
+#
+
+ISpEventSource._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetInterest',
+        (['in'], c_ulonglong, 'ullEventInterest'),
+        (['in'], c_ulonglong, 'ullQueuedInterest')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetEvents',
+        (['in'], c_ulong, 'ulCount'),
+        (['out'], POINTER(SPEVENT), 'pEventArray'),
+        (['out'], POINTER(c_ulong), 'pulFetched')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetInfo',
+        (['out'], POINTER(SPEVENTSOURCEINFO), 'pInfo')
+    ),
+]
+
+################################################################
+# code template for ISpEventSource implementation
+# class ISpEventSource_Impl(object):
+#     def SetInterest(self, ullEventInterest, ullQueuedInterest):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetEvents(self, ulCount):
+#         '-no docstring-'
+#         #return pEventArray, pulFetched
+#
+#     def GetInfo(self):
+#         '-no docstring-'
+#         #return pInfo
+#
+
+
+class ISpeechPhraseElement(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseElement Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{E6176F96-E373-4801-B223-3B62C068C0B4}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_RecoResult(self) -> 'ISpeechRecoResult': ...
-        RecoResult = hints.normal_property(_get_RecoResult)
-        def _get_StartElementInResult(self) -> hints.Incomplete: ...
-        StartElementInResult = hints.normal_property(_get_StartElementInResult)
-        def _get_NumberOfElementsInResult(self) -> hints.Incomplete: ...
-        NumberOfElementsInResult = hints.normal_property(_get_NumberOfElementsInResult)
-        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
-        PhraseInfo = hints.normal_property(_get_PhraseInfo)
-        def Commit(self) -> hints.Hresult: ...
+        def _get_AudioTimeOffset(self) -> hints.Incomplete: ...
+        AudioTimeOffset = hints.normal_property(_get_AudioTimeOffset)
+        def _get_AudioSizeTime(self) -> hints.Incomplete: ...
+        AudioSizeTime = hints.normal_property(_get_AudioSizeTime)
+        def _get_AudioStreamOffset(self) -> hints.Incomplete: ...
+        AudioStreamOffset = hints.normal_property(_get_AudioStreamOffset)
+        def _get_AudioSizeBytes(self) -> hints.Incomplete: ...
+        AudioSizeBytes = hints.normal_property(_get_AudioSizeBytes)
+        def _get_RetainedStreamOffset(self) -> hints.Incomplete: ...
+        RetainedStreamOffset = hints.normal_property(_get_RetainedStreamOffset)
+        def _get_RetainedSizeBytes(self) -> hints.Incomplete: ...
+        RetainedSizeBytes = hints.normal_property(_get_RetainedSizeBytes)
+        def _get_DisplayText(self) -> hints.Incomplete: ...
+        DisplayText = hints.normal_property(_get_DisplayText)
+        def _get_LexicalForm(self) -> hints.Incomplete: ...
+        LexicalForm = hints.normal_property(_get_LexicalForm)
+        def _get_Pronunciation(self) -> hints.Incomplete: ...
+        Pronunciation = hints.normal_property(_get_Pronunciation)
+        def _get_DisplayAttributes(self) -> hints.Incomplete: ...
+        DisplayAttributes = hints.normal_property(_get_DisplayAttributes)
+        def _get_RequiredConfidence(self) -> hints.Incomplete: ...
+        RequiredConfidence = hints.normal_property(_get_RequiredConfidence)
+        def _get_ActualConfidence(self) -> hints.Incomplete: ...
+        ActualConfidence = hints.normal_property(_get_ActualConfidence)
+        def _get_EngineConfidence(self) -> hints.Incomplete: ...
+        EngineConfidence = hints.normal_property(_get_EngineConfidence)
 
 
-ISpeechPhraseAlternates._methods_ = [
+ISpeechPhraseElement._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
+        [dispid(1), helpstring('AudioTimeOffset'), 'propget'],
         HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
+        'AudioTimeOffset',
+        (['out', 'retval'], POINTER(c_int), 'AudioTimeOffset')
     ),
     COMMETHOD(
-        [dispid(0), helpstring('Item')],
+        [dispid(2), helpstring('AudioSizeTime'), 'propget'],
         HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
+        'AudioSizeTime',
+        (['out', 'retval'], POINTER(c_int), 'AudioSizeTime')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('AudioStreamOffset'), 'propget'],
+        HRESULT,
+        'AudioStreamOffset',
+        (['out', 'retval'], POINTER(c_int), 'AudioStreamOffset')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AudioSizeBytes'), 'propget'],
+        HRESULT,
+        'AudioSizeBytes',
+        (['out', 'retval'], POINTER(c_int), 'AudioSizeBytes')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('RetainedStreamOffset'), 'propget'],
+        HRESULT,
+        'RetainedStreamOffset',
+        (['out', 'retval'], POINTER(c_int), 'RetainedStreamOffset')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('RetainedSizeBytes'), 'propget'],
+        HRESULT,
+        'RetainedSizeBytes',
+        (['out', 'retval'], POINTER(c_int), 'RetainedSizeBytes')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('DisplayText'), 'propget'],
+        HRESULT,
+        'DisplayText',
+        (['out', 'retval'], POINTER(BSTR), 'DisplayText')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('LexicalForm'), 'propget'],
+        HRESULT,
+        'LexicalForm',
+        (['out', 'retval'], POINTER(BSTR), 'LexicalForm')
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('Pronunciation'), 'propget'],
+        HRESULT,
+        'Pronunciation',
+        (['out', 'retval'], POINTER(VARIANT), 'Pronunciation')
+    ),
+    COMMETHOD(
+        [dispid(10), helpstring('DisplayAttributes'), 'propget'],
+        HRESULT,
+        'DisplayAttributes',
         (
             ['out', 'retval'],
-            POINTER(POINTER(ISpeechPhraseAlternate)),
-            'PhraseAlternate',
+            POINTER(SpeechDisplayAttributes),
+            'DisplayAttributes',
         )
     ),
     COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the alternates'), 'restricted', 'propget'],
+        [dispid(11), helpstring('RequiredConfidence'), 'propget'],
         HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+        'RequiredConfidence',
+        (
+            ['out', 'retval'],
+            POINTER(SpeechEngineConfidence),
+            'RequiredConfidence',
+        )
+    ),
+    COMMETHOD(
+        [dispid(12), helpstring('ActualConfidence'), 'propget'],
+        HRESULT,
+        'ActualConfidence',
+        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'ActualConfidence')
+    ),
+    COMMETHOD(
+        [dispid(13), helpstring('EngineConfidence'), 'propget'],
+        HRESULT,
+        'EngineConfidence',
+        (['out', 'retval'], POINTER(c_float), 'EngineConfidence')
     ),
 ]
 
 ################################################################
-# code template for ISpeechPhraseAlternates implementation
-# class ISpeechPhraseAlternates_Impl(object):
+# code template for ISpeechPhraseElement implementation
+# class ISpeechPhraseElement_Impl(object):
 #     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
-#
-#     def Item(self, Index):
-#         'Item'
-#         #return PhraseAlternate
+#     def AudioTimeOffset(self):
+#         'AudioTimeOffset'
+#         #return AudioTimeOffset
 #
 #     @property
-#     def _NewEnum(self):
-#         'Enumerates the alternates'
-#         #return EnumVARIANT
+#     def AudioSizeTime(self):
+#         'AudioSizeTime'
+#         #return AudioSizeTime
+#
+#     @property
+#     def AudioStreamOffset(self):
+#         'AudioStreamOffset'
+#         #return AudioStreamOffset
+#
+#     @property
+#     def AudioSizeBytes(self):
+#         'AudioSizeBytes'
+#         #return AudioSizeBytes
+#
+#     @property
+#     def RetainedStreamOffset(self):
+#         'RetainedStreamOffset'
+#         #return RetainedStreamOffset
+#
+#     @property
+#     def RetainedSizeBytes(self):
+#         'RetainedSizeBytes'
+#         #return RetainedSizeBytes
+#
+#     @property
+#     def DisplayText(self):
+#         'DisplayText'
+#         #return DisplayText
+#
+#     @property
+#     def LexicalForm(self):
+#         'LexicalForm'
+#         #return LexicalForm
+#
+#     @property
+#     def Pronunciation(self):
+#         'Pronunciation'
+#         #return Pronunciation
+#
+#     @property
+#     def DisplayAttributes(self):
+#         'DisplayAttributes'
+#         #return DisplayAttributes
+#
+#     @property
+#     def RequiredConfidence(self):
+#         'RequiredConfidence'
+#         #return RequiredConfidence
+#
+#     @property
+#     def ActualConfidence(self):
+#         'ActualConfidence'
+#         #return ActualConfidence
+#
+#     @property
+#     def EngineConfidence(self):
+#         'EngineConfidence'
+#         #return EngineConfidence
 #
 
-SPSERIALIZEDPHRASE._fields_ = [
-    ('ulSerializedSize', c_ulong),
-]
 
-assert sizeof(SPSERIALIZEDPHRASE) == 4, sizeof(SPSERIALIZEDPHRASE)
-assert alignment(SPSERIALIZEDPHRASE) == 4, alignment(SPSERIALIZEDPHRASE)
-
-
-class SpStream(CoClass):
-    """SpStream Class"""
-    _reg_clsid_ = GUID('{715D9C59-4442-11D2-9605-00C04F8EE628}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpStream(ISpStreamFormat):
-    """ISpStream Interface"""
+class ISpeechPhraseRules(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseRules Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{12E3CCA9-7518-44C5-A5E7-BA5A79CB929E}')
-    _idlflags_ = ['restricted']
+    _iid_ = GUID('{9047D593-01DD-4B72-81A3-E4A0CA69F407}')
+    _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def SetBaseStream(self, pStream: hints.Incomplete, rguidFormat: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
-        def GetBaseStream(self) -> 'IStream': ...
-        def BindToFile(self, pszFileName: hints.Incomplete, eMode: hints.Incomplete, pFormatId: hints.Incomplete, pWaveFormatEx: hints.Incomplete, ullEventInterest: hints.Incomplete) -> hints.Hresult: ...
-        def Close(self) -> hints.Hresult: ...
-
-
-SpStream._com_interfaces_ = [ISpStream]
-
-
-class SpUnCompressedLexicon(CoClass):
-    """SpUnCompressedLexicon Class"""
-    _reg_clsid_ = GUID('{C9E37C15-DF92-4727-85D6-72E5EEB6995A}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpObjectWithToken(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpObjectWithToken Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{5B559F40-E952-11D2-BB91-00C04F8EE6C0}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetObjectToken(self, pToken: hints.Incomplete) -> hints.Hresult: ...
-        def GetObjectToken(self) -> 'ISpObjectToken': ...
-
-
-SpUnCompressedLexicon._com_interfaces_ = [ISpeechLexicon, ISpLexicon, ISpObjectWithToken, ISpPhoneticAlphabetSelection]
-
-ISpStream._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetBaseStream',
-        (['in'], POINTER(IStream), 'pStream'),
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'rguidFormat',
-        ),
-        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetBaseStream',
-        (['out'], POINTER(POINTER(IStream)), 'ppStream')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'BindToFile',
-        (['in'], WSTRING, 'pszFileName'),
-        (['in'], SPFILEMODE, 'eMode'),
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pFormatId',
-        ),
-        ([], POINTER(WAVEFORMATEX), 'pWaveFormatEx'),
-        (['in'], c_ulonglong, 'ullEventInterest')
-    ),
-    COMMETHOD([], HRESULT, 'Close'),
-]
-
-################################################################
-# code template for ISpStream implementation
-# class ISpStream_Impl(object):
-#     def SetBaseStream(self, pStream, rguidFormat, pWaveFormatEx):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetBaseStream(self):
-#         '-no docstring-'
-#         #return ppStream
-#
-#     def BindToFile(self, pszFileName, eMode, pFormatId, pWaveFormatEx, ullEventInterest):
-#         '-no docstring-'
-#         #return 
-#
-#     def Close(self):
-#         '-no docstring-'
-#         #return 
-#
-
-SPWORD._fields_ = [
-    ('pNextWord', POINTER(SPWORD)),
-    ('LangId', c_ushort),
-    ('wReserved', c_ushort),
-    ('eWordType', SPWORDTYPE),
-    ('pszWord', WSTRING),
-    ('pFirstWordPronunciation', POINTER(SPWORDPRONUNCIATION)),
-]
-
-assert sizeof(SPWORD) == 32, sizeof(SPWORD)
-assert alignment(SPWORD) == 8, alignment(SPWORD)
-
-IEnumString._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'RemoteNext',
-        (['in'], c_ulong, 'celt'),
-        (['out'], POINTER(WSTRING), 'rgelt'),
-        (['out'], POINTER(c_ulong), 'pceltFetched')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Skip',
-        (['in'], c_ulong, 'celt')
-    ),
-    COMMETHOD([], HRESULT, 'Reset'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Clone',
-        (['out'], POINTER(POINTER(IEnumString)), 'ppEnum')
-    ),
-]
-
-################################################################
-# code template for IEnumString implementation
-# class IEnumString_Impl(object):
-#     def RemoteNext(self, celt):
-#         '-no docstring-'
-#         #return rgelt, pceltFetched
-#
-#     def Skip(self, celt):
-#         '-no docstring-'
-#         #return 
-#
-#     def Reset(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def Clone(self):
-#         '-no docstring-'
-#         #return ppEnum
-#
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseRule': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _get__NewEnum(self) -> hints.Incomplete: ...
+        _NewEnum = hints.normal_property(_get__NewEnum)
+        __iter__ = hints.to_dunder_iter(_NewEnum)
 
 
 class ISpeechPhraseRule(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -7565,6 +7732,377 @@ class ISpeechPhraseRule(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
         Confidence = hints.normal_property(_get_Confidence)
         def _get_EngineConfidence(self) -> hints.Incomplete: ...
         EngineConfidence = hints.normal_property(_get_EngineConfidence)
+
+
+ISpeechPhraseRules._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Count'), 'propget'],
+        HRESULT,
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
+    ),
+    COMMETHOD(
+        [dispid(0), helpstring('Item')],
+        HRESULT,
+        'Item',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRule)), 'Rule')
+    ),
+    COMMETHOD(
+        [dispid(-4), helpstring('Enumerates the Rules'), 'restricted', 'propget'],
+        HRESULT,
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+    ),
+]
+
+################################################################
+# code template for ISpeechPhraseRules implementation
+# class ISpeechPhraseRules_Impl(object):
+#     @property
+#     def Count(self):
+#         'Count'
+#         #return Count
+#
+#     def Item(self, Index):
+#         'Item'
+#         #return Rule
+#
+#     @property
+#     def _NewEnum(self):
+#         'Enumerates the Rules'
+#         #return EnumVARIANT
+#
+
+IEnumSpObjectTokens._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Next',
+        (['in'], c_ulong, 'celt'),
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'pelt'),
+        (['out'], POINTER(c_ulong), 'pceltFetched')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Skip',
+        (['in'], c_ulong, 'celt')
+    ),
+    COMMETHOD([], HRESULT, 'Reset'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Clone',
+        (['out'], POINTER(POINTER(IEnumSpObjectTokens)), 'ppEnum')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Item',
+        (['in'], c_ulong, 'Index'),
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetCount',
+        (['out'], POINTER(c_ulong), 'pCount')
+    ),
+]
+
+################################################################
+# code template for IEnumSpObjectTokens implementation
+# class IEnumSpObjectTokens_Impl(object):
+#     def Next(self, celt):
+#         '-no docstring-'
+#         #return pelt, pceltFetched
+#
+#     def Skip(self, celt):
+#         '-no docstring-'
+#         #return 
+#
+#     def Reset(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def Clone(self):
+#         '-no docstring-'
+#         #return ppEnum
+#
+#     def Item(self, Index):
+#         '-no docstring-'
+#         #return ppToken
+#
+#     def GetCount(self):
+#         '-no docstring-'
+#         #return pCount
+#
+
+IInternetSecurityMgrSite._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetWindow',
+        (['out'], POINTER(wireHWND), 'phwnd')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EnableModeless',
+        (['in'], c_int, 'fEnable')
+    ),
+]
+
+################################################################
+# code template for IInternetSecurityMgrSite implementation
+# class IInternetSecurityMgrSite_Impl(object):
+#     def GetWindow(self):
+#         '-no docstring-'
+#         #return phwnd
+#
+#     def EnableModeless(self, fEnable):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechCategoryAudioIn = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AudioInput'  # Constant BSTR
+
+ISpAudio._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetState',
+        (['in'], SPAUDIOSTATE, 'NewState'),
+        (['in'], c_ulonglong, 'ullReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetFormat',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'rguidFmtId',
+        ),
+        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetStatus',
+        (['out'], POINTER(SPAUDIOSTATUS), 'pStatus')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetBufferInfo',
+        (['in'], POINTER(SPAUDIOBUFFERINFO), 'pBuffInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetBufferInfo',
+        (['out'], POINTER(SPAUDIOBUFFERINFO), 'pBuffInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetDefaultFormat',
+        (
+            ['out'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pFormatId',
+        ),
+        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWaveFormatEx')
+    ),
+    COMMETHOD([], c_void_p, 'EventHandle'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetVolumeLevel',
+        (['out'], POINTER(c_ulong), 'pLevel')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetVolumeLevel',
+        (['in'], c_ulong, 'Level')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetBufferNotifySize',
+        (['out'], POINTER(c_ulong), 'pcbSize')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetBufferNotifySize',
+        (['in'], c_ulong, 'cbSize')
+    ),
+]
+
+################################################################
+# code template for ISpAudio implementation
+# class ISpAudio_Impl(object):
+#     def SetState(self, NewState, ullReserved):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetFormat(self, rguidFmtId, pWaveFormatEx):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetStatus(self):
+#         '-no docstring-'
+#         #return pStatus
+#
+#     def SetBufferInfo(self, pBuffInfo):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetBufferInfo(self):
+#         '-no docstring-'
+#         #return pBuffInfo
+#
+#     def GetDefaultFormat(self):
+#         '-no docstring-'
+#         #return pFormatId, ppCoMemWaveFormatEx
+#
+#     def EventHandle(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetVolumeLevel(self):
+#         '-no docstring-'
+#         #return pLevel
+#
+#     def SetVolumeLevel(self, Level):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetBufferNotifySize(self):
+#         '-no docstring-'
+#         #return pcbSize
+#
+#     def SetBufferNotifySize(self, cbSize):
+#         '-no docstring-'
+#         #return 
+#
+
+ISpeechLexiconPronunciation._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Type'), 'propget'],
+        HRESULT,
+        'Type',
+        (['out', 'retval'], POINTER(SpeechLexiconType), 'LexiconType')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('LangId'), 'propget'],
+        HRESULT,
+        'LangId',
+        (['out', 'retval'], POINTER(c_int), 'LangId')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('PartOfSpeech'), 'propget'],
+        HRESULT,
+        'PartOfSpeech',
+        (['out', 'retval'], POINTER(SpeechPartOfSpeech), 'PartOfSpeech')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('PhoneIds'), 'propget'],
+        HRESULT,
+        'PhoneIds',
+        (['out', 'retval'], POINTER(VARIANT), 'PhoneIds')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('Symbolic'), 'propget'],
+        HRESULT,
+        'Symbolic',
+        (['out', 'retval'], POINTER(BSTR), 'Symbolic')
+    ),
+]
+
+################################################################
+# code template for ISpeechLexiconPronunciation implementation
+# class ISpeechLexiconPronunciation_Impl(object):
+#     @property
+#     def Type(self):
+#         'Type'
+#         #return LexiconType
+#
+#     @property
+#     def LangId(self):
+#         'LangId'
+#         #return LangId
+#
+#     @property
+#     def PartOfSpeech(self):
+#         'PartOfSpeech'
+#         #return PartOfSpeech
+#
+#     @property
+#     def PhoneIds(self):
+#         'PhoneIds'
+#         #return PhoneIds
+#
+#     @property
+#     def Symbolic(self):
+#         'Symbolic'
+#         #return Symbolic
+#
+
+ISpeechRecoResultTimes._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('StreamTime'), 'propget'],
+        HRESULT,
+        'StreamTime',
+        (['out', 'retval'], POINTER(VARIANT), 'Time')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Length'), 'propget'],
+        HRESULT,
+        'Length',
+        (['out', 'retval'], POINTER(VARIANT), 'Length')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('TickCount'), 'propget'],
+        HRESULT,
+        'TickCount',
+        (['out', 'retval'], POINTER(c_int), 'TickCount')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Start'), 'propget'],
+        HRESULT,
+        'OffsetFromStart',
+        (['out', 'retval'], POINTER(VARIANT), 'OffsetFromStart')
+    ),
+]
+
+################################################################
+# code template for ISpeechRecoResultTimes implementation
+# class ISpeechRecoResultTimes_Impl(object):
+#     @property
+#     def StreamTime(self):
+#         'StreamTime'
+#         #return Time
+#
+#     @property
+#     def Length(self):
+#         'Length'
+#         #return Length
+#
+#     @property
+#     def TickCount(self):
+#         'TickCount'
+#         #return TickCount
+#
+#     @property
+#     def OffsetFromStart(self):
+#         'Start'
+#         #return OffsetFromStart
+#
 
 
 class ISpeechPhraseProperties(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
@@ -7597,6 +8135,25 @@ class ISpeechPhraseElements(comtypes.gen._00020430_0000_0000_C000_000000000046_0
         Count = hints.normal_property(_get_Count)
         __len__ = hints.to_dunder_len(Count)
         def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseElement': ...
+        __call__ = hints.to_dunder_call(Item)
+        __getitem__ = hints.to_dunder_getitem(Item)
+        __setitem__ = hints.to_dunder_setitem(Item)
+        def _get__NewEnum(self) -> hints.Incomplete: ...
+        _NewEnum = hints.normal_property(_get__NewEnum)
+        __iter__ = hints.to_dunder_iter(_NewEnum)
+
+
+class ISpeechPhraseReplacements(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseReplacements Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{38BC662F-2257-4525-959E-2069D2596C05}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Count(self) -> hints.Incomplete: ...
+        Count = hints.normal_property(_get_Count)
+        __len__ = hints.to_dunder_len(Count)
+        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseReplacement': ...
         __call__ = hints.to_dunder_call(Item)
         __getitem__ = hints.to_dunder_getitem(Item)
         __setitem__ = hints.to_dunder_setitem(Item)
@@ -7804,814 +8361,34 @@ ISpeechPhraseInfo._methods_ = [
 #
 
 
-class ISpeechRecoResultDispatch(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecoResultDispatch Interface"""
+class ISpeechPhraseProperty(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseProperty Interface"""
     _case_insensitive_ = True
-    _iid_ = GUID('{6D60EB64-ACED-40A6-BBF3-4E557F71DEE2}')
-    _idlflags_ = ['hidden', 'dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
-        RecoContext = hints.normal_property(_get_RecoContext)
-        def _get_Times(self) -> 'ISpeechRecoResultTimes': ...
-        Times = hints.normal_property(_get_Times)
-        def _get_AudioFormat(self) -> 'ISpeechAudioFormat': ...
-        def _setref_AudioFormat(self, Format: hints.Incomplete) -> hints.Hresult: ...
-        AudioFormat = hints.normal_property(_get_AudioFormat, _setref_AudioFormat)
-        def _get_PhraseInfo(self) -> 'ISpeechPhraseInfo': ...
-        PhraseInfo = hints.normal_property(_get_PhraseInfo)
-        def Alternates(self, RequestCount: hints.Incomplete, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechPhraseAlternates': ...
-        def Audio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ...) -> 'ISpeechMemoryStream': ...
-        def SpeakAudio(self, StartElement: hints.Incomplete = ..., Elements: hints.Incomplete = ..., Flags: hints.Incomplete = ...) -> hints.Incomplete: ...
-        def SaveToMemory(self) -> hints.Incomplete: ...
-        def DiscardResultInfo(self, ValueTypes: hints.Incomplete) -> hints.Hresult: ...
-        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
-        def GetXMLErrorInfo(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def SetTextFeedback(self, Feedback: hints.Incomplete, WasSuccessful: hints.Incomplete) -> hints.Hresult: ...
-
-
-ISpeechRecoResultDispatch._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('RecoContext'), 'propget'],
-        HRESULT,
-        'RecoContext',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Times'), 'propget'],
-        HRESULT,
-        'Times',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResultTimes)), 'Times')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioFormat'), 'propputref'],
-        HRESULT,
-        'AudioFormat',
-        (['in'], POINTER(ISpeechAudioFormat), 'Format')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioFormat'), 'propget'],
-        HRESULT,
-        'AudioFormat',
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioFormat)), 'Format')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('PhraseInfo'), 'propget'],
-        HRESULT,
-        'PhraseInfo',
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('Alternates')],
-        HRESULT,
-        'Alternates',
-        (['in'], c_int, 'RequestCount'),
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechPhraseAlternates)),
-            'Alternates',
-        )
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('Audio')],
-        HRESULT,
-        'Audio',
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
-        (['out', 'retval'], POINTER(POINTER(ISpeechMemoryStream)), 'Stream')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('SpeakAudio')],
-        HRESULT,
-        'SpeakAudio',
-        (['in', 'optional'], c_int, 'StartElement', 0),
-        (['in', 'optional'], c_int, 'Elements', -1),
-        (['in', 'optional'], SpeechVoiceSpeakFlags, 'Flags', 0),
-        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('SaveToMemory')],
-        HRESULT,
-        'SaveToMemory',
-        (['out', 'retval'], POINTER(VARIANT), 'ResultBlock')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('DiscardResultInfo')],
-        HRESULT,
-        'DiscardResultInfo',
-        (['in'], SpeechDiscardType, 'ValueTypes')
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('GetXMLResult')],
-        HRESULT,
-        'GetXMLResult',
-        (['in'], SPXMLRESULTOPTIONS, 'Options'),
-        (['out', 'retval'], POINTER(BSTR), 'pResult')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('GetXMLErrorInfo')],
-        HRESULT,
-        'GetXMLErrorInfo',
-        (['out'], POINTER(c_int), 'LineNumber'),
-        (['out'], POINTER(BSTR), 'ScriptLine'),
-        (['out'], POINTER(BSTR), 'Source'),
-        (['out'], POINTER(BSTR), 'Description'),
-        (['out'], POINTER(HRESULT), 'ResultCode'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'IsError')
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('SetTextFeedback')],
-        HRESULT,
-        'SetTextFeedback',
-        (['in'], BSTR, 'Feedback'),
-        (['in'], VARIANT_BOOL, 'WasSuccessful')
-    ),
-]
-
-################################################################
-# code template for ISpeechRecoResultDispatch implementation
-# class ISpeechRecoResultDispatch_Impl(object):
-#     @property
-#     def RecoContext(self):
-#         'RecoContext'
-#         #return RecoContext
-#
-#     @property
-#     def Times(self):
-#         'Times'
-#         #return Times
-#
-#     @property
-#     def AudioFormat(self, Format):
-#         'AudioFormat'
-#         #return 
-#
-#     @property
-#     def PhraseInfo(self):
-#         'PhraseInfo'
-#         #return PhraseInfo
-#
-#     def Alternates(self, RequestCount, StartElement, Elements):
-#         'Alternates'
-#         #return Alternates
-#
-#     def Audio(self, StartElement, Elements):
-#         'Audio'
-#         #return Stream
-#
-#     def SpeakAudio(self, StartElement, Elements, Flags):
-#         'SpeakAudio'
-#         #return StreamNumber
-#
-#     def SaveToMemory(self):
-#         'SaveToMemory'
-#         #return ResultBlock
-#
-#     def DiscardResultInfo(self, ValueTypes):
-#         'DiscardResultInfo'
-#         #return 
-#
-#     def GetXMLResult(self, Options):
-#         'GetXMLResult'
-#         #return pResult
-#
-#     def GetXMLErrorInfo(self):
-#         'GetXMLErrorInfo'
-#         #return LineNumber, ScriptLine, Source, Description, ResultCode, IsError
-#
-#     def SetTextFeedback(self, Feedback, WasSuccessful):
-#         'SetTextFeedback'
-#         #return 
-#
-
-ISpeechPhraseAlternate._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('RecoResult'), 'propget'],
-        HRESULT,
-        'RecoResult',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoResult)), 'RecoResult')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('StartElementInResult'), 'propget'],
-        HRESULT,
-        'StartElementInResult',
-        (['out', 'retval'], POINTER(c_int), 'StartElement')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('NumberOfElementsInResult'), 'propget'],
-        HRESULT,
-        'NumberOfElementsInResult',
-        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Phrase'), 'propget'],
-        HRESULT,
-        'PhraseInfo',
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
-    ),
-    COMMETHOD([dispid(5), helpstring('Commit')], HRESULT, 'Commit'),
-]
-
-################################################################
-# code template for ISpeechPhraseAlternate implementation
-# class ISpeechPhraseAlternate_Impl(object):
-#     @property
-#     def RecoResult(self):
-#         'RecoResult'
-#         #return RecoResult
-#
-#     @property
-#     def StartElementInResult(self):
-#         'StartElementInResult'
-#         #return StartElement
-#
-#     @property
-#     def NumberOfElementsInResult(self):
-#         'NumberOfElementsInResult'
-#         #return NumberOfElements
-#
-#     @property
-#     def PhraseInfo(self):
-#         'Phrase'
-#         #return PhraseInfo
-#
-#     def Commit(self):
-#         'Commit'
-#         #return 
-#
-
-
-class tagSPPROPERTYINFO(Structure):
-    pass
-
-
-SPPROPERTYINFO = tagSPPROPERTYINFO
-
-ISpGrammarBuilder._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'ResetGrammar',
-        (['in'], c_ushort, 'NewLanguage')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRule',
-        (['in'], WSTRING, 'pszRuleName'),
-        (['in'], c_ulong, 'dwRuleId'),
-        (['in'], c_ulong, 'dwAttributes'),
-        (['in'], c_int, 'fCreateIfNotExist'),
-        (['out'], POINTER(c_void_p), 'phInitialState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'ClearRule',
-        (['in'], c_void_p, 'hState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'CreateNewState',
-        (['in'], c_void_p, 'hState'),
-        (['out'], POINTER(c_void_p), 'phState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddWordTransition',
-        (['in'], c_void_p, 'hFromState'),
-        (['in'], c_void_p, 'hToState'),
-        (['in'], WSTRING, 'psz'),
-        (['in'], WSTRING, 'pszSeparators'),
-        (['in'], SPGRAMMARWORDTYPE, 'eWordType'),
-        (['in'], c_float, 'Weight'),
-        (['in'], POINTER(SPPROPERTYINFO), 'pPropInfo')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddRuleTransition',
-        (['in'], c_void_p, 'hFromState'),
-        (['in'], c_void_p, 'hToState'),
-        (['in'], c_void_p, 'hRule'),
-        (['in'], c_float, 'Weight'),
-        (['in'], POINTER(SPPROPERTYINFO), 'pPropInfo')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddResource',
-        (['in'], c_void_p, 'hRuleState'),
-        (['in'], WSTRING, 'pszResourceName'),
-        (['in'], WSTRING, 'pszResourceValue')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'Commit',
-        (['in'], c_ulong, 'dwReserved')
-    ),
-]
-
-################################################################
-# code template for ISpGrammarBuilder implementation
-# class ISpGrammarBuilder_Impl(object):
-#     def ResetGrammar(self, NewLanguage):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetRule(self, pszRuleName, dwRuleId, dwAttributes, fCreateIfNotExist):
-#         '-no docstring-'
-#         #return phInitialState
-#
-#     def ClearRule(self, hState):
-#         '-no docstring-'
-#         #return 
-#
-#     def CreateNewState(self, hState):
-#         '-no docstring-'
-#         #return phState
-#
-#     def AddWordTransition(self, hFromState, hToState, psz, pszSeparators, eWordType, Weight, pPropInfo):
-#         '-no docstring-'
-#         #return 
-#
-#     def AddRuleTransition(self, hFromState, hToState, hRule, Weight, pPropInfo):
-#         '-no docstring-'
-#         #return 
-#
-#     def AddResource(self, hRuleState, pszResourceName, pszResourceValue):
-#         '-no docstring-'
-#         #return 
-#
-#     def Commit(self, dwReserved):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class SPBINARYGRAMMAR(Structure):
-    pass
-
-
-class tagSPTEXTSELECTIONINFO(Structure):
-    pass
-
-
-SPTEXTSELECTIONINFO = tagSPTEXTSELECTIONINFO
-
-ISpRecoGrammar._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGrammarId',
-        (['out'], POINTER(c_ulonglong), 'pullGrammarId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRecoContext',
-        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppRecoCtxt')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromFile',
-        (['in'], WSTRING, 'pszFileName'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromObject',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'rcid',
-        ),
-        (['in'], WSTRING, 'pszGrammarName'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromResource',
-        (['in'], c_void_p, 'hModule'),
-        (['in'], WSTRING, 'pszResourceName'),
-        (['in'], WSTRING, 'pszResourceType'),
-        (['in'], c_ushort, 'wLanguage'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromMemory',
-        (['in'], POINTER(SPBINARYGRAMMAR), 'pGrammar'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromProprietaryGrammar',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'rguidParam',
-        ),
-        (['in'], WSTRING, 'pszStringParam'),
-        (['in'], c_void_p, 'pvDataPrarm'),
-        (['in'], c_ulong, 'cbDataSize'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRuleState',
-        (['in'], WSTRING, 'pszName'),
-        (['in'], c_void_p, 'pReserved'),
-        (['in'], SPRULESTATE, 'NewState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRuleIdState',
-        (['in'], c_ulong, 'ulRuleId'),
-        (['in'], SPRULESTATE, 'NewState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadDictation',
-        (['in'], WSTRING, 'pszTopicName'),
-        (['in'], SPLOADOPTIONS, 'Options')
-    ),
-    COMMETHOD([], HRESULT, 'UnloadDictation'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetDictationState',
-        (['in'], SPRULESTATE, 'NewState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetWordSequenceData',
-        (['in'], POINTER(c_ushort), 'pText'),
-        (['in'], c_ulong, 'cchText'),
-        (['in'], POINTER(SPTEXTSELECTIONINFO), 'pInfo')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetTextSelection',
-        (['in'], POINTER(SPTEXTSELECTIONINFO), 'pInfo')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'IsPronounceable',
-        (['in'], WSTRING, 'pszWord'),
-        (['out'], POINTER(SPWORDPRONOUNCEABLE), 'pWordPronounceable')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetGrammarState',
-        (['in'], SPGRAMMARSTATE, 'eGrammarState')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SaveCmd',
-        (['in'], POINTER(IStream), 'pStream'),
-        (['out', 'optional'], POINTER(WSTRING), 'ppszCoMemErrorText')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGrammarState',
-        (['out'], POINTER(SPGRAMMARSTATE), 'peGrammarState')
-    ),
-]
-
-################################################################
-# code template for ISpRecoGrammar implementation
-# class ISpRecoGrammar_Impl(object):
-#     def GetGrammarId(self):
-#         '-no docstring-'
-#         #return pullGrammarId
-#
-#     def GetRecoContext(self):
-#         '-no docstring-'
-#         #return ppRecoCtxt
-#
-#     def LoadCmdFromFile(self, pszFileName, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadCmdFromObject(self, rcid, pszGrammarName, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadCmdFromResource(self, hModule, pszResourceName, pszResourceType, wLanguage, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadCmdFromMemory(self, pGrammar, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadCmdFromProprietaryGrammar(self, rguidParam, pszStringParam, pvDataPrarm, cbDataSize, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetRuleState(self, pszName, pReserved, NewState):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetRuleIdState(self, ulRuleId, NewState):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadDictation(self, pszTopicName, Options):
-#         '-no docstring-'
-#         #return 
-#
-#     def UnloadDictation(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetDictationState(self, NewState):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetWordSequenceData(self, pText, cchText, pInfo):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetTextSelection(self, pInfo):
-#         '-no docstring-'
-#         #return 
-#
-#     def IsPronounceable(self, pszWord):
-#         '-no docstring-'
-#         #return pWordPronounceable
-#
-#     def SetGrammarState(self, eGrammarState):
-#         '-no docstring-'
-#         #return 
-#
-#     def SaveCmd(self, pStream):
-#         '-no docstring-'
-#         #return ppszCoMemErrorText
-#
-#     def GetGrammarState(self):
-#         '-no docstring-'
-#         #return peGrammarState
-#
-
-
-class SpCompressedLexicon(CoClass):
-    """SpCompressedLexicon Class"""
-    _reg_clsid_ = GUID('{90903716-2F42-11D3-9C26-00C04F8EF87C}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpCompressedLexicon._com_interfaces_ = [ISpLexicon, ISpObjectWithToken]
-
-
-class SpShortcut(CoClass):
-    """SpShortcut Class"""
-    _reg_clsid_ = GUID('{0D722F1A-9FCF-4E62-96D8-6DF8F01A26AA}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpShortcut(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpShortcut Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{3DF681E2-EA56-11D9-8BDE-F66BAD1E3F3A}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def AddShortcut(self, pszDisplay: hints.Incomplete, LangId: hints.Incomplete, pszSpoken: hints.Incomplete, shType: hints.Incomplete) -> hints.Hresult: ...
-        def RemoveShortcut(self, pszDisplay: hints.Incomplete, LangId: hints.Incomplete, pszSpoken: hints.Incomplete, shType: hints.Incomplete) -> hints.Hresult: ...
-        def GetShortcuts(self, LangId: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Incomplete: ...
-        def GetGeneration(self) -> hints.Incomplete: ...
-        def GetWordsFromGenerationChange(self, pdwGeneration: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def GetWords(self, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pWordList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def GetShortcutsForGeneration(self, pdwGeneration: hints.Incomplete, pdwCookie: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def GetGenerationChange(self, pdwGeneration: hints.Incomplete, pShortcutpairList: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-
-
-SpShortcut._com_interfaces_ = [ISpShortcut, ISpObjectWithToken]
-
-
-class SPSHORTCUTPAIRLIST(Structure):
-    pass
-
-
-ISpShortcut._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddShortcut',
-        (['in'], WSTRING, 'pszDisplay'),
-        (['in'], c_ushort, 'LangId'),
-        (['in'], WSTRING, 'pszSpoken'),
-        (['in'], SPSHORTCUTTYPE, 'shType')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'RemoveShortcut',
-        (['in'], WSTRING, 'pszDisplay'),
-        (['in'], c_ushort, 'LangId'),
-        (['in'], WSTRING, 'pszSpoken'),
-        (['in'], SPSHORTCUTTYPE, 'shType')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetShortcuts',
-        (['in'], c_ushort, 'LangId'),
-        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGeneration',
-        (['out'], POINTER(c_ulong), 'pdwGeneration')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetWordsFromGenerationChange',
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetWords',
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
-        (['in', 'out'], POINTER(SPWORDLIST), 'pWordList')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetShortcutsForGeneration',
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(c_ulong), 'pdwCookie'),
-        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetGenerationChange',
-        (['in', 'out'], POINTER(c_ulong), 'pdwGeneration'),
-        (['in', 'out'], POINTER(SPSHORTCUTPAIRLIST), 'pShortcutpairList')
-    ),
-]
-
-################################################################
-# code template for ISpShortcut implementation
-# class ISpShortcut_Impl(object):
-#     def AddShortcut(self, pszDisplay, LangId, pszSpoken, shType):
-#         '-no docstring-'
-#         #return 
-#
-#     def RemoveShortcut(self, pszDisplay, LangId, pszSpoken, shType):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetShortcuts(self, LangId):
-#         '-no docstring-'
-#         #return pShortcutpairList
-#
-#     def GetGeneration(self):
-#         '-no docstring-'
-#         #return pdwGeneration
-#
-#     def GetWordsFromGenerationChange(self):
-#         '-no docstring-'
-#         #return pdwGeneration, pWordList
-#
-#     def GetWords(self):
-#         '-no docstring-'
-#         #return pdwGeneration, pdwCookie, pWordList
-#
-#     def GetShortcutsForGeneration(self):
-#         '-no docstring-'
-#         #return pdwGeneration, pdwCookie, pShortcutpairList
-#
-#     def GetGenerationChange(self):
-#         '-no docstring-'
-#         #return pdwGeneration, pShortcutpairList
-#
-
-ISpeechRecognizerStatus._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('AudioStatus'), 'propget'],
-        HRESULT,
-        'AudioStatus',
-        (['out', 'retval'], POINTER(POINTER(ISpeechAudioStatus)), 'AudioStatus')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('CurrentStreamPosition'), 'propget'],
-        HRESULT,
-        'CurrentStreamPosition',
-        (['out', 'retval'], POINTER(VARIANT), 'pCurrentStreamPos')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('CurrentStreamNumber'), 'propget'],
-        HRESULT,
-        'CurrentStreamNumber',
-        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('NumberOfActiveRules'), 'propget'],
-        HRESULT,
-        'NumberOfActiveRules',
-        (['out', 'retval'], POINTER(c_int), 'NumberOfActiveRules')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('ClsidEngine'), 'propget'],
-        HRESULT,
-        'ClsidEngine',
-        (['out', 'retval'], POINTER(BSTR), 'ClsidEngine')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('SupportedLanguages'), 'propget'],
-        HRESULT,
-        'SupportedLanguages',
-        (['out', 'retval'], POINTER(VARIANT), 'SupportedLanguages')
-    ),
-]
-
-################################################################
-# code template for ISpeechRecognizerStatus implementation
-# class ISpeechRecognizerStatus_Impl(object):
-#     @property
-#     def AudioStatus(self):
-#         'AudioStatus'
-#         #return AudioStatus
-#
-#     @property
-#     def CurrentStreamPosition(self):
-#         'CurrentStreamPosition'
-#         #return pCurrentStreamPos
-#
-#     @property
-#     def CurrentStreamNumber(self):
-#         'CurrentStreamNumber'
-#         #return StreamNumber
-#
-#     @property
-#     def NumberOfActiveRules(self):
-#         'NumberOfActiveRules'
-#         #return NumberOfActiveRules
-#
-#     @property
-#     def ClsidEngine(self):
-#         'ClsidEngine'
-#         #return ClsidEngine
-#
-#     @property
-#     def SupportedLanguages(self):
-#         'SupportedLanguages'
-#         #return SupportedLanguages
-#
-
-
-class ISpeechPhraseRules(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseRules Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{9047D593-01DD-4B72-81A3-E4A0CA69F407}')
+    _iid_ = GUID('{CE563D48-961E-4732-A2E1-378A42B430BE}')
     _idlflags_ = ['dual', 'oleautomation']
 
     if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechPhraseRule': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _get__NewEnum(self) -> hints.Incomplete: ...
-        _NewEnum = hints.normal_property(_get__NewEnum)
-        __iter__ = hints.to_dunder_iter(_NewEnum)
+        def _get_Name(self) -> hints.Incomplete: ...
+        Name = hints.normal_property(_get_Name)
+        def _get_Id(self) -> hints.Incomplete: ...
+        Id = hints.normal_property(_get_Id)
+        def _get_Value(self) -> hints.Incomplete: ...
+        Value = hints.normal_property(_get_Value)
+        def _get_FirstElement(self) -> hints.Incomplete: ...
+        FirstElement = hints.normal_property(_get_FirstElement)
+        def _get_NumberOfElements(self) -> hints.Incomplete: ...
+        NumberOfElements = hints.normal_property(_get_NumberOfElements)
+        def _get_EngineConfidence(self) -> hints.Incomplete: ...
+        EngineConfidence = hints.normal_property(_get_EngineConfidence)
+        def _get_Confidence(self) -> hints.Incomplete: ...
+        Confidence = hints.normal_property(_get_Confidence)
+        def _get_Parent(self) -> 'ISpeechPhraseProperty': ...
+        Parent = hints.normal_property(_get_Parent)
+        def _get_Children(self) -> 'ISpeechPhraseProperties': ...
+        Children = hints.normal_property(_get_Children)
 
 
-ISpeechPhraseRule._methods_ = [
+ISpeechPhraseProperty._methods_ = [
     COMMETHOD(
         [dispid(1), helpstring('Name'), 'propget'],
         HRESULT,
@@ -8625,46 +8402,60 @@ ISpeechPhraseRule._methods_ = [
         (['out', 'retval'], POINTER(c_int), 'Id')
     ),
     COMMETHOD(
-        [dispid(3), helpstring('FirstElement'), 'propget'],
+        [dispid(3), helpstring('Value'), 'propget'],
+        HRESULT,
+        'Value',
+        (['out', 'retval'], POINTER(VARIANT), 'Value')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('FirstElement'), 'propget'],
         HRESULT,
         'FirstElement',
         (['out', 'retval'], POINTER(c_int), 'FirstElement')
     ),
     COMMETHOD(
-        [dispid(4), helpstring('NumElements'), 'propget'],
+        [dispid(5), helpstring('NumberOfElements'), 'propget'],
         HRESULT,
         'NumberOfElements',
         (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
     ),
     COMMETHOD(
-        [dispid(5), helpstring('Parent'), 'propget'],
+        [dispid(6), helpstring('EngineConfidence'), 'propget'],
         HRESULT,
-        'Parent',
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRule)), 'Parent')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('Children'), 'propget'],
-        HRESULT,
-        'Children',
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRules)), 'Children')
+        'EngineConfidence',
+        (['out', 'retval'], POINTER(c_float), 'Confidence')
     ),
     COMMETHOD(
         [dispid(7), helpstring('Confidence'), 'propget'],
         HRESULT,
         'Confidence',
-        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'ActualConfidence')
+        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'Confidence')
     ),
     COMMETHOD(
-        [dispid(8), helpstring('EngineConfidence'), 'propget'],
+        [dispid(8), helpstring('Parent'), 'propget'],
         HRESULT,
-        'EngineConfidence',
-        (['out', 'retval'], POINTER(c_float), 'EngineConfidence')
+        'Parent',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechPhraseProperty)),
+            'ParentProperty',
+        )
+    ),
+    COMMETHOD(
+        [dispid(9), helpstring('Children'), 'propget'],
+        HRESULT,
+        'Children',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechPhraseProperties)),
+            'Children',
+        )
     ),
 ]
 
 ################################################################
-# code template for ISpeechPhraseRule implementation
-# class ISpeechPhraseRule_Impl(object):
+# code template for ISpeechPhraseProperty implementation
+# class ISpeechPhraseProperty_Impl(object):
 #     @property
 #     def Name(self):
 #         'Name'
@@ -8676,6 +8467,104 @@ ISpeechPhraseRule._methods_ = [
 #         #return Id
 #
 #     @property
+#     def Value(self):
+#         'Value'
+#         #return Value
+#
+#     @property
+#     def FirstElement(self):
+#         'FirstElement'
+#         #return FirstElement
+#
+#     @property
+#     def NumberOfElements(self):
+#         'NumberOfElements'
+#         #return NumberOfElements
+#
+#     @property
+#     def EngineConfidence(self):
+#         'EngineConfidence'
+#         #return Confidence
+#
+#     @property
+#     def Confidence(self):
+#         'Confidence'
+#         #return Confidence
+#
+#     @property
+#     def Parent(self):
+#         'Parent'
+#         #return ParentProperty
+#
+#     @property
+#     def Children(self):
+#         'Children'
+#         #return Children
+#
+
+
+class ISpeechPhraseReplacement(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechPhraseReplacement Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{2890A410-53A7-4FB5-94EC-06D4998E3D02}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_DisplayAttributes(self) -> hints.Incomplete: ...
+        DisplayAttributes = hints.normal_property(_get_DisplayAttributes)
+        def _get_Text(self) -> hints.Incomplete: ...
+        Text = hints.normal_property(_get_Text)
+        def _get_FirstElement(self) -> hints.Incomplete: ...
+        FirstElement = hints.normal_property(_get_FirstElement)
+        def _get_NumberOfElements(self) -> hints.Incomplete: ...
+        NumberOfElements = hints.normal_property(_get_NumberOfElements)
+
+
+ISpeechPhraseReplacement._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('DisplayAttributes'), 'propget'],
+        HRESULT,
+        'DisplayAttributes',
+        (
+            ['out', 'retval'],
+            POINTER(SpeechDisplayAttributes),
+            'DisplayAttributes',
+        )
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Text'), 'propget'],
+        HRESULT,
+        'Text',
+        (['out', 'retval'], POINTER(BSTR), 'Text')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('FirstElement'), 'propget'],
+        HRESULT,
+        'FirstElement',
+        (['out', 'retval'], POINTER(c_int), 'FirstElement')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('NumElements'), 'propget'],
+        HRESULT,
+        'NumberOfElements',
+        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
+    ),
+]
+
+################################################################
+# code template for ISpeechPhraseReplacement implementation
+# class ISpeechPhraseReplacement_Impl(object):
+#     @property
+#     def DisplayAttributes(self):
+#         'DisplayAttributes'
+#         #return DisplayAttributes
+#
+#     @property
+#     def Text(self):
+#         'Text'
+#         #return Text
+#
+#     @property
 #     def FirstElement(self):
 #         'FirstElement'
 #         #return FirstElement
@@ -8685,55 +8574,550 @@ ISpeechPhraseRule._methods_ = [
 #         'NumElements'
 #         #return NumberOfElements
 #
+
+ISpeechPhraseAlternates._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Count'), 'propget'],
+        HRESULT,
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
+    ),
+    COMMETHOD(
+        [dispid(0), helpstring('Item')],
+        HRESULT,
+        'Item',
+        (['in'], c_int, 'Index'),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechPhraseAlternate)),
+            'PhraseAlternate',
+        )
+    ),
+    COMMETHOD(
+        [dispid(-4), helpstring('Enumerates the alternates'), 'restricted', 'propget'],
+        HRESULT,
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+    ),
+]
+
+################################################################
+# code template for ISpeechPhraseAlternates implementation
+# class ISpeechPhraseAlternates_Impl(object):
 #     @property
-#     def Parent(self):
-#         'Parent'
-#         #return Parent
+#     def Count(self):
+#         'Count'
+#         #return Count
+#
+#     def Item(self, Index):
+#         'Item'
+#         #return PhraseAlternate
 #
 #     @property
-#     def Children(self):
-#         'Children'
-#         #return Children
+#     def _NewEnum(self):
+#         'Enumerates the alternates'
+#         #return EnumVARIANT
+#
+
+ISpeechTextSelectionInformation._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('ActiveOffset'), 'propput'],
+        HRESULT,
+        'ActiveOffset',
+        (['in'], c_int, 'ActiveOffset')
+    ),
+    COMMETHOD(
+        [dispid(1), helpstring('ActiveOffset'), 'propget'],
+        HRESULT,
+        'ActiveOffset',
+        (['out', 'retval'], POINTER(c_int), 'ActiveOffset')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('ActiveLength'), 'propput'],
+        HRESULT,
+        'ActiveLength',
+        (['in'], c_int, 'ActiveLength')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('ActiveLength'), 'propget'],
+        HRESULT,
+        'ActiveLength',
+        (['out', 'retval'], POINTER(c_int), 'ActiveLength')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SelectionOffset'), 'propput'],
+        HRESULT,
+        'SelectionOffset',
+        (['in'], c_int, 'SelectionOffset')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SelectionOffset'), 'propget'],
+        HRESULT,
+        'SelectionOffset',
+        (['out', 'retval'], POINTER(c_int), 'SelectionOffset')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('SelectionLength'), 'propput'],
+        HRESULT,
+        'SelectionLength',
+        (['in'], c_int, 'SelectionLength')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('SelectionLength'), 'propget'],
+        HRESULT,
+        'SelectionLength',
+        (['out', 'retval'], POINTER(c_int), 'SelectionLength')
+    ),
+]
+
+################################################################
+# code template for ISpeechTextSelectionInformation implementation
+# class ISpeechTextSelectionInformation_Impl(object):
+#     def _get(self):
+#         'ActiveOffset'
+#         #return ActiveOffset
+#     def _set(self, ActiveOffset):
+#         'ActiveOffset'
+#     ActiveOffset = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'ActiveLength'
+#         #return ActiveLength
+#     def _set(self, ActiveLength):
+#         'ActiveLength'
+#     ActiveLength = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'SelectionOffset'
+#         #return SelectionOffset
+#     def _set(self, SelectionOffset):
+#         'SelectionOffset'
+#     SelectionOffset = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'SelectionLength'
+#         #return SelectionLength
+#     def _set(self, SelectionLength):
+#         'SelectionLength'
+#     SelectionLength = property(_get, _set, doc = _set.__doc__)
+#
+
+IEnumString._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'RemoteNext',
+        (['in'], c_ulong, 'celt'),
+        (['out'], POINTER(WSTRING), 'rgelt'),
+        (['out'], POINTER(c_ulong), 'pceltFetched')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Skip',
+        (['in'], c_ulong, 'celt')
+    ),
+    COMMETHOD([], HRESULT, 'Reset'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Clone',
+        (['out'], POINTER(POINTER(IEnumString)), 'ppEnum')
+    ),
+]
+
+################################################################
+# code template for IEnumString implementation
+# class IEnumString_Impl(object):
+#     def RemoteNext(self, celt):
+#         '-no docstring-'
+#         #return rgelt, pceltFetched
+#
+#     def Skip(self, celt):
+#         '-no docstring-'
+#         #return 
+#
+#     def Reset(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def Clone(self):
+#         '-no docstring-'
+#         #return ppEnum
+#
+
+SpeechCategoryRecoProfiles = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech\\RecoProfiles'  # Constant BSTR
+
+
+class ISpeechGrammarRuleStateTransition(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechGrammarRuleStateTransition Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{CAFD1DB1-41D1-4A06-9863-E2E81DA17A9A}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Type(self) -> hints.Incomplete: ...
+        Type = hints.normal_property(_get_Type)
+        def _get_Text(self) -> hints.Incomplete: ...
+        Text = hints.normal_property(_get_Text)
+        def _get_Rule(self) -> 'ISpeechGrammarRule': ...
+        Rule = hints.normal_property(_get_Rule)
+        def _get_Weight(self) -> hints.Incomplete: ...
+        Weight = hints.normal_property(_get_Weight)
+        def _get_PropertyName(self) -> hints.Incomplete: ...
+        PropertyName = hints.normal_property(_get_PropertyName)
+        def _get_PropertyId(self) -> hints.Incomplete: ...
+        PropertyId = hints.normal_property(_get_PropertyId)
+        def _get_PropertyValue(self) -> hints.Incomplete: ...
+        PropertyValue = hints.normal_property(_get_PropertyValue)
+        def _get_NextState(self) -> 'ISpeechGrammarRuleState': ...
+        NextState = hints.normal_property(_get_NextState)
+
+
+ISpeechGrammarRuleStateTransitions._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Count'), 'propget'],
+        HRESULT,
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
+    ),
+    COMMETHOD(
+        [dispid(0), helpstring('Item')],
+        HRESULT,
+        'Item',
+        (['in'], c_int, 'Index'),
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechGrammarRuleStateTransition)),
+            'Transition',
+        )
+    ),
+    COMMETHOD(
+        [dispid(-4), helpstring('Enumerates the transitions'), 'restricted', 'propget'],
+        HRESULT,
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+    ),
+]
+
+################################################################
+# code template for ISpeechGrammarRuleStateTransitions implementation
+# class ISpeechGrammarRuleStateTransitions_Impl(object):
+#     @property
+#     def Count(self):
+#         'Count'
+#         #return Count
+#
+#     def Item(self, Index):
+#         'Item'
+#         #return Transition
 #
 #     @property
-#     def Confidence(self):
-#         'Confidence'
-#         #return ActualConfidence
+#     def _NewEnum(self):
+#         'Enumerates the transitions'
+#         #return EnumVARIANT
+#
+
+SPEVENT._fields_ = [
+    ('eEventId', c_ushort),
+    ('elParamType', c_ushort),
+    ('ulStreamNum', c_ulong),
+    ('ullAudioStreamOffset', c_ulonglong),
+    ('wParam', UINT_PTR),
+    ('lParam', LONG_PTR),
+]
+
+assert sizeof(SPEVENT) == 32, sizeof(SPEVENT)
+assert alignment(SPEVENT) == 8, alignment(SPEVENT)
+
+ISpeechObjectTokens._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Count'), 'propget'],
+        HRESULT,
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
+    ),
+    COMMETHOD(
+        [dispid(0), helpstring('Item')],
+        HRESULT,
+        'Item',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechObjectToken)), 'Token')
+    ),
+    COMMETHOD(
+        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
+        HRESULT,
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'ppEnumVARIANT')
+    ),
+]
+
+################################################################
+# code template for ISpeechObjectTokens implementation
+# class ISpeechObjectTokens_Impl(object):
+#     @property
+#     def Count(self):
+#         'Count'
+#         #return Count
+#
+#     def Item(self, Index):
+#         'Item'
+#         #return Token
 #
 #     @property
-#     def EngineConfidence(self):
-#         'EngineConfidence'
-#         #return EngineConfidence
+#     def _NewEnum(self):
+#         'Enumerates the tokens'
+#         #return ppEnumVARIANT
 #
 
+SpeechGrammarTagDictation = '*'  # Constant BSTR
+SpeechDictationTopicSpelling = 'Spelling'  # Constant BSTR
+SpeechGrammarTagWildcard = '...'  # Constant BSTR
+SpeechGrammarTagUnlimitedDictation = '*+'  # Constant BSTR
 
-class SpSharedRecoContext(CoClass):
-    """SpSharedRecoContext Class"""
-    _reg_clsid_ = GUID('{47206204-5ECA-11D2-960F-00C04F8EE628}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+ISpPhoneticAlphabetSelection._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'IsAlphabetUPS',
+        (['out'], POINTER(c_int), 'pfIsUPS')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetAlphabetToUPS',
+        (['in'], c_int, 'fForceUPS')
+    ),
+]
+
+################################################################
+# code template for ISpPhoneticAlphabetSelection implementation
+# class ISpPhoneticAlphabetSelection_Impl(object):
+#     def IsAlphabetUPS(self):
+#         '-no docstring-'
+#         #return pfIsUPS
+#
+#     def SetAlphabetToUPS(self, fForceUPS):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechTokenIdUserLexicon = 'HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Speech\\CurrentUserLexicon'  # Constant BSTR
 
 
-SpSharedRecoContext._com_interfaces_ = [ISpeechRecoContext, ISpRecoContext, ISpRecoContext2, ISpPhoneticAlphabetSelection]
-SpSharedRecoContext._outgoing_interfaces_ = [_ISpeechRecoContextEvents]
+class ISpeechAudioStatus(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechAudioStatus Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{C62D9C91-7458-47F6-862D-1EF86FB0B278}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_FreeBufferSpace(self) -> hints.Incomplete: ...
+        FreeBufferSpace = hints.normal_property(_get_FreeBufferSpace)
+        def _get_NonBlockingIO(self) -> hints.Incomplete: ...
+        NonBlockingIO = hints.normal_property(_get_NonBlockingIO)
+        def _get_State(self) -> hints.Incomplete: ...
+        State = hints.normal_property(_get_State)
+        def _get_CurrentSeekPosition(self) -> hints.Incomplete: ...
+        CurrentSeekPosition = hints.normal_property(_get_CurrentSeekPosition)
+        def _get_CurrentDevicePosition(self) -> hints.Incomplete: ...
+        CurrentDevicePosition = hints.normal_property(_get_CurrentDevicePosition)
 
 
-class SpVoice(CoClass):
-    """SpVoice Class"""
-    _reg_clsid_ = GUID('{96749377-3391-11D2-9EE3-00C04F797396}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+ISpeechAudioStatus._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('FreeBufferSpace'), 'propget'],
+        HRESULT,
+        'FreeBufferSpace',
+        (['out', 'retval'], POINTER(c_int), 'FreeBufferSpace')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('NonBlockingIO'), 'propget'],
+        HRESULT,
+        'NonBlockingIO',
+        (['out', 'retval'], POINTER(c_int), 'NonBlockingIO')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('State'), 'propget'],
+        HRESULT,
+        'State',
+        (['out', 'retval'], POINTER(SpeechAudioState), 'State')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('CurrentSeekPosition'), 'propget'],
+        HRESULT,
+        'CurrentSeekPosition',
+        (['out', 'retval'], POINTER(VARIANT), 'CurrentSeekPosition')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('CurrentDevicePosition'), 'propget'],
+        HRESULT,
+        'CurrentDevicePosition',
+        (['out', 'retval'], POINTER(VARIANT), 'CurrentDevicePosition')
+    ),
+]
+
+################################################################
+# code template for ISpeechAudioStatus implementation
+# class ISpeechAudioStatus_Impl(object):
+#     @property
+#     def FreeBufferSpace(self):
+#         'FreeBufferSpace'
+#         #return FreeBufferSpace
+#
+#     @property
+#     def NonBlockingIO(self):
+#         'NonBlockingIO'
+#         #return NonBlockingIO
+#
+#     @property
+#     def State(self):
+#         'State'
+#         #return State
+#
+#     @property
+#     def CurrentSeekPosition(self):
+#         'CurrentSeekPosition'
+#         #return CurrentSeekPosition
+#
+#     @property
+#     def CurrentDevicePosition(self):
+#         'CurrentDevicePosition'
+#         #return CurrentDevicePosition
+#
+
+SpeechEngineProperties = 'EngineProperties'  # Constant BSTR
+
+ISpStream._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetBaseStream',
+        (['in'], POINTER(IStream), 'pStream'),
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'rguidFormat',
+        ),
+        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetBaseStream',
+        (['out'], POINTER(POINTER(IStream)), 'ppStream')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'BindToFile',
+        (['in'], WSTRING, 'pszFileName'),
+        (['in'], SPFILEMODE, 'eMode'),
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pFormatId',
+        ),
+        ([], POINTER(WAVEFORMATEX), 'pWaveFormatEx'),
+        (['in'], c_ulonglong, 'ullEventInterest')
+    ),
+    COMMETHOD([], HRESULT, 'Close'),
+]
+
+################################################################
+# code template for ISpStream implementation
+# class ISpStream_Impl(object):
+#     def SetBaseStream(self, pStream, rguidFormat, pWaveFormatEx):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetBaseStream(self):
+#         '-no docstring-'
+#         #return ppStream
+#
+#     def BindToFile(self, pszFileName, eMode, pFormatId, pWaveFormatEx, ullEventInterest):
+#         '-no docstring-'
+#         #return 
+#
+#     def Close(self):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechAddRemoveWord = 'AddRemoveWord'  # Constant BSTR
 
 
-SpVoice._com_interfaces_ = [ISpeechVoice, ISpVoice, ISpPhoneticAlphabetSelection]
-SpVoice._outgoing_interfaces_ = [_ISpeechVoiceEvents]
+class ISpeechLexiconWord(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechLexiconWord Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{4E5B933C-C9BE-48ED-8842-1EE51BB1D4FF}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_LangId(self) -> hints.Incomplete: ...
+        LangId = hints.normal_property(_get_LangId)
+        def _get_Type(self) -> hints.Incomplete: ...
+        Type = hints.normal_property(_get_Type)
+        def _get_Word(self) -> hints.Incomplete: ...
+        Word = hints.normal_property(_get_Word)
+        def _get_Pronunciations(self) -> 'ISpeechLexiconPronunciations': ...
+        Pronunciations = hints.normal_property(_get_Pronunciations)
 
 
-class SPVOICESTATUS(Structure):
-    pass
+ISpeechLexiconWord._methods_ = [
+    COMMETHOD(
+        [dispid(1), 'propget'],
+        HRESULT,
+        'LangId',
+        (['out', 'retval'], POINTER(c_int), 'LangId')
+    ),
+    COMMETHOD(
+        [dispid(2), 'propget'],
+        HRESULT,
+        'Type',
+        (['out', 'retval'], POINTER(SpeechWordType), 'WordType')
+    ),
+    COMMETHOD(
+        [dispid(3), 'propget'],
+        HRESULT,
+        'Word',
+        (['out', 'retval'], POINTER(BSTR), 'Word')
+    ),
+    COMMETHOD(
+        [dispid(4), 'propget'],
+        HRESULT,
+        'Pronunciations',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechLexiconPronunciations)),
+            'Pronunciations',
+        )
+    ),
+]
 
+################################################################
+# code template for ISpeechLexiconWord implementation
+# class ISpeechLexiconWord_Impl(object):
+#     @property
+#     def LangId(self):
+#         '-no docstring-'
+#         #return LangId
+#
+#     @property
+#     def Type(self):
+#         '-no docstring-'
+#         #return WordType
+#
+#     @property
+#     def Word(self):
+#         '-no docstring-'
+#         #return Word
+#
+#     @property
+#     def Pronunciations(self):
+#         '-no docstring-'
+#         #return Pronunciations
+#
 
 ISpVoice._methods_ = [
     COMMETHOD(
@@ -8992,91 +9376,978 @@ ISpVoice._methods_ = [
 #         #return 
 #
 
-tagSTATSTG._fields_ = [
-    ('pwcsName', WSTRING),
-    ('Type', c_ulong),
-    ('cbSize', _ULARGE_INTEGER),
-    ('mtime', _FILETIME),
-    ('ctime', _FILETIME),
-    ('atime', _FILETIME),
-    ('grfMode', c_ulong),
-    ('grfLocksSupported', c_ulong),
-    ('clsid', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-    ('grfStateBits', c_ulong),
-    ('reserved', c_ulong),
-]
-
-assert sizeof(tagSTATSTG) == 80, sizeof(tagSTATSTG)
-assert alignment(tagSTATSTG) == 8, alignment(tagSTATSTG)
-
-SPRECOGNIZERSTATUS._fields_ = [
-    ('AudioStatus', SPAUDIOSTATUS),
-    ('ullRecognitionStreamPos', c_ulonglong),
-    ('ulStreamNumber', c_ulong),
-    ('ulNumActive', c_ulong),
-    ('ClsidEngine', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-    ('cLangIDs', c_ulong),
-    ('aLangID', c_ushort * 20),
-    ('ullRecognitionStreamTime', c_ulonglong),
-]
-
-assert sizeof(SPRECOGNIZERSTATUS) == 128, sizeof(SPRECOGNIZERSTATUS)
-assert alignment(SPRECOGNIZERSTATUS) == 8, alignment(SPRECOGNIZERSTATUS)
-
-tagSPPROPERTYINFO._fields_ = [
-    ('pszName', WSTRING),
-    ('ulId', c_ulong),
-    ('pszValue', WSTRING),
-    ('vValue', VARIANT),
-]
-
-assert sizeof(tagSPPROPERTYINFO) == 48, sizeof(tagSPPROPERTYINFO)
-assert alignment(tagSPPROPERTYINFO) == 8, alignment(tagSPPROPERTYINFO)
-
-
-class ISpeechPhraseInfoBuilder(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseInfoBuilder Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{3B151836-DF3A-4E0A-846C-D2ADC9334333}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def RestorePhraseFromMemory(self, PhraseInMemory: hints.Incomplete) -> 'ISpeechPhraseInfo': ...
-
-
-ISpeechPhraseInfoBuilder._methods_ = [
+ISpObjectTokenCategory._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('RestorePhraseFromMemory')],
+        [],
         HRESULT,
-        'RestorePhraseFromMemory',
-        (['in'], POINTER(VARIANT), 'PhraseInMemory'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseInfo)), 'PhraseInfo')
+        'SetId',
+        (['in'], WSTRING, 'pszCategoryId'),
+        (['in'], c_int, 'fCreateIfNotExist')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetId',
+        (['out'], POINTER(WSTRING), 'ppszCoMemCategoryId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetDataKey',
+        (['in'], SPDATAKEYLOCATION, 'spdkl'),
+        (['out'], POINTER(POINTER(ISpDataKey)), 'ppDataKey')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EnumTokens',
+        (['in'], WSTRING, 'pzsReqAttribs'),
+        (['in'], WSTRING, 'pszOptAttribs'),
+        (['out'], POINTER(POINTER(IEnumSpObjectTokens)), 'ppEnum')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetDefaultTokenId',
+        (['in'], WSTRING, 'pszTokenId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetDefaultTokenId',
+        (['out'], POINTER(WSTRING), 'ppszCoMemTokenId')
     ),
 ]
 
 ################################################################
-# code template for ISpeechPhraseInfoBuilder implementation
-# class ISpeechPhraseInfoBuilder_Impl(object):
-#     def RestorePhraseFromMemory(self, PhraseInMemory):
-#         'RestorePhraseFromMemory'
-#         #return PhraseInfo
+# code template for ISpObjectTokenCategory implementation
+# class ISpObjectTokenCategory_Impl(object):
+#     def SetId(self, pszCategoryId, fCreateIfNotExist):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetId(self):
+#         '-no docstring-'
+#         #return ppszCoMemCategoryId
+#
+#     def GetDataKey(self, spdkl):
+#         '-no docstring-'
+#         #return ppDataKey
+#
+#     def EnumTokens(self, pzsReqAttribs, pszOptAttribs):
+#         '-no docstring-'
+#         #return ppEnum
+#
+#     def SetDefaultTokenId(self, pszTokenId):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetDefaultTokenId(self):
+#         '-no docstring-'
+#         #return ppszCoMemTokenId
 #
 
+ISpMMSysAudio._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetDeviceId',
+        (['out'], POINTER(c_uint), 'puDeviceId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetDeviceId',
+        (['in'], c_uint, 'uDeviceId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetMMHandle',
+        (['out'], POINTER(c_void_p), 'pHandle')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetLineId',
+        (['out'], POINTER(c_uint), 'puLineId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetLineId',
+        (['in'], c_uint, 'uLineId')
+    ),
+]
 
-class SPSHORTCUTPAIR(Structure):
+################################################################
+# code template for ISpMMSysAudio implementation
+# class ISpMMSysAudio_Impl(object):
+#     def GetDeviceId(self):
+#         '-no docstring-'
+#         #return puDeviceId
+#
+#     def SetDeviceId(self, uDeviceId):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetMMHandle(self):
+#         '-no docstring-'
+#         #return pHandle
+#
+#     def GetLineId(self):
+#         '-no docstring-'
+#         #return puLineId
+#
+#     def SetLineId(self, uLineId):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechUserTraining = 'UserTraining'  # Constant BSTR
+SpeechMicTraining = 'MicTraining'  # Constant BSTR
+
+
+class ISpeechWaveFormatEx(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechWaveFormatEx Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{7A1EF0D5-1581-4741-88E4-209A49F11A10}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_FormatTag(self) -> hints.Incomplete: ...
+        def _set_FormatTag(self, FormatTag: hints.Incomplete) -> hints.Hresult: ...
+        FormatTag = hints.normal_property(_get_FormatTag, _set_FormatTag)
+        def _get_Channels(self) -> hints.Incomplete: ...
+        def _set_Channels(self, Channels: hints.Incomplete) -> hints.Hresult: ...
+        Channels = hints.normal_property(_get_Channels, _set_Channels)
+        def _get_SamplesPerSec(self) -> hints.Incomplete: ...
+        def _set_SamplesPerSec(self, SamplesPerSec: hints.Incomplete) -> hints.Hresult: ...
+        SamplesPerSec = hints.normal_property(_get_SamplesPerSec, _set_SamplesPerSec)
+        def _get_AvgBytesPerSec(self) -> hints.Incomplete: ...
+        def _set_AvgBytesPerSec(self, AvgBytesPerSec: hints.Incomplete) -> hints.Hresult: ...
+        AvgBytesPerSec = hints.normal_property(_get_AvgBytesPerSec, _set_AvgBytesPerSec)
+        def _get_BlockAlign(self) -> hints.Incomplete: ...
+        def _set_BlockAlign(self, BlockAlign: hints.Incomplete) -> hints.Hresult: ...
+        BlockAlign = hints.normal_property(_get_BlockAlign, _set_BlockAlign)
+        def _get_BitsPerSample(self) -> hints.Incomplete: ...
+        def _set_BitsPerSample(self, BitsPerSample: hints.Incomplete) -> hints.Hresult: ...
+        BitsPerSample = hints.normal_property(_get_BitsPerSample, _set_BitsPerSample)
+        def _get_ExtraData(self) -> hints.Incomplete: ...
+        def _set_ExtraData(self, ExtraData: hints.Incomplete) -> hints.Hresult: ...
+        ExtraData = hints.normal_property(_get_ExtraData, _set_ExtraData)
+
+
+ISpeechAudioFormat._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Type'), 'propget'],
+        HRESULT,
+        'Type',
+        (['out', 'retval'], POINTER(SpeechAudioFormatType), 'AudioFormat')
+    ),
+    COMMETHOD(
+        [dispid(1), helpstring('Type'), 'propput'],
+        HRESULT,
+        'Type',
+        (['in'], SpeechAudioFormatType, 'AudioFormat')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Guid'), 'hidden', 'propget'],
+        HRESULT,
+        'Guid',
+        (['out', 'retval'], POINTER(BSTR), 'Guid')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Guid'), 'hidden', 'propput'],
+        HRESULT,
+        'Guid',
+        (['in'], BSTR, 'Guid')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('GetWaveFormatEx'), 'hidden'],
+        HRESULT,
+        'GetWaveFormatEx',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechWaveFormatEx)),
+            'SpeechWaveFormatEx',
+        )
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('SetWaveFormatEx'), 'hidden'],
+        HRESULT,
+        'SetWaveFormatEx',
+        (['in'], POINTER(ISpeechWaveFormatEx), 'SpeechWaveFormatEx')
+    ),
+]
+
+################################################################
+# code template for ISpeechAudioFormat implementation
+# class ISpeechAudioFormat_Impl(object):
+#     def _get(self):
+#         'Type'
+#         #return AudioFormat
+#     def _set(self, AudioFormat):
+#         'Type'
+#     Type = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'Guid'
+#         #return Guid
+#     def _set(self, Guid):
+#         'Guid'
+#     Guid = property(_get, _set, doc = _set.__doc__)
+#
+#     def GetWaveFormatEx(self):
+#         'GetWaveFormatEx'
+#         #return SpeechWaveFormatEx
+#
+#     def SetWaveFormatEx(self, SpeechWaveFormatEx):
+#         'SetWaveFormatEx'
+#         #return 
+#
+
+SpeechRecoProfileProperties = 'RecoProfileProperties'  # Constant BSTR
+
+ISpeechGrammarRuleStateTransition._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Type'), 'propget'],
+        HRESULT,
+        'Type',
+        (
+            ['out', 'retval'],
+            POINTER(SpeechGrammarRuleStateTransitionType),
+            'Type',
+        )
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Text'), 'propget'],
+        HRESULT,
+        'Text',
+        (['out', 'retval'], POINTER(BSTR), 'Text')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('Rule'), 'propget'],
+        HRESULT,
+        'Rule',
+        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRule)), 'Rule')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('Weight'), 'propget'],
+        HRESULT,
+        'Weight',
+        (['out', 'retval'], POINTER(VARIANT), 'Weight')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('PropertyName'), 'propget'],
+        HRESULT,
+        'PropertyName',
+        (['out', 'retval'], POINTER(BSTR), 'PropertyName')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('PropertyId'), 'propget'],
+        HRESULT,
+        'PropertyId',
+        (['out', 'retval'], POINTER(c_int), 'PropertyId')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('PropertyValue'), 'propget'],
+        HRESULT,
+        'PropertyValue',
+        (['out', 'retval'], POINTER(VARIANT), 'PropertyValue')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('NextState'), 'propget'],
+        HRESULT,
+        'NextState',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechGrammarRuleState)),
+            'NextState',
+        )
+    ),
+]
+
+################################################################
+# code template for ISpeechGrammarRuleStateTransition implementation
+# class ISpeechGrammarRuleStateTransition_Impl(object):
+#     @property
+#     def Type(self):
+#         'Type'
+#         #return Type
+#
+#     @property
+#     def Text(self):
+#         'Text'
+#         #return Text
+#
+#     @property
+#     def Rule(self):
+#         'Rule'
+#         #return Rule
+#
+#     @property
+#     def Weight(self):
+#         'Weight'
+#         #return Weight
+#
+#     @property
+#     def PropertyName(self):
+#         'PropertyName'
+#         #return PropertyName
+#
+#     @property
+#     def PropertyId(self):
+#         'PropertyId'
+#         #return PropertyId
+#
+#     @property
+#     def PropertyValue(self):
+#         'PropertyValue'
+#         #return PropertyValue
+#
+#     @property
+#     def NextState(self):
+#         'NextState'
+#         #return NextState
+#
+
+SpeechAudioProperties = 'AudioProperties'  # Constant BSTR
+
+
+class SpStreamFormatConverter(CoClass):
+    """FormatConverter Class"""
+    _reg_clsid_ = GUID('{7013943A-E2EC-11D2-A086-00C04F8EF9B5}')
+    _idlflags_ = ['hidden', 'restricted']
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpStreamFormatConverter._com_interfaces_ = [ISpStreamFormatConverter]
+
+ISpRecoContext2._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetGrammarOptions',
+        (['in'], c_ulong, 'eGrammarOptions')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGrammarOptions',
+        (['out'], POINTER(c_ulong), 'peGrammarOptions')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetAdaptationData2',
+        (['in'], WSTRING, 'pAdaptationData'),
+        (['in'], c_ulong, 'cch'),
+        (['in'], WSTRING, 'pTopicName'),
+        (['in'], c_ulong, 'eAdaptationSettings'),
+        (['in'], SPADAPTATIONRELEVANCE, 'eRelevance')
+    ),
+]
+
+################################################################
+# code template for ISpRecoContext2 implementation
+# class ISpRecoContext2_Impl(object):
+#     def SetGrammarOptions(self, eGrammarOptions):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetGrammarOptions(self):
+#         '-no docstring-'
+#         #return peGrammarOptions
+#
+#     def SetAdaptationData2(self, pAdaptationData, cch, pTopicName, eAdaptationSettings, eRelevance):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechAudioVolume = 'AudioVolume'  # Constant BSTR
+SpeechPropertyLowConfidenceThreshold = 'LowConfidenceThreshold'  # Constant BSTR
+SpeechVoiceSkipTypeSentence = 'Sentence'  # Constant BSTR
+SpeechAudioFormatGUIDWave = '{C31ADBAE-527F-4ff5-A230-F62BB61FF70C}'  # Constant BSTR
+
+
+class SpSharedRecognizer(CoClass):
+    """SpSharedRecognizer Class"""
+    _reg_clsid_ = GUID('{3BEE4890-4FE9-4A37-8C1E-5E7E12791C1F}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpSharedRecognizer._com_interfaces_ = [ISpeechRecognizer, ISpRecognizer, ISpRecognizer2, ISpRecognizer3, ISpSerializeState]
+
+ISpNotifySink._methods_ = [
+    COMMETHOD([], HRESULT, 'Notify'),
+]
+
+################################################################
+# code template for ISpNotifySink implementation
+# class ISpNotifySink_Impl(object):
+#     def Notify(self):
+#         '-no docstring-'
+#         #return 
+#
+
+ISpNotifyTranslator._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'InitWindowMessage',
+        (['in'], wireHWND, 'hWnd'),
+        (['in'], c_uint, 'Msg'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'InitCallback',
+        (['in'], POINTER(c_void_p), 'pfnCallback'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'InitSpNotifyCallback',
+        (['in'], POINTER(c_void_p), 'pSpCallback'),
+        (['in'], UINT_PTR, 'wParam'),
+        (['in'], LONG_PTR, 'lParam')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'InitWin32Event',
+        (['in'], c_void_p, 'hEvent'),
+        (['in'], c_int, 'fCloseHandleOnRelease')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Wait',
+        (['in'], c_ulong, 'dwMilliseconds')
+    ),
+    COMMETHOD([], c_void_p, 'GetEventHandle'),
+]
+
+################################################################
+# code template for ISpNotifyTranslator implementation
+# class ISpNotifyTranslator_Impl(object):
+#     def InitWindowMessage(self, hWnd, Msg, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def InitCallback(self, pfnCallback, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def InitSpNotifyCallback(self, pSpCallback, wParam, lParam):
+#         '-no docstring-'
+#         #return 
+#
+#     def InitWin32Event(self, hEvent, fCloseHandleOnRelease):
+#         '-no docstring-'
+#         #return 
+#
+#     def Wait(self, dwMilliseconds):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetEventHandle(self):
+#         '-no docstring-'
+#         #return 
+#
+
+SpeechAudioFormatGUIDText = '{7CEEF9F9-3D13-11d2-9EE7-00C04F797396}'  # Constant BSTR
+
+
+class SpLexicon(CoClass):
+    """SpLexicon Class"""
+    _reg_clsid_ = GUID('{0655E396-25D0-11D3-9C26-00C04F8EF87C}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpLexicon._com_interfaces_ = [ISpeechLexicon, ISpLexicon, ISpPhoneticAlphabetSelection]
+
+ISpeechWaveFormatEx._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('FormatTag'), 'propget'],
+        HRESULT,
+        'FormatTag',
+        (['out', 'retval'], POINTER(c_short), 'FormatTag')
+    ),
+    COMMETHOD(
+        [dispid(1), helpstring('FormatTag'), 'propput'],
+        HRESULT,
+        'FormatTag',
+        (['in'], c_short, 'FormatTag')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Channels'), 'propget'],
+        HRESULT,
+        'Channels',
+        (['out', 'retval'], POINTER(c_short), 'Channels')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Channels'), 'propput'],
+        HRESULT,
+        'Channels',
+        (['in'], c_short, 'Channels')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SamplesPerSec'), 'propget'],
+        HRESULT,
+        'SamplesPerSec',
+        (['out', 'retval'], POINTER(c_int), 'SamplesPerSec')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('SamplesPerSec'), 'propput'],
+        HRESULT,
+        'SamplesPerSec',
+        (['in'], c_int, 'SamplesPerSec')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AvgBytesPerSec'), 'propget'],
+        HRESULT,
+        'AvgBytesPerSec',
+        (['out', 'retval'], POINTER(c_int), 'AvgBytesPerSec')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('AvgBytesPerSec'), 'propput'],
+        HRESULT,
+        'AvgBytesPerSec',
+        (['in'], c_int, 'AvgBytesPerSec')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('BlockAlign'), 'propget'],
+        HRESULT,
+        'BlockAlign',
+        (['out', 'retval'], POINTER(c_short), 'BlockAlign')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('BlockAlign'), 'propput'],
+        HRESULT,
+        'BlockAlign',
+        (['in'], c_short, 'BlockAlign')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('BitsPerSample'), 'propget'],
+        HRESULT,
+        'BitsPerSample',
+        (['out', 'retval'], POINTER(c_short), 'BitsPerSample')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('BitsPerSample'), 'propput'],
+        HRESULT,
+        'BitsPerSample',
+        (['in'], c_short, 'BitsPerSample')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('ExtraData'), 'propget'],
+        HRESULT,
+        'ExtraData',
+        (['out', 'retval'], POINTER(VARIANT), 'ExtraData')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('ExtraData'), 'propput'],
+        HRESULT,
+        'ExtraData',
+        (['in'], VARIANT, 'ExtraData')
+    ),
+]
+
+################################################################
+# code template for ISpeechWaveFormatEx implementation
+# class ISpeechWaveFormatEx_Impl(object):
+#     def _get(self):
+#         'FormatTag'
+#         #return FormatTag
+#     def _set(self, FormatTag):
+#         'FormatTag'
+#     FormatTag = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'Channels'
+#         #return Channels
+#     def _set(self, Channels):
+#         'Channels'
+#     Channels = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'SamplesPerSec'
+#         #return SamplesPerSec
+#     def _set(self, SamplesPerSec):
+#         'SamplesPerSec'
+#     SamplesPerSec = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'AvgBytesPerSec'
+#         #return AvgBytesPerSec
+#     def _set(self, AvgBytesPerSec):
+#         'AvgBytesPerSec'
+#     AvgBytesPerSec = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'BlockAlign'
+#         #return BlockAlign
+#     def _set(self, BlockAlign):
+#         'BlockAlign'
+#     BlockAlign = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'BitsPerSample'
+#         #return BitsPerSample
+#     def _set(self, BitsPerSample):
+#         'BitsPerSample'
+#     BitsPerSample = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'ExtraData'
+#         #return ExtraData
+#     def _set(self, ExtraData):
+#         'ExtraData'
+#     ExtraData = property(_get, _set, doc = _set.__doc__)
+#
+
+Speech_Default_Weight = 1.0  # Constant c_float
+Speech_Max_Word_Length = 128  # Constant c_int
+SpeechPropertyNormalConfidenceThreshold = 'NormalConfidenceThreshold'  # Constant BSTR
+Speech_Max_Pron_Length = 384  # Constant c_int
+Speech_StreamPos_Asap = 0  # Constant c_int
+
+
+class ISpRecoGrammar(ISpGrammarBuilder):
+    """ISpRecoGrammar Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{2177DB29-7F45-47D0-8554-067E91C80502}')
+    _idlflags_ = ['restricted']
+
+    if TYPE_CHECKING:  # commembers
+        def GetGrammarId(self) -> hints.Incomplete: ...
+        def GetRecoContext(self) -> 'ISpRecoContext': ...
+        def LoadCmdFromFile(self, pszFileName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def LoadCmdFromObject(self, rcid: hints.Incomplete, pszGrammarName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def LoadCmdFromResource(self, hModule: hints.Incomplete, pszResourceName: hints.Incomplete, pszResourceType: hints.Incomplete, wLanguage: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def LoadCmdFromMemory(self, pGrammar: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def LoadCmdFromProprietaryGrammar(self, rguidParam: hints.Incomplete, pszStringParam: hints.Incomplete, pvDataPrarm: hints.Incomplete, cbDataSize: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def SetRuleState(self, pszName: hints.Incomplete, pReserved: hints.Incomplete, NewState: hints.Incomplete) -> hints.Hresult: ...
+        def SetRuleIdState(self, ulRuleId: hints.Incomplete, NewState: hints.Incomplete) -> hints.Hresult: ...
+        def LoadDictation(self, pszTopicName: hints.Incomplete, Options: hints.Incomplete) -> hints.Hresult: ...
+        def UnloadDictation(self) -> hints.Hresult: ...
+        def SetDictationState(self, NewState: hints.Incomplete) -> hints.Hresult: ...
+        def SetWordSequenceData(self, pText: hints.Incomplete, cchText: hints.Incomplete, pInfo: hints.Incomplete) -> hints.Hresult: ...
+        def SetTextSelection(self, pInfo: hints.Incomplete) -> hints.Hresult: ...
+        def IsPronounceable(self, pszWord: hints.Incomplete) -> hints.Incomplete: ...
+        def SetGrammarState(self, eGrammarState: hints.Incomplete) -> hints.Hresult: ...
+        def SaveCmd(self, pStream: hints.Incomplete) -> hints.Incomplete: ...
+        def GetGrammarState(self) -> hints.Incomplete: ...
+
+
+class SPRECOCONTEXTSTATUS(Structure):
     pass
 
 
-SPSHORTCUTPAIRLIST._fields_ = [
-    ('ulSize', c_ulong),
-    ('pvBuffer', POINTER(c_ubyte)),
-    ('pFirstShortcutPair', POINTER(SPSHORTCUTPAIR)),
+ISpRecoContext._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecognizer',
+        (['out'], POINTER(POINTER(ISpRecognizer)), 'ppRecognizer')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'CreateGrammar',
+        (['in'], c_ulonglong, 'ullGrammarID'),
+        (['out'], POINTER(POINTER(ISpRecoGrammar)), 'ppGrammar')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetStatus',
+        (['out'], POINTER(SPRECOCONTEXTSTATUS), 'pStatus')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetMaxAlternates',
+        (['in'], POINTER(c_ulong), 'pcAlternates')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetMaxAlternates',
+        (['in'], c_ulong, 'cAlternates')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetAudioOptions',
+        (['in'], SPAUDIOOPTIONS, 'Options'),
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pAudioFormatId',
+        ),
+        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetAudioOptions',
+        (['in'], POINTER(SPAUDIOOPTIONS), 'pOptions'),
+        (
+            ['out'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pAudioFormatId',
+        ),
+        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWFEX')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'DeserializeResult',
+        (['in'], POINTER(SPSERIALIZEDRESULT), 'pSerializedResult'),
+        (['out'], POINTER(POINTER(ISpRecoResult)), 'ppResult')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Bookmark',
+        (['in'], SPBOOKMARKOPTIONS, 'Options'),
+        (['in'], c_ulonglong, 'ullStreamPosition'),
+        (['in'], LONG_PTR, 'lparamEvent')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetAdaptationData',
+        (['in'], WSTRING, 'pAdaptationData'),
+        (['in'], c_ulong, 'cch')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Pause',
+        (['in'], c_ulong, 'dwReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'Resume',
+        (['in'], c_ulong, 'dwReserved')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetVoice',
+        (['in'], POINTER(ISpVoice), 'pVoice'),
+        (['in'], c_int, 'fAllowFormatChanges')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetVoice',
+        (['out'], POINTER(POINTER(ISpVoice)), 'ppVoice')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetVoicePurgeEvent',
+        (['in'], c_ulonglong, 'ullEventInterest')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetVoicePurgeEvent',
+        (['out'], POINTER(c_ulonglong), 'pullEventInterest')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetContextState',
+        (['in'], SPCONTEXTSTATE, 'eContextState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetContextState',
+        (['out'], POINTER(SPCONTEXTSTATE), 'peContextState')
+    ),
 ]
 
-assert sizeof(SPSHORTCUTPAIRLIST) == 24, sizeof(SPSHORTCUTPAIRLIST)
-assert alignment(SPSHORTCUTPAIRLIST) == 8, alignment(SPSHORTCUTPAIRLIST)
+################################################################
+# code template for ISpRecoContext implementation
+# class ISpRecoContext_Impl(object):
+#     def GetRecognizer(self):
+#         '-no docstring-'
+#         #return ppRecognizer
+#
+#     def CreateGrammar(self, ullGrammarID):
+#         '-no docstring-'
+#         #return ppGrammar
+#
+#     def GetStatus(self):
+#         '-no docstring-'
+#         #return pStatus
+#
+#     def GetMaxAlternates(self, pcAlternates):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetMaxAlternates(self, cAlternates):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetAudioOptions(self, Options, pAudioFormatId, pWaveFormatEx):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetAudioOptions(self, pOptions):
+#         '-no docstring-'
+#         #return pAudioFormatId, ppCoMemWFEX
+#
+#     def DeserializeResult(self, pSerializedResult):
+#         '-no docstring-'
+#         #return ppResult
+#
+#     def Bookmark(self, Options, ullStreamPosition, lparamEvent):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetAdaptationData(self, pAdaptationData, cch):
+#         '-no docstring-'
+#         #return 
+#
+#     def Pause(self, dwReserved):
+#         '-no docstring-'
+#         #return 
+#
+#     def Resume(self, dwReserved):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetVoice(self, pVoice, fAllowFormatChanges):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetVoice(self):
+#         '-no docstring-'
+#         #return ppVoice
+#
+#     def SetVoicePurgeEvent(self, ullEventInterest):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetVoicePurgeEvent(self):
+#         '-no docstring-'
+#         #return pullEventInterest
+#
+#     def SetContextState(self, eContextState):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetContextState(self):
+#         '-no docstring-'
+#         #return peContextState
+#
 
-ISpeechPhraseRules._methods_ = [
+Speech_StreamPos_RealTime = -1  # Constant c_int
+
+
+class ISpeechAudioBufferInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+    """ISpeechAudioBufferInfo Interface"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{11B103D8-1142-4EDF-A093-82FB3915F8CC}')
+    _idlflags_ = ['dual', 'oleautomation']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_MinNotification(self) -> hints.Incomplete: ...
+        def _set_MinNotification(self, MinNotification: hints.Incomplete) -> hints.Hresult: ...
+        MinNotification = hints.normal_property(_get_MinNotification, _set_MinNotification)
+        def _get_BufferSize(self) -> hints.Incomplete: ...
+        def _set_BufferSize(self, BufferSize: hints.Incomplete) -> hints.Hresult: ...
+        BufferSize = hints.normal_property(_get_BufferSize, _set_BufferSize)
+        def _get_EventBias(self) -> hints.Incomplete: ...
+        def _set_EventBias(self, EventBias: hints.Incomplete) -> hints.Hresult: ...
+        EventBias = hints.normal_property(_get_EventBias, _set_EventBias)
+
+
+ISpeechAudioBufferInfo._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('MinNotification'), 'propget'],
+        HRESULT,
+        'MinNotification',
+        (['out', 'retval'], POINTER(c_int), 'MinNotification')
+    ),
+    COMMETHOD(
+        [dispid(1), helpstring('MinNotification'), 'propput'],
+        HRESULT,
+        'MinNotification',
+        (['in'], c_int, 'MinNotification')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('BufferSize'), 'propget'],
+        HRESULT,
+        'BufferSize',
+        (['out', 'retval'], POINTER(c_int), 'BufferSize')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('BufferSize'), 'propput'],
+        HRESULT,
+        'BufferSize',
+        (['in'], c_int, 'BufferSize')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('EventBias'), 'propget'],
+        HRESULT,
+        'EventBias',
+        (['out', 'retval'], POINTER(c_int), 'EventBias')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('EventBias'), 'propput'],
+        HRESULT,
+        'EventBias',
+        (['in'], c_int, 'EventBias')
+    ),
+]
+
+################################################################
+# code template for ISpeechAudioBufferInfo implementation
+# class ISpeechAudioBufferInfo_Impl(object):
+#     def _get(self):
+#         'MinNotification'
+#         #return MinNotification
+#     def _set(self, MinNotification):
+#         'MinNotification'
+#     MinNotification = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'BufferSize'
+#         #return BufferSize
+#     def _set(self, BufferSize):
+#         'BufferSize'
+#     BufferSize = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'EventBias'
+#         #return EventBias
+#     def _set(self, EventBias):
+#         'EventBias'
+#     EventBias = property(_get, _set, doc = _set.__doc__)
+#
+
+SpeechAllElements = -1  # Constant c_int
+
+ISpeechLexiconWords._methods_ = [
     COMMETHOD(
         [dispid(1), helpstring('Count'), 'propget'],
         HRESULT,
@@ -9088,10 +10359,10 @@ ISpeechPhraseRules._methods_ = [
         HRESULT,
         'Item',
         (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRule)), 'Rule')
+        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWord)), 'Word')
     ),
     COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the Rules'), 'restricted', 'propget'],
+        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
         HRESULT,
         '_NewEnum',
         (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
@@ -9099,8 +10370,8 @@ ISpeechPhraseRules._methods_ = [
 ]
 
 ################################################################
-# code template for ISpeechPhraseRules implementation
-# class ISpeechPhraseRules_Impl(object):
+# code template for ISpeechLexiconWords implementation
+# class ISpeechLexiconWords_Impl(object):
 #     @property
 #     def Count(self):
 #         'Count'
@@ -9108,46 +10379,239 @@ ISpeechPhraseRules._methods_ = [
 #
 #     def Item(self, Index):
 #         'Item'
-#         #return Rule
+#         #return Word
 #
 #     @property
 #     def _NewEnum(self):
-#         'Enumerates the Rules'
+#         'Enumerates the tokens'
 #         #return EnumVARIANT
 #
 
+ISpeechRecognizerStatus._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('AudioStatus'), 'propget'],
+        HRESULT,
+        'AudioStatus',
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioStatus)), 'AudioStatus')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('CurrentStreamPosition'), 'propget'],
+        HRESULT,
+        'CurrentStreamPosition',
+        (['out', 'retval'], POINTER(VARIANT), 'pCurrentStreamPos')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('CurrentStreamNumber'), 'propget'],
+        HRESULT,
+        'CurrentStreamNumber',
+        (['out', 'retval'], POINTER(c_int), 'StreamNumber')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('NumberOfActiveRules'), 'propget'],
+        HRESULT,
+        'NumberOfActiveRules',
+        (['out', 'retval'], POINTER(c_int), 'NumberOfActiveRules')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('ClsidEngine'), 'propget'],
+        HRESULT,
+        'ClsidEngine',
+        (['out', 'retval'], POINTER(BSTR), 'ClsidEngine')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('SupportedLanguages'), 'propget'],
+        HRESULT,
+        'SupportedLanguages',
+        (['out', 'retval'], POINTER(VARIANT), 'SupportedLanguages')
+    ),
+]
 
-class ISpeechRecoGrammar(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechRecoGrammar Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{B6D6F79F-2158-4E50-B5BC-9A9CCD852A09}')
-    _idlflags_ = ['dual', 'oleautomation']
+################################################################
+# code template for ISpeechRecognizerStatus implementation
+# class ISpeechRecognizerStatus_Impl(object):
+#     @property
+#     def AudioStatus(self):
+#         'AudioStatus'
+#         #return AudioStatus
+#
+#     @property
+#     def CurrentStreamPosition(self):
+#         'CurrentStreamPosition'
+#         #return pCurrentStreamPos
+#
+#     @property
+#     def CurrentStreamNumber(self):
+#         'CurrentStreamNumber'
+#         #return StreamNumber
+#
+#     @property
+#     def NumberOfActiveRules(self):
+#         'NumberOfActiveRules'
+#         #return NumberOfActiveRules
+#
+#     @property
+#     def ClsidEngine(self):
+#         'ClsidEngine'
+#         #return ClsidEngine
+#
+#     @property
+#     def SupportedLanguages(self):
+#         'SupportedLanguages'
+#         #return SupportedLanguages
+#
 
-    if TYPE_CHECKING:  # commembers
-        def _get_Id(self) -> hints.Incomplete: ...
-        Id = hints.normal_property(_get_Id)
-        def _get_RecoContext(self) -> 'ISpeechRecoContext': ...
-        RecoContext = hints.normal_property(_get_RecoContext)
-        def _get_State(self) -> hints.Incomplete: ...
-        def _set_State(self, State: hints.Incomplete) -> hints.Hresult: ...
-        State = hints.normal_property(_get_State, _set_State)
-        def _get_Rules(self) -> 'ISpeechGrammarRules': ...
-        Rules = hints.normal_property(_get_Rules)
-        def Reset(self, NewLanguage: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdLoadFromFile(self, FileName: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdLoadFromObject(self, ClassId: hints.Incomplete, GrammarName: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdLoadFromResource(self, hModule: hints.Incomplete, ResourceName: hints.Incomplete, ResourceType: hints.Incomplete, LanguageId: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdLoadFromMemory(self, GrammarData: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdLoadFromProprietaryGrammar(self, ProprietaryGuid: hints.Incomplete, ProprietaryString: hints.Incomplete, ProprietaryData: hints.Incomplete, LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def CmdSetRuleState(self, Name: hints.Incomplete, State: hints.Incomplete) -> hints.Hresult: ...
-        def CmdSetRuleIdState(self, RuleId: hints.Incomplete, State: hints.Incomplete) -> hints.Hresult: ...
-        def DictationLoad(self, TopicName: hints.Incomplete = ..., LoadOption: hints.Incomplete = ...) -> hints.Hresult: ...
-        def DictationUnload(self) -> hints.Hresult: ...
-        def DictationSetState(self, State: hints.Incomplete) -> hints.Hresult: ...
-        def SetWordSequenceData(self, Text: hints.Incomplete, TextLength: hints.Incomplete, Info: hints.Incomplete) -> hints.Hresult: ...
-        def SetTextSelection(self, Info: hints.Incomplete) -> hints.Hresult: ...
-        def IsPronounceable(self, Word: hints.Incomplete) -> hints.Incomplete: ...
 
+class SpWaveFormatEx(CoClass):
+    """SpWaveFormatEx Class"""
+    _reg_clsid_ = GUID('{C79A574C-63BE-44B9-801F-283F87F898BE}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpWaveFormatEx._com_interfaces_ = [ISpeechWaveFormatEx]
+
+
+class SpInProcRecoContext(CoClass):
+    """SpInProcRecoContext Class"""
+    _reg_clsid_ = GUID('{73AD6842-ACE0-45E8-A4DD-8795881A2C2A}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpInProcRecoContext._com_interfaces_ = [ISpeechRecoContext, ISpRecoContext, ISpRecoContext2, ISpPhoneticAlphabetSelection]
+SpInProcRecoContext._outgoing_interfaces_ = [_ISpeechRecoContextEvents]
+
+
+class SpCustomStream(CoClass):
+    """SpCustomStream Class"""
+    _reg_clsid_ = GUID('{8DBEF13F-1948-4AA8-8CF0-048EEBED95D8}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpCustomStream._com_interfaces_ = [ISpeechCustomStream, ISpStream]
+
+ISpeechPhraseRule._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Name'), 'propget'],
+        HRESULT,
+        'Name',
+        (['out', 'retval'], POINTER(BSTR), 'Name')
+    ),
+    COMMETHOD(
+        [dispid(2), helpstring('Id'), 'propget'],
+        HRESULT,
+        'Id',
+        (['out', 'retval'], POINTER(c_int), 'Id')
+    ),
+    COMMETHOD(
+        [dispid(3), helpstring('FirstElement'), 'propget'],
+        HRESULT,
+        'FirstElement',
+        (['out', 'retval'], POINTER(c_int), 'FirstElement')
+    ),
+    COMMETHOD(
+        [dispid(4), helpstring('NumElements'), 'propget'],
+        HRESULT,
+        'NumberOfElements',
+        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
+    ),
+    COMMETHOD(
+        [dispid(5), helpstring('Parent'), 'propget'],
+        HRESULT,
+        'Parent',
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRule)), 'Parent')
+    ),
+    COMMETHOD(
+        [dispid(6), helpstring('Children'), 'propget'],
+        HRESULT,
+        'Children',
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseRules)), 'Children')
+    ),
+    COMMETHOD(
+        [dispid(7), helpstring('Confidence'), 'propget'],
+        HRESULT,
+        'Confidence',
+        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'ActualConfidence')
+    ),
+    COMMETHOD(
+        [dispid(8), helpstring('EngineConfidence'), 'propget'],
+        HRESULT,
+        'EngineConfidence',
+        (['out', 'retval'], POINTER(c_float), 'EngineConfidence')
+    ),
+]
+
+################################################################
+# code template for ISpeechPhraseRule implementation
+# class ISpeechPhraseRule_Impl(object):
+#     @property
+#     def Name(self):
+#         'Name'
+#         #return Name
+#
+#     @property
+#     def Id(self):
+#         'Id'
+#         #return Id
+#
+#     @property
+#     def FirstElement(self):
+#         'FirstElement'
+#         #return FirstElement
+#
+#     @property
+#     def NumberOfElements(self):
+#         'NumElements'
+#         #return NumberOfElements
+#
+#     @property
+#     def Parent(self):
+#         'Parent'
+#         #return Parent
+#
+#     @property
+#     def Children(self):
+#         'Children'
+#         #return Children
+#
+#     @property
+#     def Confidence(self):
+#         'Confidence'
+#         #return ActualConfidence
+#
+#     @property
+#     def EngineConfidence(self):
+#         'EngineConfidence'
+#         #return EngineConfidence
+#
+
+
+class SpFileStream(CoClass):
+    """SpFileStream Class"""
+    _reg_clsid_ = GUID('{947812B3-2AE1-4644-BA86-9E90DED7EC91}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpFileStream._com_interfaces_ = [ISpeechFileStream, ISpStream]
+
+
+class SpMemoryStream(CoClass):
+    """SpMemoryStream Class"""
+    _reg_clsid_ = GUID('{5FB7EF7D-DFF4-468A-B6B7-2FCBD188F994}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
+
+
+SpMemoryStream._com_interfaces_ = [ISpeechMemoryStream, ISpStream]
+
+SpeechCategoryVoices = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices'  # Constant BSTR
 
 ISpeechRecoContext._methods_ = [
     COMMETHOD(
@@ -9391,59 +10855,663 @@ ISpeechRecoContext._methods_ = [
 #         #return 
 #
 
-SPSHORTCUTPAIR._fields_ = [
-    ('pNextSHORTCUTPAIR', POINTER(SPSHORTCUTPAIR)),
-    ('LangId', c_ushort),
-    ('shType', SPSHORTCUTTYPE),
-    ('pszDisplay', WSTRING),
-    ('pszSpoken', WSTRING),
+ISpeechPhraseElements._methods_ = [
+    COMMETHOD(
+        [dispid(1), helpstring('Count'), 'propget'],
+        HRESULT,
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
+    ),
+    COMMETHOD(
+        [dispid(0), helpstring('Item')],
+        HRESULT,
+        'Item',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseElement)), 'Element')
+    ),
+    COMMETHOD(
+        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
+        HRESULT,
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
+    ),
 ]
 
-assert sizeof(SPSHORTCUTPAIR) == 32, sizeof(SPSHORTCUTPAIR)
-assert alignment(SPSHORTCUTPAIR) == 8, alignment(SPSHORTCUTPAIR)
-SpeechRegistryLocalMachineRoot = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech'  # Constant BSTR
-SpeechCategoryAudioIn = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\AudioInput'  # Constant BSTR
+################################################################
+# code template for ISpeechPhraseElements implementation
+# class ISpeechPhraseElements_Impl(object):
+#     @property
+#     def Count(self):
+#         'Count'
+#         #return Count
+#
+#     def Item(self, Index):
+#         'Item'
+#         #return Element
+#
+#     @property
+#     def _NewEnum(self):
+#         'Enumerates the tokens'
+#         #return EnumVARIANT
+#
 
-WAVEFORMATEX._fields_ = [
-    ('wFormatTag', c_ushort),
-    ('nChannels', c_ushort),
-    ('nSamplesPerSec', c_ulong),
-    ('nAvgBytesPerSec', c_ulong),
-    ('nBlockAlign', c_ushort),
-    ('wBitsPerSample', c_ushort),
-    ('cbSize', c_ushort),
+ISpRecognizer2._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EmulateRecognitionEx',
+        (['in'], POINTER(ISpPhrase), 'pPhrase'),
+        (['in'], c_ulong, 'dwCompareFlags')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetTrainingState',
+        (['in'], c_int, 'fDoingTraining'),
+        (['in'], c_int, 'fAdaptFromTrainingData')
+    ),
+    COMMETHOD([], HRESULT, 'ResetAcousticModelAdaptation'),
 ]
 
-assert sizeof(WAVEFORMATEX) == 20, sizeof(WAVEFORMATEX)
-assert alignment(WAVEFORMATEX) == 4, alignment(WAVEFORMATEX)
+################################################################
+# code template for ISpRecognizer2 implementation
+# class ISpRecognizer2_Impl(object):
+#     def EmulateRecognitionEx(self, pPhrase, dwCompareFlags):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetTrainingState(self, fDoingTraining, fAdaptFromTrainingData):
+#         '-no docstring-'
+#         #return 
+#
+#     def ResetAcousticModelAdaptation(self):
+#         '-no docstring-'
+#         #return 
+#
 
+ISpeechAudio._methods_ = [
+    COMMETHOD(
+        [dispid(200), helpstring('Status'), 'propget'],
+        HRESULT,
+        'Status',
+        (['out', 'retval'], POINTER(POINTER(ISpeechAudioStatus)), 'Status')
+    ),
+    COMMETHOD(
+        [dispid(201), helpstring('BufferInfo'), 'propget'],
+        HRESULT,
+        'BufferInfo',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechAudioBufferInfo)),
+            'BufferInfo',
+        )
+    ),
+    COMMETHOD(
+        [dispid(202), helpstring('DefaultFormat'), 'propget'],
+        HRESULT,
+        'DefaultFormat',
+        (
+            ['out', 'retval'],
+            POINTER(POINTER(ISpeechAudioFormat)),
+            'StreamFormat',
+        )
+    ),
+    COMMETHOD(
+        [dispid(203), helpstring('Volume'), 'propget'],
+        HRESULT,
+        'Volume',
+        (['out', 'retval'], POINTER(c_int), 'Volume')
+    ),
+    COMMETHOD(
+        [dispid(203), helpstring('Volume'), 'propput'],
+        HRESULT,
+        'Volume',
+        (['in'], c_int, 'Volume')
+    ),
+    COMMETHOD(
+        [dispid(204), helpstring('BufferNotifySize'), 'propget'],
+        HRESULT,
+        'BufferNotifySize',
+        (['out', 'retval'], POINTER(c_int), 'BufferNotifySize')
+    ),
+    COMMETHOD(
+        [dispid(204), helpstring('BufferNotifySize'), 'propput'],
+        HRESULT,
+        'BufferNotifySize',
+        (['in'], c_int, 'BufferNotifySize')
+    ),
+    COMMETHOD(
+        [dispid(205), helpstring('EventHandle'), 'hidden', 'propget'],
+        HRESULT,
+        'EventHandle',
+        (['out', 'retval'], POINTER(c_int), 'EventHandle')
+    ),
+    COMMETHOD(
+        [dispid(206), helpstring('SetState'), 'hidden'],
+        HRESULT,
+        'SetState',
+        (['in'], SpeechAudioState, 'State')
+    ),
+]
 
-class ISpeechPhraseProperty(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseProperty Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{CE563D48-961E-4732-A2E1-378A42B430BE}')
-    _idlflags_ = ['dual', 'oleautomation']
+################################################################
+# code template for ISpeechAudio implementation
+# class ISpeechAudio_Impl(object):
+#     @property
+#     def Status(self):
+#         'Status'
+#         #return Status
+#
+#     @property
+#     def BufferInfo(self):
+#         'BufferInfo'
+#         #return BufferInfo
+#
+#     @property
+#     def DefaultFormat(self):
+#         'DefaultFormat'
+#         #return StreamFormat
+#
+#     def _get(self):
+#         'Volume'
+#         #return Volume
+#     def _set(self, Volume):
+#         'Volume'
+#     Volume = property(_get, _set, doc = _set.__doc__)
+#
+#     def _get(self):
+#         'BufferNotifySize'
+#         #return BufferNotifySize
+#     def _set(self, BufferNotifySize):
+#         'BufferNotifySize'
+#     BufferNotifySize = property(_get, _set, doc = _set.__doc__)
+#
+#     @property
+#     def EventHandle(self):
+#         'EventHandle'
+#         #return EventHandle
+#
+#     def SetState(self, State):
+#         'SetState'
+#         #return 
+#
 
-    if TYPE_CHECKING:  # commembers
-        def _get_Name(self) -> hints.Incomplete: ...
-        Name = hints.normal_property(_get_Name)
-        def _get_Id(self) -> hints.Incomplete: ...
-        Id = hints.normal_property(_get_Id)
-        def _get_Value(self) -> hints.Incomplete: ...
-        Value = hints.normal_property(_get_Value)
-        def _get_FirstElement(self) -> hints.Incomplete: ...
-        FirstElement = hints.normal_property(_get_FirstElement)
-        def _get_NumberOfElements(self) -> hints.Incomplete: ...
-        NumberOfElements = hints.normal_property(_get_NumberOfElements)
-        def _get_EngineConfidence(self) -> hints.Incomplete: ...
-        EngineConfidence = hints.normal_property(_get_EngineConfidence)
-        def _get_Confidence(self) -> hints.Incomplete: ...
-        Confidence = hints.normal_property(_get_Confidence)
-        def _get_Parent(self) -> 'ISpeechPhraseProperty': ...
-        Parent = hints.normal_property(_get_Parent)
-        def _get_Children(self) -> 'ISpeechPhraseProperties': ...
-        Children = hints.normal_property(_get_Children)
+ISpProperties._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetPropertyNum',
+        (['in'], WSTRING, 'pName'),
+        (['in'], c_int, 'lValue')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetPropertyNum',
+        (['in'], WSTRING, 'pName'),
+        (['out'], POINTER(c_int), 'plValue')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetPropertyString',
+        (['in'], WSTRING, 'pName'),
+        (['in'], WSTRING, 'pValue')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetPropertyString',
+        (['in'], WSTRING, 'pName'),
+        (['out'], POINTER(WSTRING), 'ppCoMemValue')
+    ),
+]
 
+################################################################
+# code template for ISpProperties implementation
+# class ISpProperties_Impl(object):
+#     def SetPropertyNum(self, pName, lValue):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetPropertyNum(self, pName):
+#         '-no docstring-'
+#         #return plValue
+#
+#     def SetPropertyString(self, pName, pValue):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetPropertyString(self, pName):
+#         '-no docstring-'
+#         #return ppCoMemValue
+#
+
+ISpRecognizer._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRecognizer',
+        (['in'], POINTER(ISpObjectToken), 'pRecognizer')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecognizer',
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppRecognizer')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetInput',
+        (['in'], POINTER(IUnknown), 'pUnkInput'),
+        (['in'], c_int, 'fAllowFormatChanges')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetInputObjectToken',
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetInputStream',
+        (['out'], POINTER(POINTER(ISpStreamFormat)), 'ppStream')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'CreateRecoContext',
+        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppNewCtxt')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecoProfile',
+        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRecoProfile',
+        (['in'], POINTER(ISpObjectToken), 'pToken')
+    ),
+    COMMETHOD([], HRESULT, 'IsSharedInstance'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecoState',
+        (['out'], POINTER(SPRECOSTATE), 'pState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRecoState',
+        (['in'], SPRECOSTATE, 'NewState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetStatus',
+        (['out'], POINTER(SPRECOGNIZERSTATUS), 'pStatus')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetFormat',
+        (['in'], SPSTREAMFORMATTYPE, 'WaveFormatType'),
+        (
+            ['out'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'pFormatId',
+        ),
+        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWFEX')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'IsUISupported',
+        (['in'], WSTRING, 'pszTypeOfUI'),
+        (['in'], c_void_p, 'pvExtraData'),
+        (['in'], c_ulong, 'cbExtraData'),
+        (['out'], POINTER(c_int), 'pfSupported')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'DisplayUI',
+        (['in'], wireHWND, 'hWndParent'),
+        (['in'], WSTRING, 'pszTitle'),
+        (['in'], WSTRING, 'pszTypeOfUI'),
+        (['in'], c_void_p, 'pvExtraData'),
+        (['in'], c_ulong, 'cbExtraData')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'EmulateRecognition',
+        (['in'], POINTER(ISpPhrase), 'pPhrase')
+    ),
+]
+
+################################################################
+# code template for ISpRecognizer implementation
+# class ISpRecognizer_Impl(object):
+#     def SetRecognizer(self, pRecognizer):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetRecognizer(self):
+#         '-no docstring-'
+#         #return ppRecognizer
+#
+#     def SetInput(self, pUnkInput, fAllowFormatChanges):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetInputObjectToken(self):
+#         '-no docstring-'
+#         #return ppToken
+#
+#     def GetInputStream(self):
+#         '-no docstring-'
+#         #return ppStream
+#
+#     def CreateRecoContext(self):
+#         '-no docstring-'
+#         #return ppNewCtxt
+#
+#     def GetRecoProfile(self):
+#         '-no docstring-'
+#         #return ppToken
+#
+#     def SetRecoProfile(self, pToken):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsSharedInstance(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetRecoState(self):
+#         '-no docstring-'
+#         #return pState
+#
+#     def SetRecoState(self, NewState):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetStatus(self):
+#         '-no docstring-'
+#         #return pStatus
+#
+#     def GetFormat(self, WaveFormatType):
+#         '-no docstring-'
+#         #return pFormatId, ppCoMemWFEX
+#
+#     def IsUISupported(self, pszTypeOfUI, pvExtraData, cbExtraData):
+#         '-no docstring-'
+#         #return pfSupported
+#
+#     def DisplayUI(self, hWndParent, pszTitle, pszTypeOfUI, pvExtraData, cbExtraData):
+#         '-no docstring-'
+#         #return 
+#
+#     def EmulateRecognition(self, pPhrase):
+#         '-no docstring-'
+#         #return 
+#
+
+ISpRecognizer3._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetCategory',
+        (['in'], SPCATEGORYTYPE, 'categoryType'),
+        (['out'], POINTER(POINTER(ISpRecoCategory)), 'ppCategory')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetActiveCategory',
+        (['in'], POINTER(ISpRecoCategory), 'pCategory')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetActiveCategory',
+        (['out'], POINTER(POINTER(ISpRecoCategory)), 'ppCategory')
+    ),
+]
+
+################################################################
+# code template for ISpRecognizer3 implementation
+# class ISpRecognizer3_Impl(object):
+#     def GetCategory(self, categoryType):
+#         '-no docstring-'
+#         #return ppCategory
+#
+#     def SetActiveCategory(self, pCategory):
+#         '-no docstring-'
+#         #return 
+#
+#     def GetActiveCategory(self):
+#         '-no docstring-'
+#         #return ppCategory
+#
+
+SPTEXTSELECTIONINFO = tagSPTEXTSELECTIONINFO
+
+ISpRecoGrammar._methods_ = [
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGrammarId',
+        (['out'], POINTER(c_ulonglong), 'pullGrammarId')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetRecoContext',
+        (['out'], POINTER(POINTER(ISpRecoContext)), 'ppRecoCtxt')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromFile',
+        (['in'], WSTRING, 'pszFileName'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromObject',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'rcid',
+        ),
+        (['in'], WSTRING, 'pszGrammarName'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromResource',
+        (['in'], c_void_p, 'hModule'),
+        (['in'], WSTRING, 'pszResourceName'),
+        (['in'], WSTRING, 'pszResourceType'),
+        (['in'], c_ushort, 'wLanguage'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromMemory',
+        (['in'], POINTER(SPBINARYGRAMMAR), 'pGrammar'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadCmdFromProprietaryGrammar',
+        (
+            ['in'],
+            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
+            'rguidParam',
+        ),
+        (['in'], WSTRING, 'pszStringParam'),
+        (['in'], c_void_p, 'pvDataPrarm'),
+        (['in'], c_ulong, 'cbDataSize'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRuleState',
+        (['in'], WSTRING, 'pszName'),
+        (['in'], c_void_p, 'pReserved'),
+        (['in'], SPRULESTATE, 'NewState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetRuleIdState',
+        (['in'], c_ulong, 'ulRuleId'),
+        (['in'], SPRULESTATE, 'NewState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'LoadDictation',
+        (['in'], WSTRING, 'pszTopicName'),
+        (['in'], SPLOADOPTIONS, 'Options')
+    ),
+    COMMETHOD([], HRESULT, 'UnloadDictation'),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetDictationState',
+        (['in'], SPRULESTATE, 'NewState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetWordSequenceData',
+        (['in'], POINTER(c_ushort), 'pText'),
+        (['in'], c_ulong, 'cchText'),
+        (['in'], POINTER(SPTEXTSELECTIONINFO), 'pInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetTextSelection',
+        (['in'], POINTER(SPTEXTSELECTIONINFO), 'pInfo')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'IsPronounceable',
+        (['in'], WSTRING, 'pszWord'),
+        (['out'], POINTER(SPWORDPRONOUNCEABLE), 'pWordPronounceable')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SetGrammarState',
+        (['in'], SPGRAMMARSTATE, 'eGrammarState')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'SaveCmd',
+        (['in'], POINTER(IStream), 'pStream'),
+        (['out', 'optional'], POINTER(WSTRING), 'ppszCoMemErrorText')
+    ),
+    COMMETHOD(
+        [],
+        HRESULT,
+        'GetGrammarState',
+        (['out'], POINTER(SPGRAMMARSTATE), 'peGrammarState')
+    ),
+]
+
+################################################################
+# code template for ISpRecoGrammar implementation
+# class ISpRecoGrammar_Impl(object):
+#     def GetGrammarId(self):
+#         '-no docstring-'
+#         #return pullGrammarId
+#
+#     def GetRecoContext(self):
+#         '-no docstring-'
+#         #return ppRecoCtxt
+#
+#     def LoadCmdFromFile(self, pszFileName, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadCmdFromObject(self, rcid, pszGrammarName, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadCmdFromResource(self, hModule, pszResourceName, pszResourceType, wLanguage, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadCmdFromMemory(self, pGrammar, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadCmdFromProprietaryGrammar(self, rguidParam, pszStringParam, pvDataPrarm, cbDataSize, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetRuleState(self, pszName, pReserved, NewState):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetRuleIdState(self, ulRuleId, NewState):
+#         '-no docstring-'
+#         #return 
+#
+#     def LoadDictation(self, pszTopicName, Options):
+#         '-no docstring-'
+#         #return 
+#
+#     def UnloadDictation(self):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetDictationState(self, NewState):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetWordSequenceData(self, pText, cchText, pInfo):
+#         '-no docstring-'
+#         #return 
+#
+#     def SetTextSelection(self, pInfo):
+#         '-no docstring-'
+#         #return 
+#
+#     def IsPronounceable(self, pszWord):
+#         '-no docstring-'
+#         #return pWordPronounceable
+#
+#     def SetGrammarState(self, eGrammarState):
+#         '-no docstring-'
+#         #return 
+#
+#     def SaveCmd(self, pStream):
+#         '-no docstring-'
+#         #return ppszCoMemErrorText
+#
+#     def GetGrammarState(self):
+#         '-no docstring-'
+#         #return peGrammarState
+#
 
 ISpeechPhraseProperties._methods_ = [
     COMMETHOD(
@@ -9485,1589 +11553,6 @@ ISpeechPhraseProperties._methods_ = [
 #         #return EnumVARIANT
 #
 
-SPVOICESTATUS._fields_ = [
-    ('ulCurrentStream', c_ulong),
-    ('ulLastStreamQueued', c_ulong),
-    ('hrLastResult', HRESULT),
-    ('dwRunningState', c_ulong),
-    ('ulInputWordPos', c_ulong),
-    ('ulInputWordLen', c_ulong),
-    ('ulInputSentPos', c_ulong),
-    ('ulInputSentLen', c_ulong),
-    ('lBookmarkId', c_int),
-    ('PhonemeId', c_ushort),
-    ('VisemeId', SPVISEMES),
-    ('dwReserved1', c_ulong),
-    ('dwReserved2', c_ulong),
-]
-
-assert sizeof(SPVOICESTATUS) == 52, sizeof(SPVOICESTATUS)
-assert alignment(SPVOICESTATUS) == 4, alignment(SPVOICESTATUS)
-
-
-class ISpeechDataKey(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechDataKey Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{CE17C09B-4EFA-44D5-A4C9-59D9585AB0CD}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def SetBinaryValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
-        def GetBinaryValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
-        def SetStringValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
-        def GetStringValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
-        def SetLongValue(self, ValueName: hints.Incomplete, Value: hints.Incomplete) -> hints.Hresult: ...
-        def GetLongValue(self, ValueName: hints.Incomplete) -> hints.Incomplete: ...
-        def OpenKey(self, SubKeyName: hints.Incomplete) -> 'ISpeechDataKey': ...
-        def CreateKey(self, SubKeyName: hints.Incomplete) -> 'ISpeechDataKey': ...
-        def DeleteKey(self, SubKeyName: hints.Incomplete) -> hints.Hresult: ...
-        def DeleteValue(self, ValueName: hints.Incomplete) -> hints.Hresult: ...
-        def EnumKeys(self, Index: hints.Incomplete) -> hints.Incomplete: ...
-        def EnumValues(self, Index: hints.Incomplete) -> hints.Incomplete: ...
-
-
-ISpeechDataKey._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('SetBinaryValue')],
-        HRESULT,
-        'SetBinaryValue',
-        (['in'], BSTR, 'ValueName'),
-        (['in'], VARIANT, 'Value')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('GetBinaryValue')],
-        HRESULT,
-        'GetBinaryValue',
-        (['in'], BSTR, 'ValueName'),
-        (['out', 'retval'], POINTER(VARIANT), 'Value')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('SetStringValue')],
-        HRESULT,
-        'SetStringValue',
-        (['in'], BSTR, 'ValueName'),
-        (['in'], BSTR, 'Value')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('GetStringValue')],
-        HRESULT,
-        'GetStringValue',
-        (['in'], BSTR, 'ValueName'),
-        (['out', 'retval'], POINTER(BSTR), 'Value')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('SetLongValue')],
-        HRESULT,
-        'SetLongValue',
-        (['in'], BSTR, 'ValueName'),
-        (['in'], c_int, 'Value')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('GetlongValue')],
-        HRESULT,
-        'GetLongValue',
-        (['in'], BSTR, 'ValueName'),
-        (['out', 'retval'], POINTER(c_int), 'Value')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('OpenKey')],
-        HRESULT,
-        'OpenKey',
-        (['in'], BSTR, 'SubKeyName'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'SubKey')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('CreateKey')],
-        HRESULT,
-        'CreateKey',
-        (['in'], BSTR, 'SubKeyName'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'SubKey')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('DeleteKey')],
-        HRESULT,
-        'DeleteKey',
-        (['in'], BSTR, 'SubKeyName')
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('DeleteValue')],
-        HRESULT,
-        'DeleteValue',
-        (['in'], BSTR, 'ValueName')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('EnumKeys')],
-        HRESULT,
-        'EnumKeys',
-        (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(BSTR), 'SubKeyName')
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('EnumValues')],
-        HRESULT,
-        'EnumValues',
-        (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(BSTR), 'ValueName')
-    ),
-]
-
-################################################################
-# code template for ISpeechDataKey implementation
-# class ISpeechDataKey_Impl(object):
-#     def SetBinaryValue(self, ValueName, Value):
-#         'SetBinaryValue'
-#         #return 
-#
-#     def GetBinaryValue(self, ValueName):
-#         'GetBinaryValue'
-#         #return Value
-#
-#     def SetStringValue(self, ValueName, Value):
-#         'SetStringValue'
-#         #return 
-#
-#     def GetStringValue(self, ValueName):
-#         'GetStringValue'
-#         #return Value
-#
-#     def SetLongValue(self, ValueName, Value):
-#         'SetLongValue'
-#         #return 
-#
-#     def GetLongValue(self, ValueName):
-#         'GetlongValue'
-#         #return Value
-#
-#     def OpenKey(self, SubKeyName):
-#         'OpenKey'
-#         #return SubKey
-#
-#     def CreateKey(self, SubKeyName):
-#         'CreateKey'
-#         #return SubKey
-#
-#     def DeleteKey(self, SubKeyName):
-#         'DeleteKey'
-#         #return 
-#
-#     def DeleteValue(self, ValueName):
-#         'DeleteValue'
-#         #return 
-#
-#     def EnumKeys(self, Index):
-#         'EnumKeys'
-#         #return SubKeyName
-#
-#     def EnumValues(self, Index):
-#         'EnumValues'
-#         #return ValueName
-#
-
-
-class SpMMAudioEnum(CoClass):
-    """SpMMAudioEnum Class"""
-    _reg_clsid_ = GUID('{AB1890A0-E91F-11D2-BB91-00C04F8EE6C0}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpMMAudioEnum._com_interfaces_ = [IEnumSpObjectTokens]
-
-
-class SpPhoneConverter(CoClass):
-    """SpPhoneConverter Class"""
-    _reg_clsid_ = GUID('{9185F743-1143-4C28-86B5-BFF14F20E5C8}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpPhoneConverter(ISpObjectWithToken):
-    """ISpPhoneConverter Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{8445C581-0CAC-4A38-ABFE-9B2CE2826455}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def PhoneToId(self, pszPhone: hints.Incomplete) -> hints.Incomplete: ...
-        def IdToPhone(self, pId: hints.Incomplete) -> hints.Incomplete: ...
-
-
-SpPhoneConverter._com_interfaces_ = [ISpeechPhoneConverter, ISpPhoneConverter, ISpPhoneticAlphabetSelection]
-
-ISpeechPhraseProperty._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Name'), 'propget'],
-        HRESULT,
-        'Name',
-        (['out', 'retval'], POINTER(BSTR), 'Name')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Id'), 'propget'],
-        HRESULT,
-        'Id',
-        (['out', 'retval'], POINTER(c_int), 'Id')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('Value'), 'propget'],
-        HRESULT,
-        'Value',
-        (['out', 'retval'], POINTER(VARIANT), 'Value')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('FirstElement'), 'propget'],
-        HRESULT,
-        'FirstElement',
-        (['out', 'retval'], POINTER(c_int), 'FirstElement')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('NumberOfElements'), 'propget'],
-        HRESULT,
-        'NumberOfElements',
-        (['out', 'retval'], POINTER(c_int), 'NumberOfElements')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('EngineConfidence'), 'propget'],
-        HRESULT,
-        'EngineConfidence',
-        (['out', 'retval'], POINTER(c_float), 'Confidence')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('Confidence'), 'propget'],
-        HRESULT,
-        'Confidence',
-        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'Confidence')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('Parent'), 'propget'],
-        HRESULT,
-        'Parent',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechPhraseProperty)),
-            'ParentProperty',
-        )
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('Children'), 'propget'],
-        HRESULT,
-        'Children',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechPhraseProperties)),
-            'Children',
-        )
-    ),
-]
-
-################################################################
-# code template for ISpeechPhraseProperty implementation
-# class ISpeechPhraseProperty_Impl(object):
-#     @property
-#     def Name(self):
-#         'Name'
-#         #return Name
-#
-#     @property
-#     def Id(self):
-#         'Id'
-#         #return Id
-#
-#     @property
-#     def Value(self):
-#         'Value'
-#         #return Value
-#
-#     @property
-#     def FirstElement(self):
-#         'FirstElement'
-#         #return FirstElement
-#
-#     @property
-#     def NumberOfElements(self):
-#         'NumberOfElements'
-#         #return NumberOfElements
-#
-#     @property
-#     def EngineConfidence(self):
-#         'EngineConfidence'
-#         #return Confidence
-#
-#     @property
-#     def Confidence(self):
-#         'Confidence'
-#         #return Confidence
-#
-#     @property
-#     def Parent(self):
-#         'Parent'
-#         #return ParentProperty
-#
-#     @property
-#     def Children(self):
-#         'Children'
-#         #return Children
-#
-
-
-class SPPHRASERULE(Structure):
-    pass
-
-
-SPPHRASERULE._fields_ = [
-    ('pszName', WSTRING),
-    ('ulId', c_ulong),
-    ('ulFirstElement', c_ulong),
-    ('ulCountOfElements', c_ulong),
-    ('pNextSibling', POINTER(SPPHRASERULE)),
-    ('pFirstChild', POINTER(SPPHRASERULE)),
-    ('SREngineConfidence', c_float),
-    ('Confidence', c_char),
-]
-
-assert sizeof(SPPHRASERULE) == 48, sizeof(SPPHRASERULE)
-assert alignment(SPPHRASERULE) == 8, alignment(SPPHRASERULE)
-
-
-class SPPHRASEPROPERTY(Structure):
-    pass
-
-
-class SPPHRASEELEMENT(Structure):
-    pass
-
-
-SPPHRASE._fields_ = [
-    ('cbSize', c_ulong),
-    ('LangId', c_ushort),
-    ('wHomophoneGroupId', c_ushort),
-    ('ullGrammarID', c_ulonglong),
-    ('ftStartTime', c_ulonglong),
-    ('ullAudioStreamPosition', c_ulonglong),
-    ('ulAudioSizeBytes', c_ulong),
-    ('ulRetainedSizeBytes', c_ulong),
-    ('ulAudioSizeTime', c_ulong),
-    ('Rule', SPPHRASERULE),
-    ('pProperties', POINTER(SPPHRASEPROPERTY)),
-    ('pElements', POINTER(SPPHRASEELEMENT)),
-    ('cReplacements', c_ulong),
-    ('pReplacements', POINTER(SPPHRASEREPLACEMENT)),
-    ('SREngineID', comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-    ('ulSREnginePrivateDataSize', c_ulong),
-    ('pSREnginePrivateData', POINTER(c_ubyte)),
-    ('pSML', WSTRING),
-    ('pSemanticErrorInfo', POINTER(SPSEMANTICERRORINFO)),
-    ('SemanticTagFormat', SPSEMANTICFORMAT),
-]
-
-assert sizeof(SPPHRASE) == 184, sizeof(SPPHRASE)
-assert alignment(SPPHRASE) == 8, alignment(SPPHRASE)
-
-ISpObjectWithToken._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetObjectToken',
-        (['in'], POINTER(ISpObjectToken), 'pToken')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetObjectToken',
-        (['out'], POINTER(POINTER(ISpObjectToken)), 'ppToken')
-    ),
-]
-
-################################################################
-# code template for ISpObjectWithToken implementation
-# class ISpObjectWithToken_Impl(object):
-#     def SetObjectToken(self, pToken):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetObjectToken(self):
-#         '-no docstring-'
-#         #return ppToken
-#
-
-ISpPhoneConverter._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'PhoneToId',
-        (['in'], WSTRING, 'pszPhone'),
-        (['out'], POINTER(c_ushort), 'pId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'IdToPhone',
-        (['in'], WSTRING, 'pId'),
-        (['out'], POINTER(c_ushort), 'pszPhone')
-    ),
-]
-
-################################################################
-# code template for ISpPhoneConverter implementation
-# class ISpPhoneConverter_Impl(object):
-#     def PhoneToId(self, pszPhone):
-#         '-no docstring-'
-#         #return pId
-#
-#     def IdToPhone(self, pId):
-#         '-no docstring-'
-#         #return pszPhone
-#
-
-
-class SpMMAudioIn(CoClass):
-    """SpMMAudioIn Class"""
-    _reg_clsid_ = GUID('{CF3D2E50-53F2-11D2-960C-00C04F8EE628}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpEventSink(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpEventSink Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{BE7A9CC9-5F9E-11D2-960F-00C04F8EE628}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def AddEvents(self, pEventArray: hints.Incomplete, ulCount: hints.Incomplete) -> hints.Hresult: ...
-        def GetEventInterest(self) -> hints.Incomplete: ...
-
-
-class ISpAudio(ISpStreamFormat):
-    """ISpAudio Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{C05C768F-FAE8-4EC2-8E07-338321C12452}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def SetState(self, NewState: hints.Incomplete, ullReserved: hints.Incomplete) -> hints.Hresult: ...
-        def SetFormat(self, rguidFmtId: hints.Incomplete, pWaveFormatEx: hints.Incomplete) -> hints.Hresult: ...
-        def GetStatus(self) -> hints.Incomplete: ...
-        def SetBufferInfo(self, pBuffInfo: hints.Incomplete) -> hints.Hresult: ...
-        def GetBufferInfo(self) -> hints.Incomplete: ...
-        def GetDefaultFormat(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def EventHandle(self) -> hints.Hresult: ...
-        def GetVolumeLevel(self) -> hints.Incomplete: ...
-        def SetVolumeLevel(self, Level: hints.Incomplete) -> hints.Hresult: ...
-        def GetBufferNotifySize(self) -> hints.Incomplete: ...
-        def SetBufferNotifySize(self, cbSize: hints.Incomplete) -> hints.Hresult: ...
-
-
-class ISpMMSysAudio(ISpAudio):
-    """ISpMMSysAudio Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{15806F6E-1D70-4B48-98E6-3B1A007509AB}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetDeviceId(self) -> hints.Incomplete: ...
-        def SetDeviceId(self, uDeviceId: hints.Incomplete) -> hints.Hresult: ...
-        def GetMMHandle(self) -> hints.Incomplete: ...
-        def GetLineId(self) -> hints.Incomplete: ...
-        def SetLineId(self, uLineId: hints.Incomplete) -> hints.Hresult: ...
-
-
-SpMMAudioIn._com_interfaces_ = [ISpeechMMSysAudio, ISpEventSource, ISpEventSink, ISpObjectWithToken, ISpMMSysAudio]
-
-SPBINARYGRAMMAR._fields_ = [
-    ('ulTotalSerializedSize', c_ulong),
-]
-
-assert sizeof(SPBINARYGRAMMAR) == 4, sizeof(SPBINARYGRAMMAR)
-assert alignment(SPBINARYGRAMMAR) == 4, alignment(SPBINARYGRAMMAR)
-
-
-class SpPhoneticAlphabetConverter(CoClass):
-    """SpPhoneticAlphabetConverter Class"""
-    _reg_clsid_ = GUID('{4F414126-DFE3-4629-99EE-797978317EAD}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-class ISpPhoneticAlphabetConverter(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpPhoneticAlphabetConverter Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{133ADCD4-19B4-4020-9FDC-842E78253B17}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetLangId(self) -> hints.Incomplete: ...
-        def SetLangId(self, LangId: hints.Incomplete) -> hints.Hresult: ...
-        def SAPI2UPS(self, pszSAPIId: hints.Incomplete, cMaxLength: hints.Incomplete) -> hints.Incomplete: ...
-        def UPS2SAPI(self, pszUPSId: hints.Incomplete, cMaxLength: hints.Incomplete) -> hints.Incomplete: ...
-        def GetMaxConvertLength(self, cSrcLength: hints.Incomplete, bSAPI2UPS: hints.Incomplete) -> hints.Incomplete: ...
-
-
-SpPhoneticAlphabetConverter._com_interfaces_ = [ISpPhoneticAlphabetConverter]
-
-ISpPhoneticAlphabetConverter._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetLangId',
-        (['out'], POINTER(c_ushort), 'pLangID')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetLangId',
-        (['in'], c_ushort, 'LangId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SAPI2UPS',
-        (['in'], POINTER(c_ushort), 'pszSAPIId'),
-        (['out'], POINTER(c_ushort), 'pszUPSId'),
-        (['in'], c_ulong, 'cMaxLength')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'UPS2SAPI',
-        (['in'], POINTER(c_ushort), 'pszUPSId'),
-        (['out'], POINTER(c_ushort), 'pszSAPIId'),
-        (['in'], c_ulong, 'cMaxLength')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetMaxConvertLength',
-        (['in'], c_ulong, 'cSrcLength'),
-        (['in'], c_int, 'bSAPI2UPS'),
-        (['out'], POINTER(c_ulong), 'pcMaxDestLength')
-    ),
-]
-
-################################################################
-# code template for ISpPhoneticAlphabetConverter implementation
-# class ISpPhoneticAlphabetConverter_Impl(object):
-#     def GetLangId(self):
-#         '-no docstring-'
-#         #return pLangID
-#
-#     def SetLangId(self, LangId):
-#         '-no docstring-'
-#         #return 
-#
-#     def SAPI2UPS(self, pszSAPIId, cMaxLength):
-#         '-no docstring-'
-#         #return pszUPSId
-#
-#     def UPS2SAPI(self, pszUPSId, cMaxLength):
-#         '-no docstring-'
-#         #return pszSAPIId
-#
-#     def GetMaxConvertLength(self, cSrcLength, bSAPI2UPS):
-#         '-no docstring-'
-#         #return pcMaxDestLength
-#
-
-
-class ISpeechRecoResult2(ISpeechRecoResult):
-    """ISpeechRecoResult2 Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{8E0A246D-D3C8-45DE-8657-04290C458C3C}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def SetTextFeedback(self, Feedback: hints.Incomplete, WasSuccessful: hints.Incomplete) -> hints.Hresult: ...
-
-
-ISpeechRecoResult2._methods_ = [
-    COMMETHOD(
-        [dispid(12), helpstring('DiscardResultInfo')],
-        HRESULT,
-        'SetTextFeedback',
-        (['in'], BSTR, 'Feedback'),
-        (['in'], VARIANT_BOOL, 'WasSuccessful')
-    ),
-]
-
-################################################################
-# code template for ISpeechRecoResult2 implementation
-# class ISpeechRecoResult2_Impl(object):
-#     def SetTextFeedback(self, Feedback, WasSuccessful):
-#         'DiscardResultInfo'
-#         #return 
-#
-
-
-class __MIDL___MIDL_itf_sapi_0000_0020_0001(Union):
-    pass
-
-
-class __MIDL___MIDL_itf_sapi_0000_0020_0002(Structure):
-    pass
-
-
-__MIDL___MIDL_itf_sapi_0000_0020_0002._fields_ = [
-    ('bType', c_ubyte),
-    ('bReserved', c_ubyte),
-    ('usArrayIndex', c_ushort),
-]
-
-assert sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0002) == 4, sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0002)
-assert alignment(__MIDL___MIDL_itf_sapi_0000_0020_0002) == 2, alignment(__MIDL___MIDL_itf_sapi_0000_0020_0002)
-
-__MIDL___MIDL_itf_sapi_0000_0020_0001._fields_ = [
-    ('ulId', c_ulong),
-    ('__MIDL____MIDL_itf_sapi_0000_00200000', __MIDL___MIDL_itf_sapi_0000_0020_0002),
-]
-
-assert sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0001) == 4, sizeof(__MIDL___MIDL_itf_sapi_0000_0020_0001)
-assert alignment(__MIDL___MIDL_itf_sapi_0000_0020_0001) == 4, alignment(__MIDL___MIDL_itf_sapi_0000_0020_0001)
-
-SPPHRASEPROPERTY._fields_ = [
-    ('pszName', WSTRING),
-    ('__MIDL____MIDL_itf_sapi_0000_00200001', __MIDL___MIDL_itf_sapi_0000_0020_0001),
-    ('pszValue', WSTRING),
-    ('vValue', VARIANT),
-    ('ulFirstElement', c_ulong),
-    ('ulCountOfElements', c_ulong),
-    ('pNextSibling', POINTER(SPPHRASEPROPERTY)),
-    ('pFirstChild', POINTER(SPPHRASEPROPERTY)),
-    ('SREngineConfidence', c_float),
-    ('Confidence', c_char),
-]
-
-assert sizeof(SPPHRASEPROPERTY) == 80, sizeof(SPPHRASEPROPERTY)
-assert alignment(SPPHRASEPROPERTY) == 8, alignment(SPPHRASEPROPERTY)
-
-
-class SpNullPhoneConverter(CoClass):
-    """SpNullPhoneConverter Class"""
-    _reg_clsid_ = GUID('{455F24E9-7396-4A16-9715-7C0FDBE3EFE3}')
-    _idlflags_ = ['hidden', 'restricted']
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpNullPhoneConverter._com_interfaces_ = [ISpPhoneConverter]
-
-
-class SpTextSelectionInformation(CoClass):
-    """SpTextSelectionInformation Class"""
-    _reg_clsid_ = GUID('{0F92030A-CBFD-4AB8-A164-FF5985547FF6}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpTextSelectionInformation._com_interfaces_ = [ISpeechTextSelectionInformation]
-
-
-class SpPhraseInfoBuilder(CoClass):
-    """SpPhraseInfoBuilder Class"""
-    _reg_clsid_ = GUID('{C23FC28D-C55F-4720-8B32-91F73C2BD5D1}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpPhraseInfoBuilder._com_interfaces_ = [ISpeechPhraseInfoBuilder]
-
-
-class SpAudioFormat(CoClass):
-    """SpAudioFormat Class"""
-    _reg_clsid_ = GUID('{9EF96870-E160-4792-820D-48CF0649E4EC}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpAudioFormat._com_interfaces_ = [ISpeechAudioFormat]
-
-SPEVENT._fields_ = [
-    ('eEventId', c_ushort),
-    ('elParamType', c_ushort),
-    ('ulStreamNum', c_ulong),
-    ('ullAudioStreamOffset', c_ulonglong),
-    ('wParam', UINT_PTR),
-    ('lParam', LONG_PTR),
-]
-
-assert sizeof(SPEVENT) == 32, sizeof(SPEVENT)
-assert alignment(SPEVENT) == 8, alignment(SPEVENT)
-
-
-class ISpeechPhraseElement(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechPhraseElement Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{E6176F96-E373-4801-B223-3B62C068C0B4}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_AudioTimeOffset(self) -> hints.Incomplete: ...
-        AudioTimeOffset = hints.normal_property(_get_AudioTimeOffset)
-        def _get_AudioSizeTime(self) -> hints.Incomplete: ...
-        AudioSizeTime = hints.normal_property(_get_AudioSizeTime)
-        def _get_AudioStreamOffset(self) -> hints.Incomplete: ...
-        AudioStreamOffset = hints.normal_property(_get_AudioStreamOffset)
-        def _get_AudioSizeBytes(self) -> hints.Incomplete: ...
-        AudioSizeBytes = hints.normal_property(_get_AudioSizeBytes)
-        def _get_RetainedStreamOffset(self) -> hints.Incomplete: ...
-        RetainedStreamOffset = hints.normal_property(_get_RetainedStreamOffset)
-        def _get_RetainedSizeBytes(self) -> hints.Incomplete: ...
-        RetainedSizeBytes = hints.normal_property(_get_RetainedSizeBytes)
-        def _get_DisplayText(self) -> hints.Incomplete: ...
-        DisplayText = hints.normal_property(_get_DisplayText)
-        def _get_LexicalForm(self) -> hints.Incomplete: ...
-        LexicalForm = hints.normal_property(_get_LexicalForm)
-        def _get_Pronunciation(self) -> hints.Incomplete: ...
-        Pronunciation = hints.normal_property(_get_Pronunciation)
-        def _get_DisplayAttributes(self) -> hints.Incomplete: ...
-        DisplayAttributes = hints.normal_property(_get_DisplayAttributes)
-        def _get_RequiredConfidence(self) -> hints.Incomplete: ...
-        RequiredConfidence = hints.normal_property(_get_RequiredConfidence)
-        def _get_ActualConfidence(self) -> hints.Incomplete: ...
-        ActualConfidence = hints.normal_property(_get_ActualConfidence)
-        def _get_EngineConfidence(self) -> hints.Incomplete: ...
-        EngineConfidence = hints.normal_property(_get_EngineConfidence)
-
-
-ISpeechPhraseElements._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
-        HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
-    ),
-    COMMETHOD(
-        [dispid(0), helpstring('Item')],
-        HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseElement)), 'Element')
-    ),
-    COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
-        HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
-    ),
-]
-
-################################################################
-# code template for ISpeechPhraseElements implementation
-# class ISpeechPhraseElements_Impl(object):
-#     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
-#
-#     def Item(self, Index):
-#         'Item'
-#         #return Element
-#
-#     @property
-#     def _NewEnum(self):
-#         'Enumerates the tokens'
-#         #return EnumVARIANT
-#
-
-tagSPTEXTSELECTIONINFO._fields_ = [
-    ('ulStartActiveOffset', c_ulong),
-    ('cchActiveChars', c_ulong),
-    ('ulStartSelection', c_ulong),
-    ('cchSelection', c_ulong),
-]
-
-assert sizeof(tagSPTEXTSELECTIONINFO) == 16, sizeof(tagSPTEXTSELECTIONINFO)
-assert alignment(tagSPTEXTSELECTIONINFO) == 4, alignment(tagSPTEXTSELECTIONINFO)
-
-
-class SpWaveFormatEx(CoClass):
-    """SpWaveFormatEx Class"""
-    _reg_clsid_ = GUID('{C79A574C-63BE-44B9-801F-283F87F898BE}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpWaveFormatEx._com_interfaces_ = [ISpeechWaveFormatEx]
-
-ISpeechObjectToken._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Id'), 'propget'],
-        HRESULT,
-        'Id',
-        (['out', 'retval'], POINTER(BSTR), 'ObjectId')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('DataKey'), 'hidden', 'propget'],
-        HRESULT,
-        'DataKey',
-        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'DataKey')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('Category'), 'propget'],
-        HRESULT,
-        'Category',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechObjectTokenCategory)),
-            'Category',
-        )
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('GetDescription')],
-        HRESULT,
-        'GetDescription',
-        (['in', 'optional'], c_int, 'Locale', 0),
-        (['out', 'retval'], POINTER(BSTR), 'Description')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('SetId'), 'hidden'],
-        HRESULT,
-        'SetId',
-        (['in'], BSTR, 'Id'),
-        (['in', 'optional'], BSTR, 'CategoryID', ''),
-        (['in', 'optional'], VARIANT_BOOL, 'CreateIfNotExist', False)
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('GetAttribute')],
-        HRESULT,
-        'GetAttribute',
-        (['in'], BSTR, 'AttributeName'),
-        (['out', 'retval'], POINTER(BSTR), 'AttributeValue')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('CreateInstance')],
-        HRESULT,
-        'CreateInstance',
-        (['in', 'optional'], POINTER(IUnknown), 'pUnkOuter'),
-        (['in', 'optional'], SpeechTokenContext, 'ClsContext', 23),
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'Object')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('Remove'), 'hidden'],
-        HRESULT,
-        'Remove',
-        (['in'], BSTR, 'ObjectStorageCLSID')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('GetStorageFileName'), 'hidden'],
-        HRESULT,
-        'GetStorageFileName',
-        (['in'], BSTR, 'ObjectStorageCLSID'),
-        (['in'], BSTR, 'KeyName'),
-        (['in'], BSTR, 'FileName'),
-        (['in'], SpeechTokenShellFolder, 'Folder'),
-        (['out', 'retval'], POINTER(BSTR), 'FilePath')
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('RemoveStorageFileName'), 'hidden'],
-        HRESULT,
-        'RemoveStorageFileName',
-        (['in'], BSTR, 'ObjectStorageCLSID'),
-        (['in'], BSTR, 'KeyName'),
-        (['in'], VARIANT_BOOL, 'DeleteFile')
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('IsUISupported'), 'hidden'],
-        HRESULT,
-        'IsUISupported',
-        (['in'], BSTR, 'TypeOfUI'),
-        (['in', 'optional'], POINTER(VARIANT), 'ExtraData'),
-        (['in', 'optional'], POINTER(IUnknown), 'Object'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Supported')
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('DisplayUI'), 'hidden'],
-        HRESULT,
-        'DisplayUI',
-        (['in'], c_int, 'hWnd'),
-        (['in'], BSTR, 'Title'),
-        (['in'], BSTR, 'TypeOfUI'),
-        (['in', 'optional'], POINTER(VARIANT), 'ExtraData'),
-        (['in', 'optional'], POINTER(IUnknown), 'Object')
-    ),
-    COMMETHOD(
-        [dispid(13), helpstring('MatchesAttributes')],
-        HRESULT,
-        'MatchesAttributes',
-        (['in'], BSTR, 'Attributes'),
-        (['out', 'retval'], POINTER(VARIANT_BOOL), 'Matches')
-    ),
-]
-
-################################################################
-# code template for ISpeechObjectToken implementation
-# class ISpeechObjectToken_Impl(object):
-#     @property
-#     def Id(self):
-#         'Id'
-#         #return ObjectId
-#
-#     @property
-#     def DataKey(self):
-#         'DataKey'
-#         #return DataKey
-#
-#     @property
-#     def Category(self):
-#         'Category'
-#         #return Category
-#
-#     def GetDescription(self, Locale):
-#         'GetDescription'
-#         #return Description
-#
-#     def SetId(self, Id, CategoryID, CreateIfNotExist):
-#         'SetId'
-#         #return 
-#
-#     def GetAttribute(self, AttributeName):
-#         'GetAttribute'
-#         #return AttributeValue
-#
-#     def CreateInstance(self, pUnkOuter, ClsContext):
-#         'CreateInstance'
-#         #return Object
-#
-#     def Remove(self, ObjectStorageCLSID):
-#         'Remove'
-#         #return 
-#
-#     def GetStorageFileName(self, ObjectStorageCLSID, KeyName, FileName, Folder):
-#         'GetStorageFileName'
-#         #return FilePath
-#
-#     def RemoveStorageFileName(self, ObjectStorageCLSID, KeyName, DeleteFile):
-#         'RemoveStorageFileName'
-#         #return 
-#
-#     def IsUISupported(self, TypeOfUI, ExtraData, Object):
-#         'IsUISupported'
-#         #return Supported
-#
-#     def DisplayUI(self, hWnd, Title, TypeOfUI, ExtraData, Object):
-#         'DisplayUI'
-#         #return 
-#
-#     def MatchesAttributes(self, Attributes):
-#         'MatchesAttributes'
-#         #return Matches
-#
-
-
-class ISpeechLexiconWords(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechLexiconWords Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{8D199862-415E-47D5-AC4F-FAA608B424E6}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Count(self) -> hints.Incomplete: ...
-        Count = hints.normal_property(_get_Count)
-        __len__ = hints.to_dunder_len(Count)
-        def Item(self, Index: hints.Incomplete) -> 'ISpeechLexiconWord': ...
-        __call__ = hints.to_dunder_call(Item)
-        __getitem__ = hints.to_dunder_getitem(Item)
-        __setitem__ = hints.to_dunder_setitem(Item)
-        def _get__NewEnum(self) -> hints.Incomplete: ...
-        _NewEnum = hints.normal_property(_get__NewEnum)
-        __iter__ = hints.to_dunder_iter(_NewEnum)
-
-
-ISpeechLexicon._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('GenerationId'), 'hidden', 'propget'],
-        HRESULT,
-        'GenerationId',
-        (['out', 'retval'], POINTER(c_int), 'GenerationId')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('GetWords')],
-        HRESULT,
-        'GetWords',
-        (['in', 'optional'], SpeechLexiconType, 'Flags', 3),
-        (['out', 'optional'], POINTER(c_int), 'GenerationId', 0),
-        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWords)), 'Words')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AddPronunciation')],
-        HRESULT,
-        'AddPronunciation',
-        (['in'], BSTR, 'bstrWord'),
-        (['in'], c_int, 'LangId'),
-        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
-        (['in', 'optional'], BSTR, 'bstrPronunciation', '')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AddPronunciationByPhoneIds'), 'hidden'],
-        HRESULT,
-        'AddPronunciationByPhoneIds',
-        (['in'], BSTR, 'bstrWord'),
-        (['in'], c_int, 'LangId'),
-        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
-        (['in', 'optional'], POINTER(VARIANT), 'PhoneIds')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('RemovePronunciation')],
-        HRESULT,
-        'RemovePronunciation',
-        (['in'], BSTR, 'bstrWord'),
-        (['in'], c_int, 'LangId'),
-        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
-        (['in', 'optional'], BSTR, 'bstrPronunciation', '')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('RemovePronunciationByPhoneIds'), 'hidden'],
-        HRESULT,
-        'RemovePronunciationByPhoneIds',
-        (['in'], BSTR, 'bstrWord'),
-        (['in'], c_int, 'LangId'),
-        (['in', 'optional'], SpeechPartOfSpeech, 'PartOfSpeech', 0),
-        (['in', 'optional'], POINTER(VARIANT), 'PhoneIds')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('GetPronunciations')],
-        HRESULT,
-        'GetPronunciations',
-        (['in'], BSTR, 'bstrWord'),
-        (['in', 'optional'], c_int, 'LangId', 0),
-        (['in', 'optional'], SpeechLexiconType, 'TypeFlags', 3),
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechLexiconPronunciations)),
-            'ppPronunciations',
-        )
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('GetGenerationChange'), 'hidden'],
-        HRESULT,
-        'GetGenerationChange',
-        (['in', 'out'], POINTER(c_int), 'GenerationId'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWords)), 'ppWords')
-    ),
-]
-
-################################################################
-# code template for ISpeechLexicon implementation
-# class ISpeechLexicon_Impl(object):
-#     @property
-#     def GenerationId(self):
-#         'GenerationId'
-#         #return GenerationId
-#
-#     def GetWords(self, Flags):
-#         'GetWords'
-#         #return GenerationId, Words
-#
-#     def AddPronunciation(self, bstrWord, LangId, PartOfSpeech, bstrPronunciation):
-#         'AddPronunciation'
-#         #return 
-#
-#     def AddPronunciationByPhoneIds(self, bstrWord, LangId, PartOfSpeech, PhoneIds):
-#         'AddPronunciationByPhoneIds'
-#         #return 
-#
-#     def RemovePronunciation(self, bstrWord, LangId, PartOfSpeech, bstrPronunciation):
-#         'RemovePronunciation'
-#         #return 
-#
-#     def RemovePronunciationByPhoneIds(self, bstrWord, LangId, PartOfSpeech, PhoneIds):
-#         'RemovePronunciationByPhoneIds'
-#         #return 
-#
-#     def GetPronunciations(self, bstrWord, LangId, TypeFlags):
-#         'GetPronunciations'
-#         #return ppPronunciations
-#
-#     def GetGenerationChange(self):
-#         'GetGenerationChange'
-#         #return GenerationId, ppWords
-#
-
-
-class SpInProcRecoContext(CoClass):
-    """SpInProcRecoContext Class"""
-    _reg_clsid_ = GUID('{73AD6842-ACE0-45E8-A4DD-8795881A2C2A}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpInProcRecoContext._com_interfaces_ = [ISpeechRecoContext, ISpRecoContext, ISpRecoContext2, ISpPhoneticAlphabetSelection]
-SpInProcRecoContext._outgoing_interfaces_ = [_ISpeechRecoContextEvents]
-
-
-class SpCustomStream(CoClass):
-    """SpCustomStream Class"""
-    _reg_clsid_ = GUID('{8DBEF13F-1948-4AA8-8CF0-048EEBED95D8}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpCustomStream._com_interfaces_ = [ISpeechCustomStream, ISpStream]
-
-
-class SpFileStream(CoClass):
-    """SpFileStream Class"""
-    _reg_clsid_ = GUID('{947812B3-2AE1-4644-BA86-9E90DED7EC91}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpFileStream._com_interfaces_ = [ISpeechFileStream, ISpStream]
-
-
-class SpMemoryStream(CoClass):
-    """SpMemoryStream Class"""
-    _reg_clsid_ = GUID('{5FB7EF7D-DFF4-468A-B6B7-2FCBD188F994}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpMemoryStream._com_interfaces_ = [ISpeechMemoryStream, ISpStream]
-
-
-class ISpXMLRecoResult(ISpRecoResult):
-    """ISpXMLRecoResult Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{AE39362B-45A8-4074-9B9E-CCF49AA2D0B6}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetXMLResult(self, Options: hints.Incomplete) -> hints.Incomplete: ...
-        def GetXMLErrorInfo(self) -> hints.Incomplete: ...
-
-
-ISpXMLRecoResult._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetXMLResult',
-        (['out'], POINTER(WSTRING), 'ppszCoMemXMLResult'),
-        (['in'], SPXMLRESULTOPTIONS, 'Options')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetXMLErrorInfo',
-        (['out'], POINTER(SPSEMANTICERRORINFO), 'pSemanticErrorInfo')
-    ),
-]
-
-################################################################
-# code template for ISpXMLRecoResult implementation
-# class ISpXMLRecoResult_Impl(object):
-#     def GetXMLResult(self, Options):
-#         '-no docstring-'
-#         #return ppszCoMemXMLResult
-#
-#     def GetXMLErrorInfo(self):
-#         '-no docstring-'
-#         #return pSemanticErrorInfo
-#
-
-ISpEventSink._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'AddEvents',
-        (['in'], POINTER(SPEVENT), 'pEventArray'),
-        (['in'], c_ulong, 'ulCount')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetEventInterest',
-        (['out'], POINTER(c_ulonglong), 'pullEventInterest')
-    ),
-]
-
-################################################################
-# code template for ISpEventSink implementation
-# class ISpEventSink_Impl(object):
-#     def AddEvents(self, pEventArray, ulCount):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetEventInterest(self):
-#         '-no docstring-'
-#         #return pullEventInterest
-#
-
-
-class ISpRecoGrammar2(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
-    """ISpRecoGrammar2 Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{4B37BC9E-9ED6-44A3-93D3-18F022B79EC3}')
-    _idlflags_ = ['restricted']
-
-    if TYPE_CHECKING:  # commembers
-        def GetRules(self) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def LoadCmdFromFile2(self, pszFileName: hints.Incomplete, Options: hints.Incomplete, pszSharingUri: hints.Incomplete, pszBaseUri: hints.Incomplete) -> hints.Hresult: ...
-        def LoadCmdFromMemory2(self, pGrammar: hints.Incomplete, Options: hints.Incomplete, pszSharingUri: hints.Incomplete, pszBaseUri: hints.Incomplete) -> hints.Hresult: ...
-        def SetRulePriority(self, pszRuleName: hints.Incomplete, ulRuleId: hints.Incomplete, nRulePriority: hints.Incomplete) -> hints.Hresult: ...
-        def SetRuleWeight(self, pszRuleName: hints.Incomplete, ulRuleId: hints.Incomplete, flWeight: hints.Incomplete) -> hints.Hresult: ...
-        def SetDictationWeight(self, flWeight: hints.Incomplete) -> hints.Hresult: ...
-        def SetGrammarLoader(self, pLoader: hints.Incomplete) -> hints.Hresult: ...
-        def SetSMLSecurityManager(self, pSMLSecurityManager: hints.Incomplete) -> hints.Hresult: ...
-
-
-class SPRULE(Structure):
-    pass
-
-
-class ISpeechResourceLoader(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechResourceLoader Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{B9AC5783-FCD0-4B21-B119-B4F8DA8FD2C3}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def LoadResource(self, bstrResourceUri: hints.Incomplete, fAlwaysReload: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def GetLocalCopy(self, bstrResourceUri: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete, hints.Incomplete]: ...
-        def ReleaseLocalCopy(self, pbstrLocalPath: hints.Incomplete) -> hints.Hresult: ...
-
-
-ISpRecoGrammar2._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetRules',
-        (['out'], POINTER(POINTER(SPRULE)), 'ppCoMemRules'),
-        (['out'], POINTER(c_uint), 'puNumRules')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromFile2',
-        (['in'], WSTRING, 'pszFileName'),
-        (['in'], SPLOADOPTIONS, 'Options'),
-        (['in'], WSTRING, 'pszSharingUri'),
-        (['in'], WSTRING, 'pszBaseUri')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'LoadCmdFromMemory2',
-        (['in'], POINTER(SPBINARYGRAMMAR), 'pGrammar'),
-        (['in'], SPLOADOPTIONS, 'Options'),
-        (['in'], WSTRING, 'pszSharingUri'),
-        (['in'], WSTRING, 'pszBaseUri')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRulePriority',
-        (['in'], WSTRING, 'pszRuleName'),
-        (['in'], c_ulong, 'ulRuleId'),
-        (['in'], c_int, 'nRulePriority')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetRuleWeight',
-        (['in'], WSTRING, 'pszRuleName'),
-        (['in'], c_ulong, 'ulRuleId'),
-        (['in'], c_float, 'flWeight')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetDictationWeight',
-        (['in'], c_float, 'flWeight')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetGrammarLoader',
-        (['in'], POINTER(ISpeechResourceLoader), 'pLoader')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetSMLSecurityManager',
-        (['in'], POINTER(IInternetSecurityManager), 'pSMLSecurityManager')
-    ),
-]
-
-################################################################
-# code template for ISpRecoGrammar2 implementation
-# class ISpRecoGrammar2_Impl(object):
-#     def GetRules(self):
-#         '-no docstring-'
-#         #return ppCoMemRules, puNumRules
-#
-#     def LoadCmdFromFile2(self, pszFileName, Options, pszSharingUri, pszBaseUri):
-#         '-no docstring-'
-#         #return 
-#
-#     def LoadCmdFromMemory2(self, pGrammar, Options, pszSharingUri, pszBaseUri):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetRulePriority(self, pszRuleName, ulRuleId, nRulePriority):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetRuleWeight(self, pszRuleName, ulRuleId, flWeight):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetDictationWeight(self, flWeight):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetGrammarLoader(self, pLoader):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetSMLSecurityManager(self, pSMLSecurityManager):
-#         '-no docstring-'
-#         #return 
-#
-
-ISpeechPhraseElement._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('AudioTimeOffset'), 'propget'],
-        HRESULT,
-        'AudioTimeOffset',
-        (['out', 'retval'], POINTER(c_int), 'AudioTimeOffset')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('AudioSizeTime'), 'propget'],
-        HRESULT,
-        'AudioSizeTime',
-        (['out', 'retval'], POINTER(c_int), 'AudioSizeTime')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('AudioStreamOffset'), 'propget'],
-        HRESULT,
-        'AudioStreamOffset',
-        (['out', 'retval'], POINTER(c_int), 'AudioStreamOffset')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('AudioSizeBytes'), 'propget'],
-        HRESULT,
-        'AudioSizeBytes',
-        (['out', 'retval'], POINTER(c_int), 'AudioSizeBytes')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('RetainedStreamOffset'), 'propget'],
-        HRESULT,
-        'RetainedStreamOffset',
-        (['out', 'retval'], POINTER(c_int), 'RetainedStreamOffset')
-    ),
-    COMMETHOD(
-        [dispid(6), helpstring('RetainedSizeBytes'), 'propget'],
-        HRESULT,
-        'RetainedSizeBytes',
-        (['out', 'retval'], POINTER(c_int), 'RetainedSizeBytes')
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('DisplayText'), 'propget'],
-        HRESULT,
-        'DisplayText',
-        (['out', 'retval'], POINTER(BSTR), 'DisplayText')
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('LexicalForm'), 'propget'],
-        HRESULT,
-        'LexicalForm',
-        (['out', 'retval'], POINTER(BSTR), 'LexicalForm')
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('Pronunciation'), 'propget'],
-        HRESULT,
-        'Pronunciation',
-        (['out', 'retval'], POINTER(VARIANT), 'Pronunciation')
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('DisplayAttributes'), 'propget'],
-        HRESULT,
-        'DisplayAttributes',
-        (
-            ['out', 'retval'],
-            POINTER(SpeechDisplayAttributes),
-            'DisplayAttributes',
-        )
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('RequiredConfidence'), 'propget'],
-        HRESULT,
-        'RequiredConfidence',
-        (
-            ['out', 'retval'],
-            POINTER(SpeechEngineConfidence),
-            'RequiredConfidence',
-        )
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('ActualConfidence'), 'propget'],
-        HRESULT,
-        'ActualConfidence',
-        (['out', 'retval'], POINTER(SpeechEngineConfidence), 'ActualConfidence')
-    ),
-    COMMETHOD(
-        [dispid(13), helpstring('EngineConfidence'), 'propget'],
-        HRESULT,
-        'EngineConfidence',
-        (['out', 'retval'], POINTER(c_float), 'EngineConfidence')
-    ),
-]
-
-################################################################
-# code template for ISpeechPhraseElement implementation
-# class ISpeechPhraseElement_Impl(object):
-#     @property
-#     def AudioTimeOffset(self):
-#         'AudioTimeOffset'
-#         #return AudioTimeOffset
-#
-#     @property
-#     def AudioSizeTime(self):
-#         'AudioSizeTime'
-#         #return AudioSizeTime
-#
-#     @property
-#     def AudioStreamOffset(self):
-#         'AudioStreamOffset'
-#         #return AudioStreamOffset
-#
-#     @property
-#     def AudioSizeBytes(self):
-#         'AudioSizeBytes'
-#         #return AudioSizeBytes
-#
-#     @property
-#     def RetainedStreamOffset(self):
-#         'RetainedStreamOffset'
-#         #return RetainedStreamOffset
-#
-#     @property
-#     def RetainedSizeBytes(self):
-#         'RetainedSizeBytes'
-#         #return RetainedSizeBytes
-#
-#     @property
-#     def DisplayText(self):
-#         'DisplayText'
-#         #return DisplayText
-#
-#     @property
-#     def LexicalForm(self):
-#         'LexicalForm'
-#         #return LexicalForm
-#
-#     @property
-#     def Pronunciation(self):
-#         'Pronunciation'
-#         #return Pronunciation
-#
-#     @property
-#     def DisplayAttributes(self):
-#         'DisplayAttributes'
-#         #return DisplayAttributes
-#
-#     @property
-#     def RequiredConfidence(self):
-#         'RequiredConfidence'
-#         #return RequiredConfidence
-#
-#     @property
-#     def ActualConfidence(self):
-#         'ActualConfidence'
-#         #return ActualConfidence
-#
-#     @property
-#     def EngineConfidence(self):
-#         'EngineConfidence'
-#         #return EngineConfidence
-#
-
-SPEVENTSOURCEINFO._fields_ = [
-    ('ullEventInterest', c_ulonglong),
-    ('ullQueuedInterest', c_ulonglong),
-    ('ulCount', c_ulong),
-]
-
-assert sizeof(SPEVENTSOURCEINFO) == 24, sizeof(SPEVENTSOURCEINFO)
-assert alignment(SPEVENTSOURCEINFO) == 8, alignment(SPEVENTSOURCEINFO)
-
-
-class ISpeechLexiconWord(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
-    """ISpeechLexiconWord Interface"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{4E5B933C-C9BE-48ED-8842-1EE51BB1D4FF}')
-    _idlflags_ = ['dual', 'oleautomation']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_LangId(self) -> hints.Incomplete: ...
-        LangId = hints.normal_property(_get_LangId)
-        def _get_Type(self) -> hints.Incomplete: ...
-        Type = hints.normal_property(_get_Type)
-        def _get_Word(self) -> hints.Incomplete: ...
-        Word = hints.normal_property(_get_Word)
-        def _get_Pronunciations(self) -> 'ISpeechLexiconPronunciations': ...
-        Pronunciations = hints.normal_property(_get_Pronunciations)
-
-
-ISpeechLexiconWords._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Count'), 'propget'],
-        HRESULT,
-        'Count',
-        (['out', 'retval'], POINTER(c_int), 'Count')
-    ),
-    COMMETHOD(
-        [dispid(0), helpstring('Item')],
-        HRESULT,
-        'Item',
-        (['in'], c_int, 'Index'),
-        (['out', 'retval'], POINTER(POINTER(ISpeechLexiconWord)), 'Word')
-    ),
-    COMMETHOD(
-        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
-        HRESULT,
-        '_NewEnum',
-        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
-    ),
-]
-
-################################################################
-# code template for ISpeechLexiconWords implementation
-# class ISpeechLexiconWords_Impl(object):
-#     @property
-#     def Count(self):
-#         'Count'
-#         #return Count
-#
-#     def Item(self, Index):
-#         'Item'
-#         #return Word
-#
-#     @property
-#     def _NewEnum(self):
-#         'Enumerates the tokens'
-#         #return EnumVARIANT
-#
-
-SPRULE._fields_ = [
-    ('pszRuleName', WSTRING),
-    ('ulRuleId', c_ulong),
-    ('dwAttributes', c_ulong),
-]
-
-assert sizeof(SPRULE) == 16, sizeof(SPRULE)
-assert alignment(SPRULE) == 8, alignment(SPRULE)
-
 SPRECOCONTEXTSTATUS._fields_ = [
     ('eInterference', SPINTERFERENCE),
     ('szRequestTypeOfUI', c_ushort * 255),
@@ -11078,1054 +11563,580 @@ SPRECOCONTEXTSTATUS._fields_ = [
 assert sizeof(SPRECOCONTEXTSTATUS) == 524, sizeof(SPRECOCONTEXTSTATUS)
 assert alignment(SPRECOCONTEXTSTATUS) == 4, alignment(SPRECOCONTEXTSTATUS)
 
-ISpAudio._methods_ = [
+ISpeechMMSysAudio._methods_ = [
     COMMETHOD(
-        [],
+        [dispid(300), helpstring('DeviceId'), 'propget'],
         HRESULT,
-        'SetState',
-        (['in'], SPAUDIOSTATE, 'NewState'),
-        (['in'], c_ulonglong, 'ullReserved')
+        'DeviceId',
+        (['out', 'retval'], POINTER(c_int), 'DeviceId')
     ),
     COMMETHOD(
-        [],
+        [dispid(300), helpstring('DeviceId'), 'propput'],
         HRESULT,
-        'SetFormat',
-        (
-            ['in'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'rguidFmtId',
-        ),
-        (['in'], POINTER(WAVEFORMATEX), 'pWaveFormatEx')
+        'DeviceId',
+        (['in'], c_int, 'DeviceId')
     ),
     COMMETHOD(
-        [],
+        [dispid(301), helpstring('LineId'), 'propget'],
         HRESULT,
-        'GetStatus',
-        (['out'], POINTER(SPAUDIOSTATUS), 'pStatus')
+        'LineId',
+        (['out', 'retval'], POINTER(c_int), 'LineId')
     ),
     COMMETHOD(
-        [],
+        [dispid(301), helpstring('LineId'), 'propput'],
         HRESULT,
-        'SetBufferInfo',
-        (['in'], POINTER(SPAUDIOBUFFERINFO), 'pBuffInfo')
+        'LineId',
+        (['in'], c_int, 'LineId')
     ),
     COMMETHOD(
-        [],
+        [dispid(302), helpstring('MMHandle'), 'hidden', 'propget'],
         HRESULT,
-        'GetBufferInfo',
-        (['out'], POINTER(SPAUDIOBUFFERINFO), 'pBuffInfo')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetDefaultFormat',
-        (
-            ['out'],
-            POINTER(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.GUID),
-            'pFormatId',
-        ),
-        (['out'], POINTER(POINTER(WAVEFORMATEX)), 'ppCoMemWaveFormatEx')
-    ),
-    COMMETHOD([], c_void_p, 'EventHandle'),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetVolumeLevel',
-        (['out'], POINTER(c_ulong), 'pLevel')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetVolumeLevel',
-        (['in'], c_ulong, 'Level')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetBufferNotifySize',
-        (['out'], POINTER(c_ulong), 'pcbSize')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetBufferNotifySize',
-        (['in'], c_ulong, 'cbSize')
+        'MMHandle',
+        (['out', 'retval'], POINTER(c_int), 'Handle')
     ),
 ]
 
 ################################################################
-# code template for ISpAudio implementation
-# class ISpAudio_Impl(object):
-#     def SetState(self, NewState, ullReserved):
-#         '-no docstring-'
-#         #return 
-#
-#     def SetFormat(self, rguidFmtId, pWaveFormatEx):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetStatus(self):
-#         '-no docstring-'
-#         #return pStatus
-#
-#     def SetBufferInfo(self, pBuffInfo):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetBufferInfo(self):
-#         '-no docstring-'
-#         #return pBuffInfo
-#
-#     def GetDefaultFormat(self):
-#         '-no docstring-'
-#         #return pFormatId, ppCoMemWaveFormatEx
-#
-#     def EventHandle(self):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetVolumeLevel(self):
-#         '-no docstring-'
-#         #return pLevel
-#
-#     def SetVolumeLevel(self, Level):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetBufferNotifySize(self):
-#         '-no docstring-'
-#         #return pcbSize
-#
-#     def SetBufferNotifySize(self, cbSize):
-#         '-no docstring-'
-#         #return 
-#
-
-ISpMMSysAudio._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetDeviceId',
-        (['out'], POINTER(c_uint), 'puDeviceId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetDeviceId',
-        (['in'], c_uint, 'uDeviceId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetMMHandle',
-        (['out'], POINTER(c_void_p), 'pHandle')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'GetLineId',
-        (['out'], POINTER(c_uint), 'puLineId')
-    ),
-    COMMETHOD(
-        [],
-        HRESULT,
-        'SetLineId',
-        (['in'], c_uint, 'uLineId')
-    ),
-]
-
-################################################################
-# code template for ISpMMSysAudio implementation
-# class ISpMMSysAudio_Impl(object):
-#     def GetDeviceId(self):
-#         '-no docstring-'
-#         #return puDeviceId
-#
-#     def SetDeviceId(self, uDeviceId):
-#         '-no docstring-'
-#         #return 
-#
-#     def GetMMHandle(self):
-#         '-no docstring-'
-#         #return pHandle
-#
-#     def GetLineId(self):
-#         '-no docstring-'
-#         #return puLineId
-#
-#     def SetLineId(self, uLineId):
-#         '-no docstring-'
-#         #return 
-#
-
-
-class SpMMAudioOut(CoClass):
-    """SpMMAudioOut Class"""
-    _reg_clsid_ = GUID('{A8C680EB-3D32-11D2-9EE7-00C04F797396}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{C866CA3A-32F7-11D2-9602-00C04F8EE628}', 5, 4)
-
-
-SpMMAudioOut._com_interfaces_ = [ISpeechMMSysAudio, ISpEventSource, ISpEventSink, ISpObjectWithToken, ISpMMSysAudio]
-
-ISpeechLexiconWord._methods_ = [
-    COMMETHOD(
-        [dispid(1), 'propget'],
-        HRESULT,
-        'LangId',
-        (['out', 'retval'], POINTER(c_int), 'LangId')
-    ),
-    COMMETHOD(
-        [dispid(2), 'propget'],
-        HRESULT,
-        'Type',
-        (['out', 'retval'], POINTER(SpeechWordType), 'WordType')
-    ),
-    COMMETHOD(
-        [dispid(3), 'propget'],
-        HRESULT,
-        'Word',
-        (['out', 'retval'], POINTER(BSTR), 'Word')
-    ),
-    COMMETHOD(
-        [dispid(4), 'propget'],
-        HRESULT,
-        'Pronunciations',
-        (
-            ['out', 'retval'],
-            POINTER(POINTER(ISpeechLexiconPronunciations)),
-            'Pronunciations',
-        )
-    ),
-]
-
-################################################################
-# code template for ISpeechLexiconWord implementation
-# class ISpeechLexiconWord_Impl(object):
-#     @property
-#     def LangId(self):
-#         '-no docstring-'
-#         #return LangId
-#
-#     @property
-#     def Type(self):
-#         '-no docstring-'
-#         #return WordType
-#
-#     @property
-#     def Word(self):
-#         '-no docstring-'
-#         #return Word
-#
-#     @property
-#     def Pronunciations(self):
-#         '-no docstring-'
-#         #return Pronunciations
-#
-
-SPPHRASEELEMENT._fields_ = [
-    ('ulAudioTimeOffset', c_ulong),
-    ('ulAudioSizeTime', c_ulong),
-    ('ulAudioStreamOffset', c_ulong),
-    ('ulAudioSizeBytes', c_ulong),
-    ('ulRetainedStreamOffset', c_ulong),
-    ('ulRetainedSizeBytes', c_ulong),
-    ('pszDisplayText', WSTRING),
-    ('pszLexicalForm', WSTRING),
-    ('pszPronunciation', POINTER(c_ushort)),
-    ('bDisplayAttributes', c_ubyte),
-    ('RequiredConfidence', c_char),
-    ('ActualConfidence', c_char),
-    ('reserved', c_ubyte),
-    ('SREngineConfidence', c_float),
-]
-
-assert sizeof(SPPHRASEELEMENT) == 56, sizeof(SPPHRASEELEMENT)
-assert alignment(SPPHRASEELEMENT) == 8, alignment(SPPHRASEELEMENT)
-
-ISpeechRecoGrammar._methods_ = [
-    COMMETHOD(
-        [dispid(1), helpstring('Id'), 'propget'],
-        HRESULT,
-        'Id',
-        (['out', 'retval'], POINTER(VARIANT), 'Id')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('RecoContext'), 'propget'],
-        HRESULT,
-        'RecoContext',
-        (['out', 'retval'], POINTER(POINTER(ISpeechRecoContext)), 'RecoContext')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('State'), 'propput'],
-        HRESULT,
-        'State',
-        (['in'], SpeechGrammarState, 'State')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('State'), 'propget'],
-        HRESULT,
-        'State',
-        (['out', 'retval'], POINTER(SpeechGrammarState), 'State')
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('Rules'), 'propget'],
-        HRESULT,
-        'Rules',
-        (['out', 'retval'], POINTER(POINTER(ISpeechGrammarRules)), 'Rules')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('Reset')],
-        HRESULT,
-        'Reset',
-        (['in', 'optional'], c_int, 'NewLanguage', 0)
-    ),
-    COMMETHOD(
-        [dispid(7), helpstring('CmdLoadFromFile')],
-        HRESULT,
-        'CmdLoadFromFile',
-        (['in'], BSTR, 'FileName'),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(8), helpstring('CmdLoadFromObject')],
-        HRESULT,
-        'CmdLoadFromObject',
-        (['in'], BSTR, 'ClassId'),
-        (['in'], BSTR, 'GrammarName'),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(9), helpstring('CmdLoadFromResource')],
-        HRESULT,
-        'CmdLoadFromResource',
-        (['in'], c_int, 'hModule'),
-        (['in'], VARIANT, 'ResourceName'),
-        (['in'], VARIANT, 'ResourceType'),
-        (['in'], c_int, 'LanguageId'),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(10), helpstring('CmdLoadFromMemory')],
-        HRESULT,
-        'CmdLoadFromMemory',
-        (['in'], VARIANT, 'GrammarData'),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(11), helpstring('CmdLoadFromProprietaryGrammar')],
-        HRESULT,
-        'CmdLoadFromProprietaryGrammar',
-        (['in'], BSTR, 'ProprietaryGuid'),
-        (['in'], BSTR, 'ProprietaryString'),
-        (['in'], VARIANT, 'ProprietaryData'),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(12), helpstring('CmdSetRuleState')],
-        HRESULT,
-        'CmdSetRuleState',
-        (['in'], BSTR, 'Name'),
-        (['in'], SpeechRuleState, 'State')
-    ),
-    COMMETHOD(
-        [dispid(13), helpstring('CmdSetRuleIdState')],
-        HRESULT,
-        'CmdSetRuleIdState',
-        (['in'], c_int, 'RuleId'),
-        (['in'], SpeechRuleState, 'State')
-    ),
-    COMMETHOD(
-        [dispid(14), helpstring('DictationLoad')],
-        HRESULT,
-        'DictationLoad',
-        (['in', 'optional'], BSTR, 'TopicName', ''),
-        (['in', 'optional'], SpeechLoadOption, 'LoadOption', 0)
-    ),
-    COMMETHOD(
-        [dispid(15), helpstring('DictationUnload')],
-        HRESULT,
-        'DictationUnload',
-    ),
-    COMMETHOD(
-        [dispid(16), helpstring('DictationSetState')],
-        HRESULT,
-        'DictationSetState',
-        (['in'], SpeechRuleState, 'State')
-    ),
-    COMMETHOD(
-        [dispid(17), helpstring('SetWordSequenceData')],
-        HRESULT,
-        'SetWordSequenceData',
-        (['in'], BSTR, 'Text'),
-        (['in'], c_int, 'TextLength'),
-        (['in'], POINTER(ISpeechTextSelectionInformation), 'Info')
-    ),
-    COMMETHOD(
-        [dispid(18), helpstring('SetTextSelection')],
-        HRESULT,
-        'SetTextSelection',
-        (['in'], POINTER(ISpeechTextSelectionInformation), 'Info')
-    ),
-    COMMETHOD(
-        [dispid(19), helpstring('IsPronounceable')],
-        HRESULT,
-        'IsPronounceable',
-        (['in'], BSTR, 'Word'),
-        (
-            ['out', 'retval'],
-            POINTER(SpeechWordPronounceable),
-            'WordPronounceable',
-        )
-    ),
-]
-
-################################################################
-# code template for ISpeechRecoGrammar implementation
-# class ISpeechRecoGrammar_Impl(object):
-#     @property
-#     def Id(self):
-#         'Id'
-#         #return Id
-#
-#     @property
-#     def RecoContext(self):
-#         'RecoContext'
-#         #return RecoContext
+# code template for ISpeechMMSysAudio implementation
+# class ISpeechMMSysAudio_Impl(object):
+#     def _get(self):
+#         'DeviceId'
+#         #return DeviceId
+#     def _set(self, DeviceId):
+#         'DeviceId'
+#     DeviceId = property(_get, _set, doc = _set.__doc__)
 #
 #     def _get(self):
-#         'State'
-#         #return State
-#     def _set(self, State):
-#         'State'
-#     State = property(_get, _set, doc = _set.__doc__)
+#         'LineId'
+#         #return LineId
+#     def _set(self, LineId):
+#         'LineId'
+#     LineId = property(_get, _set, doc = _set.__doc__)
 #
 #     @property
-#     def Rules(self):
-#         'Rules'
-#         #return Rules
-#
-#     def Reset(self, NewLanguage):
-#         'Reset'
-#         #return 
-#
-#     def CmdLoadFromFile(self, FileName, LoadOption):
-#         'CmdLoadFromFile'
-#         #return 
-#
-#     def CmdLoadFromObject(self, ClassId, GrammarName, LoadOption):
-#         'CmdLoadFromObject'
-#         #return 
-#
-#     def CmdLoadFromResource(self, hModule, ResourceName, ResourceType, LanguageId, LoadOption):
-#         'CmdLoadFromResource'
-#         #return 
-#
-#     def CmdLoadFromMemory(self, GrammarData, LoadOption):
-#         'CmdLoadFromMemory'
-#         #return 
-#
-#     def CmdLoadFromProprietaryGrammar(self, ProprietaryGuid, ProprietaryString, ProprietaryData, LoadOption):
-#         'CmdLoadFromProprietaryGrammar'
-#         #return 
-#
-#     def CmdSetRuleState(self, Name, State):
-#         'CmdSetRuleState'
-#         #return 
-#
-#     def CmdSetRuleIdState(self, RuleId, State):
-#         'CmdSetRuleIdState'
-#         #return 
-#
-#     def DictationLoad(self, TopicName, LoadOption):
-#         'DictationLoad'
-#         #return 
-#
-#     def DictationUnload(self):
-#         'DictationUnload'
-#         #return 
-#
-#     def DictationSetState(self, State):
-#         'DictationSetState'
-#         #return 
-#
-#     def SetWordSequenceData(self, Text, TextLength, Info):
-#         'SetWordSequenceData'
-#         #return 
-#
-#     def SetTextSelection(self, Info):
-#         'SetTextSelection'
-#         #return 
-#
-#     def IsPronounceable(self, Word):
-#         'IsPronounceable'
-#         #return WordPronounceable
+#     def MMHandle(self):
+#         'MMHandle'
+#         #return Handle
 #
 
-ISpeechResourceLoader._methods_ = [
+ISpeechPhraseReplacements._methods_ = [
     COMMETHOD(
-        [dispid(1)],
+        [dispid(1), helpstring('Count'), 'propget'],
         HRESULT,
-        'LoadResource',
-        (['in'], BSTR, 'bstrResourceUri'),
-        (['in'], VARIANT_BOOL, 'fAlwaysReload'),
-        (['out'], POINTER(POINTER(IUnknown)), 'pStream'),
-        (['out'], POINTER(BSTR), 'pbstrMIMEType'),
-        (['out'], POINTER(VARIANT_BOOL), 'pfModified'),
-        (['out'], POINTER(BSTR), 'pbstrRedirectUrl')
+        'Count',
+        (['out', 'retval'], POINTER(c_int), 'Count')
     ),
     COMMETHOD(
-        [dispid(2)],
+        [dispid(0), helpstring('Item')],
         HRESULT,
-        'GetLocalCopy',
-        (['in'], BSTR, 'bstrResourceUri'),
-        (['out'], POINTER(BSTR), 'pbstrLocalPath'),
-        (['out'], POINTER(BSTR), 'pbstrMIMEType'),
-        (['out'], POINTER(BSTR), 'pbstrRedirectUrl')
+        'Item',
+        (['in'], c_int, 'Index'),
+        (['out', 'retval'], POINTER(POINTER(ISpeechPhraseReplacement)), 'Reps')
     ),
     COMMETHOD(
-        [dispid(3)],
+        [dispid(-4), helpstring('Enumerates the tokens'), 'restricted', 'propget'],
         HRESULT,
-        'ReleaseLocalCopy',
-        (['in'], BSTR, 'pbstrLocalPath')
+        '_NewEnum',
+        (['out', 'retval'], POINTER(POINTER(IUnknown)), 'EnumVARIANT')
     ),
 ]
 
 ################################################################
-# code template for ISpeechResourceLoader implementation
-# class ISpeechResourceLoader_Impl(object):
-#     def LoadResource(self, bstrResourceUri, fAlwaysReload):
-#         '-no docstring-'
-#         #return pStream, pbstrMIMEType, pfModified, pbstrRedirectUrl
+# code template for ISpeechPhraseReplacements implementation
+# class ISpeechPhraseReplacements_Impl(object):
+#     @property
+#     def Count(self):
+#         'Count'
+#         #return Count
 #
-#     def GetLocalCopy(self, bstrResourceUri):
-#         '-no docstring-'
-#         #return pbstrLocalPath, pbstrMIMEType, pbstrRedirectUrl
+#     def Item(self, Index):
+#         'Item'
+#         #return Reps
 #
-#     def ReleaseLocalCopy(self, pbstrLocalPath):
-#         '-no docstring-'
-#         #return 
+#     @property
+#     def _NewEnum(self):
+#         'Enumerates the tokens'
+#         #return EnumVARIANT
 #
 
-ISpeechObjectTokenCategory._methods_ = [
+ISpSerializeState._methods_ = [
     COMMETHOD(
-        [dispid(1), helpstring('Id'), 'propget'],
+        [],
         HRESULT,
-        'Id',
-        (['out', 'retval'], POINTER(BSTR), 'Id')
+        'GetSerializedState',
+        (['out'], POINTER(POINTER(c_ubyte)), 'ppbData'),
+        (['out'], POINTER(c_ulong), 'pulSize'),
+        (['in'], c_ulong, 'dwReserved')
     ),
     COMMETHOD(
-        [dispid(2), helpstring('Default'), 'propput'],
+        [],
         HRESULT,
-        'Default',
-        (['in'], BSTR, 'TokenId')
-    ),
-    COMMETHOD(
-        [dispid(2), helpstring('Default'), 'propget'],
-        HRESULT,
-        'Default',
-        (['out', 'retval'], POINTER(BSTR), 'TokenId')
-    ),
-    COMMETHOD(
-        [dispid(3), helpstring('SetId')],
-        HRESULT,
-        'SetId',
-        (['in'], BSTR, 'Id'),
-        (['in', 'optional'], VARIANT_BOOL, 'CreateIfNotExist', False)
-    ),
-    COMMETHOD(
-        [dispid(4), helpstring('GetDataKey'), 'hidden'],
-        HRESULT,
-        'GetDataKey',
-        (['in', 'optional'], SpeechDataKeyLocation, 'Location', 0),
-        (['out', 'retval'], POINTER(POINTER(ISpeechDataKey)), 'DataKey')
-    ),
-    COMMETHOD(
-        [dispid(5), helpstring('EnumerateTokens')],
-        HRESULT,
-        'EnumerateTokens',
-        (['in', 'optional'], BSTR, 'RequiredAttributes', ''),
-        (['in', 'optional'], BSTR, 'OptionalAttributes', ''),
-        (['out', 'retval'], POINTER(POINTER(ISpeechObjectTokens)), 'Tokens')
+        'SetSerializedState',
+        (['in'], POINTER(c_ubyte), 'pbData'),
+        (['in'], c_ulong, 'ulSize'),
+        (['in'], c_ulong, 'dwReserved')
     ),
 ]
 
 ################################################################
-# code template for ISpeechObjectTokenCategory implementation
-# class ISpeechObjectTokenCategory_Impl(object):
-#     @property
-#     def Id(self):
-#         'Id'
-#         #return Id
+# code template for ISpSerializeState implementation
+# class ISpSerializeState_Impl(object):
+#     def GetSerializedState(self, dwReserved):
+#         '-no docstring-'
+#         #return ppbData, pulSize
 #
-#     def _get(self):
-#         'Default'
-#         #return TokenId
-#     def _set(self, TokenId):
-#         'Default'
-#     Default = property(_get, _set, doc = _set.__doc__)
-#
-#     def SetId(self, Id, CreateIfNotExist):
-#         'SetId'
+#     def SetSerializedState(self, pbData, ulSize, dwReserved):
+#         '-no docstring-'
 #         #return 
-#
-#     def GetDataKey(self, Location):
-#         'GetDataKey'
-#         #return DataKey
-#
-#     def EnumerateTokens(self, RequiredAttributes, OptionalAttributes):
-#         'EnumerateTokens'
-#         #return Tokens
 #
 
 __all__ = [
-    'ISpLexicon', 'SAFT11kHz16BitMono', 'DISPID_SRCEEndStream',
-    'SPWORDPRONOUNCEABLE', 'DISPID_SpeechVoiceStatus',
-    'DISPID_SPIAudioSizeBytes', 'DISPID_SOTs_NewEnum',
-    'eLEXTYPE_RESERVED8', 'SAFT48kHz16BitStereo', 'SECLowConfidence',
-    'DISPID_SPIEngineId', 'SAFT16kHz8BitStereo',
-    'SGDSActiveWithAutoPause', 'SAFTADPCM_44kHzStereo',
-    'SRTAutopause', 'DISPID_SpeechAudioBufferInfo',
-    'DISPID_SASCurrentDevicePosition', 'DISPID_SVPause',
-    'DISPID_SGRAddResource', 'DISPID_SPIGrammarId', 'SP_VISEME_9',
-    'eLEXTYPE_PRIVATE12', 'STSF_CommonAppData', 'DISPID_SPAsItem',
-    'SDA_Consume_Leading_Spaces', 'DISPID_SVSLastBookmarkId',
-    'SAFT16kHz16BitStereo', 'SREAudioLevel', 'DISPID_SPISaveToMemory',
-    'SpeechTokenContext', 'SpUnCompressedLexicon',
-    'SPWP_UNKNOWN_WORD_PRONOUNCEABLE', 'DISPID_SPRuleConfidence',
-    'DISPID_SOTSetId', 'eLEXTYPE_PRIVATE5', 'eLEXTYPE_PRIVATE20',
-    'SPCONTEXTSTATE', 'SREPrivate', 'DISPID_SDKDeleteKey',
-    'DISPID_SPACommit', 'DISPID_SRCVoicePurgeEvent',
-    'DISPID_SpeechLexiconWord', 'ISpeechGrammarRuleState',
-    'SPINTERFERENCE_NOISE', 'SpeechInterference', 'SITooSlow',
-    'DISPID_SVWaitUntilDone', 'DISPID_SRCEPhraseStart',
-    'DISPID_SGRAttributes', 'DISPID_SPERetainedSizeBytes',
-    'SDKLDefaultLocation', 'ISpeechLexiconWord', 'SPPS_SuppressWord',
-    'DISPID_SVAlertBoundary', 'SPSERIALIZEDPHRASE',
-    'SVEEndInputStream', 'DISPID_SRCRecognizer', 'SVSFNLPSpeakPunc',
-    'SAFT22kHz16BitMono', 'SAFT32kHz8BitMono',
-    'DISPID_SRCERecognizerStateChange', 'DISPID_SPRulesCount',
-    'SPSMF_SRGS_SEMANTICINTERPRETATION_W3C', 'SPEI_MIN_SR',
-    'SRSEIsSpeaking', 'SAFTCCITT_ALaw_44kHzStereo', 'SVP_18',
-    'DISPIDSPTSI', 'DISPID_SPIGetText', 'DISPID_SAStatus',
-    'DISPID_SOTRemove', 'DISPID_SpeechLexiconPronunciation',
-    'SPPS_LMA', 'SPEI_PROPERTY_STRING_CHANGE', 'SAFT12kHz16BitStereo',
-    'SREInterference', 'DISPID_SPPParent', 'SpeechRuleAttributes',
-    'eLEXTYPE_RESERVED7', 'SPFILEMODE', 'SVP_5',
-    'DISPID_SpeechAudioStatus', 'SPBO_AHEAD',
-    'SpeechWordPronounceable', 'DISPIDSPTSI_SelectionLength',
-    'SPEI_ACTIVE_CATEGORY_CHANGED', 'ISpVoice', 'DISPID_SPRulesItem',
-    'SREStreamEnd', 'SPAO_RETAIN_AUDIO', 'SAFTCCITT_uLaw_22kHzStereo',
-    'DISPID_SRCBookmark', 'ISpeechPhraseElements',
-    'SpeechAudioFormatType', 'SpeechRetainedAudioOptions',
-    'SREFalseRecognition', 'ISpeechPhoneConverter',
-    'DISPID_SOTCEnumerateTokens', 'STSF_AppData', 'SPEI_PHRASE_START',
-    'DISPID_SLWPronunciations', 'DISPID_SRCState', 'SPEI_MIN_TTS',
-    'DISPID_SLPLangId', 'DISPID_SWFEExtraData',
-    'SPDKL_DefaultLocation', 'DISPID_SPIAudioSizeTime', 'SRTStandard',
-    'SPSNoun', 'SPRST_NUM_STATES', 'SpInprocRecognizer',
-    'SSSPTRelativeToEnd', 'SpeechTokenKeyAttributes',
-    'DISPID_SRGCommit', 'DISPID_SRGCmdLoadFromObject', 'SDTAll',
-    'SPRS_ACTIVE', 'SP_VISEME_16', 'ISpeechObjectTokenCategory',
-    'SpeechVisemeType', 'DISPID_SVSInputSentencePosition',
-    'DISPID_SGRSTNextState', 'DISPID_SLWs_NewEnum',
-    'SpeechAudioProperties', 'DISPID_SGRsCommitAndSave',
-    '_RemotableHandle', 'DISPID_SPIProperties', 'SpPhraseInfoBuilder',
-    'DISPID_SLWsCount', 'SLOStatic', 'DISPID_SPPsItem',
-    'SPPROPERTYINFO', 'DISPID_SRRTLength', 'SGRSTTRule',
-    'SAFT44kHz16BitStereo', 'DISPID_SRSCurrentStreamPosition',
-    'eLEXTYPE_PRIVATE11', 'SPRECOSTATE', 'IEnumString',
-    'SPSHORTCUTPAIRLIST', 'DISPID_SVSVisemeId',
-    'SpeechCategoryRecognizers', 'DISPID_SGRSTransitions',
-    'DISPID_SOTDisplayUI', 'SPEI_SR_PRIVATE',
-    'DISPID_SpeechPhraseBuilder', 'DISPID_SPEAudioTimeOffset',
-    'SAFTCCITT_ALaw_8kHzMono', 'SPPS_Interjection', 'SpeechRuleState',
-    'SPEI_TTS_AUDIO_LEVEL', 'DISPID_SRRTTickCount', 'DISPID_SBSWrite',
-    'SAFT16kHz16BitMono', 'SAFTCCITT_uLaw_11kHzMono',
-    'SPEI_RESERVED3', 'SVSFIsXML', 'SVEBookmark',
-    'DISPID_SRCEAudioLevel', 'DISPID_SVAudioOutput',
-    'SpCompressedLexicon', 'ISpNotifySource',
-    'DISPID_SpeechLexiconProns', 'ISpeechObjectTokens',
-    'DISPID_SPIAudioStreamPosition', 'typelib_path', 'SFTSREngine',
-    'eLEXTYPE_PRIVATE2', 'SRERequestUI', 'DISPID_SRGetRecognizers',
-    'SAFTCCITT_uLaw_44kHzStereo', 'Speech_Max_Word_Length',
-    'DISPID_SDKOpenKey', 'SPCT_SLEEP', 'DISPID_SVSLastResult',
-    'DISPID_SAVolume', 'eLEXTYPE_RESERVED10',
-    'DISPID_SPAStartElementInResult', 'DISPID_SPEs_NewEnum',
-    'SpeechCategoryAudioIn', 'DISPID_SPPNumberOfElements',
-    'DISPID_SPRuleFirstElement', 'SAFT8kHz8BitStereo',
-    'SpeechFormatType', 'SP_VISEME_8', 'SDTReplacement',
-    'ISpeechXMLRecoResult', 'SAFTGSM610_44kHzMono',
-    'DISPID_SRCCmdMaxAlternates', 'DISPID_SASCurrentSeekPosition',
-    'SPINTERFERENCE_TOOSLOW', 'SP_VISEME_10', 'DISPID_SPILanguageId',
-    'eLEXTYPE_PRIVATE1', 'SPPS_Unknown', 'LONG_PTR',
-    'ISpeechCustomStream', 'DISPID_SFSClose', 'SpObjectTokenCategory',
-    'SPGRAMMARWORDTYPE', 'SP_VISEME_5', 'SVP_13',
-    'SpeechRegistryLocalMachineRoot', 'SpeechRunState',
-    'SPPARTOFSPEECH', 'SREPropertyNumChange', 'DISPID_SPIStartTime',
-    'DISPID_SRGRules', 'DISPID_SPIReplacements',
-    'SAFTADPCM_11kHzMono', 'SGSExclusive', 'DISPID_SDKDeleteValue',
-    'SRAInterpreter', 'DISPID_SVSPhonemeId', 'SAFT11kHz8BitMono',
-    'SpMMAudioIn', 'ISpeechAudioBufferInfo', 'SPEI_TTS_PRIVATE',
-    'SPEI_PROPERTY_NUM_CHANGE', 'SPPS_Verb',
-    'DISPID_SPEActualConfidence', 'DISPID_SpeechGrammarRules',
-    'SAFT8kHz16BitMono', 'DISPID_SLRemovePronunciationByPhoneIds',
-    'SVP_12', 'SPAS_RUN', 'SAFTCCITT_ALaw_11kHzMono',
-    'SGRSTTWildcard', 'DISPID_SPRDisplayAttributes',
-    'SPEI_WORD_BOUNDARY', 'SLTUser', 'SpVoice',
-    'DISPIDSPTSI_SelectionOffset', 'SpeechGrammarWordType',
-    'DISPID_SGRs_NewEnum', 'SpShortcut', 'SVSFParseSsml',
-    'SpeechAllElements', 'ISpeechVoice', 'DISPID_SFSOpen',
-    'SRSInactive', 'ISpeechRecoResult', 'SVSFDefault',
-    'SVSFlagsAsync', 'DISPID_SGRAddState', 'SPGS_ENABLED', 'SVP_2',
-    'SPINTERFERENCE_TOOFAST', 'DISPID_SRGCmdSetRuleState',
-    'DISPID_SpeechFileStream', 'SPAR_Unknown', 'SSFMCreateForWrite',
-    'SP_VISEME_19', 'SPRST_INACTIVE_WITH_PURGE',
-    'DISPID_SRRSpeakAudio', 'ISpeechLexiconWords',
-    'DISPID_SVEStreamStart', 'STSF_FlagCreate', 'DISPID_SGRsFindRule',
-    'eLEXTYPE_PRIVATE16', 'SDTRule', 'STCRemoteServer',
-    'SSTTTextBuffer', 'SPVPRI_ALERT', 'ISpeechRecoResultTimes',
-    'SPFM_NUM_MODES', 'DISPID_SRGId', 'ISpRecoContext2',
-    'DISPID_SABufferInfo', 'SRAImport', 'SSFMOpenForRead',
-    'SPEI_SR_BOOKMARK', 'DISPID_SVSInputWordLength',
-    'DISPID_SPPBRestorePhraseFromMemory', 'SPAUDIOBUFFERINFO',
-    'DISPID_SVEBookmark', 'DISPID_SPELexicalForm', 'SPPS_Noncontent',
-    'SpeechPropertyResourceUsage', 'ISpeechPhraseProperty',
-    'SPWT_LEXICAL', 'SVP_7', 'SDTPronunciation',
-    'DISPID_SABIMinNotification', 'DISPID_SOTCSetId',
-    'DISPID_SRCResume', 'ISpeechGrammarRuleStateTransition',
-    'SPEI_RESERVED5', 'SpWaveFormatEx', 'DISPID_SASNonBlockingIO',
-    'SPBINARYGRAMMAR', 'SAFTDefault', 'SpStream', 'SpeechMicTraining',
-    'SP_VISEME_11', 'SECFDefault',
-    'SpeechGrammarRuleStateTransitionType', 'DISPID_SGRsCommit',
-    'DISPID_SpeechGrammarRuleState', 'ISpRecognizer', 'SPCS_ENABLED',
-    'eLEXTYPE_PRIVATE15', 'SRTEmulated', 'ISpPhrase',
-    'DISPID_SRCERecognition', 'SPINTERFERENCE_TOOLOUD',
-    'DISPID_SPRuleEngineConfidence', 'SpLexicon',
-    'DISPID_SRGCmdLoadFromProprietaryGrammar', 'SWTDeleted',
-    'ISpRecoGrammar', 'DISPID_SRRTimes', 'SPSHT_EMAIL',
-    'DISPID_SLPPartOfSpeech', 'SPEI_RECOGNITION', 'DISPID_SVVoice',
-    'DISPID_SREmulateRecognition', 'DISPID_SGRsItem',
-    'DISPID_SpeechXMLRecoResult', 'ISpGrammarBuilder',
-    'SpeechDisplayAttributes', 'SpeechVisemeFeature',
-    'DISPID_SRGetPropertyString', 'SECFNoSpecialChars',
-    'DISPID_SVSInputSentenceLength', 'SASPause', 'ISpResourceManager',
-    'ISpeechPhraseReplacement', 'STSF_LocalAppData',
-    'ISpeechObjectToken', 'SPADAPTATIONRELEVANCE',
-    'SPSMF_SAPI_PROPERTIES', 'SpeechAudioFormatGUIDWave',
-    'SPCT_SUB_DICTATION', 'SDTAudio', 'ISpRecoCategory',
-    'SPPHRASEELEMENT', 'DISPID_SpeechAudioFormat', 'SVPNormal',
-    'DISPID_SpeechPhraseAlternate', 'SpeechEngineProperties',
-    'SPLEXICONTYPE', 'SpStreamFormatConverter', 'DISPID_SLWWord',
-    'SpeechStreamFileMode', 'ISpShortcut', 'DISPID_SPPName',
-    'SVSFParseAutodetect', 'SpeechDictationTopicSpelling',
-    'SPEI_SR_RETAINEDAUDIO', 'DISPID_SRGIsPronounceable',
-    'ISpXMLRecoResult', 'SREStreamStart',
-    'DISPID_SRCreateRecoContext', 'SpeechTokenShellFolder',
-    'SPWF_SRENGINE', 'DISPID_SOTCGetDataKey', 'DISPID_SMSALineId',
-    'ISpRecoContext', 'SPRS_ACTIVE_WITH_AUTO_PAUSE',
-    'DISPID_SPRNumberOfElements', 'SPINTERFERENCE',
-    'DISPID_SVGetVoices', 'DISPID_SDKGetStringValue', 'SPCT_COMMAND',
-    'SpeechEngineConfidence', 'SWPUnknownWordPronounceable', 'SVP_17',
-    'SPRST_ACTIVE_ALWAYS', 'ISpObjectToken', 'DISPID_SVRate',
-    'ISpDataKey', 'DISPID_SDKGetlongValue', 'SPAO_NONE',
-    'DISPID_SVSyncronousSpeakTimeout', 'DISPID_SDKSetLongValue',
-    'SAFT48kHz8BitStereo', 'SPPS_Noun', 'SVP_8',
-    'DISPID_SRRAudioFormat', 'DISPID_SPRuleChildren', 'SVEAudioLevel',
-    'SPSNotOverriden', 'DISPID_SRAllowVoiceFormatMatchingOnNextSet',
-    'SPCT_DICTATION', 'SAFT11kHz16BitStereo',
-    'SpeechCategoryAudioOut', 'SREStateChange', 'DISPID_SLPSymbolic',
-    'SPSERIALIZEDRESULT', 'SVEViseme', 'SAFTCCITT_uLaw_11kHzStereo',
-    'DISPID_SAEventHandle', 'SDA_No_Trailing_Space',
-    'DISPID_SRGSetTextSelection', 'SPSEMANTICERRORINFO',
-    'SpMMAudioOut', 'DISPID_SRCESoundEnd', 'ISpeechFileStream',
-    'DISPID_SPRuleNumberOfElements', 'SPPS_RESERVED1',
-    'SAFTNoAssignedFormat', 'SpeechEmulationCompareFlags',
-    'ISpeechTextSelectionInformation', 'SpeechTokenIdUserLexicon',
-    'SpeechVoiceSpeakFlags', 'DISPID_SGRSTPropertyValue',
-    'SVSFPurgeBeforeSpeak', '_SPAUDIOSTATE',
-    'DISPID_SRRDiscardResultInfo', 'SPSEMANTICFORMAT',
-    'DISPID_SRCSetAdaptationData', 'SVF_None', 'SPEI_HYPOTHESIS',
-    'DISPID_SRCEEnginePrivate', 'DISPID_SMSGetData',
-    'DISPID_SPEPronunciation', 'DISPID_SVEventInterests', 'SITooFast',
-    'SpPhoneticAlphabetConverter', 'DISPID_SRSAudioStatus', 'SRARoot',
-    'DISPID_SRGDictationLoad', 'SPSMF_UPS', 'DISPID_SBSSeek',
-    'DISPID_SDKGetBinaryValue', 'SPWORDTYPE', 'SGRSTTEpsilon',
-    'DISPID_SABufferNotifySize', 'DISPID_SLPsCount',
-    'DISPID_SGRSTs_NewEnum', 'SpeechRecoEvents',
-    'SPWORDPRONUNCIATION', 'Speech_Default_Weight',
-    'SAFT22kHz8BitMono', 'SAFTExtendedAudioFormat',
-    'DISPID_SOTRemoveStorageFileName', 'DISPID_SpeechObjectToken',
-    'SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN', 'DISPID_SGRSRule',
-    'ISpeechGrammarRuleStateTransitions', 'ISpeechMMSysAudio',
-    'DISPID_SRCEBookmark', 'SGSDisabled', 'ISpRecognizer3',
-    'ISpObjectTokenCategory', 'SPEVENTSOURCEINFO',
-    'SpeechAudioFormatGUIDText', 'SVP_6', 'SGRSTTWord', 'SPEVENT',
-    'eWORDTYPE_DELETED', 'SPEI_TTS_BOOKMARK',
-    'DISPID_SLAddPronunciationByPhoneIds', 'DISPID_SGRSTRule',
-    'DISPID_SVEPhoneme', 'SPINTERFERENCE_NOSIGNAL', 'SPPS_RESERVED4',
-    'DISPID_SGRId', 'DISPID_SPEAudioStreamOffset',
-    'DISPID_SpeechAudio', 'ISpeechAudioStatus', 'SVSFIsNotXML',
-    'DISPID_SRCEFalseRecognition', 'SVEPrivate',
-    'SPRECOCONTEXTSTATUS', 'SVP_1',
-    'DISPID_SPANumberOfElementsInResult', 'SPCT_SUB_COMMAND',
-    'SP_VISEME_2', 'DISPID_SAFSetWaveFormatEx',
-    'Speech_Max_Pron_Length', 'eLEXTYPE_PRIVATE13', 'SPSLMA',
-    'SPAR_Medium', 'DISPID_SRAudioInputStream', 'SPFM_OPEN_READONLY',
-    'SPLO_DYNAMIC', 'STCAll', 'DISPID_SVSpeakCompleteEvent',
-    'DISPID_SVSCurrentStreamNumber', 'DISPID_SpeechPhoneConverter',
-    'SBONone', 'DISPID_SGRName', 'SpeechGrammarTagDictation',
-    'DISPID_SPRules_NewEnum', 'ISpStreamFormat',
-    'SpeechBookmarkOptions', 'DISPID_SpeechVoiceEvent',
-    'DISPID_SPAsCount', 'DISPID_SPPValue',
-    'SpTextSelectionInformation', 'DISPID_SVPriority',
-    'DISPID_SpeechMMSysAudio', 'SAFT12kHz8BitStereo',
-    'ISpeechRecognizer', 'SPLOADOPTIONS', 'STCInprocServer',
-    'ISpRecognizer2', 'SPWF_INPUT', 'SAFT32kHz8BitStereo',
-    'DISPID_SBSFormat', 'DISPID_SRRAlternates',
-    'eLEXTYPE_VENDORLEXICON', 'DISPID_SPEAudioSizeTime', 'SAFTText',
-    'eLEXTYPE_USER_SHORTCUT', 'SPPS_Function', 'SP_VISEME_1',
-    'SPEI_SOUND_END', 'SAFTCCITT_ALaw_22kHzStereo', 'SPGRAMMARSTATE',
-    'ISpSerializeState', 'SpeechCategoryPhoneConverters',
-    'DISPID_SPPFirstElement', 'SRERecoOtherContext',
-    'SAFTGSM610_22kHzMono', 'DISPID_SGRClear',
-    'SPSMF_SRGS_SEMANTICINTERPRETATION_MS', 'SPRULE',
-    'SAFT24kHz8BitStereo', 'DISPID_SpeechGrammarRuleStateTransitions',
-    'DISPID_SRCEventInterests', 'SREHypothesis',
-    'DISPID_SPPConfidence', 'SAFT48kHz8BitMono', 'SVP_3',
-    'ISpeechRecoContext', 'DISPID_SpeechPhraseProperty',
-    'SpeechRecognizerState', 'SAFT16kHz8BitMono',
-    'DISPID_SWFEBitsPerSample', 'STCLocalServer',
-    'DISPID_SMSADeviceId', 'SGDSActiveUserDelimited', 'SPEI_MAX_TTS',
-    'DISPID_SVSRunningState', 'DISPID_SRCPause', 'DISPID_SRState',
-    'SpeechRegistryUserRoot', 'DISPID_SRSCurrentStreamNumber',
-    'SPRECOGNIZERSTATUS', 'eLEXTYPE_PRIVATE3', 'SpObjectToken',
-    'SAFT8kHz8BitMono', 'SP_VISEME_17', 'DISPID_SGRsDynamic',
-    'DISPID_SRCESoundStart', 'SVPOver', 'DISPID_SDKEnumKeys',
-    'SVP_14', 'SPSHORTCUTTYPE', 'STCInprocHandler',
-    'SAFTNonStandardFormat', 'SRAONone', 'DISPID_SPRText',
-    'eLEXTYPE_PRIVATE17', 'Speech_StreamPos_RealTime',
-    'ISpeechLexiconPronunciations', 'SSTTWildcard', 'DISPID_SRGState',
-    'DISPID_SRCEStartStream', 'SWPKnownWordPronounceable',
-    'DISPID_SRAudioInput', 'DISPID_SVGetAudioInputs',
-    'DISPID_SpeechPhraseProperties', 'SINoSignal', 'SVP_15',
-    'SAFTCCITT_uLaw_22kHzMono', 'SRSActiveAlways',
-    'SpeechGrammarTagUnlimitedDictation',
-    'DISPID_SOTMatchesAttributes', 'SASClosed',
-    'DISPID_SRGCmdLoadFromFile', 'SPRS_INACTIVE', 'SpFileStream',
-    'SAFT44kHz8BitStereo', 'SLTApp', 'DISPID_SOTIsUISupported',
-    'SAFT44kHz8BitMono', 'eLEXTYPE_RESERVED6', 'eLEXTYPE_PRIVATE18',
-    'ISpeechPhraseReplacements', 'DISPID_SRRTStreamTime',
-    'SPEI_RECO_OTHER_CONTEXT', 'DISPID_SVStatus',
-    'DISPID_SpeechPhraseElements', 'DISPID_SVSpeak',
-    'DISPID_SRAllowAudioInputFormatChangesOnNextSet', 'SSTTDictation',
-    'SPDKL_CurrentConfig', 'DISPID_SPRs_NewEnum',
-    'DISPID_SRDisplayUI', 'SPSSuppressWord', 'DISPID_SPRsCount',
-    'ISpPhraseAlt', 'DISPID_SPCPhoneToId',
-    'DISPID_SpeechRecoResultTimes', 'SREAllEvents',
-    'DISPID_SDKEnumValues', 'DISPID_SRSClsidEngine', 'SPSFunction',
-    'DISPID_SRCEAdaptation', 'IStream', 'DISPID_SVEWord',
-    'eLEXTYPE_APP', 'SpeechPropertyLowConfidenceThreshold',
-    'DISPID_SVEVoiceChange', 'SVP_9', 'SSFMOpenReadWrite', 'SVPAlert',
-    'SPEI_RESERVED6', 'ISpeechPhraseAlternates',
-    'ISpeechPhraseAlternate', 'DISPID_SpeechObjectTokenCategory',
-    'SPEI_INTERFERENCE', 'SpeechAudioState', 'SpeechVoiceEvents',
-    'DISPID_SAFType', 'SGSEnabled', 'SRSActive',
-    'DISPID_SpeechLexiconWords', 'SpMemoryStream', 'DISPID_SRProfile',
-    'eLEXTYPE_RESERVED9', 'SPSTREAMFORMATTYPE', 'SPEI_MAX_SR',
-    'DISPID_SGRInitialState', 'ISpeechAudio',
-    'SAFTCCITT_uLaw_8kHzMono', 'ISpeechPhraseProperties',
-    'ISpeechVoiceStatus', 'SINone', 'SVP_19',
-    'DISPID_SpeechPhraseReplacement', 'ISpEventSource',
-    'SP_VISEME_18', 'SpMMAudioEnum', 'SpInProcRecoContext',
-    'DISPID_SpeechPhraseReplacements', 'DISPID_SRCEInterference',
-    'DISPID_SpeechPhraseAlternates', 'SGPronounciation',
-    'DISPID_SDKSetStringValue', 'SRCS_Disabled', 'eLEXTYPE_PRIVATE14',
-    'DISPID_SpeechMemoryStream', 'DISPID_SpeechCustomStream',
-    'ISpeechRecoResultDispatch', 'DISPID_SpeechPhraseInfo',
-    'SPRECORESULTTIMES', '__MIDL___MIDL_itf_sapi_0000_0020_0001',
-    'DISPID_SOTCDefault', 'DISPID_SOTGetStorageFileName',
-    'SVSFVoiceMask', 'DISPID_SRRSaveToMemory',
-    'SPINTERFERENCE_LATENCY_WARNING', 'DISPID_SRRAudio',
-    'SPPS_Modifier', 'SPEVENTENUM', 'SPAS_PAUSE',
-    'SpeechRecoProfileProperties', 'SPWT_DISPLAY', 'SPAUDIOSTATUS',
-    'DISPID_SRRSetTextFeedback', 'SPEI_ADAPTATION', 'SPRST_ACTIVE',
-    'DISPID_SVDisplayUI', 'DISPID_SRSNumberOfActiveRules',
-    'SECFIgnoreKanaType', 'DISPID_SVSLastBookmark', 'DISPID_SOTCId',
-    'SPEI_REQUEST_UI', '__MIDL___MIDL_itf_sapi_0000_0020_0002',
-    'DISPID_SRSSupportedLanguages', 'DISPID_SMSAMMHandle',
-    'tagSTATSTG', 'SPBO_NONE', 'DISPID_SPRuleParent',
-    'DISPID_SLWsItem', 'SP_VISEME_15', 'SRESoundEnd',
-    'DISPIDSPTSI_ActiveLength', 'DISPID_SRGCmdLoadFromMemory',
-    'SRTSMLTimeout', 'SPGS_EXCLUSIVE', 'DISPID_SDKSetBinaryValue',
-    'SP_VISEME_4', 'DISPID_SpeechDataKey',
-    'SPWP_KNOWN_WORD_PRONOUNCEABLE', 'DISPID_SPEDisplayAttributes',
-    'SpeechPropertyAdaptationOn', 'SWPUnknownWordUnpronounceable',
-    'SWTAdded', 'DISPID_SRIsShared', 'SAFTADPCM_22kHzStereo',
-    'eLEXTYPE_MORPHOLOGY', 'SPLO_STATIC', 'DISPID_SGRSTPropertyName',
-    'DISPID_SRGRecoContext', 'SPAR_Low', 'SpAudioFormat', 'SVP_0',
-    'SpeechWordType', 'DISPID_SRRGetXMLResult', 'SRTReSent',
-    'SPINTERFERENCE_LATENCY_TRUNCATE_END', 'DISPID_SGRSTPropertyId',
-    'DISPID_SBSRead', 'DISPID_SRRecognizer', 'SRAORetainAudio',
-    'SP_VISEME_13', 'eLEXTYPE_PRIVATE4', 'SVP_11',
-    'ISpeechRecoGrammar', 'DISPID_SVAudioOutputStream',
-    'SECFIgnoreWidth', 'SVP_4', 'SPWAVEFORMATTYPE', 'SGLexical',
-    'SpeechGrammarState', 'SVSFParseMask', 'SPWORDLIST',
-    'DISPID_SPERequiredConfidence',
-    'SpeechPropertyHighConfidenceThreshold', 'eLEXTYPE_PRIVATE10',
-    'DISPID_SRCCreateGrammar', 'SREAdaptation', 'ISpeechGrammarRules',
-    'DISPIDSPTSI_ActiveOffset', 'SPEI_RECO_STATE_CHANGE',
-    'ISpMMSysAudio', 'WAVEFORMATEX', 'SFTInput', 'SpCustomStream',
-    'SPEI_PHONEME', 'DISPID_SABIEventBias', 'SGDisplay',
-    'SAFTADPCM_44kHzMono', 'DISPID_SVEEnginePrivate', 'SPXRO_SML',
-    'SINoise', 'DISPID_SPCIdToPhone', 'ISpeechWaveFormatEx',
-    'SPWORDPRONUNCIATIONLIST', 'SECHighConfidence',
-    'SpeechPartOfSpeech', 'ISpeechPhraseRules', 'DISPID_SPEsItem',
-    'DISPID_SRStatus', 'DISPID_SCSBaseStream', 'SVSFIsFilename',
-    'Library', 'SDTProperty', 'SPPHRASEREPLACEMENT',
-    'DISPID_SRCEPropertyStringChange', 'SP_VISEME_14', 'SITooLoud',
-    'DISPID_SVEAudioLevel', 'SpeechDiscardType',
-    'DISPID_SpeechRecoResult2', 'SPSHT_Unknown', 'ISpEventSink',
-    'DISPID_SVResume', 'SAFTGSM610_11kHzMono',
-    'SpeechDataKeyLocation', 'ISpeechPhraseRule',
-    'DISPID_SpeechObjectTokens', 'SDKLLocalMachine',
-    'DISPID_SRCERequestUI', 'SDTLexicalForm', 'ISpRecoGrammar2',
-    'SPAS_STOP', 'DISPID_SVESentenceBoundary', 'SRESoundStart',
-    'DISPIDSPRG', 'ISpeechLexicon', 'SAFT22kHz16BitStereo',
-    'SAFTADPCM_22kHzMono', 'SPRST_INACTIVE', 'DISPID_SRCVoice',
-    'DISPID_SRCCreateResultFromMemory', 'SPSMF_SRGS_SAPIPROPERTIES',
-    'DISPID_SLWLangId', 'DISPID_SLPPhoneIds',
-    'DISPID_SpeechWaveFormatEx', 'ISpeechPhraseInfo',
-    'DISPID_SRRRecoContext', 'SREPhraseStart', 'DISPID_SVEStreamEnd',
-    'ISpNotifySink', 'SPEI_FALSE_RECOGNITION', 'DISPID_SDKCreateKey',
-    'ISpStreamFormatConverter', 'DISPID_SLPType',
-    'DISPID_SVSInputWordPosition', 'SVP_20',
-    'DISPID_SpeechRecoResult', 'SpeechCategoryRecoProfiles',
-    'SPEI_SENTENCE_BOUNDARY', 'DISPID_SGRSTType', 'SPPHRASEPROPERTY',
-    'SPRS_ACTIVE_USER_DELIMITED', 'SpeechTokenKeyFiles',
-    'SPBOOKMARKOPTIONS', 'DISPID_SPCLangId', 'ISpPhoneConverter',
-    'DISPID_SGRSAddWordTransition', 'SAFT24kHz8BitMono',
-    'DISPID_SRIsUISupported', 'DISPID_SPERetainedStreamOffset',
-    'eWORDTYPE_ADDED', 'SPWORD', 'SECFEmulateResult', 'SVSFParseSapi',
-    'DISPID_SPEDisplayText', 'ISpeechPhraseElement', 'SVSFPersistXML',
-    'DISPID_SOTsCount', 'SRADefaultToActive', 'DISPID_SGRSTWeight',
+    'SPGS_ENABLED', 'DISPID_SPRules_NewEnum', 'SpMMAudioEnum',
+    'WAVEFORMATEX', 'DISPID_SPIEngineId',
+    'DISPID_SpeechGrammarRuleStateTransitions', 'ISpeechRecoContext',
+    'SREStateChange', 'SREFalseRecognition', 'DISPID_SGRSTNextState',
+    'DISPID_SVEventInterests', 'SLOStatic',
+    '_ISpeechRecoContextEvents', 'SREBookmark', 'DISPID_SLWs_NewEnum',
+    'SpeechEmulationCompareFlags', 'SRADefaultToActive', 'SPBO_NONE',
+    'DISPID_SPILanguageId', 'SPEI_FALSE_RECOGNITION',
+    'SAFT16kHz8BitMono', 'SRCS_Disabled', 'SASPause',
+    'ISpeechPhraseRules', 'ISpNotifyTranslator',
+    'SpeechAddRemoveWord', 'ISpeechPhraseElements', 'SPSVerb',
+    'DISPID_SpeechLexicon', 'DISPID_SPRulesCount',
+    'SDA_Consume_Leading_Spaces', 'DISPID_SOTGetStorageFileName',
+    'SPSMF_SRGS_SAPIPROPERTIES', 'DISPID_SVWaitUntilDone',
+    'SGRSTTDictation', 'SPINTERFERENCE_LATENCY_WARNING',
+    'SpeechTokenShellFolder', 'DISPID_SRGetPropertyString',
+    'DISPID_SGRsDynamic', 'ISpEventSink', 'DISPID_SRCERecognition',
+    'SGRSTTEpsilon', 'SRSEIsSpeaking', 'DISPID_SLWsCount',
+    'SpeechTokenKeyAttributes', 'DISPID_SWFESamplesPerSec',
+    'SPEI_RECO_OTHER_CONTEXT', 'DISPID_SVSVisemeId',
+    'DISPID_SpeechRecognizer', 'DISPID_SAStatus',
+    'DISPID_SPPEngineConfidence', 'DISPID_SVSInputWordPosition',
+    'DISPID_SOTSetId', '__MIDL___MIDL_itf_sapi_0000_0020_0002',
+    'ISpRecoResult', 'DISPID_SPEActualConfidence', 'SPFILEMODE',
+    'tagSPTEXTSELECTIONINFO', 'SAFT32kHz8BitMono',
+    'DISPID_SDKSetLongValue', 'SPFM_CREATE_ALWAYS',
+    'DISPID_SAFGetWaveFormatEx', 'SpLexicon', 'ISpeechPhraseProperty',
+    'SAFT22kHz16BitStereo', 'SPEI_REQUEST_UI',
+    'DISPID_SGRInitialState', 'SPEI_MAX_SR',
+    'DISPID_SPIAudioSizeBytes', 'SPPHRASEREPLACEMENT', 'SITooSlow',
+    'SPWP_KNOWN_WORD_PRONOUNCEABLE', 'DISPIDSPTSI',
+    'DISPID_SDKOpenKey', 'SAFTCCITT_ALaw_11kHzStereo',
+    'Speech_StreamPos_Asap', 'SpNotifyTranslator',
+    'DISPID_SOTDataKey', 'SPAUDIOSTATUS', 'DISPID_SRGIsPronounceable',
+    'DISPID_SpeechPhraseProperty', 'SAFTCCITT_ALaw_44kHzStereo',
+    'SpeechEngineProperties', 'DISPID_SGRSTsCount', 'SPEI_RESERVED6',
+    'DISPID_SPIGetDisplayAttributes', 'SGRSTTWord', 'SRTReSent',
+    'SVP_0', 'SWPKnownWordPronounceable', 'eLEXTYPE_PRIVATE7',
+    'DISPID_SGRsCommit', 'DISPID_SPPId',
+    'SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE', 'SPEI_VOICE_CHANGE',
+    'SPDKL_CurrentUser', 'eWORDTYPE_ADDED', 'SVEStartInputStream',
+    'SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN', 'SpeechAudioState',
+    'DISPID_SPIEnginePrivateData', 'DISPID_SpeechGrammarRules',
+    'DISPID_SRDisplayUI', 'IStream', 'SVP_13', 'SVSFIsNotXML',
+    'SPPS_RESERVED1', 'ISpResourceManager', 'SECFIgnoreKanaType',
+    'DISPID_SABIBufferSize', 'DISPID_SPERetainedSizeBytes',
+    'SPEVENTENUM', 'DISPID_SRGRecoContext', 'SDKLDefaultLocation',
+    'SpeechWordType', 'eLEXTYPE_USER_SHORTCUT', 'SREPhraseStart',
+    'SAFTCCITT_ALaw_22kHzMono', 'SPAR_Low', 'DISPID_SCSBaseStream',
+    'SDTReplacement', 'DISPID_SRSCurrentStreamPosition', 'SDTAudio',
+    'SDKLCurrentUser', 'SPLOADOPTIONS', 'SVF_None',
+    'DISPID_SDKSetBinaryValue', 'SINoise', 'ISpNotifySource',
+    'SPEI_RESERVED2', 'SPLO_STATIC', 'DISPID_SRRTLength',
+    'DISPID_SPRuleChildren', 'IInternetSecurityManager',
+    'DISPID_SPACommit', 'SpVoice', 'DISPID_SRIsUISupported',
+    'SGRSTTRule', 'DISPID_SpeechPhraseElements', 'DISPID_SPPValue',
+    'SGRSTTTextBuffer', 'DISPID_SPISaveToMemory',
+    'ISpeechCustomStream', 'SREStreamEnd',
+    'DISPID_SpeechPhraseProperties', 'SPEI_SR_PRIVATE',
+    'SAFT12kHz16BitMono',
+    'DISPID_SRAllowVoiceFormatMatchingOnNextSet',
+    'DISPID_SDKGetBinaryValue', 'SPDKL_DefaultLocation',
+    'ISpeechPhraseReplacement', 'SVP_3', 'ISpeechGrammarRuleState',
+    'SPPROPERTYINFO', 'DISPID_SpeechPhraseBuilder', 'SVP_9',
+    'SAFTCCITT_uLaw_11kHzStereo', 'DISPID_SRCRetainedAudioFormat',
+    'SpSharedRecoContext', 'SRTStandard', 'SPFM_OPEN_READWRITE',
+    'SECNormalConfidence', 'SP_VISEME_13', '_RemotableHandle',
+    'SPRECOGNIZERSTATUS', 'DISPID_SRRSpeakAudio',
+    'DISPID_SVSyncronousSpeakTimeout', 'ISpeechLexiconWord',
+    'DISPID_SPPName', 'DISPID_SVSpeakCompleteEvent', 'SPCT_COMMAND',
+    'ISpLexicon', 'DISPID_SLPsCount', 'SVP_7', 'SPEI_TTS_AUDIO_LEVEL',
+    'DISPID_SpeechDataKey', 'SPFM_OPEN_READONLY', 'SPSNoun',
+    'SVSFPersistXML', 'SPWT_DISPLAY', 'SREStreamStart',
+    'SpeechGrammarTagWildcard', 'ISpeechTextSelectionInformation',
+    'DISPID_SRSSupportedLanguages', 'ISpeechRecoResult',
+    'SAFTCCITT_ALaw_11kHzMono', 'SpeechRecognizerState',
+    'SpeechVoiceCategoryTTSRate', 'DISPID_SpeechLexiconProns',
+    'DISPID_SVGetVoices', 'DISPID_SRGCommit',
+    'DISPID_SPRuleNumberOfElements', 'SpeechRecoProfileProperties',
+    'DISPID_SpeechPhraseElement', 'SDTAlternates', 'SP_VISEME_18',
+    'DISPID_SPIRetainedSizeBytes', 'eLEXTYPE_PRIVATE19',
+    'DISPID_SGRSAddWordTransition', 'DISPID_SVSInputSentenceLength',
+    'SPEI_HYPOTHESIS', 'SVP_20', 'SpFileStream', 'SREHypothesis',
+    'DISPID_SRCEPhraseStart', 'DISPID_SLPLangId', 'SPPS_Unknown',
+    'SAFTGSM610_44kHzMono', 'DISPID_SRGCmdLoadFromObject',
+    'DISPID_SPRuleEngineConfidence', 'SpeechVoiceSpeakFlags',
+    'DISPID_SpeechLexiconWord', 'SPTEXTSELECTIONINFO', 'SPBO_PAUSE',
+    'SPWORD', 'DISPID_SGRsAdd', 'DISPID_SOTCDefault',
+    'SVSFNLPSpeakPunc', 'ISpDataKey',
+    'DISPID_SpeechGrammarRuleStateTransition',
+    'DISPID_SVGetAudioOutputs', 'DISPID_SRRPhraseInfo',
+    'SAFT12kHz8BitStereo', 'DISPID_SRGDictationUnload',
+    'SSSPTRelativeToStart', 'SpeechTokenValueCLSID',
+    'SPDKL_CurrentConfig', 'SPEI_SOUND_END', 'SAFT32kHz16BitMono',
+    'SAFTNonStandardFormat', 'SRARoot', 'DISPID_SRRAudioFormat',
+    'DISPID_SPCPhoneToId', 'SVF_Emphasis', 'SPPS_Function',
+    'SRESoundStart', 'SPSMF_UPS', 'DISPID_SRCERecognizerStateChange',
+    'DISPID_SPEAudioStreamOffset', 'SVPNormal',
+    'DISPID_SLWPronunciations', 'SPSEMANTICERRORINFO', 'SP_VISEME_19',
+    'SpeechPartOfSpeech', 'SPSHORTCUTTYPE',
+    'DISPID_SRGetPropertyNumber', 'DISPID_SBSWrite', 'SGSExclusive',
+    'DISPID_SpeechRecoContextEvents', 'SPSHT_NotOverriden',
+    'SPAR_High', 'SECFNoSpecialChars', 'SAFTADPCM_8kHzStereo',
+    'DISPID_SVEEnginePrivate', 'SSFMCreateForWrite',
+    'eLEXTYPE_PRIVATE20', 'SPCS_DISABLED', 'SPSTREAMFORMATTYPE',
+    'DISPID_SABufferInfo', 'SP_VISEME_3', 'SpeechTokenContext',
+    'SAFTADPCM_22kHzMono', 'DISPID_SpeechPhraseAlternates',
+    'DISPID_SVPause', 'SECFIgnoreCase', 'SVPOver', 'DISPID_SPPsItem',
+    'SVEBookmark', 'SVSFIsFilename', 'DISPID_SMSADeviceId',
+    'SREAudioLevel', '_SPAUDIOSTATE', 'DISPID_SAVolume',
+    'DISPID_SRRTTickCount', 'DISPID_SRGCmdLoadFromMemory',
+    'SPEI_TTS_BOOKMARK', 'typelib_path', 'SRAImport',
+    'SPWORDPRONUNCIATION', 'SPPS_SuppressWord', 'SPCS_ENABLED',
+    'SRTAutopause', 'SPEI_VISEME', 'SVP_19', 'ISpeechMemoryStream',
+    'SPDATAKEYLOCATION', 'ISpeechGrammarRules', 'SPGRAMMARSTATE',
+    'SPLEXICONTYPE', 'SDA_One_Trailing_Space', 'DISPID_SWFEExtraData',
+    'DISPID_SGRSTs_NewEnum', 'DISPID_SGRSRule', 'DISPID_SRGetFormat',
+    'DISPID_SVSInputSentencePosition', 'SPAR_Medium', 'SVP_17',
+    'SPEI_END_SR_STREAM', 'SpeechDictationTopicSpelling',
+    'SpObjectToken', 'SpeechAudioVolume', 'SpeechUserTraining',
+    'DISPID_SVESentenceBoundary', 'DISPID_SPRuleParent',
+    'DISPID_SVSLastResult', 'ISpObjectTokenCategory',
+    'eLEXTYPE_PRIVATE16', 'SRERequestUI', 'DISPID_SVVolume',
+    'SAFT11kHz16BitStereo', 'ISpeechAudioFormat',
+    'SAFT44kHz16BitMono', 'DISPIDSPRG', 'SAFT32kHz16BitStereo',
+    'SAFT48kHz16BitStereo', 'ISpeechObjectToken', 'SVEVoiceChange',
     'DISPID_SVAllowAudioOuputFormatChangesOnNextSet',
-    'SPDKL_CurrentUser', 'SSSPTRelativeToStart', 'SPBO_PAUSE',
-    'DISPID_SGRSTsCount', 'SpSharedRecoContext',
-    'SPEI_END_INPUT_STREAM', 'DISPID_SRRTOffsetFromStart',
-    'DISPID_SpeechBaseStream', 'DISPID_SASFreeBufferSpace',
-    'IInternetSecurityManager', 'SAFTADPCM_11kHzStereo',
-    'SpeechVoicePriority', 'SpeechPropertyNormalConfidenceThreshold',
-    'DISPID_SRSetPropertyNumber', 'SpeechAudioVolume',
-    'SAFT22kHz8BitStereo', 'DISPID_SpeechRecoContextEvents',
-    'ISpPhoneticAlphabetSelection', 'DISPID_SPPsCount',
-    'DISPID_SVGetAudioOutputs', 'DISPID_SPEAudioSizeBytes',
-    'SPSInterjection', 'ISpeechBaseStream',
-    'DISPID_SpeechRecoContext', 'SpeechLoadOption', 'SASRun',
-    'SAFT11kHz8BitStereo', 'SPSModifier', 'SRERecognition',
-    'DISPID_SOTGetAttribute', 'ISpRecoResult', 'DISPID_SLPsItem',
-    'SAFTADPCM_8kHzStereo', 'SRSInactiveWithPurge',
-    'SDKLCurrentConfig', 'SPEI_RESERVED2', 'ISpeechResourceLoader',
-    'DISPID_SRCRetainedAudioFormat', 'SpNotifyTranslator',
-    'DISPID_SVSkip', 'SPAS_CLOSED', 'SPSHORTCUTPAIR', 'ISpStream',
-    'tagSPPROPERTYINFO', 'DISPID_SOTCategory', 'SpResourceManager',
-    'DISPID_SVGetProfiles', 'SPFM_OPEN_READWRITE',
-    'eLEXTYPE_LETTERTOSOUND', 'SAFT32kHz16BitStereo', 'SPEI_VISEME',
-    'SpeechCategoryVoices', 'ISpProperties', 'DISPID_SLWType',
-    'SAFT12kHz8BitMono', 'DISPID_SWFEFormatTag', 'ISpObjectWithToken',
-    'DISPID_SLGetPronunciations', 'SSSPTRelativeToCurrentPosition',
-    'SRTExtendableParse', 'DISPID_SOTDataKey', 'SRATopLevel',
-    'DISPID_SVEViseme', 'SVEVoiceChange', 'DISPID_SWFEBlockAlign',
-    'ISpeechRecoResult2', 'SVEAllEvents', 'DISPID_SPAs_NewEnum',
-    'DISPID_SLGetGenerationChange', 'eLEXTYPE_PRIVATE19',
-    'DISPID_SPPEngineConfidence', 'DISPID_SPIGetDisplayAttributes',
-    'SPBO_TIME_UNITS', 'DISPID_SADefaultFormat',
-    'SAFTTrueSpeech_8kHz1BitMono', 'eLEXTYPE_RESERVED4', 'SVP_21',
-    'DISPID_SWFESamplesPerSec', 'tagSPTEXTSELECTIONINFO',
-    'ISpeechGrammarRule', 'SP_VISEME_20', 'SP_VISEME_12',
-    'DISPID_SLPs_NewEnum', 'SpSharedRecognizer',
-    'SpeechVoiceCategoryTTSRate', 'SPPS_NotOverriden',
-    'SpNullPhoneConverter', 'ISpeechDataKey', 'SPXRO_Alternates_SML',
-    'DISPID_SPRsItem', 'DISPID_SRCAudioInInterferenceStatus',
-    'DISPID_SPPs_NewEnum', 'SPVPRI_NORMAL',
-    'DISPID_SRGCmdLoadFromResource', 'DISPID_SGRSAddRuleTransition',
-    'SVSFNLPMask', 'SPFM_CREATE', 'SPPHRASE', 'SGDSActive',
-    'SP_VISEME_6', 'SPAR_High', 'SAFT48kHz16BitMono',
-    'DISPID_SMSSetData', 'DISPID_SRGCmdSetRuleIdState',
-    'SVEStartInputStream', 'DISPID_SWFEChannels', 'SpeechLexiconType',
-    'SpeechAddRemoveWord', 'SpeechTokenValueCLSID',
-    'SPEI_SR_AUDIO_LEVEL', 'DISPID_SASetState', 'SPAUDIOSTATE',
-    'SPEI_START_SR_STREAM', 'DISPID_SRRPhraseInfo',
-    'SPEI_SOUND_START', 'SPVPRIORITY', 'SVSFUnusedFlags',
-    'DISPID_SPRFirstElement', '__MIDL_IWinTypes_0009', 'SITooQuiet',
-    'SAFTCCITT_ALaw_11kHzStereo', 'DISPID_SLRemovePronunciation',
-    'ISpNotifyTranslator', 'SREPropertyStringChange',
-    'DISPID_SRGReset', 'SPINTERFERENCE_TOOQUIET', 'SPEI_VOICE_CHANGE',
-    'SECFIgnoreCase', 'DISPID_SRGSetWordSequenceData',
-    'SPDATAKEYLOCATION', 'SVP_16', 'SRADynamic',
-    'ISpeechLexiconPronunciation', 'DISPID_SVSpeakStream',
-    'ISpeechMemoryStream', 'DISPID_SPPChildren',
-    'SDA_Two_Trailing_Spaces', 'DISPID_SPIElements',
-    'SGRSTTTextBuffer', 'DISPID_SpeechGrammarRule',
-    'DISPID_SpeechRecognizerStatus', 'SPWT_PRONUNCIATION',
-    'SPTEXTSELECTIONINFO', 'DISPID_SOTCreateInstance', 'SPSUnknown',
-    'DISPID_SVSLastStreamNumberQueued', '_ISpeechRecoContextEvents',
-    'DISPID_SpeechRecognizer', 'SGRSTTDictation',
-    'SAFT32kHz16BitMono', 'DISPID_SGRSTsItem', 'SDTDisplayText',
-    'SPINTERFERENCE_NONE', 'SECNormalConfidence',
-    'SAFT24kHz16BitMono', 'SAFTADPCM_8kHzMono', 'DISPID_SVVolume',
-    'SPWT_LEXICAL_NO_SPECIAL_CHARS', 'SPCATEGORYTYPE',
-    'ISpeechPhraseInfoBuilder', 'SPCS_DISABLED',
-    'SpeechRecoContextState', 'DISPID_SpeechPhraseElement',
-    'DISPID_SLGetWords', 'DISPID_SRCEHypothesis', 'DISPID_SGRsCount',
-    'DISPID_SPIRule', 'DISPID_SRCRequestedUIType',
-    'ISpeechAudioFormat', 'DISPID_SAFGetWaveFormatEx',
-    'IEnumSpObjectTokens', 'SPFM_CREATE_ALWAYS', 'SVP_10',
-    'SPPS_RESERVED2', 'eLEXTYPE_PRIVATE6', 'DISPID_SpeechPhraseRule',
-    'SLODynamic', 'SP_VISEME_3', 'DISPID_SRGDictationSetState',
-    'SPAUDIOOPTIONS', 'DISPID_SGRSAddSpecialTransition', 'UINT_PTR',
-    'SAFTCCITT_uLaw_8kHzStereo', 'SAFTGSM610_8kHzMono', 'SPVPRI_OVER',
-    'DISPID_SABIBufferSize', 'DISPID_SRRGetXMLErrorInfo',
-    'SPEI_UNDEFINED', 'SP_VISEME_0', 'DISPID_SASState', 'ISpAudio',
-    'SpeechGrammarTagWildcard', 'SpeechVoiceSkipTypeSentence',
-    'SAFT8kHz16BitStereo', 'DISPID_SRCERecognitionForOtherContext',
-    'eLEXTYPE_USER', 'DISPID_SPAPhraseInfo', 'SAFT44kHz16BitMono',
-    'SAFTCCITT_ALaw_8kHzStereo', 'DISPID_SLGenerationId',
-    'SGDSInactive', 'DISPID_SpeechVoice', 'DISPID_SOTsItem',
-    'SPSHT_OTHER', 'SpeechSpecialTransitionType', 'SPVISEMES',
-    'ISpeechRecognizerStatus', 'SPSVerb',
-    'SpeechPropertyComplexResponseSpeed', 'SVEWordBoundary',
-    'DISPID_SpeechGrammarRuleStateTransition', 'DISPID_SPARecoResult',
-    'SpeechStreamSeekPositionType', 'Speech_StreamPos_Asap',
-    'DISPID_SRCEPropertyNumberChange', 'SPRULESTATE',
-    'DISPID_SLAddPronunciation', 'eLEXTYPE_PRIVATE7', 'SBOPause',
-    'IInternetSecurityMgrSite', 'DISPID_SPRuleId', 'SRAExport',
-    'SPSHT_NotOverriden', 'SAFTCCITT_ALaw_44kHzMono', 'SREBookmark',
-    'DISPID_SPEEngineConfidence', 'DISPID_SWFEAvgBytesPerSec',
-    'DISPID_SRSetPropertyString', 'SAFTCCITT_ALaw_22kHzMono',
-    'SPVOICESTATUS', 'SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE',
-    'SRCS_Enabled', 'SPEI_END_SR_STREAM', 'SVESentenceBoundary',
-    'DISPID_SRCRetainedAudio', 'DISPID_SRGetPropertyNumber',
-    'DISPID_SPIEnginePrivateData', 'DISPID_SpeechLexicon',
-    'SVF_Stressed', 'SGLexicalNoSpecialChars', 'DISPID_SRGetFormat',
-    'SAFT24kHz16BitStereo', 'SAFTCCITT_uLaw_44kHzMono', 'SASStop',
-    'DISPID_SpeechPhraseRules', 'SPEI_RESERVED1',
-    'SDA_One_Trailing_Space', 'eLEXTYPE_PRIVATE9', 'DISPID_SGRsAdd',
-    'DISPID_SPEsCount', 'DISPID_SPRuleName',
-    'SpeechCategoryAppLexicons', 'SP_VISEME_21',
-    'SpeechPropertyResponseSpeed', 'SVEPhoneme', 'SpeechTokenKeyUI',
-    'SPPS_RESERVED3', 'DISPID_SVIsUISupported', 'SPPHRASERULE',
-    'DISPID_SAFGuid', 'SSFMCreate', '_ISpeechVoiceEvents',
-    'SPEI_START_INPUT_STREAM', 'DISPID_SPIRetainedSizeBytes',
-    'DISPID_SPPId', 'ISpPhoneticAlphabetConverter',
-    'SpeechUserTraining', 'DISPID_SOTId', 'DISPID_SOTGetDescription',
-    'SPGS_DISABLED', 'SAFT12kHz16BitMono', 'SpPhoneConverter',
-    'SDKLCurrentUser', 'SVF_Emphasis', 'DISPID_SGRSTText',
-    'eLEXTYPE_PRIVATE8', 'SPXMLRESULTOPTIONS', 'SDTAlternates',
-    'SP_VISEME_7', 'SRSEDone', 'DISPID_SRGDictationUnload',
-    'SpeechRecognitionType', 'SPDKL_LocalMachine'
+    'DISPID_SASetState', 'SpeechRuleAttributes', 'DISPID_SMSALineId',
+    'SRSInactiveWithPurge', 'DISPID_SPEsCount', 'ISpeechRecoResult2',
+    'SPINTERFERENCE_TOOSLOW', 'SP_VISEME_6', 'DISPID_SRCEBookmark',
+    'DISPID_SRCEPropertyStringChange', 'ISpeechPhraseAlternate',
+    'SPVPRI_ALERT', 'DISPID_SpeechRecoContext', 'SPSHORTCUTPAIRLIST',
+    'SECLowConfidence', 'ISpeechDataKey', 'DISPID_SRGState',
+    'DISPID_SpeechPhraseAlternate', 'SP_VISEME_9', 'SP_VISEME_4',
+    'DISPID_SMSGetData', 'DISPID_SRCVoicePurgeEvent',
+    'DISPID_SRCEAdaptation', 'SPSModifier', 'ISpeechPhraseAlternates',
+    'SASClosed', 'DISPID_SWFEBlockAlign', 'SDTLexicalForm',
+    'SPAUDIOBUFFERINFO', 'SVEAudioLevel', 'DISPID_SLPsItem',
+    'SP_VISEME_17', 'SPEI_SR_AUDIO_LEVEL', 'SPEI_SOUND_START',
+    'DISPID_SOTsCount', 'DISPID_SVSLastStreamNumberQueued',
+    'DISPID_SPIElements', 'SSFMCreate', 'DISPID_SAFSetWaveFormatEx',
+    'SpMMAudioIn', 'IEnumSpObjectTokens', 'Speech_Default_Weight',
+    'DISPID_SPEDisplayText', 'DISPID_SPRuleName', 'SRADynamic',
+    'DISPID_SGRId', 'SGSEnabled', 'SpStream', 'SRERecognition',
+    'DISPID_SOTGetDescription', 'SVSFPurgeBeforeSpeak',
+    'DISPID_SOTs_NewEnum', 'SAFT11kHz8BitMono', 'ISpStreamFormat',
+    'DISPIDSPTSI_SelectionOffset', 'DISPID_SWFEFormatTag',
+    'DISPID_SpeechMemoryStream', 'SITooQuiet', 'SVSFParseSapi',
+    'DISPID_SBSRead', 'ISpRecognizer3', 'SpeechAudioProperties',
+    'SAFTADPCM_44kHzStereo', 'DISPID_SRGSetWordSequenceData',
+    'SAFTCCITT_ALaw_44kHzMono', 'SpeechWordPronounceable',
+    'DISPID_SpeechPhraseInfo', 'DISPID_SDKEnumKeys', 'SRATopLevel',
+    'SFTInput', 'SpPhoneticAlphabetConverter', 'SAFT16kHz16BitStereo',
+    'ISpeechLexiconPronunciation', 'SPRECOSTATE',
+    'SpeechVoiceSkipTypeSentence', 'DISPID_SpeechObjectTokens',
+    '__MIDL_IWinTypes_0009', 'SREPropertyStringChange',
+    'SAFT11kHz16BitMono', 'DISPID_SRCreateRecoContext',
+    'DISPID_SGRSTText', 'DISPID_SOTIsUISupported', 'SPRS_ACTIVE',
+    'eLEXTYPE_RESERVED6', 'SPEI_MIN_TTS',
+    'SpTextSelectionInformation', 'SGSDisabled', 'SPWF_INPUT',
+    'SPSERIALIZEDPHRASE', 'DISPID_SGRSTransitions',
+    'DISPID_SOTMatchesAttributes', 'SpPhraseInfoBuilder',
+    'SRAORetainAudio', 'eLEXTYPE_RESERVED4', 'SPWF_SRENGINE',
+    'SPSHT_OTHER', 'SPVOICESTATUS', 'DISPID_SRCSetAdaptationData',
+    'DISPID_SOTsItem', 'DISPID_SRCEEnginePrivate',
+    'SpeechVoiceEvents', 'DISPID_SGRSTPropertyName',
+    'ISpeechRecognizer', 'SAFTNoAssignedFormat', 'ISpRecognizer2',
+    'DISPID_SVEVoiceChange', 'DISPID_SRCState', 'DISPID_SRCBookmark',
+    'SAFT22kHz8BitMono', 'DISPID_SABufferNotifySize',
+    'DISPID_SVEStreamStart', 'DISPID_SPPsCount', 'SPEVENTSOURCEINFO',
+    'eLEXTYPE_PRIVATE8', 'SPEI_UNDEFINED', 'STCLocalServer',
+    'SPPS_LMA', 'DISPID_SPAs_NewEnum', 'SpeechTokenIdUserLexicon',
+    'SVP_2', 'DISPID_SpeechRecoResultTimes',
+    'SAFTCCITT_uLaw_11kHzMono', 'DISPID_SFSClose',
+    'ISpeechRecoGrammar', 'SLTApp', 'ISpeechPhraseInfoBuilder',
+    'ISpRecoGrammar', 'SGDSActive', 'eLEXTYPE_PRIVATE1',
+    'DISPID_SGRs_NewEnum', 'SPPARTOFSPEECH', 'DISPID_SPAPhraseInfo',
+    'SPSMF_SRGS_SEMANTICINTERPRETATION_MS',
+    'DISPID_SRCEventInterests', 'SpeechRegistryUserRoot',
+    'ISpeechGrammarRuleStateTransition', 'LONG_PTR', 'SVP_18',
+    'DISPID_SPAsItem', 'SpeechGrammarTagDictation', 'SREPrivate',
+    'DISPID_SLRemovePronunciationByPhoneIds', 'DISPID_SDKEnumValues',
+    'SpeechVisemeType', 'ISpeechAudioBufferInfo', 'SLODynamic',
+    'SVP_1', 'ISpGrammarBuilder', 'SGDSActiveWithAutoPause',
+    'DISPID_SPIProperties', 'DISPID_SRCRequestedUIType',
+    'SpeechCategoryRecoProfiles', 'SPEI_START_INPUT_STREAM',
+    'SpAudioFormat', 'SVSFVoiceMask', 'SRTEmulated', 'SPEVENT',
+    'SPGS_DISABLED', 'DISPID_SPRuleId', 'eLEXTYPE_LETTERTOSOUND',
+    'SVSFUnusedFlags', 'DISPID_SOTCreateInstance', 'SP_VISEME_7',
+    'SGDSActiveUserDelimited', 'DISPID_SLWWord', 'SWTAdded',
+    'DISPID_SOTGetAttribute', 'DISPID_SVEWord',
+    'DISPID_SpeechAudioFormat', 'DISPID_SPRDisplayAttributes',
+    'ISpeechLexiconPronunciations', 'SpeechCategoryAudioIn',
+    'ISpSerializeState', 'DISPID_SVSRunningState',
+    'DISPID_SMSSetData', 'SECFDefault', 'SVSFlagsAsync', 'SRAONone',
+    'SPEI_PROPERTY_STRING_CHANGE', 'DISPID_SOTCEnumerateTokens',
+    'SREPropertyNumChange', 'SPAUDIOSTATE', 'SVP_12',
+    'DISPID_SGRName', 'eLEXTYPE_PRIVATE6',
+    'SpeechAudioFormatGUIDWave', 'SVP_16',
+    'DISPID_SPRNumberOfElements', 'ISpPhoneConverter', 'SPPS_Verb',
+    'ISpRecoGrammar2', 'SpeechStreamSeekPositionType',
+    'ISpeechRecognizerStatus', 'SPSHT_Unknown',
+    'DISPID_SRGDictationSetState', 'DISPID_SRCRecognizer',
+    'ISpeechLexiconWords', 'STCInprocServer', 'DISPID_SLGenerationId',
+    'DISPID_SpeechRecoResult', 'SpeechTokenKeyFiles',
+    'SpeechGrammarTagUnlimitedDictation', 'SPWORDPRONOUNCEABLE',
+    'DISPID_SABIMinNotification', 'DISPID_SRRTStreamTime',
+    'SAFT44kHz8BitMono', 'SVP_6', 'SPBOOKMARKOPTIONS',
+    'DISPID_SWFEAvgBytesPerSec', 'SpeechInterference',
+    'DISPID_SRGSetTextSelection', 'DISPID_SVIsUISupported',
+    'SAFTCCITT_uLaw_44kHzMono', 'DISPID_SOTDisplayUI',
+    'SAFT8kHz8BitMono', 'DISPID_SRGReset', 'SRTExtendableParse',
+    'DISPID_SAEventHandle', 'SAFTADPCM_11kHzMono', 'SVP_8',
+    'SP_VISEME_5', 'SPEI_RECOGNITION', 'DISPID_SRCCmdMaxAlternates',
+    'SAFT8kHz16BitMono', 'SpeechDiscardType',
+    'DISPID_SPERetainedStreamOffset', 'DISPID_SVEViseme',
+    'ISpeechBaseStream', 'DISPID_SVEBookmark',
+    'DISPID_SLAddPronunciationByPhoneIds', 'DISPID_SRCCreateGrammar',
+    'SVP_21', 'SRSActiveAlways', 'SAFTGSM610_8kHzMono',
+    'DISPID_SGRClear', 'SAFTADPCM_22kHzStereo',
+    'DISPID_SRRRecoContext', 'SPRST_INACTIVE',
+    'DISPID_SASNonBlockingIO', 'SPPHRASEPROPERTY', 'SPPS_RESERVED4',
+    'DISPID_SGRSTType', 'SpeechPropertyHighConfidenceThreshold',
+    'ISpeechMMSysAudio', 'ISpeechPhraseReplacements', 'DISPID_SOTCId',
+    'DISPID_SpeechLexiconWords', 'SASStop', 'eLEXTYPE_PRIVATE4',
+    'DISPID_SRGDictationLoad', 'SREAdaptation', 'DISPID_SPAsCount',
+    'SpSharedRecognizer', 'eLEXTYPE_PRIVATE9', 'SAFT48kHz8BitMono',
+    'DISPID_SREmulateRecognition', 'SECHighConfidence',
+    'DISPID_SPRFirstElement', 'DISPID_SGRSTsItem', 'SPPHRASE',
+    'DISPID_SLRemovePronunciation', 'SPAUDIOOPTIONS',
+    'SGPronounciation', 'DISPID_SPRsCount', 'DISPID_SPPChildren',
+    'SPVPRI_NORMAL', 'SPINTERFERENCE_TOOQUIET',
+    'ISpeechPhoneConverter', 'SPEI_SR_BOOKMARK', 'SpPhoneConverter',
+    'SPDKL_LocalMachine', 'DISPID_SRCEStartStream', 'SVSFParseMask',
+    'SpCustomStream', 'ISpeechLexicon', 'SPAS_PAUSE',
+    'DISPID_SVEAudioLevel', 'DISPID_SGRAttributes',
+    'SDA_No_Trailing_Space', 'tagSPPROPERTYINFO',
+    'SpInProcRecoContext', 'SECFEmulateResult', 'ISpProperties',
+    'DISPIDSPTSI_SelectionLength', 'SPCT_SLEEP', 'DISPID_SVRate',
+    'SPCT_SUB_COMMAND', 'ISpAudio', 'SAFT48kHz8BitStereo',
+    'DISPID_SGRsCount', 'DISPID_SABIEventBias', 'DISPID_SPPParent',
+    'SpeechTokenKeyUI', 'SPEI_RESERVED3', 'SPPS_Interjection',
+    'SpeechRecognitionType', 'SPSMF_SRGS_SEMANTICINTERPRETATION_W3C',
+    'SAFTCCITT_uLaw_8kHzMono', 'SPRECOCONTEXTSTATUS',
+    'SPRS_ACTIVE_WITH_AUTO_PAUSE', 'SASRun', 'DISPID_SPIGrammarId',
+    'ISpeechPhraseRule', 'SDTPronunciation', 'DISPID_SpeechAudio',
+    'SAFTCCITT_ALaw_8kHzMono', 'DISPID_SRGCmdLoadFromFile',
+    'SFTSREngine', 'DISPID_SpeechRecoResult2', 'SPGS_EXCLUSIVE',
+    'DISPID_SPRuleFirstElement', 'eLEXTYPE_PRIVATE18',
+    'DISPID_SGRsCommitAndSave', 'SPEI_RESERVED5', 'SDKLCurrentConfig',
+    'SAFT16kHz16BitMono', 'SpeechCategoryRecognizers', 'SP_VISEME_14',
+    'DISPID_SVPriority', 'SpeechGrammarRuleStateTransitionType',
+    'DISPID_SRState', 'DISPID_SRSClsidEngine',
+    'DISPID_SRCEFalseRecognition', 'ISpeechPhraseElement',
+    'SRAInterpreter', 'ISpeechAudioStatus', 'SAFT48kHz16BitMono',
+    'ISpPhoneticAlphabetConverter', 'SAFTCCITT_ALaw_8kHzStereo',
+    'SpeechCategoryVoices', 'DISPID_SVGetProfiles',
+    'SPWT_LEXICAL_NO_SPECIAL_CHARS', 'SBONone', 'IEnumString',
+    'STSF_AppData', 'SPINTERFERENCE_TOOLOUD',
+    'DISPID_SDKGetlongValue', 'DISPID_SBSFormat',
+    'DISPID_SRSCurrentStreamNumber', 'SpeechLexiconType',
+    'ISpeechXMLRecoResult', 'SPEI_WORD_BOUNDARY',
+    '_ISpeechVoiceEvents', 'DISPID_SRCCreateResultFromMemory',
+    'DISPID_SLWLangId', 'DISPID_SOTCategory', 'DISPID_SLPSymbolic',
+    'DISPID_SASCurrentDevicePosition', 'ISpeechRecoResultTimes',
+    'SGDisplay', 'DISPID_SVSInputWordLength', 'SpeechStreamFileMode',
+    'SPSERIALIZEDRESULT', 'SpeechPropertyAdaptationOn', 'SPEI_MIN_SR',
+    'SPPS_NotOverriden', 'DISPID_SpeechRecognizerStatus',
+    'SAFT16kHz8BitStereo', 'DISPID_SWFEChannels', 'SPINTERFERENCE',
+    'SpeechAllElements', 'SPPS_Noun', 'SPVISEMES',
+    'DISPID_SRSNumberOfActiveRules', 'SpeechRecoEvents',
+    'DISPID_SPEAudioSizeBytes', 'DISPID_SpeechPhraseReplacements',
+    'DISPID_SPCIdToPhone', 'SpeechPropertyResourceUsage',
+    'SPWORDLIST', 'STCRemoteServer', 'SVSFNLPMask',
+    'SPWP_UNKNOWN_WORD_PRONOUNCEABLE',
+    'DISPID_SPIAudioStreamPosition', 'SPSHORTCUTPAIR',
+    'DISPID_SPPConfidence', 'SP_VISEME_11', 'SpObjectTokenCategory',
+    'SpeechAudioFormatGUIDText', 'Speech_Max_Word_Length',
+    'DISPID_SVAlertBoundary', 'DISPID_SRRTimes',
+    'SPEI_SR_RETAINEDAUDIO', 'DISPID_SGRSTPropertyId',
+    'SPINTERFERENCE_NOSIGNAL', 'SPPHRASEELEMENT', 'SINoSignal',
+    'SP_VISEME_10', 'STSF_LocalAppData', 'DISPID_SDKDeleteValue',
+    'DISPID_SVSPhonemeId', 'DISPID_SLGetGenerationChange',
+    'SPEI_END_INPUT_STREAM', 'DISPID_SRSetPropertyString',
+    'DISPID_SpeechAudioStatus', 'SAFTDefault', 'eLEXTYPE_APP',
+    'DISPID_SRStatus', 'SpStreamFormatConverter',
+    'DISPID_SRCRetainedAudio', 'SPFM_CREATE', 'DISPID_SGRsItem',
+    'DISPID_SLGetPronunciations', 'DISPID_SpeechVoiceStatus',
+    'SPRST_ACTIVE', 'SPEI_PHRASE_START', 'SPXRO_Alternates_SML',
+    'SPFM_NUM_MODES', 'DISPID_SVAudioOutputStream',
+    'DISPID_SRCESoundStart', 'DISPID_SPIGetText', 'STSF_FlagCreate',
+    'DISPID_SOTRemove', 'SP_VISEME_16', 'SPWORDTYPE',
+    'DISPID_SpeechAudioBufferInfo', 'ISpStreamFormatConverter',
+    'SpeechVoicePriority', 'ISpPhoneticAlphabetSelection',
+    'SAFT12kHz8BitMono', 'DISPID_SOTCSetId', 'DISPID_SPCLangId',
+    'SPSHT_EMAIL', 'DISPID_SLWsItem', 'DISPID_SRCEHypothesis',
+    'SPRST_NUM_STATES', 'SPEI_MAX_TTS', 'eLEXTYPE_MORPHOLOGY',
+    'SGRSTTWildcard', 'SPAO_RETAIN_AUDIO', 'SpMemoryStream', 'SVP_14',
+    'DISPID_SpeechPhraseRules', 'SP_VISEME_20', 'SPPS_Modifier',
+    'SDKLLocalMachine', 'DISPID_SDKGetStringValue',
+    'DISPID_SpeechObjectToken', 'SAFTText', 'SP_VISEME_21',
+    'SpeechLoadOption', 'SWTDeleted', 'DISPID_SRCEEndStream',
+    'DISPID_SVSLastBookmarkId', 'DISPID_SFSOpen',
+    'DISPID_SVEStreamEnd', 'SPRST_ACTIVE_ALWAYS', 'SRSActive',
+    'SAFT24kHz16BitMono', 'ISpObjectWithToken', 'ISpRecoContext',
+    'SAFT8kHz8BitStereo', 'ISpXMLRecoResult', 'SPEI_RESERVED1',
+    'SVP_11', 'SpUnCompressedLexicon', 'DISPID_SPEDisplayAttributes',
+    'DISPID_SpeechFileStream', 'eLEXTYPE_PRIVATE14',
+    'SpeechDataKeyLocation', 'DISPID_SAFType', 'SPINTERFERENCE_NONE',
+    'SPEI_START_SR_STREAM', 'SWPUnknownWordPronounceable',
+    'SPINTERFERENCE_TOOFAST', 'SVSFParseSsml',
+    'DISPID_SRRDiscardResultInfo',
+    'DISPID_SRCERecognitionForOtherContext', 'SRERecoOtherContext',
+    'SAFT24kHz8BitMono', 'SpInprocRecognizer', 'DISPID_SGRsFindRule',
+    'DISPID_SRRSaveToMemory', 'SVSFParseAutodetect',
+    'DISPID_SPPNumberOfElements', 'SpeechGrammarState',
+    'DISPID_SRGCmdLoadFromProprietaryGrammar', 'SPLO_DYNAMIC',
+    'DISPID_SRSetPropertyNumber', 'DISPID_SGRSAddSpecialTransition',
+    'DISPID_SWFEBitsPerSample', 'ISpeechPhraseProperties',
+    'DISPID_SRRTOffsetFromStart', 'SAFT22kHz8BitStereo',
+    'DISPID_SLPPhoneIds', 'SpeechCategoryAudioOut', 'SVEPrivate',
+    'DISPID_SRAudioInput', 'DISPID_SVDisplayUI',
+    'eLEXTYPE_RESERVED10', 'DISPID_SRRAudio',
+    'DISPID_SLPPartOfSpeech', 'DISPID_SPPBRestorePhraseFromMemory',
+    'SpeechRunState', 'SSFMOpenReadWrite', 'SRSEDone',
+    'DISPID_SPAStartElementInResult', 'SVEPhoneme',
+    'SpeechPropertyNormalConfidenceThreshold', 'DISPID_SVVoice',
+    'DISPID_SGRAddState', 'SITooLoud', 'DISPID_SpeechCustomStream',
+    'SPCATEGORYTYPE', 'DISPID_SRGCmdSetRuleIdState',
+    'DISPID_SPIStartTime', 'SAFTADPCM_44kHzMono',
+    'DISPID_SPRs_NewEnum', 'SPVPRIORITY', 'ISpRecoCategory',
+    'eLEXTYPE_PRIVATE2', 'DISPID_SGRAddResource',
+    'DISPID_SRCERequestUI', 'DISPID_SLAddPronunciation',
+    'eLEXTYPE_RESERVED9', 'ISpPhraseAlt', 'Library',
+    'DISPID_SPARecoResult', 'SpeechGrammarWordType',
+    'SAFT32kHz8BitStereo', 'SpNullPhoneConverter',
+    'DISPID_SRCEPropertyNumberChange', 'DISPID_SRCESoundEnd',
+    'DISPID_SPIAudioSizeTime', 'DISPID_SLGetWords',
+    'ISpeechObjectTokens', 'DISPID_SVResume',
+    'SAFTExtendedAudioFormat', 'DISPID_SRProfile',
+    'DISPID_SLPs_NewEnum', 'SPEI_ACTIVE_CATEGORY_CHANGED',
+    'SPRULESTATE', 'SBOPause', 'SpeechPropertyComplexResponseSpeed',
+    'SVSFIsXML', 'eLEXTYPE_PRIVATE3', 'SPSMF_SAPI_PROPERTIES',
+    'SpeechVisemeFeature', 'SP_VISEME_12',
+    'SPRST_INACTIVE_WITH_PURGE', 'DISPID_SVAudioOutput',
+    'DISPID_SRIsShared', 'DISPID_SVStatus', 'SPAS_RUN', 'SVP_5',
+    'DISPID_SASState', 'STCAll', 'DISPID_SRRGetXMLResult',
+    'SVEAllEvents', 'DISPID_SPRulesItem', 'DISPID_SVGetAudioInputs',
+    'SP_VISEME_0', 'SPWT_LEXICAL', 'SSSPTRelativeToCurrentPosition',
+    'SPPS_RESERVED2', 'DISPID_SpeechMMSysAudio', 'tagSTATSTG',
+    'SpShortcut', 'SSTTDictation', 'SVSFDefault',
+    'IInternetSecurityMgrSite', 'UINT_PTR', 'DISPID_SRRAlternates',
+    'SPSFunction', 'SAFT11kHz8BitStereo', 'ISpeechPhraseInfo',
+    'DISPID_SPPFirstElement', 'SPWT_PRONUNCIATION',
+    'DISPID_SRCResume', 'SAFTADPCM_11kHzStereo', 'SPBO_AHEAD',
+    'SGDSInactive', 'DISPID_SLPType', 'SVEEndInputStream',
+    'SITooFast', 'SPEI_PHONEME', 'SAFTCCITT_uLaw_22kHzMono',
+    'DISPID_SBSSeek', 'SpeechRuleState', 'DISPID_SpeechBaseStream',
+    'DISPID_SVSpeakStream', 'SAFT24kHz8BitStereo', 'SPVPRI_OVER',
+    'SAFTCCITT_uLaw_22kHzStereo', 'DISPID_SRRSetTextFeedback',
+    'eLEXTYPE_PRIVATE13', 'DISPID_SPEPronunciation',
+    'SPEI_SENTENCE_BOUNDARY', 'SAFT44kHz16BitStereo',
+    'SpeechFormatType', 'SPAS_CLOSED', 'DISPID_SRGId',
+    'DISPID_SpeechVoiceEvent', 'DISPID_SGRSAddRuleTransition',
+    'eLEXTYPE_PRIVATE15', 'DISPID_SASCurrentSeekPosition',
+    'SDA_Two_Trailing_Spaces', 'SpeechPropertyResponseSpeed', 'SVP_4',
+    'DISPID_SpeechGrammarRuleState',
+    'DISPID_SRCAudioInInterferenceStatus',
+    'DISPID_SPANumberOfElementsInResult',
+    'DISPID_SpeechPhraseReplacement', 'SGLexical',
+    'SAFTTrueSpeech_8kHz1BitMono', 'DISPID_SASFreeBufferSpace',
+    'Speech_Max_Pron_Length', 'SRTSMLTimeout', 'SPXRO_SML',
+    'SPWORDPRONUNCIATIONLIST', 'SPCT_DICTATION', 'ISpeechVoice',
+    'SpeechCategoryPhoneConverters', 'DISPID_SpeechPhoneConverter',
+    'ISpRecognizer', 'SPINTERFERENCE_NOISE', 'SVF_Stressed',
+    'eLEXTYPE_PRIVATE17', 'SPEI_INTERFERENCE',
+    'DISPID_SGRSTPropertyValue', 'DISPID_SPPs_NewEnum',
+    'DISPID_SGRSTRule', 'SPRS_ACTIVE_USER_DELIMITED',
+    '__MIDL___MIDL_itf_sapi_0000_0020_0001', 'SDTDisplayText',
+    'ISpeechVoiceStatus', 'SpResourceManager',
+    'ISpeechGrammarRuleStateTransitions', 'DISPID_SDKSetStringValue',
+    'ISpMMSysAudio', 'DISPID_SGRSTWeight', 'SPSLMA', 'SINone',
+    'DISPID_SRRGetXMLErrorInfo', 'SpCompressedLexicon',
+    'SpMMAudioOut', 'SPGRAMMARWORDTYPE', 'SPCT_SUB_DICTATION',
+    'DISPID_SPIRule', 'SPXMLRESULTOPTIONS',
+    'DISPID_SpeechObjectTokenCategory', 'SVPAlert', 'ISpRecoContext2',
+    'DISPID_SVSCurrentStreamNumber', 'SRESoundEnd',
+    'DISPID_SpeechVoice', 'SPBO_TIME_UNITS', 'ISpPhrase',
+    'SPSEMANTICFORMAT', 'DISPID_SPELexicalForm',
+    'DISPID_SPERequiredConfidence', 'DISPID_SPEs_NewEnum',
+    'DISPID_SPRText', 'SSFMOpenForRead', 'ISpEventSource',
+    'SAFT8kHz16BitStereo', 'SAFT12kHz16BitStereo',
+    'SAFTGSM610_22kHzMono', 'DISPID_SLWType', 'DISPID_SRSAudioStatus',
+    'SVESentenceBoundary',
+    'DISPID_SRAllowAudioInputFormatChangesOnNextSet',
+    'SpeechEngineConfidence', 'SpeechAudioFormatType', 'DISPID_SOTId',
+    'SAFT22kHz16BitMono', 'DISPID_SOTRemoveStorageFileName',
+    'SpeechCategoryAppLexicons', 'SpeechRegistryLocalMachineRoot',
+    'DISPID_SPEEngineConfidence', 'DISPID_SPIReplacements',
+    'DISPID_SPRuleConfidence', 'SpeechRecoContextState',
+    'SECFIgnoreWidth', 'DISPID_SRGCmdLoadFromResource', 'SRSInactive',
+    'SVP_10', 'SPCONTEXTSTATE', 'SPSSuppressWord',
+    'DISPID_SpeechPhraseRule', 'SVEWordBoundary',
+    'SpeechDisplayAttributes', 'SPEI_ADAPTATION', 'DISPID_SRCVoice',
+    'ISpeechFileStream', 'SDTRule', 'SAFTADPCM_8kHzMono', 'ISpStream',
+    'ISpeechRecoResultDispatch',
+    'SpeechPropertyLowConfidenceThreshold', 'DISPID_SOTCGetDataKey',
+    'DISPID_SRCEInterference', 'DISPID_SpeechXMLRecoResult',
+    'SRAExport', 'DISPID_SRCPause', 'DISPID_SDKCreateKey',
+    'eLEXTYPE_USER', 'DISPID_SRRecognizer',
+    'SPEI_PROPERTY_NUM_CHANGE', 'SPEI_RECO_STATE_CHANGE',
+    'DISPID_SAFGuid', 'eLEXTYPE_RESERVED7', 'eLEXTYPE_RESERVED8',
+    'SPADAPTATIONRELEVANCE', 'SPBINARYGRAMMAR', 'STSF_CommonAppData',
+    'ISpObjectToken', 'SPEI_TTS_PRIVATE', 'DISPID_SVSkip',
+    'SPRECORESULTTIMES', 'Speech_StreamPos_RealTime',
+    'DISPID_SVSLastBookmark', 'SPSInterjection', 'SREAllEvents',
+    'SSTTWildcard', 'SPAR_Unknown', 'ISpeechObjectTokenCategory',
+    'DISPID_SPEsItem', 'DISPIDSPTSI_ActiveOffset',
+    'DISPID_SRAudioInputStream', 'SP_VISEME_15', 'DISPID_SVSpeak',
+    'SPPS_RESERVED3', 'DISPID_SRGCmdSetRuleState',
+    'DISPID_SPEAudioSizeTime', 'DISPID_SRGRules',
+    'ISpeechResourceLoader', 'SPPHRASERULE', 'DISPID_SDKDeleteKey',
+    'SGLexicalNoSpecialChars', 'DISPID_SRCEAudioLevel',
+    'ISpeechGrammarRule', 'SVEViseme', 'SPRULE', 'ISpVoice',
+    'DISPID_SpeechGrammarRule', 'SP_VISEME_8',
+    'DISPID_SADefaultFormat', 'eWORDTYPE_DELETED',
+    'DISPIDSPTSI_ActiveLength', 'SPSNotOverriden', 'SSTTTextBuffer',
+    'SPSUnknown', 'SLTUser', 'DISPID_SRGetRecognizers',
+    'eLEXTYPE_PRIVATE5', 'DISPID_SpeechWaveFormatEx',
+    'DISPID_SVEPhoneme', 'ISpShortcut', 'SpWaveFormatEx',
+    'SPINTERFERENCE_LATENCY_TRUNCATE_END', 'eLEXTYPE_VENDORLEXICON',
+    'DISPID_SPRsItem', 'SSSPTRelativeToEnd',
+    'SAFTCCITT_ALaw_22kHzStereo', 'SPRS_INACTIVE', 'SREInterference',
+    'ISpNotifySink', 'SDTAll', 'SpeechRetainedAudioOptions',
+    'ISpeechAudio', 'eLEXTYPE_PRIVATE12', 'STCInprocHandler',
+    'SAFTCCITT_uLaw_44kHzStereo', 'SAFTGSM610_11kHzMono',
+    'eLEXTYPE_PRIVATE11', 'DISPID_SMSAMMHandle',
+    'SWPUnknownWordUnpronounceable', 'SPAS_STOP', 'SPAO_NONE',
+    'SDTProperty', 'DISPID_SPEAudioTimeOffset',
+    'SpeechBookmarkOptions', 'SAFTCCITT_uLaw_8kHzStereo',
+    'ISpeechWaveFormatEx', 'SAFT44kHz8BitStereo', 'SRCS_Enabled',
+    'SpeechMicTraining', 'DISPID_SpeechLexiconPronunciation',
+    'SP_VISEME_2', 'SpeechSpecialTransitionType', 'SVP_15',
+    'SPWAVEFORMATTYPE', 'SAFT24kHz16BitStereo', 'SPPS_Noncontent',
+    'SP_VISEME_1', 'eLEXTYPE_PRIVATE10'
 ]
 
-_check_version('1.4.11', 1749035080.511971)
+_check_version('1.4.11', 1755312039.928113)
 
