@@ -20,7 +20,50 @@
 - Cập nhật `.gitignore` để loại trừ các file tạm và file liên quan đến AI.
 - Đồng bộ hóa mã nguồn và các dependency của addon.
 
+### 🇰🇷 한국어
 
+* 유지보수성과 관심사 분리를 개선하기 위해 `superfreetts.py`의 God Class를 전용 모듈로 리팩터링했습니다.
+* Supertonic TTS 지원 및 워커 관련 문제를 추가 및 수정했습니다.
+* UI 워크플로 문제를 수정하고 `batch_orchestrator.py`의 `NameError`를 해결했습니다.
+* 자동화된 테스트 스위트와 GitHub Actions CI를 추가했습니다.
+* AI 관련 파일 및 임시 파일이 제외되도록 `.gitignore`를 업데이트했습니다.
+* 애드온 코드와 의존성을 동기화했습니다.
+
+### 🇨🇳 简体中文
+
+* 重构了 `superfreetts.py` 中的 God Class，将其拆分为多个独立模块，以提升关注点分离和可维护性。
+* 新增 Supertonic TTS 支持，并修复了 Worker 相关问题。
+* 修复了 UI 工作流程问题，并解决了 `batch_orchestrator.py` 中的 `NameError`。
+* 新增自动化测试套件和 GitHub Actions CI。
+* 更新 `.gitignore`，排除 AI 相关文件和临时文件。
+* 同步了插件代码及依赖项。
+
+### 🇹🇼 繁體中文
+
+* 重構 `superfreetts.py` 中的 God Class，將其拆分為多個獨立模組，以改善關注點分離與可維護性。
+* 新增 Supertonic TTS 支援，並修正 Worker 相關問題。
+* 修正 UI 工作流程問題，並解決 `batch_orchestrator.py` 中的 `NameError`。
+* 新增自動化測試套件與 GitHub Actions CI。
+* 更新 `.gitignore`，排除 AI 相關檔案與暫存檔。
+* 同步外掛程式程式碼與相依性。
+
+### 🇯🇵 日本語
+
+* 関心の分離と保守性を向上させるため、`superfreetts.py` の God Class を専用モジュールへリファクタリングしました。
+* Supertonic TTS のサポートを追加し、ワーカー関連の問題を修正しました。
+* UI ワークフローの問題を修正し、`batch_orchestrator.py` の `NameError` を解消しました。
+* 自動テストスイートと GitHub Actions CI を追加しました。
+* AI 関連ファイルおよび一時ファイルを除外するよう `.gitignore` を更新しました。
+* アドオンのコードと依存関係を同期しました。
+
+### 🇸🇪 Svenska
+
+* Refaktorerade God Class i `superfreetts.py` till dedikerade moduler för bättre ansvarsfördelning och enklare underhåll.
+* Lade till stöd för Supertonic TTS och åtgärdade problem relaterade till workers.
+* Åtgärdade problem i användargränssnittets arbetsflöde och löste ett `NameError` i `batch_orchestrator.py`.
+* Lade till ett automatiserat testpaket samt GitHub Actions CI.
+* Uppdaterade `.gitignore` för att utesluta AI-relaterade och temporära filer.
+* Synkroniserade tilläggets kod och beroenden.
 
 ## 1.3.4 - 2026-06-03
 

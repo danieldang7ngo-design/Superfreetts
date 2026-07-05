@@ -20,6 +20,7 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
             "zh-CN": "核心模块重构与同步",
             "zh-TW": "核心模組重構與同步",
             "ja": "コアモジュールのリファクタリングと同期",
+            "sv": "Kärnmodul refaktorering och synkronisering",
         },
         bullets={
             "en": [
@@ -63,12 +64,20 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "同步了插件程式碼和相依性。",
             ],
             "ja": [
-                "関心の分離を改善するため、superfreetts.py God Class を専用モジュールにリファクタリングしました。",
-                "Supertonic TTS サポートと worker 修正を追加しました。",
-                "UI workflow の問題を修正し、batch_orchestrator.py の NameError を解決しました。",
+                "関心の分離と保守性を向上させるため、`superfreetts.py` の God Class を専用モジュールへリファクタリングしました。",
+                "Supertonic TTS のサポートを追加し、ワーカー関連の問題を修正しました。",
+                "UI ワークフローの問題を修正し、`batch_orchestrator.py` の `NameError` を解消しました。",
                 "自動テストスイートと GitHub Actions CI を追加しました。",
-                "AI 関連ファイルや一時ファイルを除外するように .gitignore を更新しました。",
-                "アドオンコードと依存関係を同期しました。",
+                "AI 関連ファイルおよび一時ファイルを除外するよう `.gitignore` を更新しました。",
+                "アドオンのコードと依存関係を同期しました。",
+            ],
+            "sv": [
+                "Refaktorerade God Class i `superfreetts.py` till dedikerade moduler för bättre ansvarsfördelning och enklare underhåll.",
+                "Lade till stöd för Supertonic TTS och åtgärdade problem relaterade till workers.",
+                "Åtgärdade problem i användargränssnittets arbetsflöde och löste ett `NameError` i `batch_orchestrator.py`.",
+                "Lade till ett automatiserat testpaket samt GitHub Actions CI.",
+                "Uppdaterade `.gitignore` för att utesluta AI-relaterade och temporära filer.",
+                "Synkroniserade tilläggets kod och beroenden.",
             ],
         },
     ),
