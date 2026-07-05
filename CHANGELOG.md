@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4 - 2026-07-05
+
+### English
+
+- Refactored core modules (`audio_generator`, `editor_manager`, `job_pipeline`, `tts_orchestrator`, `ui_controller`) for better separation of concerns.
+- Updated `.gitignore` to exclude AI-related and temporary files.
+- Synced addon code and dependencies.
+
+### Tiếng Việt
+
+- Tái cấu trúc các module lõi (`audio_generator`, `editor_manager`, `job_pipeline`, `tts_orchestrator`, `ui_controller`) để phân tách chức năng tốt hơn.
+- Cập nhật `.gitignore` để loại trừ các file tạm và file liên quan đến AI.
+- Đồng bộ hóa mã nguồn và các dependency của addon.
+
+
 ## 1.3.4 - 2026-06-03
 
 ### English

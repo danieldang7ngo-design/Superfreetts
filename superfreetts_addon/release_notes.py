@@ -12,6 +12,49 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="1.4",
+        title={
+            "en": "Core refactor and sync",
+            "vi": "Tái cấu trúc module lõi và đồng bộ",
+            "ko": "핵심 모듈 리팩터링 및 동기화",
+            "zh-CN": "核心模块重构与同步",
+            "zh-TW": "核心模組重構與同步",
+            "ja": "コアモジュールのリファクタリングと同期",
+        },
+        bullets={
+            "en": [
+                "Refactored core modules (audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller) for better separation of concerns.",
+                "Updated .gitignore to exclude AI-related and temporary files.",
+                "Synced addon code and dependencies.",
+            ],
+            "vi": [
+                "Tái cấu trúc các module lõi (audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller) để phân tách chức năng tốt hơn.",
+                "Cập nhật .gitignore để loại trừ các file tạm và file liên quan đến AI.",
+                "Đồng bộ hóa mã nguồn và các dependency của addon.",
+            ],
+            "ko": [
+                "핵심 모듈(audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller)을 리팩터링하여 역할 분리를 개선했습니다.",
+                "AI 관련 파일 및 임시 파일을 제외하도록 .gitignore를 업데이트했습니다.",
+                "애드온 코드와 종속성을 동기화했습니다.",
+            ],
+            "zh-CN": [
+                "重构了核心模块 (audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller) 以实现更好的关注点分离。",
+                "更新了 .gitignore 以排除 AI 相关和临时文件。",
+                "同步了插件代码和依赖项。",
+            ],
+            "zh-TW": [
+                "重構了核心模組 (audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller) 以實現更好的關注點分離。",
+                "更新了 .gitignore 以排除 AI 相關和臨時檔案。",
+                "同步了插件程式碼和相依性。",
+            ],
+            "ja": [
+                "コアモジュール (audio_generator, editor_manager, job_pipeline, tts_orchestrator, ui_controller) をリファクタリングし、関心の分離を改善しました。",
+                "AI 関連ファイルや一時ファイルを除外するように .gitignore を更新しました。",
+                "アドオンコードと依存関係を同期しました。",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.3.4",
         title={
             "en": "Workflow generate-first apply controls",
