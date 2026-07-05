@@ -178,7 +178,7 @@ class MmsEngineManager:
         try:
             result = subprocess.run(
                 [cls.get_python_exe(), '-c', 'import sherpa_onnx; print("OK")'],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True, text=True, errors='replace', timeout=30,
                 cwd=constants.MMS_ENGINE_DIR,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
@@ -249,6 +249,7 @@ class MmsEngineManager:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            errors='replace',
             cwd=constants.MMS_ENGINE_DIR,
             timeout=600,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0

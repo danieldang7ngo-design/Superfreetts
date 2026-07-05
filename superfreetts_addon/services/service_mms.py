@@ -420,7 +420,7 @@ class MmsTTS(service.ServiceBase):
                         if not response_line:
                             raise BrokenPipeError("Sherpa process closed stream.")
                         
-                        resp = json.loads(response_line.decode('utf-8').strip())
+                        resp = json.loads(response_line.decode('utf-8', errors='replace').strip())
                         
                         if resp.get("status") == "ok":
                             if os.path.exists(temp_path):
@@ -513,7 +513,7 @@ class MmsTTS(service.ServiceBase):
                     if not response_line:
                         raise BrokenPipeError("Sherpa process closed stream during batch.")
                     
-                    resp = json.loads(response_line.decode('utf-8').strip())
+                    resp = json.loads(response_line.decode('utf-8', errors='replace').strip())
                     
                     results = []
                     if resp.get("status") == "ok":

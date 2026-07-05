@@ -28,7 +28,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Added Supertonic TTS support and worker fixes.",
                 "Fixed UI workflow issues and resolved NameError in batch_orchestrator.py.",
                 "Added automated test suite and GitHub Actions CI.",
-                "Updated .gitignore to exclude AI-related and temporary files.",
                 "Synced addon code and dependencies.",
             ],
             "vi": [
@@ -36,7 +35,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Hỗ trợ Supertonic TTS và sửa worker.",
                 "Sửa lỗi UI workflow và NameError trong batch_orchestrator.py.",
                 "Thêm bộ test tự động và GitHub Actions CI.",
-                "Cập nhật .gitignore để loại trừ các file tạm và file liên quan đến AI.",
                 "Đồng bộ hóa mã nguồn và các dependency của addon.",
             ],
             "ko": [
@@ -44,7 +42,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Supertonic TTS 지원 및 worker 수정을 추가했습니다.",
                 "UI 워크플로 문제를 수정하고 batch_orchestrator.py의 NameError를 해결했습니다.",
                 "자동화된 테스트 스위트와 GitHub Actions CI를 추가했습니다.",
-                "AI 관련 파일 및 임시 파일을 제외하도록 .gitignore를 업데이트했습니다.",
                 "애드온 코드와 종속성을 동기화했습니다.",
             ],
             "zh-CN": [
@@ -52,7 +49,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "添加了 Supertonic TTS 支持和 worker 修复。",
                 "修复了 UI workflow 问题，并解决了 batch_orchestrator.py 中的 NameError。",
                 "添加了自动化测试套件和 GitHub Actions CI。",
-                "更新了 .gitignore 以排除 AI 相关和临时文件。",
                 "同步了插件代码和依赖项。",
             ],
             "zh-TW": [
@@ -60,7 +56,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "新增了 Supertonic TTS 支援和 worker 修復。",
                 "修復了 UI workflow 問題，並解決了 batch_orchestrator.py 中的 NameError。",
                 "新增了自動化測試套件和 GitHub Actions CI。",
-                "更新了 .gitignore 以排除 AI 相關和臨時檔案。",
                 "同步了插件程式碼和相依性。",
             ],
             "ja": [
@@ -68,7 +63,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Supertonic TTS のサポートを追加し、ワーカー関連の問題を修正しました。",
                 "UI ワークフローの問題を修正し、`batch_orchestrator.py` の `NameError` を解消しました。",
                 "自動テストスイートと GitHub Actions CI を追加しました。",
-                "AI 関連ファイルおよび一時ファイルを除外するよう `.gitignore` を更新しました。",
                 "アドオンのコードと依存関係を同期しました。",
             ],
             "sv": [
@@ -76,7 +70,6 @@ RELEASE_NOTES: List[ReleaseNoteEntry] = [
                 "Lade till stöd för Supertonic TTS och åtgärdade problem relaterade till workers.",
                 "Åtgärdade problem i användargränssnittets arbetsflöde och löste ett `NameError` i `batch_orchestrator.py`.",
                 "Lade till ett automatiserat testpaket samt GitHub Actions CI.",
-                "Uppdaterade `.gitignore` för att utesluta AI-relaterade och temporära filer.",
                 "Synkroniserade tilläggets kod och beroenden.",
             ],
         },

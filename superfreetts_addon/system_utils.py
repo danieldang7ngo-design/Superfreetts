@@ -40,7 +40,7 @@ def is_amd_gpu_detected():
     try:
         # Simple wmic check (fast)
         cmd = "wmic path win32_VideoController get name"
-        result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, errors='replace', shell=True)
         if "AMD" in result.stdout or "Radeon" in result.stdout:
             return True
     except Exception as e:

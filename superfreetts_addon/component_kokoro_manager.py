@@ -322,12 +322,13 @@ class KokoroInstallManager(QDialog):
             cmd, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT, 
-            text=True, 
+            text=False, 
             cwd=constants.KOKORO_ENGINE_DIR,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         
-        for line in process.stdout:
+        for line_bytes in iter(process.stdout.readline, b''):
+            line = line_bytes.decode('utf-8', errors='replace')
             mw.taskman.run_on_main(lambda l=line: self.log(f"CMD: {l.strip()}"))
         
         process.wait()

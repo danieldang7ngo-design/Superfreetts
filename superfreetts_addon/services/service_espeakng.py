@@ -73,7 +73,7 @@ class ESpeakNg(service.ServiceBase):
         try:
             # First check if espeak-ng is available
             try:
-                subprocess.run(['espeak-ng', '--version'], check=True, capture_output=True, text=True)
+                subprocess.run(['espeak-ng', '--version'], check=True, capture_output=True, text=True, errors='replace')
             except (subprocess.CalledProcessError, FileNotFoundError):
                 logger.warning('espeak-ng executable not found')
                 return []
@@ -136,7 +136,7 @@ class ESpeakNg(service.ServiceBase):
         ]
         
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            subprocess.run(cmd, check=True, capture_output=True, text=True, errors='replace')
         except Exception as e:
             logger.warning(f"espeak-ng failed: {e}")
             raise errors.RequestError(f"espeak-ng failed: {e}")

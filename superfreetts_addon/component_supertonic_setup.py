@@ -111,6 +111,7 @@ class SupertonicSetupDialog(QDialog):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            errors='replace',
             cwd=constants.SHARED_ENGINE_DIR,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )

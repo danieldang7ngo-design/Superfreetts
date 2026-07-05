@@ -315,7 +315,7 @@ class SupertonicTTS(service.ServiceBase):
                 line = process.stdout.readline()
                 if not line:
                     raise BrokenPipeError("Supertonic process closed stream.")
-                resp = json.loads(line.decode("utf-8").strip())
+                resp = json.loads(line.decode("utf-8", errors='replace').strip())
                 if resp.get("status") == "ok" and resp.get("audio_b64"):
                     return base64.b64decode(resp["audio_b64"])
                 raise RuntimeError(resp.get("message") or "Supertonic generation failed")
@@ -352,7 +352,7 @@ class SupertonicTTS(service.ServiceBase):
                 line = process.stdout.readline()
                 if not line:
                     raise BrokenPipeError("Supertonic process closed stream.")
-                resp = json.loads(line.decode("utf-8").strip())
+                resp = json.loads(line.decode("utf-8", errors='replace').strip())
                 if resp.get("status") != "ok":
                     raise RuntimeError(resp.get("message") or "Supertonic batch generation failed")
                 results = []
