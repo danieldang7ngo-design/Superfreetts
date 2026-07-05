@@ -206,7 +206,7 @@ class SherpaProcessPool:
             [executable_path, "-u", script_path],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=stderr_sink,
+            stderr=subprocess.PIPE, # ponytail: capture stderr to prevent blocking on full pipe
             cwd=cwd,
             startupinfo=startupinfo,
             env=env,
@@ -214,6 +214,19 @@ class SherpaProcessPool:
             bufsize=0
         )
         proc.is_healthy = True
+
+        # ponytail: drain stderr in a thread to avoid UnicodeDecodeError from Python's internal reader
+        def _drain_stderr(p, debug):
+            for line in iter(p.stderr.readline, b''):
+                if debug:
+                    try:
+                        decoded = line.decode('utf-8', errors='replace')
+                        logger.debug(f"{self.name} stderr: {decoded.rstrip()}")
+                    except:
+                        pass # Ignore any final errors on close
+            p.stderr.close()
+
+        threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
         
         # Guard: Close our handle in parent after child inherits it to avoid leaks
         if hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
