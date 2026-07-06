@@ -3,7 +3,7 @@ import json
 
 # pyqt
 import aqt.qt
-import pprint
+
 
 # anki imports
 import aqt.qt

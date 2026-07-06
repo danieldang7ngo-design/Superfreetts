@@ -13,7 +13,6 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
-from aqt import mw
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -107,6 +106,7 @@ class KokoroTTS(service.ServiceBase):
         # Wait a bit for Anki to settle
         time.sleep(2)
         try:
+            from aqt import mw
             engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
             # If user didn't configure an engine path, fall back to the packaged engine if present
             if not engine_path:
@@ -158,10 +158,9 @@ class KokoroTTS(service.ServiceBase):
     def advanced_configuration_options(self):
         """Advanced settings for power users (hidden in dropdown)"""
         from .. import system_utils
-        from .. import cpu_utils
         return {
             'num_threads': ('number', 'CPU Threads (0=Auto/Serial)', 1, 0, system_utils.get_total_cpu_count()),
-            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, cpu_utils.CPUInfo.get_max_workers()),
+            'concurrency_workers': ('number', 'Concurrency Workers (1-N)', 1, 1, system_utils.get_max_workers()),
             'debug_logging': ('bool', 'Enable Debug Logging', False),
         }
 

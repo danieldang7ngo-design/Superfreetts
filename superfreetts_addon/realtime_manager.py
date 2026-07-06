@@ -9,7 +9,7 @@ Handles:
 
 import copy
 import re
-import pprint
+
 from typing import List, Optional, Tuple, Any
 
 from . import constants
@@ -162,7 +162,7 @@ class RealtimeManager:
         note_model = note.note_type()
         note_model = copy.deepcopy(note_model)
         note_model = self.set_tts_tag_note_model(realtime_model, 'preview', note_model, side, card_ord, False)
-        logger.debug(f'render_card_template_extract_tts_tag, note_model {pprint.pformat(note_model, compact=True, width=500)}')
+        logger.debug(f'render_card_template_extract_tts_tag, note_model {note_model}')
 
         card = self.anki_utils.create_card_from_note(note, card_ord, note_model, note_model["tmpls"][card_ord])
         if side == constants.AnkiCardSide.Front:

@@ -141,10 +141,10 @@ class SupertonicTTS(service.ServiceBase):
         }
 
     def advanced_configuration_options(self):
-        from .. import cpu_utils
+        from .. import system_utils
 
         return {
-            "concurrency_workers": ("number", "Concurrency Workers (1-N)", 1, 1, cpu_utils.CPUInfo.get_max_workers()),
+            "concurrency_workers": ("number", "Concurrency Workers (1-N)", 1, 1, system_utils.get_max_workers()),
             "total_steps": ("number", "Generation Steps (5-12)", 8, 5, 12),
             "max_chunk_length": ("number", "Max Chunk Length", 300, 80, 1000),
             "silence_duration": ("number", "Silence Between Chunks", 0.3, 0, 3),

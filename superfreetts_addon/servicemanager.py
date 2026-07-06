@@ -4,7 +4,7 @@ import os
 import importlib
 import typing
 import requests
-import pprint
+
 import functools
 
 
@@ -17,7 +17,6 @@ from . import constants
 from . import config_models
 from . import logging_utils
 from . import stats
-from . import performance_cache as performance
 from . import voice_cache
 logger = logging_utils.get_child_logger(__name__)
 
@@ -43,12 +42,9 @@ class ServiceManager():
         self._services_discovered = False  # Track if discover/import/cache has been performed
 
         
-        # Performance optimization: Initialize caching layers
-        # TTL cache for voice lists (1 hour expiration)
-        self._voice_list_cache = performance.TTLCache(max_size=100, ttl_seconds=3600)
-        # Persistent disk cache for voice lists with compression (built-in)
+        # Voice list caching — single persistent+in-memory cache
         cache_dir = os.path.join(os.path.dirname(services_directory), 'cache')
-        self._persistent_voice_cache = voice_cache.VoiceListCache(
+        self._voice_cache = voice_cache.VoiceListCache(
             cache_dir=cache_dir,
             ttl_seconds=86400  # 1 day
         )
@@ -486,18 +482,11 @@ class ServiceManager():
             logger.info('full_voice_list: Services initialized but expensive services not loaded, loading now')
             self.instantiate_all_services(instantiate_expensive=True)
 
-        # Check persistent cache first (disk-based, survives across sessions)
         cache_key = f"voice_list_{single_service_name}" if single_service_name else "voice_list_all"
-        cached_voices = self._persistent_voice_cache.get(cache_key)
+        cached_voices = self._voice_cache.get(cache_key)
         if cached_voices is not None:
-            logger.debug(f'full_voice_list: Returning {len(cached_voices)} voices from persistent cache')
+            logger.debug(f'full_voice_list: Returning {len(cached_voices)} voices from cache')
             return cached_voices
-
-        # Check in-memory cache (TTL, faster than disk read)
-        ttl_cached = self._voice_list_cache.get(cache_key)
-        if ttl_cached is not None:
-            logger.debug(f'full_voice_list: Returning {len(ttl_cached)} voices from TTL cache')
-            return ttl_cached
 
         full_list = []
         enabled_count = 0
@@ -517,9 +506,7 @@ class ServiceManager():
                     logger.error(f'full_voice_list: Error getting voices from service {service_name}: {e}', exc_info=True)
                     # Continue with other services even if one fails
         
-        # Cache the result in both tiers for fast future access
-        self._voice_list_cache.set(cache_key, full_list)
-        self._persistent_voice_cache.set(cache_key, full_list)
+        self._voice_cache.set(cache_key, full_list)
         
         logger.info(f'full_voice_list: Returning {len(full_list)} voices from {enabled_count} enabled services (total services: {len(self.services)})')
         return full_list
@@ -534,9 +521,7 @@ class ServiceManager():
         """Clear cached voice lists so newly downloaded voices (e.g. Piper) appear in the UI."""
         self.get_service_voice_list.cache_clear()
         self.locate_voice.cache_clear()
-        # Also clear new caching layers
-        self._voice_list_cache.clear()
-        self._persistent_voice_cache.clear()
+        self._voice_cache.clear()
 
     def deserialize_voice(self, voice_data) -> voice_module.TtsVoice_v3:
         # avoid loading voice list for services we don't need, this is particularly important for ElevenLabsCustom which does
@@ -556,7 +541,6 @@ class ServiceManager():
         assert isinstance(voice_id, voice_module.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
         # convert from voice_id to actual voice
         voice_list = self.full_voice_list(single_service_name=voice_id.service)
-        # logger.debug(pprint.pformat(voice_list))
         voice_subset = [voice for voice in voice_list if voice.get_voice_id() == voice_id]
         if len(voice_subset) == 0:
             logger.warning(f'could not locate voice for voice_id: {voice_id!r}')

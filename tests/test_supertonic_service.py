@@ -104,7 +104,7 @@ def test_engine_config_scales_supertonic_without_touching_edge_cap():
     from superfreetts_addon.tts_orchestrator import TTSOrchestrator
     mock_stts = __import__("unittest.mock", fromlist=["MagicMock"]).MagicMock()
     instance = TTSOrchestrator(mock_stts)
-    with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=4):
+    with patch("superfreetts_addon.system_utils.get_max_workers", return_value=4):
         config = instance.build_engine_config(
             {
                 "SupertonicTTS": {"concurrency_workers": 8},
@@ -127,7 +127,7 @@ def test_supertonic_engine_config_respects_concurrency_settings():
         "SupertonicTTS": {"concurrency_workers": 8}
     }
 
-    with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=16), \
+    with patch("superfreetts_addon.system_utils.get_max_workers", return_value=16), \
          patch.object(orchestrator, 'auto_scale_pool') as mock_auto_scale:
         engine_config = orchestrator.build_engine_config(service_config_map)
         assert engine_config.get("Supertonic") == 8
@@ -145,7 +145,7 @@ def test_supertonic_engine_config_is_capped_by_max_workers():
         "SupertonicTTS": {"concurrency_workers": 24}
     }
 
-    with patch("superfreetts_addon.cpu_utils.CPUInfo.get_max_workers", return_value=16), \
+    with patch("superfreetts_addon.system_utils.get_max_workers", return_value=16), \
          patch.object(orchestrator, 'auto_scale_pool'):
         engine_config = orchestrator.build_engine_config(service_config_map)
         assert engine_config.get("Supertonic") == 16

@@ -1,7 +1,7 @@
 import os
 from . import constants
 from . import batch_constants
-from . import cpu_utils
+from . import system_utils
 from . import batch_executor
 from . import config_models
 from . import logging_utils
@@ -36,7 +36,7 @@ class TTSOrchestrator:
             service_config = service_config_map.get(service_name, {})
             concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
             
-            max_cap = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else cpu_utils.CPUInfo.get_max_workers()
+            max_cap = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else system_utils.get_max_workers()
             if concurrency > max_cap:
                 logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max ({max_cap}), capping')
                 concurrency = max_cap

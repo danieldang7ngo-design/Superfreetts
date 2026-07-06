@@ -19,16 +19,7 @@ logger = logging_utils.get_child_logger(__name__)
 the various objects here dictate how HyperTTS is configured and these objects will serialize to/from the anki config
 """
 
-class ConfigModelBase(abc.ABC):
-    @abc.abstractmethod
-    def serialize(self):
-        pass
-
-    @abc.abstractmethod
-    def validate(self):
-        pass    
-
-class BatchConfig(ConfigModelBase):
+class BatchConfig:
     def __init__(self, anki_utils):
         self._source = None
         self._target = None
@@ -122,24 +113,17 @@ class BatchSource():
         return f"BatchSource(mode={self.mode}, source_field={self.source_field}, source_template={self.source_template})"
 
 def _dataclass_to_dict(obj):
-    """Manual dataclass serializer that handles enums and nested dataclasses.
-    Replaces databind.json.dump which silently drops fields in this environment."""
-    if not is_dataclass(obj):
-        return obj
-    data = {}
-    for f in fields(obj):
-        value = getattr(obj, f.name)
-        if isinstance(value, enum.Enum):
-            data[f.name] = value.name
-        elif is_dataclass(value):
-            data[f.name] = _dataclass_to_dict(value)
-        elif isinstance(value, list):
-            data[f.name] = [_dataclass_to_dict(v) if is_dataclass(v) else v for v in value]
-        elif isinstance(value, dict):
-            data[f.name] = {k: (_dataclass_to_dict(v) if is_dataclass(v) else v) for k, v in value.items()}
-        else:
-            data[f.name] = value
-    return data
+    import dataclasses
+    import enum
+    if dataclasses.is_dataclass(obj):
+        return dataclasses.asdict(obj, dict_factory=lambda items: {k: v.name if isinstance(v, enum.Enum) else v for k, v in items})
+    if isinstance(obj, enum.Enum):
+        return obj.name
+    if isinstance(obj, dict):
+        return {k: _dataclass_to_dict(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_dataclass_to_dict(v) for v in obj]
+    return obj
 
 def serialize_batchsource(batch_source):
     return _dataclass_to_dict(batch_source)
@@ -233,7 +217,7 @@ class VoiceWithOptionsSequence(VoiceWithOptions):
         VoiceWithOptions.__init__(self, voice_id, options)
 
 
-class VoiceSelectionBase(ConfigModelBase):
+class VoiceSelectionBase:
     def __init__(self):
         self._selection_mode = None
 
@@ -345,7 +329,7 @@ class VoiceSelectionSequence(VoiceSelectionMultipleBase):
 # text processing
 # ===============
 
-class TextReplacementRule(ConfigModelBase):
+class TextReplacementRule:
     def __init__(self, rule_type):
         self._rule_type = rule_type
         self._source = None
@@ -380,7 +364,7 @@ class TextReplacementRule(ConfigModelBase):
     def validate(self):
         pass
 
-class TextProcessing(ConfigModelBase):
+class TextProcessing:
     def __init__(self):
         self._text_replacement_rules = []
         self.enabled = constants.TEXT_PROCESSING_DEFAULT_ENABLED
@@ -533,7 +517,7 @@ def deserialize_configuration(config_dict) -> Configuration:
 # realtime config models
 # ======================
 
-class RealtimeConfig(ConfigModelBase):
+class RealtimeConfig:
     def __init__(self):
         self.front = None
         self.back = None
@@ -553,7 +537,7 @@ class RealtimeConfig(ConfigModelBase):
             logger.debug('self.back.validate()')
             self.back.validate()
 
-class RealtimeConfigSide(ConfigModelBase):
+class RealtimeConfigSide:
     def __init__(self):
         self.side_enabled = False
         self.source = None
@@ -589,7 +573,7 @@ class RealtimeConfigSide(ConfigModelBase):
 <b>Voice Selection:</b> {self.voice_selection}
 """        
 
-class RealtimeSourceAnkiTTS(ConfigModelBase):
+class RealtimeSourceAnkiTTS:
     def __init__(self):
         self.mode = constants.RealtimeSourceType.AnkiTTSTag
         self.field_name = None
@@ -656,7 +640,7 @@ class PresetInfo:
     id: str
     name: str
 
-class WorkflowConfig(ConfigModelBase):
+class WorkflowConfig:
     def __init__(self, anki_utils):
         self.uuid = anki_utils.get_uuid()
         self.name = None
@@ -832,6 +816,21 @@ class TrialRequestReponse:
     error: Optional[str] = None
 
 
+def _force_single_worker_mode(config, worker_keys, force_exist=False):
+    service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
+    for service_name, s_config in service_config.items():
+        if force_exist or 'num_threads' in s_config:
+            s_config['num_threads'] = 1
+        if force_exist or 'concurrency_workers' in s_config:
+            s_config['concurrency_workers'] = 1
+
+    if constants.CONFIG_PREFERENCES in config:
+        prefs = config[constants.CONFIG_PREFERENCES]
+        for worker_key in worker_keys:
+            if force_exist or worker_key in prefs:
+                prefs[worker_key] = 1
+
+
 def migrate_configuration(anki_utils, config):
     current_config_schema_version = config.get(constants.CONFIG_SCHEMA, 0)
     if current_config_schema_version < 2:
@@ -896,21 +895,11 @@ def migrate_configuration(anki_utils, config):
     if current_config_schema_version < 5:
         # Super Free TTS: Force all users to safe serial mode (1 thread, 1 worker) by default.
         # This resolves issues where older defaults (Auto=2) were persisted.
-        service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
-        for service_name, s_config in service_config.items():
-            # Reset threads to 1 for all services
-            if 'num_threads' in s_config:
-                s_config['num_threads'] = 1
-            # Reset concurrency workers to 1 for all services
-            if 'concurrency_workers' in s_config:
-                s_config['concurrency_workers'] = 1
-
-        # Also reset global preference workers if they exist
-        if constants.CONFIG_PREFERENCES in config:
-            prefs = config[constants.CONFIG_PREFERENCES]
-            for worker_key in ['piper_workers', 'kokoro_workers', 'edgetts_workers', 'mms_workers', 'default_workers', 'batch_concurrency']:
-                if worker_key in prefs:
-                    prefs[worker_key] = 1
+        _force_single_worker_mode(
+            config,
+            ['piper_workers', 'kokoro_workers', 'edgetts_workers', 'mms_workers', 'default_workers', 'batch_concurrency'],
+            force_exist=False
+        )
 
     if current_config_schema_version < 6:
         # Super Free TTS: Clear all presets, mapping rules and realtime configs
@@ -919,22 +908,15 @@ def migrate_configuration(anki_utils, config):
         config[constants.CONFIG_MAPPING_RULES] = serialize_preset_mapping_rules(PresetMappingRules())
         config[constants.CONFIG_REALTIME_CONFIG] = {}
         
-        # Force all service configurations to single-worker mode
-        service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
-        for service_name, s_config in service_config.items():
-            s_config['num_threads'] = 1
-            s_config['concurrency_workers'] = 1
-
-        # Reset all worker-related preferences to 1
-        if constants.CONFIG_PREFERENCES in config:
-            prefs = config[constants.CONFIG_PREFERENCES]
-            worker_keys = [
+        _force_single_worker_mode(
+            config,
+            [
                 'piper_workers', 'kokoro_workers', 'edgetts_workers', 
                 'mms_workers', 'default_workers', 'batch_concurrency',
                 'batch_max_cores', 'sherpa_max_processes'
-            ]
-            for worker_key in worker_keys:
-                prefs[worker_key] = 1
+            ],
+            force_exist=True
+        )
 
     if current_config_schema_version < 7:
         if constants.CONFIG_WORKFLOWS not in config:

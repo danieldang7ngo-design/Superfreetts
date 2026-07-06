@@ -4,7 +4,6 @@ import traceback
 import logging
 import uuid
 import re
-import pprint
 import json
 
 addon_package_dir = os.path.dirname(os.path.realpath(__file__))

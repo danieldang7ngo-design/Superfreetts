@@ -7,32 +7,14 @@ import time
 import soundfile as sf
 import numpy as np
 
-# ponytail: force utf-8 on stdio streams, windows pipes are not safe
-if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
-    sys.stdin.reconfigure(encoding='utf-8')
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+# Ensure the directory containing this script is in sys.path for runner_base import
+runner_dir = os.path.dirname(os.path.abspath(__file__))
+if runner_dir not in sys.path:
+    sys.path.insert(0, runner_dir)
 
-def log(msg):
-    # Log to stderr (captured by Anki)
-    sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
-    sys.stderr.flush()
-    # Log to file if configured
-    log_path = os.environ.get('SUPERFREETTS_LOG_FILE')
-    if log_path:
-        try:
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-        except: pass
+from runner_base import setup_stdio, log, write_response
+setup_stdio()
 
-def write_response(response):
-    try:
-        sys.stdout.buffer.write(response.encode('utf-8'))
-        sys.stdout.buffer.flush()
-        return True
-    except (BrokenPipeError, OSError) as e:
-        log(f"stdout closed while writing response: {e}")
-        return False
 
 def main():
     log("KOKORO HIGH-FIDELITY RUNNER STARTED (v1.0-stable)")

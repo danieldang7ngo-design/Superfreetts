@@ -9,16 +9,19 @@ import io
 import base64
 import wave
 
-# Inject local libs path (still needed for soundfile or other dependencies if used, 
-# but we'll try to use standard 'wave' module for zero-dependency WAV creation)
+# Ensure the directory containing this script is in sys.path for runner_base import
+runner_dir = os.path.dirname(os.path.abspath(__file__))
+if runner_dir not in sys.path:
+    sys.path.insert(0, runner_dir)
+
+from runner_base import setup_stdio, log
+setup_stdio()
+
+# Inject local libs path
 base_dir = os.path.dirname(os.path.dirname(__file__))
 libs_path = os.path.join(base_dir, 'libs')
 if os.path.exists(libs_path) and libs_path not in sys.path:
     sys.path.insert(0, libs_path)
-
-def log(msg):
-    sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
-    sys.stderr.flush()
 
 def write_json(obj):
     try:
@@ -38,20 +41,6 @@ def pcm_to_wav(pcm_data, sample_rate=22050, channels=1, sampwidth=2):
     return buf.getvalue()
 
 def main():
-    # ponytail: force utf-8 on stdio streams, windows pipes are not safe
-    if os.name == 'nt':
-        # Python 3.7+
-        if hasattr(sys, 'reconfigure'):
-            sys.stdin.reconfigure(encoding='utf-8')
-            sys.stdout.reconfigure(encoding='utf-8')
-            sys.stderr.reconfigure(encoding='utf-8')
-        else:
-            # Fallback for older pythons
-            import io
-            sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-
     log("PIPER-STOCK RUNNER STARTED")
     
     # Resolve piper.exe path

@@ -22,6 +22,16 @@ def get_cpu_threads():
     except:
         return 1
 
+def get_max_workers():
+    """
+    Returns the maximum available CPU cores (minimum 1).
+    Replaces cpu_utils.CPUInfo.get_max_workers().
+    """
+    try:
+        return max(1, multiprocessing.cpu_count())
+    except Exception:
+        return 1
+
 def get_total_cpu_count():
     """Returns the total number of logical processors."""
     try:

@@ -4,11 +4,13 @@ import json
 import time
 import traceback
 
-# ponytail: force utf-8 on stdio streams, windows pipes are not safe
-if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
-    sys.stdin.reconfigure(encoding='utf-8')
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+# Ensure the directory containing this script is in sys.path for runner_base import
+runner_dir = os.path.dirname(os.path.abspath(__file__))
+if runner_dir not in sys.path:
+    sys.path.insert(0, runner_dir)
+
+from runner_base import setup_stdio, log, write_response
+setup_stdio()
 
 # Robust path detection for embedded Python
 base_dir = os.path.dirname(sys.executable)
@@ -24,28 +26,6 @@ if os.path.exists(addon_libs) and addon_libs not in sys.path:
 site_packages_root = os.path.join(base_dir, 'site-packages')
 if os.path.exists(site_packages_root) and site_packages_root not in sys.path:
     sys.path.append(site_packages_root)
-
-def log(msg):
-    # Log to stderr (captured by Anki/Service)
-    sys.stderr.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
-    sys.stderr.flush()
-    # Log to file if configured
-    log_path = os.environ.get('SUPERFREETTS_LOG_FILE')
-    if log_path:
-        try:
-            with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-        except Exception as e:
-            sys.stderr.write(f"Log file error: {e}\n")
-
-def write_response(response):
-    try:
-        sys.stdout.buffer.write(response.encode('utf-8'))
-        sys.stdout.buffer.flush()
-        return True
-    except (BrokenPipeError, OSError) as e:
-        log(f"stdout closed while writing response: {e}")
-        return False
 
 log("SHERPA RUNNER V2 STARTED")
 log("Runner script started. Importing dependencies...")

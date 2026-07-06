@@ -5,20 +5,18 @@ import os
 import sys
 import traceback
 
-# ponytail: force utf-8 on stdio streams, windows pipes are not safe
-if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
-    sys.stdin.reconfigure(encoding='utf-8')
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+# Ensure the directory containing this script is in sys.path for runner_base import
+runner_dir = os.path.dirname(os.path.abspath(__file__))
+if runner_dir not in sys.path:
+    sys.path.insert(0, runner_dir)
+
+from runner_base import setup_stdio, log
+setup_stdio()
 
 
 _ENGINE = None
 _ENGINE_CACHE_KEY = None
 _VOICE_STYLE_CACHE = {}
-
-
-def _log(message):
-    print(message, file=sys.stderr, flush=True)
 
 
 def _set_cache_env(cache_path):
@@ -233,13 +231,13 @@ def handle_request(request):
 
 
 def main():
-    _log("Supertonic runner ready")
+    log("Supertonic runner ready")
     for line in sys.stdin.buffer:
         try:
             request = json.loads(line.decode("utf-8"))
             response = handle_request(request)
         except Exception as exc:
-            _log(traceback.format_exc())
+            log(traceback.format_exc())
             response = {"status": "error", "message": str(exc)}
         sys.stdout.write(json.dumps(response) + "\n")
         sys.stdout.flush()

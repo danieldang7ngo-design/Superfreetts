@@ -18,7 +18,6 @@ NOT responsible for:
 """
 
 import os
-import pprint
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
@@ -81,7 +80,7 @@ class ConfigStore:
             self.config[constants.CONFIG_PRESETS] = {}
         self.config[constants.CONFIG_PRESETS][preset.uuid] = preset.serialize()
         self._write()
-        logger.info(f'saved preset [{preset.name}] {pprint.pformat(preset.serialize(), compact=True, width=500)}')
+        logger.info(f'saved preset [{preset.name}] {preset.serialize()}')
 
     def load_preset(self, preset_id: str) -> config_models.BatchConfig:
         logger.info(f'loading preset [{preset_id}]')
@@ -132,7 +131,7 @@ class ConfigStore:
             self.config[constants.CONFIG_WORKFLOWS] = {}
         self.config[constants.CONFIG_WORKFLOWS][workflow.uuid] = workflow.serialize()
         self._write()
-        logger.info(f'saved workflow [{workflow.name}] {pprint.pformat(workflow.serialize(), compact=True, width=500)}')
+        logger.info(f'saved workflow [{workflow.name}] {workflow.serialize()}')
 
     def load_workflow(self, workflow_id: str) -> config_models.WorkflowConfig:
         logger.info(f'loading workflow [{workflow_id}]')
@@ -227,7 +226,7 @@ class ConfigStore:
         if settings_key not in self.config.get(constants.CONFIG_REALTIME_CONFIG, {}):
             raise errors.RealtimePresetNotFound(settings_key)
         realtime_config = self.config[constants.CONFIG_REALTIME_CONFIG][settings_key]
-        logger.info(f'loaded realtime config {pprint.pformat(realtime_config, compact=True, width=500)}')
+        logger.info(f'loaded realtime config {realtime_config}')
         return self.deserialize_realtime_config(realtime_config)
 
     # ------------------------------------------------------------------

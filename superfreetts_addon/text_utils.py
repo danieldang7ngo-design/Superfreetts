@@ -33,11 +33,7 @@ def extract_template_regexp(input, regexp):
     content = match_result.group(3).strip()
     return setting, version, content
 
-def extract_simple_template(input):
-    return extract_template_regexp(input, REGEXP_REALTIME_SIMPLE_TEMPLATE)
 
-def extract_advanced_template(input):
-    return extract_template_regexp(input, REGEXP_REALTIME_ADVANCED_TEMPLATE)
 
 def process_text_replacement(text, text_processing_model):
     for text_replacement_rule in text_processing_model.text_replacement_rules:

@@ -12,7 +12,7 @@ import time
 import threading
 import concurrent.futures
 from typing import List, Dict, Tuple, Optional, Any
-import pprint
+
 
 # anki imports
 import aqt
@@ -37,7 +37,7 @@ from . import preset_rules_status
 from . import i18n
 from . import batch_constants
 from . import performance_tracker
-from . import cpu_utils
+from . import system_utils
 from . import batch_progress_ui
 from . import audio_file_store
 from . import note_audio_updater
@@ -146,7 +146,7 @@ class SuperFreeTTS():
             if not os.path.isdir(user_files_dir):
                 return
 
-            logger.info(f'{batch_constants.INFO_CACHE_CLEANUP_STARTED} Retention: {retention_days} days.')
+            logger.info(f'[CACHE] Starting cache cleanup. Retention: {retention_days} days.')
             deleted = 0
             scanned = 0
 
@@ -162,11 +162,11 @@ class SuperFreeTTS():
                             os.remove(entry.path)
                             deleted += 1
                     except OSError as e:
-                        logger.warning(f'{batch_constants.WARNING_CACHE_DELETE_ERROR} {entry.path}: {e}')
+                        logger.warning(f'[CACHE] Error deleting {entry.path}: {e}')
 
-            logger.info(f'{batch_constants.INFO_CACHE_CLEANUP_FINISHED} Scanned {scanned} files, deleted {deleted} old files.')
+            logger.info(f'[CACHE] Cache cleanup finished. Scanned {scanned} files, deleted {deleted} old files.')
         except Exception as e:
-            logger.error(f'{batch_constants.ERROR_CACHE_CLEANUP_EXCEPTION}: {e}')
+            logger.error(f'[CACHE] Error during cache cleanup: {e}')
 
     def _set_batch_status_with_ui_refresh(self, batch_status, message, phase=None):
         """Set stable batch phase/status; UI refresh is scheduled by BatchStatus."""
@@ -228,7 +228,7 @@ class SuperFreeTTS():
             if service_name == 'EdgeTTS':
                 max_cap = batch_constants.EDGETTS_MAX_WORKERS
             else:
-                max_cap = min(batch_constants.MAX_WORKER_THREADS, cpu_utils.CPUInfo.get_max_workers())
+                max_cap = min(batch_constants.MAX_WORKER_THREADS, system_utils.get_max_workers())
 
             service_limits[service_name] = max(1, min(int(configured_workers), max_cap))
 

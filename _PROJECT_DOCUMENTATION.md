@@ -1,783 +1,216 @@
-# Super Free TTS by Paul from AnkiVN - T‡i Li?u D? ¡n
+# Super Free TTS by Paul from AnkiVN - Project Documentation
 
-> T‡i li?u n‡y mÙ t? chi ti?t d? ·n Super Free TTS. –? xem nhanh tÛm t?t ki?n tr˙c v‡ d?nh hu?ng d‡nh riÍng cho AI Agents, vui lÚng d?c [AI_SUMMARY.md](./AI_SUMMARY.md).
+> This document describes the Super Free TTS project in detail. For a quick overview of the architecture and AI Agent-specific guidelines, please read [AI_SUMMARY.md](./AI_SUMMARY.md).
 
-## ?? M?c L?c
+## Table of Contents
 
-- [T?ng Quan](#-t?ng-quan)
-- [CÙng Ngh? S? D?ng](#-cÙng-ngh?-s?-d?ng)
-- [Ki?n Tr˙c D? ¡n](#-ki?n-tr˙c-d?-·n)
-- [Hu?ng D?n S? D?ng](#-hu?ng-d?n-s?-d?ng)
-- [Hu?ng D?n Ph·t Tri?n](#-hu?ng-d?n-ph·t-tri?n)
+- [Overview](#overview)
+- [Technologies Used](#technologies-used)
+- [Project Architecture](#project-architecture)
+- [Usage Guide](#usage-guide)
+- [Development Guide](#development-guide)
+- [Multi-Language UI](#multi-language-ui)
+- [License](#license)
+- [Contact & Support](#contact--support)
 
 ---
 
-## ?? T?ng Quan
+## Overview
 
-### D? ·n l‡ gÏ?
+### What is this project?
 
-**Super Free TTS** l‡ m?t addon (ti?n Ìch m? r?ng) **100% MI?N PHÕ** cho [Anki](https://apps.ankiweb.net/) - ?ng d?ng h?c flashcard ph? bi?n. Addon n‡y du?c **fork t? d? ·n HyperTTS** v‡ ti?p t?c ph·t tri?n d? ph?c v? c?ng d?ng.
+**Super Free TTS** is a **100% FREE** add-on (extension) for [Anki](https://apps.ankiweb.net/) - a popular flashcard learning application. This add-on is **forked from the HyperTTS project** and continues to be developed to serve the community.
 
-**T·c gi?**: Paul from AnkiVN
+**Author**: Paul from AnkiVN
 
-### Gi?i quy?t v?n d? gÏ?
+### What problem does it solve?
 
-Khi h?c ngÙn ng? ho?c b?t k? mÙn h?c n‡o c?n ph·t ‚m, vi?c cÛ ‚m thanh trÍn th? h?c r?t quan tr?ng. Tuy nhiÍn, vi?c thu ‚m ho?c tÏm file ‚m thanh cho t?ng th? r?t t?n th?i gian. Super Free TTS gi?i quy?t v?n d? n‡y b?ng c·ch:
+When learning a language or any subject that requires pronunciation, having audio on flashcards is crucial. However, recording audio manually or finding audio files for each card is very time-consuming. Super Free TTS solves this problem by:
 
-- **T? d?ng t?o ‚m thanh** t? van b?n trÍn th? h?c
-- **H? tr? nhi?u engine TTS MI?N PHÕ**: EdgeTTS, Piper (offline), Kokoro (offline), MMS (offline, 1100+ ngÙn ng?), Google Translate, Windows SAPI, macOS TTS, eSpeak-ng
-- **Linh ho?t**: ThÍm ‚m thanh t?ng th? ho?c h‡ng lo?t; preset mapping rules; realtime TTS
-- **100% Mi?n phÌ**: Ch? load engine free, khÙng c?n API key
+- **Automatically generating audio** from text on flashcards.
+- **Supporting multiple FREE TTS engines**: EdgeTTS, Piper (offline), Kokoro (offline), MMS (offline, 1100+ languages), Google Translate, Windows SAPI, macOS TTS, eSpeak-ng.
+- **Flexibility**: Add audio to a single card or in bulk (batch); preset mapping rules; real-time TTS.
+- **100% Free**: Only loads free engines, no API keys required.
 
-### ThÙng tin
+### Information
 
-- **TÍn addon**: Super Free TTS
-- **T·c gi?**: Paul from AnkiVN
-- **PhiÍn b?n hi?n t?i**: 1.0 (trong `version.py`)
+- **Add-on name**: Super Free TTS
+- **Author**: Paul from AnkiVN
+- **Current version**: 1.4 (in `version.py`)
 - **Website**: ankivn.com
-- **Tuong thÌch Anki**: `min_point_version: 5`, `max_point_version: 241100` (meta.json)
+- **Anki compatibility**: `min_point_version: 5`, `max_point_version: 241100` (meta.json)
 
 ---
 
-## ?? CÙng Ngh? S? D?ng
+## Technologies Used
 
-### NgÙn ng? l?p trÏnh
+### Programming Languages
 
-- **Python 3.x**: NgÙn ng? chÌnh c?a d? ·n
-- **PyQt5/PyQt6**: Framework d? t?o giao di?n ngu?i d˘ng (UI)
-- **HTML/CSS/JavaScript**: T?o giao di?n web trong c·c dialog c?a Anki
+- **Python 3.x**: Main language of the project
+- **PyQt5/PyQt6**: Framework for creating the user interface (UI)
+- **HTML/CSS/JavaScript**: Creating web interfaces in Anki's dialogs
 
-### Thu vi?n chÌnh
+### Main Libraries
 
-#### Core Dependencies (trong thu m?c `external/`)
+#### Core Dependencies (in the `external/` folder)
 
-1. **aiohttp (3.13.3)**: HTTP client/server b?t d?ng b? cho Python
-   - D˘ng d? g?i API c·c d?ch v? TTS
-
-2. **edge-tts (7.2.7)**: Thu vi?n Python d? s? d?ng Microsoft Edge TTS
-   - D?ch v? TTS mi?n phÌ ch?t lu?ng cao
-
+1. **aiohttp (3.13.3)**: Asynchronous HTTP client/server for Python
+   - Used to call APIs of TTS services.
+2. **edge-tts (7.2.7)**: Python module to use Microsoft Edge TTS
+   - High-quality free TTS service.
 3. **gtts**: Google Text-to-Speech
-   - D?ch v? TTS mi?n phÌ t? Google
-
-4. **requests**: HTTP library don gi?n
-   - G?i API c·c d?ch v? TTS mi?n phÌ
-
-5. **tabulate (0.9.0)**: T?o b?ng d? li?u d?p
-   - Hi?n th? danh s·ch voices
-
+   - Free TTS service from Google.
+4. **requests**: Simple HTTP library
+   - Calling APIs for free TTS services.
+5. **tabulate (0.9.0)**: Creating clean data tables
+   - Displaying voice lists.
 6. **comtypes** (Windows only): COM interface
-   - TÌch h?p v?i Windows SAPI TTS
+   - Integrated with Windows SAPI TTS.
 
-### D?ch v? TTS du?c h? tr? (T?T C? MI?N PHÕ)
+### Supported TTS Services (ALL FREE)
 
-D? ·n ch? load **c·c d?ch v? TTS cÛ `service_fee = free`** (service tr? phÌ nhu Naver b? b? qua khi kh?i t?o).
+The project only loads **TTS services with `service_fee = free`** (paid services like Naver are ignored during initialization).
 
-#### Engine TTS chÌnh (th? t? uu tiÍn trong UI)
-| Engine | MÙ t? | Online/Offline |
+#### Main TTS Engines (priority order in UI)
+| Engine | Description | Online/Offline |
 |--------|--------|-----------------|
-| **EdgeTTS** | Microsoft Edge TTS (? ch?t lu?ng cao) | Online |
-| **PiperTTS** | Piper (Rhasspy) ñ gi?ng da ngÙn ng?, model .onnx | Offline |
-| **KokoroTTS** | Kokoro ñ gi?ng t? nhiÍn, ch?y qua engine riÍng | Offline |
-| **MmsTTS** | MMS (Massively Multilingual Speech) ñ 1100+ ngÙn ng? | Offline |
+| **EdgeTTS** | Microsoft Edge TTS (High quality) | Online |
+| **PiperTTS** | Piper (Rhasspy) - Multi-language voices, .onnx models | Offline |
+| **KokoroTTS** | Kokoro - Natural voices, runs via separate engine | Offline |
+| **MmsTTS** | MMS (Massively Multilingual Speech) - 1100+ languages | Offline |
 | **GoogleTranslate** | Google Translate TTS | Online |
-| **Windows** | Windows SAPI (ch? Windows) | Offline |
-| **MacOS** | macOS built-in TTS (ch? macOS) | Offline |
+| **Windows** | Windows SAPI (Windows only) | Offline |
+| **MacOS** | macOS built-in TTS (macOS only) | Offline |
 | **ESpeakNg** | eSpeak-ng, open-source | Offline |
 
-#### D?ch v? t? di?n (pronunciation, `service_type = dictionary`)
-- **Cambridge**, **Oxford**, **Duden**, **DWDS**, **Youdao**, **SpanishDict** ñ t?t c? mi?n phÌ.
-- **Naver**: trong code l‡ `service_fee = paid` nÍn **khÙng du?c load** trong Super Free TTS.
+#### Dictionary Services (pronunciation, `service_type = dictionary`)
+- **Cambridge**, **Oxford**, **Duden**, **DWDS**, **Youdao**, **SpanishDict** - All free.
+- **Naver**: In the code, it is marked as `service_fee = paid`, so it is **not loaded** in Super Free TTS.
 
-#### File service tuong ?ng (trong `services/`)
-- `service_edgetts.py`, `service_piper.py`, `service_kokoro.py`, `service_mms.py`, `service_googletranslate.py`, `service_windows.py`, `service_macos.py`, `service_espeakng.py`
-- T? di?n: `service_cambridge.py`, `service_oxford.py`, `service_duden.py`, `service_dwds.py`, `service_youdao.py`, `service_spanishdict.py`
-- `service_naver.py` (paid ñ b? b? qua). `service_onnx_general.py` (OnnxGeneralTTS) hi?n b? comment/disabled.
+#### Corresponding Service Files (in `services/`)
+- `service_edgetts.py`, `service_piper.py`, `service_kokoro.py`, `service_mms.py`, `service_googletranslate.py`, `service_windows.py`, `service_macos.py`, `service_espeakng.py`, `service_supertonic.py`
+- Dictionaries: `service_cambridge.py`, `service_oxford.py`, `service_duden.py`, `service_dwds.py`, `service_youdao.py`, `service_spanishdict.py`
+- `service_naver.py` (paid - ignored). `service_onnx_general.py` (OnnxGeneralTTS) is currently disabled.
 
-**Runner / helper (khÙng ph?i ServiceBase):** `piper_runner.py` (Piper qua sherpa_onnx, JSON stdin/stdout), `kokoro_runner.py`, `sherpa_runner.py`/`sherpa_runner_v2.py` ñ d˘ng cho inference offline (MMS/Kokoro). Engine Piper chÌnh trong add-on hi?n d˘ng `piper.exe` subprocess trong `service_piper.py`.
-
----
-
-## ?? Ki?n Tr˙c D? ¡n
-
-### C?u tr˙c thu m?c
-
-```
-Superfreetts/                       # Thu m?c g?c addon (ho?c ID s? trong addons21/)
-+-- __init__.py                     # Entry point, thÍm path v‡ import superfreetts_addon
-+-- meta.json                       # C?u hÏnh Anki, min/max version, config addon
-¶
-+-- superfreetts_addon/             # Code chÌnh
-¶   +-- __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init
-¶   +-- superfreetts.py             # ? CORE ñ SuperFreeTTS class: text extraction, process_batch_audio, presets
-¶   +-- batch_executor.py           # ? ASYNC ñ UnifiedBatchExecutor & MultiEngineExecutor (Producer-Consumer pattern)
-¶   +-- cpu_utils.py                # CPU info & concurrency validation
-¶   +-- performance_tracker.py      # Tracking batch performance & latency
-¶   +-- batch_progress_ui.py        # UI for batch progress and status
-¶   +-- servicemanager.py           # TTS Service Management (lazy loading)
-¶   +-- anki_utils.py               # Anki API interaction
-¶   +-- gui.py                      # Menu and main UI actions
-¶   +-- ...
-¶   +-- cloudlanguagetools.py       # CloudLanguageTools (Super Free TTS: disabled)
-¶   +-- constants_events.py         # Event names cho stats
-¶   +-- sentry_utils.py             # Sentry filter (crash reporting)
-¶   ¶
-¶   +-- services/                   # Engine TTS & t? di?n
-¶   ¶   +-- service_edgetts.py      # EdgeTTS (online)
-¶   ¶   +-- service_piper.py        # Piper (offline, .onnx + .onnx.json, data/piper_models)
-¶   ¶   +-- service_kokoro.py       # Kokoro (offline, data/kokoro_engine)
-¶   ¶   +-- service_mms.py          # MMS (offline, 1100+ ngÙn ng?)
-¶   ¶   +-- service_googletranslate.py
-¶   ¶   +-- service_windows.py      # Windows SAPI
-¶   ¶   +-- service_macos.py
-¶   ¶   +-- service_espeakng.py
-¶   ¶   +-- service_cambridge.py, service_oxford.py, service_duden.py, service_dwds.py
-¶   ¶   +-- service_youdao.py, service_spanishdict.py
-¶   ¶   +-- service_naver.py        # Paid ñ khÙng load trong Super Free TTS
-¶   ¶   +-- service_onnx_general.py # OnnxGeneralTTS (hi?n disabled)
-¶   ¶   +-- voicelist.py            # VOICE_LIST (paid voices, reference)
-¶   ¶   +-- piper_runner.py         # Optional Piper runner (sherpa_onnx, stdin JSON)
-¶   ¶   +-- kokoro_runner.py        # Kokoro inference
-¶   ¶   +-- sherpa_runner.py / sherpa_runner_v2.py  # Sherpa-ONNX (MMS/Kokoro)
-¶   ¶   +-- __init__.py
-¶   ¶
-¶   +-- data/                       # D? li?u add-on (t?o t?i runtime n?u c?n)
-¶   ¶   +-- piper_models/           # Model Piper (.onnx + .onnx.json) ñ m?c d?nh ho?c config
-¶   ¶   +-- piper_engine/           # Piper binary (sau Setup Piper)
-¶   ¶   +-- kokoro_engine/           # Kokoro Python/env (n?u d˘ng)
-¶   ¶
-¶   +-- component_*.py              # UI components (nhi?u file)
-¶   ¶   +-- component_batch.py      # Add Audio (Collection), batch preview
-¶   ¶   +-- component_batch_preview.py
-¶   ¶   +-- component_easy.py       # Easy mode
-¶   ¶   +-- component_unified_settings.py  # ? NEW (P0) ñ Unified Settings dialog (Services + Preferences in QTabWidget)
-¶   ¶   +-- component_configuration.py  # Services Configuration (enable/disable, path Piper/Kokoro/MMS)
-¶   ¶   +-- component_services_configuration.py
-¶   ¶   +-- component_piper_setup.py    # Setup Piper engine + Manage Voices
-¶   ¶   +-- component_piper_manager.py  # Piper: t?i gi?ng t? HuggingFace (voices.json)
-¶   ¶   +-- component_kokoro_manager.py # Kokoro: qu?n l˝ engine/gi?ng
-¶   ¶   +-- component_mms_manager.py    # MMS: c‡i d?t ngÙn ng? (1100+)
-¶   ¶   +-- component_onnx_manager.py   # ONNX models (n?u b?t)
-¶   ¶   +-- component_voiceselection.py # Ch?n voice (single/random/priority)
-¶   ¶   +-- component_voiceselection_easy.py
-¶   ¶   +-- component_realtime.py   # Realtime TTS config
-¶   ¶   +-- component_realtime_source.py, component_realtime_side.py
-¶   ¶   +-- component_presetmappingrules.py, component_mappingrule.py
-¶   ¶   +-- component_choosepreset.py, component_choose_easy_advanced.py
-¶   ¶   +-- component_source.py, component_source_easy.py
-¶   ¶   +-- component_target.py, component_target_easy.py
-¶   ¶   +-- component_text_processing.py
-¶   ¶   +-- component_label_preview.py
-¶   ¶   +-- component_preferences.py   # Preferences (batch_concurrency, cache, UI language)
-¶   ¶   +-- component_errorhandling.py
-¶   ¶   +-- component_about.py, component_shortcuts.py
-¶   ¶   +-- component_common.py
-¶   ¶   +-- component_trialsignup.py, component_superfreettpro.py
-¶   ¶   +-- ...
-¶   ¶
-¶   +-- external/                   # (n?u n?m trong addon) Thu vi?n: aiohttp, edge_tts, requests, ...
-¶
-+-- external/                       # Thu vi?n bÍn th? 3 (cÛ th? ? ngo‡i superfreetts_addon)
-¶   +-- aiohttp/, edge_tts/, gtts/, requests/, comtypes/, ...
-¶
-+-- user_files/                     # Cache ‚m thanh (hash-based: superfreetts-{hash}.mp3)
-+-- UPGRADE_IDEAS.md                # G?i ˝ n‚ng c?p (hi?n t?i: t?i uu load add-on)
-+-- PROJECT_DOCUMENTATION.md        # T‡i li?u n‡y
-```
-
-### Lu?ng ho?t d?ng chÌnh
-
-#### 1. Kh?i d?ng Addon (d„ t?i uu lazy load)
-
-```
-Anki starts
-    ?
-__init__.py (root) ? sys.path, import superfreetts_addon
-    ?
-superfreetts_addon/__init__.py
-    +-? Setup logging (logging_utils)
-    +-? get_configuration() / save_configuration() (user_uuid, config)
-    +-? (Optional) Sentry crash reporting (disabled trong Lite)
-    +-? Import anki_utils, servicemanager, superfreetts, gui
-    +-? ServiceManager(services_dir, package_name, allow_test_services=False)
-    +-? SuperFreeTTS(ankiutils, service_manager)
-    +-? service_manager.set_config_provider(hyper_tts)
-    ¶   ?? KhÙng g?i init_services() hay configure() t?i d‚y ñ lazy load
-    +-? gui.init(hyper_tts)  ? menus, actions
-
-L?n d?u c?n d˘ng TTS (m? Configuration, Generate, ho?c g?i get_tts_audio / full_voice_list):
-    +-? service_manager.ensure_initialized()
-        +-? init_services()  ? import to‡n b? service_*.py, instantiate (ch? free)
-        +-? _initialized = True
-        +-? configure(config_provider.get_configuration())
-```
-
-#### 2. ThÍm Audio (Collection Mode)
-
-```
-User clicks "Add Audio" button in editor
-    ?
-gui.py: run_hypertts_apply()
-    ?
-component_easy.py ho?c component_batch.py
-    ?
-HyperTTS.editor_note_add_audio()
-    +-? get_source_text() - L?y text t? note
-    +-? process_text() - X? l˝ text (strip HTML, etc.)
-    +-? get_audio_file()
-    ¶   +-? choose_voice() - Ch?n voice
-    ¶   +-? generate_audio_write_file()
-    ¶       +-? servicemanager.get_tts_audio()
-    ¶       ¶   +-? service_edgetts.py (ho?c service kh·c)
-    ¶       +-? Write to user_files/superfreetts-{hash}.mp3
-    +-? get_collection_sound_tag() - T?o [sound:filename.mp3]
-    +-? Update note field v?i sound tag
-```
-
-#### 3. ThÍm Audio (Realtime Mode)
-
-```
-User configures Realtime TTS
-    ?
-component_realtime.py
-    ?
-HyperTTS.persist_realtime_config_update_note_type()
-    +-? Save realtime config
-    +-? Build TTS tag: {{tts en voices=HyperTTS:Field}}
-    +-? Insert v‡o card template (qfmt/afmt)
-        ?
-When reviewing card
-    ?
-Anki calls tts_player
-    ?
-ttsplayer.py: AnkiHyperTTSPlayer
-    +-? Extract TTS tag info
-    +-? HyperTTS.get_audio_filename_tts_tag()
-    +-? Generate & play audio
-```
-
-### C·c th‡nh ph?n chÌnh
-
-#### 1. **HyperTTS Class** (`superfreetts.py`)
-
-Core business logic, x? l˝:
-- L?y text t? note (simple/template/advanced template)
-- X? l˝ text (HTML to text, strip brackets, cloze)
-- T?o audio file (v?i caching d?a trÍn hash)
-- Qu?n l˝ presets, mapping rules
-- C?u hÏnh realtime TTS
-
-**Key methods:**
-- `process_note_audio()`: X? l˝ 1 note, t?o audio
-- `get_audio_file()`: T?o audio file t? text + voice
-- `editor_note_add_audio()`: ThÍm audio v‡o note trong editor
-- `save_preset()`, `load_preset()`: Qu?n l˝ presets
-
-#### 2. **ServiceManager** (`servicemanager.py`)
-
-Qu?n l˝ c·c d?ch v? TTS, **lazy init** d? add-on load nhanh:
-- **Lazy load:** KhÙng g?i `init_services()`/`configure()` l˙c add-on load; ch? ch?y khi l?n d?u c?n (m? Configuration/Generate, ho?c `get_tts_audio`/`full_voice_list`).
-- Discovery: quÈt `services/service_*.py`, import module, instantiate class k? th?a `ServiceBase` (b? qua `service_fee == paid` v‡ test_service).
-- Th? t? hi?n th?: EdgeTTS ? PiperTTS ? KokoroTTS ? MmsTTS ? Others.
-
-**Key methods:**
-- `set_config_provider(hyper_tts)`: G·n provider d? lazy init g?i `get_configuration()` khi c?n.
-- `ensure_initialized()`: G?i m?t l?n khi c?n; ch?y `init_services()` r?i `configure(config)`.
-- `init_services()`: `import_services()` + `instantiate_services()` (ch? free).
-- `configure(configuration_model)`: G·n enabled v‡ service_config cho t?ng service.
-- `get_tts_audio()`, `full_voice_list()`, `get_service_voice_list()`, `locate_voice()`, `deserialize_voice()`: –?u g?i `ensure_initialized()` tru?c khi d˘ng `self.services`.
-- `clear_voice_list_cache()`: XÛa cache `get_service_voice_list` v‡ `locate_voice` (sau khi t?i Piper/Kokoro ho?c d?i config).
-- `service_exists()`, `get_service()`, `get_all_services()`, `service_configuration_options()`: Cung d?m b?o d„ init.
-
-#### 3. **GUI Components** (`component_*.py`)
-
-M?i component l‡ 1 ph?n UI riÍng bi?t:
-
-- **component_batch.py**: Dialog "Add Audio (Collection)"
-  - Ch?n source field, template
-  - Ch?n target field
-  - Ch?n voice(s)
-  - Preview v‡ apply cho nhi?u notes
-
-- **component_easy.py**: Easy mode dialog
-  - UI don gi?n hon cho ngu?i d˘ng m?i
-  - T? d?ng ch?n field hi?n t?i
-  - Ch? c?n ch?n voice v‡ click OK
-
-- **component_realtime.py**: Realtime TTS configuration
-  - C?u hÏnh TTS tag trong card template
-  - Ch?n field d? ph·t ‚m
-  - C?u hÏnh cho front/back c?a card
-
-- **component_presetmappingrules.py**: Preset mapping rules
-  - LiÍn k?t preset v?i Note Type ho?c Deck+Note Type
-  - Cho phÈp auto-apply preset d?a trÍn rule
-
-- **component_voiceselection.py**: Voice selection UI
-  - Ch?n voice t? danh s·ch (filter by language/service)
-  - Ch?n voice mode: single, random, priority
-
-#### 4. **Services** (`services/service_*.py`)
-
-M?i engine k? th?a **`ServiceBase`** (`service.py`), khai b·o `service_type` (tts/dictionary), `service_fee` (free/paid), v‡ implement:
-
-- `voice_list() -> List[TtsVoice_v3]`: Tr? v? danh s·ch gi?ng (d˘ng `voice.build_voice_v3(name, gender, language, service, voice_key, options)`).
-- `get_tts_audio(source_text, voice: TtsVoice_v3, options) -> bytes`: Sinh audio t? text.
-- `configuration_options() -> dict`: Key ? (type, label [, default]) cho UI config (directory, bool, int, Ö).
-
-**Engine TTS chÌnh:**
-- **service_edgetts.py**: Edge TTS (async, `edge_tts`), nhi?u gi?ng/ngÙn ng?.
-- **service_piper.py**: Piper (offline). Config: `models_path` (thu m?c .onnx + .onnx.json), `debug_logging`. M?c d?nh: `data/piper_models`, engine t? Setup Piper. Voice list d?c t? file JSON, map `AudioLanguage`, suy gi?i tÌnh t? dataset/filename.
-- **service_kokoro.py**: Kokoro (offline). Config: `engine_path` (python/engine), `num_threads`, `use_gpu`, `debug_logging`. Gi?ng t? engine.
-- **service_mms.py**: MMS (offline). Config: `python_path`, `num_threads`, `use_gpu`, `debug_logging`. H? tr? 1100+ ngÙn ng?, c‡i qua component_mms_manager.
-- **service_googletranslate.py**: Google Translate TTS.
-- **service_windows.py** / **service_macos.py** / **service_espeakng.py**: H? th?ng / eSpeak-ng.
-
-**T? di?n:** Cambridge, Oxford, Duden, DWDS, Youdao, SpanishDict (free). Naver (paid ñ khÙng load).
-
-### Config Models (`config_models.py`)
-
-–?nh nghia c?u tr˙c d? li?u cho:
-
-- **Configuration**: C?u hÏnh chung (user_uuid, service_enabled, service_config, presets, mapping_rules, realtime_config, Ö).
-- **Preferences**: `ui_language` (en/vi), `cache_retention_days`, `cache_enabled`, `batch_concurrency` (s? thread batch), `error_handling` (disable_ssl_verification, realtime_tts_errors_dialog_type), keyboard_shortcuts.
-- **BatchConfig** (Preset): Source (simple/template/advanced_template), Target (target_field, remove_sound_tag, text_and_sound_tag, insert_location), VoiceSelection, Text processing.
-- **VoiceSelection**: Ch? d? single / random / priority; danh s·ch voice (voice_id + options + weight).
-- **VoiceWithOptions**: voice + options (vd. format mp3/ogg).
-- **MappingRule**: LiÍn k?t preset v?i deck/note type.
-- **RealtimeConfig**: C?u hÏnh realtime TTS (front/back, source, voice).
-- **AudioLanguage / Language**: Enum ngÙn ng? (d˘ng trong `voice.py` v‡ `languages.py`).
-
-### Voice & Options
-
-- **voice.py**: `TtsVoice_v3` (name, voice_key, service, gender, audio_languages, options, service_fee), `TtsVoiceId_v3` (voice_key, service), `build_voice_v3(name, gender, language, service, voice_key, options)`, `voice_str(voice)` d˘ng trong combobox.
-- **options.py**: `AudioFormat` (mp3, ogg_vorbis, ogg_opus) ñ d˘ng khi ghi file cache (`superfreetts-{hash}.mp3`/`.ogg`).
-
-### Error Handling (`errors.py`)
-
-Custom exceptions: `SourceFieldNotFoundError`, `TargetFieldNotFoundError`, `SourceTextEmpty`, `NoVoicesAdded`, `AudioNotFoundError`, `PresetNotFound`, `VoiceNotFound`, `VoiceIdNotFound`, `MissingServiceConfiguration`, `RequestError` (TTS l?i), Ö  
-**ErrorManager** d˘ng d? wrap action v‡ hi?n th? l?i qua dialog/tooltip.
+**Runner / helpers (not ServiceBase):** `piper_runner.py` (Piper via sherpa_onnx, JSON stdin/stdout), `kokoro_runner.py`, `sherpa_runner_v2.py` - used for offline inference (MMS/Kokoro). The main Piper engine in the add-on currently uses the `piper.exe` subprocess in `service_piper.py`.
 
 ---
 
-## ?? Hu?ng D?n S? D?ng
-
-### C‡i d?t
-
-1. **T?i addon**:
-   - Copy thu m?c n‡y v‡o `Anki2/addons21/`
-   - Ho?c t? AnkiVN (xem hu?ng d?n t?i ankivn.com)
-
-2. **Restart Anki**
-
-3. **C?u hÏnh d?ch v? TTS** (l?n d?u):
-   - Menu: `AnkiVN` ? `Super Free TTS Settings` ? Click tab "Services"
-   - B?t engine c?n d˘ng: EdgeTTS (online, ? khuyÍn d˘ng), Piper/Kokoro/MMS (offline c?n setup du?ng d?n ho?c Setup/Manage), Google Translate, Windows/macOS/eSpeak-ng.
-   - **Piper:** CÛ th? d? tr?ng "Piper Models Directory" (d˘ng m?c d?nh `data/piper_models`) ho?c ch?n thu m?c ch?a file `.onnx` + `.onnx.json`. D˘ng "Setup Piper" d? c‡i engine, "Manage Voices" d? t?i gi?ng t? HuggingFace.
-   - **Kokoro / MMS:** Ch? d?nh du?ng d?n Python/engine n?u c?n (xem component_kokoro_manager, component_mms_manager).
-
-### S? d?ng co b?n
-
-#### 1. Easy Mode (–on gi?n)
-
-D˘ng cho ngu?i m?i, thÍm audio v‡o t?ng note riÍng l?:
-
-1. M? note editor (Add card ho?c Browser)
-2. Click n˙t **speaker icon** (Add Audio)
-3. Ch?n voice t? dropdown
-4. Click "Add Audio"
-5. Audio du?c thÍm v‡o field hi?n t?i
-
-#### 2. Collection Mode (N‚ng cao)
-
-ThÍm audio cho nhi?u notes c˘ng l˙c:
-
-1. M? Browser, ch?n c·c notes
-2. Menu: `Super Free TTS` ? `Add Audio (Collection)...`
-3. Configure:
-   - **Source**: Field ch?a text c?n t?o audio
-   - **Voice**: Ch?n voice TTS
-   - **Target**: Field d? chËn sound tag
-   - **Text Processing**: T˘y ch?n x? l˝ text
-4. Preview (nghe th?)
-5. Click "Apply" d? thÍm audio cho t?t c? notes
-
-#### 3. Preset Mapping Rules
-
-T? d?ng apply preset d?a trÍn Note Type ho?c Deck:
-
-1. Click n˙t **gear icon** (Settings) trong editor
-2. Add rule:
-   - Ch?n Note Type (ho?c Deck + Note Type)
-   - Ch?n/t?o preset
-3. Save rule
-4. T? gi?, khi click "Add Audio" button, preset s? t? d?ng apply
-
-#### 4. Realtime TTS
-
-Audio t? d?ng ph·t khi review card (khÙng c?n thÍm v‡o note):
-
-1. Ch?n 1 note trong Browser
-2. Menu: `Super Free TTS` ? `Add Audio (Realtime)...`
-3. Configure:
-   - Front side: Field n‡o s? d?c, voice n‡o
-   - Back side: Field n‡o s? d?c, voice n‡o
-4. Apply
-5. TTS tag `{{tts ...}}` du?c thÍm v‡o card template
-6. Khi review, audio t? d?ng ph·t
-
-### C·c tÌnh nang n‚ng cao
-
-#### Text Processing
-
-- **HTML to Text**: Lo?i b? HTML tags
-- **Strip Brackets**: Lo?i b? [...]
-- **Strip Cloze**: Lo?i b? cloze {{c1::...}}
-- **SSML Characters**: Escape k˝ t? d?c bi?t cho SSML
-- **Text Replacement**: Thay th? text tru?c khi t?o audio
-
-#### Voice Selection Modes
-
-- **Single**: Ch?n 1 voice c? d?nh
-- **Random**: Ch?n ng?u nhiÍn t? danh s·ch voices (cÛ th? set weight)
-- **Priority**: Th? voice theo th? t?, fallback n?u khÙng t?o du?c audio
-
-#### Template Source
-
-Combine nhi?u fields:
-- **Simple Template**: `{Field1} {Field2}`
-- **Advanced Template**: Python code (disabled trong b?n Lite vÏ l˝ do b?o m?t)
-
----
-
-## ????? Hu?ng D?n Ph·t Tri?n
-
-### Setup mÙi tru?ng ph·t tri?n
-
-#### 1. Clone/Copy d? ·n
-
-```bash
-# Thu m?c addon thu?ng ? d‚y (Windows):
-cd %APPDATA%\Anki2\addons21\655806401
-
-# Ho?c (macOS/Linux):
-cd ~/Library/Application Support/Anki2/addons21/655806401
-```
-
-#### 2. Dependency management
-
-Dependencies d„ du?c bundle trong thu m?c `external/`. N?u c?n thÍm dependency:
-
-```bash
-pip install <package> -t external/
-```
-
-#### 3. Enable debug logging
-
-Set environment variable:
-
-```bash
-# Windows (PowerShell)
-$env:HYPER_TTS_DEBUG_LOGGING="enable"
-
-# macOS/Linux
-export HYPER_TTS_DEBUG_LOGGING="enable"
-```
-
-Ho?c log to file:
-
-```bash
-$env:HYPER_TTS_DEBUG_LOGGING="file"
-$env:HYPER_TTS_DEBUG_LOGFILE="C:\path\to\superfreetts.log"
-```
-
-#### 4. Restart Anki v‡ test
-
-```bash
-# Anki s? load addon t? thu m?c n‡y
-# M?i thay d?i code c?n restart Anki
-```
-
-### C?u tr˙c code guidelines
-
-#### 1. T? ch?c code
-
-- **Business logic**: NÍn ? `superfreetts.py` ho?c `servicemanager.py`
-- **UI logic**: NÍn ? c·c `component_*.py`
-- **Utilities**: NÍn ? c·c `*_utils.py`
-- **Models**: NÍn ? `config_models.py`
-- **Constants**: NÍn ? `constants.py`
-
-#### 2. Error handling
-
-LuÙn s? d?ng custom exceptions t? `errors.py`:
-
-```python
-# Good
-if field not in note:
-    raise errors.TargetFieldNotFoundError(field)
-
-# Bad
-if field not in note:
-    raise Exception(f"Field {field} not found")
-```
-
-Wrap user-facing actions v?i `ErrorManager`:
-
-```python
-with superfreetts.error_manager.get_single_action_context('Action Name'):
-    # Your code here
-```
-
-#### 3. Configuration
-
-M?i c?u hÏnh c?n:
-- –?nh nghia model trong `config_models.py`
-- Implement `serialize()` v‡ `deserialize()`
-- Luu v‡o config qua `anki_utils.write_config()`
-
-#### 4. Logging
-
-```python
-from . import logging_utils
-logger = logging_utils.get_child_logger(__name__)
-
-logger.debug('Debug message')
-logger.info('Info message')
-logger.error('Error message')
-```
-
-### ThÍm d?ch v? TTS m?i
-
-#### Bu?c 1: T?o file service
-
-T?o `superfreetts_addon/services/service_yourservice.py`. Class **k? th?a `ServiceBase`** v‡ khai b·o **`service_fee = constants.ServiceFee.free`** (n?u paid thÏ add-on s? khÙng load).
-
-```python
-from typing import List
-from superfreetts_addon import service, voice as voice_module, constants, languages
-
-class YourServiceTTS(service.ServiceBase):
-    def __init__(self):
-        service.ServiceBase.__init__(self)
-
-    @property
-    def name(self):
-        return "YourServiceTTS"
-
-    @property
-    def service_type(self):
-        return constants.ServiceType.tts
-
-    @property
-    def service_fee(self):
-        return constants.ServiceFee.free  # b?t bu?c free d? du?c load
-
-    def configuration_options(self):
-        return {
-            'api_key': ('string', 'API Key', ''),
-            'debug_logging': ('bool', 'Debug Logging', False),
-        }
-
-    def voice_list(self) -> List[voice_module.TtsVoice_v3]:
-        # L?y danh s·ch t? API ho?c file; m?i gi?ng t?o b?ng build_voice_v3
-        voices = []
-        # ... fetch list ...
-        voices.append(voice_module.build_voice_v3(
-            name="Display Name",
-            gender=constants.Gender.Female,
-            language=languages.AudioLanguage.en_US,
-            service=self,
-            voice_key="voice_id",
-            options={}
-        ))
-        return voices
-
-    def get_tts_audio(self, source_text, voice: voice_module.TtsVoice_v3, options):
-        # G?i API / engine, tr? v? bytes (audio)
-        # voice.voice_key, voice.service
-        return response_content  # bytes
-```
-
-- **`build_voice_v3`** (trong `voice.py`): Tham s? `name`, `gender`, `language`, `service`, `voice_key`, `options`. Thi?u `gender` s? g‚y l?i.
-- **Config:** Key trong `configuration_options()` d˘ng trong UI; gi· tr? d?c b?ng `self.get_configuration_value_optional(key, default)` / `get_configuration_value_mandatory(key)`.
-
-#### Bu?c 2: Register service
-
-Service **t? d?ng du?c discovery** n?u file d?t tÍn `service_*.py` trong `services/`. KhÙng c?n dang k˝ tay. N?u mu?n th? t? hi?n th?: thÍm tÍn class v‡o `priority_order` trong `servicemanager.instantiate_services()` (vd. `["EdgeTTS", "PiperTTS", "KokoroTTS", "MmsTTS", "YourServiceTTS"]`).
-
-Test:
-
-```python
-# Anki Debug Console (Tools > Debug Console)
-from superfreetts_addon.servicemanager import ServiceManager
-from superfreetts_addon import constants
-import os
-path = os.path.join(os.path.dirname(__file__), 'services')  # di?u ch?nh path
-sm = ServiceManager(path, 'superfreetts_addon.services', False)
-sm.set_config_provider(hyper_tts)  # n?u cÛ
-sm.ensure_initialized()
-voices = sm.full_voice_list()
-print([v for v in voices if v.service == 'YourServiceTTS'])
-```
-
-### Testing
-
-#### Manual testing
-
-1. T?o test deck v?i v‡i notes
-2. Configure service trong UI
-3. Test t?ng workflow:
-   - Easy mode
-   - Collection mode
-   - Realtime mode
-   - Preset mapping rules
-
-#### Unit testing (hi?n t?i chua cÛ)
-
-D? ·n khÙng cÚn thu m?c `test_services/` (d„ xÛa). CÛ th? thÍm test b?ng pytest ho?c unittest; khi ch?y test c?n set `sys._pytest_mode = True` d? add-on khÙng ch?y block Anki (vd. Sentry). Test service: instantiate class service, g?i `voice_list()` v‡ `get_tts_audio(source_text, voice, {})` v?i voice l?y t? `voice_list()[0]`.
-
-### Code review checklist
-
-Tru?c khi commit code:
-
-- [ ] Code cÛ follow c?u tr˙c hi?n t?i khÙng?
-- [ ] CÛ thÍm logging ph˘ h?p khÙng?
-- [ ] Error handling d˙ng c·ch (d˘ng custom exceptions)?
-- [ ] Config du?c save/load d˙ng khÙng?
-- [ ] UI cÛ responsive v‡ user-friendly khÙng?
-- [ ] Code cÛ comments cho ph?n ph?c t?p khÙng?
-- [ ] –„ test manually c·c workflow chÌnh chua?
-
-### Quy t?c c?n tu‚n theo
-
-#### 1. B?o m?t
-
-- **KH‘NG bao gi?** execute Python code do user nh?p (Advanced Template d„ b? disable)
-- **KH‘NG log** API keys ho?c sensitive data
-- **Validate** t?t c? user input
-
-#### 2. Tuong thÌch Anki
-
-- Addon ph?i tuong thÌch v?i:
-  - Anki 2.1.50 - 2.1.x (check `meta.json`: `min_point_version: 5, max_point_version: 241100`)
-- S? d?ng Anki API d˙ng c·ch (qua `anki_utils.py`)
-
-#### 3. Performance
-
-- **Lazy load add-on:** Services **khÙng** du?c load l˙c Anki kh?i d?ng. Ch? khi l?n d?u c?n (m? Configuration/Generate, ho?c g?i `get_tts_audio`/`full_voice_list`), `ServiceManager.ensure_initialized()` m?i ch?y `init_services()` v‡ `configure()`.
-- **New Executor Architecture:** S? d?ng `MultiEngineExecutor` (`batch_executor.py`) v?i c·c pool riÍng bi?t cho t?ng engine.
-- **Concurrency Capping:** 
-    - **EdgeTTS**: –u?c gi?i h?n c?ng ? **3 workers** d? tr·nh b? Microsoft rate-limit.
-    - **Offline Engines**: S? d?ng `BoundedThreadPoolExecutor` d? gi?i h?n h‡ng ch? v‡ qu?n l˝ t‡i nguyÍn (RAM/CPU). –? xu?t 4-8 workers cho CPU Ryzen 7.
-- **Interleaved Batching:** ¡p d?ng mÙ hÏnh producer-consumer d? b?t d?u t?o audio ngay khi cÛ yÍu c?u, khÙng d?i n?p xong to‡n b? danh s·ch, gi˙p gi?m d·ng k? d? tr? kh?i d?ng (startup latency).
-- **Cache audio files:** `generate_audio_write_file()` d˘ng hash `(source_text, voice_id, options)` ? file `superfreetts-{hash}.mp3`; n?u d„ t?n t?i thÏ khÙng g?i TTS l?i.
-- **Voice list cache:** `get_service_voice_list()` v‡ `locate_voice()` d˘ng `functools.lru_cache`.
-
-#### 4. UI/UX
-
-- **Consistent v?i Anki**: D˘ng PyQt components chu?n
-- **Error messages rı r‡ng**: User ph?i hi?u du?c l?i gÏ
-- **Progress indicators**: Cho operations l‚u (batch processing)
-
-#### 5. HyperTTS Lite vs Pro
-
-B?n Lite c?n disable m?t s? features:
-
-```python
-# constants.py
-ENABLE_SENTRY_CRASH_REPORTING = True  # Set to False for Lite
-
-# superfreetts.py
-def expand_advanced_template(self, note, source_template):
-    raise errors.HyperTTSError("Advanced Template (Python) khÙng h? tr? trong b?n Lite")
-```
-
----
-
-## ?? T‡i Li?u & Tham Kh?o
-
-### T‡i li?u trong repo
-
-- **UPGRADE_IDEAS.md**: G?i ˝ n‚ng c?p (hi?n t?i ch? t?i uu t?c d? load add-on ñ lazy load services).
-- **PROJECT_DOCUMENTATION.md**: T‡i li?u n‡y.
-
-### API Documentation
-
-- **Anki Addon API**: https://addon-docs.ankiweb.net/
-- **PyQt5**: https://www.riverbankcomputing.com/static/Docs/PyQt5/
-- **Edge TTS**: https://github.com/rany2/edge-tts
-
-### Service APIs (Mi?n phÌ)
-
-- **Edge TTS**: https://github.com/rany2/edge-tts
-- **gTTS (Google Translate)**: https://github.com/pndurette/gTTS
-- **eSpeak-ng**: https://github.com/espeak-ng/espeak-ng
-
-### Anki Resources
-
-- **Anki Manual**: https://docs.ankiweb.net/
-- **Addon Development**: https://addon-docs.ankiweb.net/intro.html
-
----
-
-## ?? –Ûng GÛp
-
-N?u b?n mu?n dÛng gÛp v‡o d? ·n:
-
-1. Fork d? ·n (n?u cÛ repository)
-2. T?o branch m?i: `git checkout -b feature/your-feature`
-3. L‡m theo [Hu?ng D?n Ph·t Tri?n](#-hu?ng-d?n-ph·t-tri?n)
-4. Test k? c·c thay d?i
-5. Commit v?i message rı r‡ng
-6. T?o Pull Request
-
-### › tu?ng dÛng gÛp
-
-- ThÍm d?ch v? TTS m?i
-- Improve UI/UX
-- ThÍm text processing features
-- Vi?t tests
-- Improve documentation
-- Bug fixes
-
----
-
-## ?? –a ngÙn ng? giao di?n (UI)
-
-Super Free TTS hi?n h? tr? **2 ngÙn ng? giao di?n**: **English** v‡ **Ti?ng Vi?t**.
-
-- **C·ch d?i ngÙn ng? giao di?n**:
-  1. V‡o menu `Tools ? Super Free TTS: Preferences`  
-  2. ? nhÛm **Language / NgÙn ng?**, ch?n:
-     - `English` d? d˘ng giao di?n ti?ng Anh
-     - `Ti?ng Vi?t` d? d˘ng giao di?n ti?ng Vi?t
-  3. Nh?n **Apply** v‡ m? l?i c·c h?p tho?i c?a Super Free TTS (Easy, Collection, Configuration, Realtime, Preset Rules, Voice Selection) d? th?y thay d?i.
-
-- **Luu ˝ cho developer**:
-  - B?ng d?ch n?m trong file `[superfreetts_addon/i18n.py](superfreetts_addon/i18n.py)`.
-  - Khi thÍm text m?i ra UI, h„y d˘ng `i18n.get_text("some_key", lang)` thay vÏ hard-code chu?i.
-  - Quy u?c d?t key:
-    - N˙t b?m: `button_*` ho?c `easy_button_*`, `batch_button_*`, `voice_button_*`
-    - TiÍu d? dialog: `dialog_*_title`
-    - NhÛm / groupbox / label: `*_group_*`, `label_*`
-
----
-
-## ?? License
-
-Super Free TTS du?c ph·t tri?n b?i **Paul from AnkiVN**. 100% mi?n phÌ cho c?ng d?ng Anki Vi?t Nam.
-
----
-
-## ?? LiÍn H? & H? Tr?
-
-- **Website**: https://ankivn.com
-- **T·c gi?**: Paul from AnkiVN
-- **Issues**: B·o c·o l?i ho?c d? xu?t tÌnh nang qua AnkiVN
-
----
-
-**T‡i li?u c?p nh?t**: 2026-04-11  
-**PhiÍn b?n addon (version.py)**: 1.0  
-**T·c gi?**: Paul from AnkiVN  
+## Project Architecture
+
+### Directory Structure
+
+```text
+Superfreetts/                       # Root add-on folder (or number ID in addons21/)
++-- __init__.py                     # Entry point, sets up path and imports superfreetts_addon
++-- meta.json                       # Anki config, min/max version, add-on config
+|
++-- superfreetts_addon/             # Main source code
+|   +-- __init__.py                 # Setup logging, config, ServiceManager, SuperFreeTTS, gui.init
+|   +-- superfreetts.py             # ‚≠ê CORE - SuperFreeTTS class: text extraction, process_batch_audio, presets
+|   +-- batch_executor.py           # ‚ö° ASYNC - UnifiedBatchExecutor & MultiEngineExecutor (Producer-Consumer pattern)
+|   +-- batch_orchestrator.py       # Batch task preparation, execution, apply
+|   +-- batch_constants.py          # Worker caps, timeouts, GC constants
+|   +-- batch_progress_ui.py        # UI for batch progress and status
+|   +-- batch_state_manager.py      # Checkpoint/resume for batch jobs
+|   +-- batch_status.py             # Batch status model
+|   +-- system_utils.py             # CPU/GPU detection, thread calculation
+|   +-- performance_tracker.py      # Tracking batch performance & latency
+|   +-- servicemanager.py           # TTS Service Management (lazy loading)
+|   +-- anki_utils.py               # Anki API interaction
+|   +-- gui.py                      # Menu and main UI actions
+|   +-- gui_utils.py                # GUI helpers
+|   +-- i18n.py                     # Internationalization (7 locales)
+|   +-- logging_utils.py            # NullLogger, SentryLogger, SafeStreamHandler
+|   +-- config_models.py            # Dataclass config models + migration
+|   +-- config_store.py             # Config persistence layer
+|   +-- constants.py                # Enums, paths, GUI strings, stylesheets
+|   +-- voice.py                    # Voice data models + serialization
+|   +-- voice_cache.py              # Persistent voice cache
+|   +-- audio_file_store.py         # Audio file caching, hash-based filenames
+|   +-- audio_generator.py          # Single-note audio generation
+|   +-- note_audio_updater.py       # Note field update helpers
+|   +-- editor_manager.py           # Anki editor bridge, mapping rules
+|   +-- source_text_resolver.py     # Template expansion, text processing
+|   +-- text_utils.py               # HTML strip, cloze strip, bracket strip
+|   +-- engine_manager.py           # Shared Python engine management
+|   +-- mms_engine_manager.py       # MMS-specific engine management
+|   +-- sherpa_manager.py           # Sherpa ONNX manager
+|   +-- downloader.py               # File downloads for model files
+|   +-- resource_manager.py         # Manage downloadable resources
+|   +-- job_pipeline.py             # Async job pipeline
+|   +-- languages.py                # AudioLanguage enum
+|   +-- options.py                  # AudioFormat enum
+|   +-- stats.py                    # Usage stats
+|   +-- performance_cache.py        # TTL cache
+|   +-- preset_rules_status.py      # Preset rule status model
+|   +-- service_logger.py           # Per-service log writer
+|   +-- release_notes.py            # Release note loading
+|   +-- context.py                  # Action context helpers
+|   +-- errors.py                   # Exception hierarchy + ErrorManager
+|   +-- service.py                  # ServiceBase abstract class
+|   +-- tts_orchestrator.py         # Engine config, pool auto-scaling
+|   +-- ttsplayer.py                # Realtime TTS player
+|   +-- ui_controller.py            # UI orchestration
+|   +-- utils_hf.py                 # HuggingFace utils
+|   +-- version.py                  # Version constant
+|   +-- services/                   # TTS & Dictionary engines
+|   |   +-- service_edgetts.py      # EdgeTTS (online)
+|   |   +-- service_piper.py        # Piper (offline, .onnx + .onnx.json, data/piper_models)
+|   |   +-- service_kokoro.py       # Kokoro (offline, data/kokoro_engine)
+|   |   +-- service_mms.py          # MMS (offline, 1100+ languages)
+|   |   +-- service_googletranslate.py
+|   |   +-- service_windows.py      # Windows SAPI
+|   |   +-- service_macos.py
+|   |   +-- service_espeakng.py
+|   |   +-- service_cambridge.py, service_oxford.py, service_duden.py, service_dwds.py
+|   |   +-- service_youdao.py, service_spanishdict.py
+|   |   +-- service_naver.py        # Paid - Not loaded in Super Free TTS
+|   |   +-- service_onnx_general.py # OnnxGeneralTTS (currently disabled)
+|   |   +-- voicelist.py            # VOICE_LIST (paid voices, for reference)
+|   |   +-- piper_runner.py         # Optional Piper runner (sherpa_onnx, stdin JSON)
+|   |   +-- kokoro_runner.py        # Kokoro inference
+|   |   +-- sherpa_runner.py / sherpa_runner_v2.py  # Sherpa-ONNX (MMS/Kokoro)
+|   |   +-- __init__.py
+|   |
+|   +-- data/                       # Add-on data (created at runtime if needed)
+|   |   +-- piper_models/           # Piper models (.onnx + .onnx.json) - default or configured
+|   |   +-- piper_engine/           # Piper binary (after Setup Piper)
+|   |   +-- kokoro_engine/          # Kokoro Python/env (if used)
+|   |
+|   +-- component_*.py              # UI components (multiple files)
+|   |   +-- component_batch.py      # Add Audio (Collection), batch preview
+|   |   +-- component_batch_preview.py
+|   |   +-- component_settings.py   # Unified Settings dialog (Services + Preferences in QTabWidget)
+|   |   +-- component_services.py   # Services Configuration (enable/disable, path Piper/Kokoro/MMS/Supertonic)
+|   |   +-- component_piper_setup.py    # Setup Piper engine + Manage Voices
+|   |   +-- component_piper_manager.py  # Piper: download voices from HuggingFace (voices.json)
+|   |   +-- component_kokoro_manager.py # Kokoro: manage engine/voices
+|   |   +-- component_mms_manager.py    # MMS: setup languages (1100+)
+|   |   +-- component_onnx_manager.py   # ONNX models (if enabled)
+|   |   +-- component_supertonic_setup.py   # Supertonic engine setup
+|   |   +-- component_supertonic_voice_manager.py # Supertonic voice manager
+|   |   +-- component_voiceselection.py # Select voice (single/random/priority)
+|   |   +-- component_realtime.py   # Realtime TTS config
+|   |   +-- component_realtime_source.py, component_realtime_side.py
+|   |   +-- component_presetmappingrules.py, component_mappingrule.py
+|   |   +-- component_choosepreset.py
+|   |   +-- component_source.py
+|   |   +-- component_target.py
+|   |   +-- component_text_processing.py
+|   |   +-- component_label_preview.py
+|   |   +-- component_preferences.py   # Preferences (batch_concurrency, cache, UI language)
+|   |   +-- component_about.py, component_shortcuts.py
+|   |   +-- component_common.py
+|   |   +-- component_changes.py, component_donation.py, component_failure_report.py
+|   |   +-- component_release_notes.py, component_troubleshooting.py, component_welcome.py
+|   |   +-- component_workflow.py, component_services_legacy.py
+|   |
+|   +-- external/                   # (if bundled) Libraries: aiohttp, edge_tts, requests, etc.
+|
++-- external/                       # Third-party libraries (can be placed outside superfreetts_addon)
+|   +-- aiohttp/, edge_tts/, gtts/, requests/, comtypes/, ...
+|
++-- user_files/                     # Audio cache (hash-based: superfreetts-{hash}.mp3)
++-- UPGRADE_IDEAS.md                # Upgrade suggestions (currently: optimize add-on loading)
++-- PROJECT_DOCUMENTATION.md        # This document

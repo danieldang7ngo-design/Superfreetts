@@ -52,59 +52,60 @@ class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
 
 
 class UnifiedCache:
-    """
-    Single unified cache replacing 3 separate caches.
-    LRU with automatic eviction based on size.
-    """
+    """Minimal LRU cache using OrderedDict. Supports size-based or entry-count eviction."""
     
     def __init__(self, max_size_mb: int = 100):
         self.cache = OrderedDict()
+        self.max_entries = 1000
         self.max_size_bytes = max_size_mb * 1024 * 1024
-        self.current_size_bytes = 0
+        self.current_size = 0
         self.hits = 0
         self.misses = 0
     
+    @property
+    def _use_size(self) -> bool:
+        return self.max_size_bytes > 0
+    
     def get(self, key: str) -> Optional[Any]:
-        """Get from cache (moves to end for LRU)"""
         if key in self.cache:
             self.cache.move_to_end(key)
             self.hits += 1
-            return self.cache[key]
+            val = self.cache[key]
+            return val[0] if isinstance(val, tuple) else val
         self.misses += 1
         return None
     
     def put(self, key: str, value: Any, size_bytes: int = 0):
-        """Put in cache with automatic LRU eviction"""
-        if size_bytes == 0:
-            if isinstance(value, (bytes, str)):
-                size_bytes = len(value)
-            else:
-                size_bytes = 1000  # Conservative estimate
-        
-        # Remove if exists
-        if key in self.cache:
-            old_val = self.cache[key]
-            self.current_size_bytes -= len(old_val) if isinstance(old_val, (bytes, str)) else 1000
-        
-        self.cache[key] = value
-        self.current_size_bytes += size_bytes
-        self.cache.move_to_end(key)
-        
-        # Evict oldest entries if over capacity
-        while self.current_size_bytes > self.max_size_bytes and self.cache:
-            old_key, old_val = self.cache.popitem(last=False)
-            self.current_size_bytes -= len(old_val) if isinstance(old_val, (bytes, str)) else 1000
+        if self._use_size:
+            if size_bytes == 0:
+                size_bytes = len(value) if isinstance(value, (bytes, str)) else 1000
+            
+            if key in self.cache:
+                old_val = self.cache[key]
+                if isinstance(old_val, tuple):
+                    self.current_size -= old_val[1]
+                del self.cache[key]
+            
+            self.cache[key] = (value, size_bytes)
+            self.current_size += size_bytes
+            
+            while self.current_size > self.max_size_bytes and self.cache:
+                oldest_key, (oldest_val, oldest_size) = self.cache.popitem(last=False)
+                self.current_size -= oldest_size
+        else:
+            if key in self.cache:
+                del self.cache[key]
+            self.cache[key] = value
+            while len(self.cache) > self.max_entries and self.cache:
+                self.cache.popitem(last=False)
     
     def clear(self):
-        """Clear all entries"""
         self.cache.clear()
-        self.current_size_bytes = 0
+        self.current_size = 0
     
     def stats(self) -> dict:
-        """Get cache statistics"""
         total = max(self.hits + self.misses, 1)
         return {
-            'size_mb': self.current_size_bytes / 1024 / 1024,
             'entries': len(self.cache),
             'hits': self.hits,
             'misses': self.misses,

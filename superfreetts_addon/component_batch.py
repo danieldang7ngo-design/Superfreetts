@@ -1,7 +1,7 @@
 import sys
 import aqt.qt
 import copy
-import pprint
+
 
 from typing import List, Optional
 

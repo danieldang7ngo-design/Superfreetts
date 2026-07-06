@@ -24,17 +24,16 @@ class TestUnifiedCache:
         assert cache.get("miss") is None
         
     def test_lru_eviction(self):
-        # 100 bytes limit
         cache = batch_executor.UnifiedCache(max_size_mb=0)
         cache.max_size_bytes = 100
         
         cache.put("k1", "v1" * 20, size_bytes=40)
         cache.put("k2", "v2" * 20, size_bytes=40)
-        cache.put("k3", "v3" * 20, size_bytes=40) # Should evict k1
+        cache.put("k3", "v3" * 20, size_bytes=40)  # Should evict k1
         
         assert cache.get("k1") is None
-        assert cache.get("k2") == "v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2v2"
-        assert cache.get("k3") == "v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3v3"
+        assert cache.get("k2") == "v2" * 20
+        assert cache.get("k3") == "v3" * 20
 
 class TestSimpleResourceMonitor:
     def test_ram_tracking(self):

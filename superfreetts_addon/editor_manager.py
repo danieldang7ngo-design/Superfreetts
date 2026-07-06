@@ -16,7 +16,6 @@ NOT responsible for:
   - Realtime TTS tag rendering (→ realtime_manager.py)
 """
 
-import pprint
 from typing import Any, Optional
 
 import aqt

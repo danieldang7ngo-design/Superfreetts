@@ -19,9 +19,8 @@ from . import constants
 from . import config_models
 from . import errors
 from . import context
-from . import batch_constants
 from . import batch_progress_ui
-from . import cpu_utils
+from . import system_utils
 from . import audio_file_store
 from . import logging_utils
 from . import i18n
@@ -160,7 +159,7 @@ class BatchOrchestrator:
         if not batch_status.must_continue:
             return []
 
-        max_workers = cpu_utils.CPUInfo.get_max_workers()
+        max_workers = system_utils.get_max_workers()
         unique_count = len(dedup_map)
         batch_status.total_unique_tasks = unique_count
         batch_status.unique_tasks_completed = 0
@@ -359,7 +358,7 @@ class BatchOrchestrator:
                 else:
                     logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
 
-                max_workers = cpu_utils.CPUInfo.get_max_workers()
+                max_workers = system_utils.get_max_workers()
                 logger.info(f"[BATCH] Parallel generation started: engine pools will respect their own limits")
 
                 batch_status.total_unique_tasks = unique_count

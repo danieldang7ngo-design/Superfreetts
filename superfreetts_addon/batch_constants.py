@@ -55,28 +55,6 @@ EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS: Final[int] = 5
 # Set high because EdgeTTS might be slow on first request or with network issues
 TASK_TIMEOUT_SECONDS: Final[int] = 120  # 2 minutes per task
 
-# ============================================================================
-# UI/DISPLAY
-# ============================================================================
-
-# Status message icons and formats
-STATUS_LOADING_VOICES = "🎙️ Loading voice list..."
-STATUS_PREPARING_NOTES = "📝 Preparing {} notes..."
-STATUS_ANALYZING_DUPLICATES = "🔍 Analyzing for duplicates..."
-STATUS_GENERATING_AUDIO = "🔊 Generating audio ({} unique)..."
-STATUS_UPDATING_PROGRESS = "🔊 Generating audio ({}/{} completed)..."
-STATUS_APPLYING_RESULTS = "📋 Applying to {} notes..."
-STATUS_SAVING_COLLECTION = "💾 Saving to collection..."
-
-# Progress display format
-PROGRESS_TEXT_FORMAT = "Completed {} / {}"
-ETA_TEXT_FORMAT = "ETA: {}m {}s"
-STATUS_SEPARATOR = " — "
-
-# ============================================================================
-# DELAYS & TIMING
-# ============================================================================
-
 # Sleep duration after status message update (seconds) to allow user to see the message
 STATUS_MESSAGE_DISPLAY_DELAY_SECONDS: Final[float] = 0.1
 
@@ -89,52 +67,3 @@ DEFAULT_CACHE_RETENTION_DAYS: Final[int] = 30
 
 # Maximum cache retention period (days)
 MAX_CACHE_RETENTION_DAYS: Final[int] = 365
-
-# ============================================================================
-# ERROR LOGGING
-# ============================================================================
-
-# Error message templates
-ERROR_VOICE_LIST_PRELOAD_FAILED = "[BATCH] Voice list pre-load failed: {}"
-ERROR_AUDIO_GENERATION_FAILED = "Error generating audio for unique task: {}"
-ERROR_NOTE_UPDATE_FAILED = "Error updating note {}: {}"
-ERROR_QT_EVENTS_PROCESSING_FAILED = "Error processing Qt events: {}"
-ERROR_CACHE_FILE_DELETE_FAILED = "Error deleting cache file {}: {}"
-ERROR_CACHE_CLEANUP_EXCEPTION = "[CACHE] Error during cache cleanup"
-ERROR_CACHE_CLEANUP_FAILED = "Error during cache cleanup: {}"
-
-# ============================================================================
-# WARNING MESSAGES
-# ============================================================================
-
-WARNING_CACHE_DELETE_ERROR = "[CACHE] Error deleting"
-
-# ============================================================================
-# LOGGING MESSAGES
-# ============================================================================
-
-# Info message templates
-INFO_VOICE_LIST_PRELOADED = "[BATCH] Voice list pre-loaded in {:.2f}s"
-INFO_BATCH_STARTING = "[BATCH] Starting to prepare {} notes..."
-INFO_BATCH_PREPARED = "[BATCH] Prepared {} notes in {:.2f}s"
-INFO_DEDUP_ANALYSIS = "[BATCH] Analyzing for duplicate (text + voice) combinations..."
-INFO_DEDUP_FOUND = "[BATCH] Deduplication found: {} tasks, {} unique, {} duplicates (saving {:.1f}% TTS calls) - analyzed in {:.2f}s"
-INFO_DEDUP_NOT_FOUND = "[BATCH] No duplicates found - analyzed in {:.2f}s"
-INFO_AUDIO_GEN_STARTING = "[BATCH] Starting audio generation with {} threads ({} unique combinations)"
-INFO_AUDIO_GEN_COMPLETED = "[BATCH] Generated {} audio files in {:.2f}s"
-INFO_RESULTS_APPLIED = "[BATCH] Applied results in {:.2f}s"
-INFO_COLLECTION_UPDATING = "[BATCH] Updating Anki collection with {} note changes..."
-INFO_COLLECTION_UPDATED = "[BATCH] Updated collection in {:.2f}s"
-INFO_BATCH_COMPLETED = "[BATCH] Completed batch in {:.2f}s (extract: {:.2f}s, dedup: {:.2f}s, gen: {:.2f}s, update: {:.2f}s)"
-INFO_CPU_CORES_DETECTED = "[BATCH] Auto-detected {} CPU cores, using {} threads for batch processing"
-INFO_STOPPING_BATCH = "stopping current batch"
-INFO_CACHE_CLEANUP_STARTED = "[CACHE] Starting cache cleanup."
-INFO_CACHE_CLEANUP_FINISHED = "[CACHE] Cache cleanup finished."
-
-# ============================================================================
-# DEBUG LOGGING
-# ============================================================================
-
-DEBUG_CLEANUP_DISABLED = "cleanup_user_files: cache disabled by preferences, skipping"
-DEBUG_CLEANUP_RETENTION_ZERO = "cleanup_user_files: retention_days is 0, skipping automatic cleanup"
-DEBUG_CLEANUP_DIR_NOT_EXISTS = "cleanup_user_files: user_files dir does not exist at {}"
