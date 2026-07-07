@@ -7,6 +7,7 @@ import html
 
 from . import constants
 from . import errors
+from . import config_models
 
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
@@ -35,7 +36,18 @@ def extract_template_regexp(input, regexp):
 
 
 
+def _coerce_text_processing_model(text_processing_model):
+    if text_processing_model is None:
+        return config_models.TextProcessing()
+    if hasattr(text_processing_model, 'text_replacement_rules'):
+        return text_processing_model
+    if hasattr(text_processing_model, 'enabled') or hasattr(text_processing_model, 'html_to_text_line'):
+        return text_processing_model
+    return config_models.TextProcessing()
+
+
 def process_text_replacement(text, text_processing_model):
+    text_processing_model = _coerce_text_processing_model(text_processing_model)
     for text_replacement_rule in text_processing_model.text_replacement_rules:
         text = process_text_replacement_rule(text, text_replacement_rule, text_processing_model)
     return text
@@ -68,6 +80,7 @@ def strip_cloze_markers(text):
     return re.sub(pattern, r'\1', text)
 
 def process_text_rules(text, text_processing_model):
+    text_processing_model = _coerce_text_processing_model(text_processing_model)
     # Always strip sound tags first - they should never be pronounced
     text = strip_sound_tag(text)
     if text_processing_model.strip_cloze:
@@ -83,6 +96,7 @@ def process_text_rules(text, text_processing_model):
 
 def process_text(source_text, text_processing_model):
     logger.debug(f'process_text source_text: {source_text}')
+    text_processing_model = _coerce_text_processing_model(text_processing_model)
     if not getattr(text_processing_model, 'enabled', True):
         return strip_sound_tag(source_text)
     if text_processing_model.run_replace_rules_after:
@@ -96,6 +110,7 @@ def process_text(source_text, text_processing_model):
     return processed_text
 
 def process_text_replacement_rule(input_text, rule, text_processing_model):
+    text_processing_model = _coerce_text_processing_model(text_processing_model)
     try:
         if rule.source == None:
             raise Exception('missing pattern in text replacement rule')

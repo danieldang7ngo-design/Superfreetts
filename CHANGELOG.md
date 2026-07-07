@@ -1,5 +1,50 @@
 # Changelog
 
+## 26.7.1 - 2026-07-07
+
+### English
+
+- Updated addon versioning to 26.7.1 using the AMD-style release format: year.month.release, so 26.7.1 means the first release in July 2026.
+- Added Anki collection path handling so database access follows the active profile path.
+- Added note-loading helpers and lazy note list scaffolding for smoother handling of large note sets.
+- Verified the packaged addon includes the new DB helper and related modules in the built archive.
+
+### Tiếng Việt
+
+- Cập nhật số phiên bản addon thành 26.7.1 theo quy ước phát hành kiểu AMD.
+- Thêm xử lý đường dẫn collection của Anki để truy cập DB theo profile đang hoạt động.
+- Thêm helper tải note và khung danh sách note lười để xử lý lượng note lớn mượt hơn.
+
+### 🇰🇷 한국어
+
+* AMD 스타일 릴리스 규칙에 따라 애드온 버전을 26.7.1로 업데이트했습니다.
+* 활성 프로필 경로를 따르도록 Anki collection 경로 처리를 추가했습니다.
+* 대량 노트 처리에 더 부드럽게 대응하도록 노트 로딩 헬퍼와 지연 로딩 리스트 스캐폴딩을 추가했습니다.
+
+### 🇨🇳 简体中文
+
+* 按照 AMD 风格的版本规则，将插件版本更新为 26.7.1。
+* 新增 Anki collection 路径处理，数据库访问将遵循当前活跃配置文件路径。
+* 新增笔记加载辅助逻辑与懒加载笔记列表骨架，以更顺畅地处理大量笔记。
+
+### 🇹🇼 繁體中文
+
+* 依照 AMD 風格的版本規則，將外掛版本更新為 26.7.1。
+* 新增 Anki collection 路徑處理，資料庫存取將遵循目前使用中的設定檔路徑。
+* 新增筆記載入輔助邏輯與延遲載入筆記清單骨架，以更順暢處理大量筆記。
+
+### 🇯🇵 日本語
+
+* AMD 形式のバージョン体系に合わせて、アドオンのバージョンを 26.7.1 に更新しました。
+* Anki の collection パスを利用するようにし、現在のアクティブプロファイルに合わせて DB へアクセスするようにしました。
+* 大量ノートをより滑らかに扱えるよう、ノート読み込みヘルパーと遅延読み込みリストの土台を追加しました。
+
+### 🇸🇪 Svenska
+
+* Uppdaterade tilläggsversionen till 26.7.1 enligt AMD-liknande versionsschema.
+* Lade till hantering av Anki collection-sökväg så att databasanvändning följer den aktiva profilen.
+* Lade till hjälpfunktioner för att ladda anteckningar och en lat liststruktur för smidigare hantering av stora anteckningsmängder.
+
 ## 1.4 - 2026-07-05
 
 ### English

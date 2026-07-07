@@ -70,3 +70,15 @@ def test_process_text_disabled():
     
     input_text = "<b>Hello</b> (world) [sound:test.mp3]"
     assert text_utils.process_text(input_text, tp) == "<b>Hello</b> (world)"
+
+@pytest.mark.unit
+def test_process_text_with_none_model_uses_defaults():
+    input_text = "<b>Hello</b> [sound:test.mp3]"
+    processed = text_utils.process_text(input_text, None)
+    assert processed == "Hello"
+
+@pytest.mark.unit
+def test_process_text_replacement_with_none_model_uses_defaults():
+    input_text = "hello world"
+    processed = text_utils.process_text_replacement(input_text, None)
+    assert processed == input_text

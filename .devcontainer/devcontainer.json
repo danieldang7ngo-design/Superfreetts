@@ -1,0 +1,29 @@
+{
+    "name": "SuperFreeTTS",
+
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+
+    "workspaceFolder": "/workspace",
+
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    ],
+
+    "remoteUser": "vscode",
+
+    "shutdownAction": "stopContainer",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "charliermarsh.ruff",
+                "ms-azuretools.vscode-docker",
+                "GitHub.copilot"
+            ]
+        }
+    }
+}

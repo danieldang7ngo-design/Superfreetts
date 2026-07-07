@@ -296,6 +296,8 @@ class TextProcessing(component_common.ConfigComponentBase):
     def set_text_processing_rules_widget_state(self):
         if not hasattr(self, 'html_to_text_line_checkbox'):
             return
+        if self.model is None:
+            return
         self.enabled_checkbox.setChecked(getattr(self.model, 'enabled', True))
         self.html_to_text_line_checkbox.setChecked(self.model.html_to_text_line)
         self.strip_brackets_checkbox.setChecked(self.model.strip_brackets)

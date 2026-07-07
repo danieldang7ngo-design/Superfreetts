@@ -12,6 +12,62 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.7.1",
+        title={
+            "en": "Anki addon update",
+            "vi": "Cập nhật addon Anki",
+            "ko": "Anki 애드온 업데이트",
+            "zh-CN": "Anki 插件更新",
+            "zh-TW": "Anki 外掛更新",
+            "ja": "Anki アドオン更新",
+            "sv": "Anki-tilläggsuppdatering",
+        },
+        bullets={
+            "en": [
+                "Updated addon versioning to 26.7.1 using the AMD-style release format: year.month.release, so 26.7.1 means the first release in July 2026.",
+                "Added Anki collection path handling so DB access follows the active profile path.",
+                "Added note-loading helpers and lazy note list scaffolding for smoother large-note handling.",
+                "Verified the packaged addon includes the new DB helper and related modules in the built archive.",
+            ],
+            "vi": [
+                "Cập nhật phiên bản addon lên 26.7.1 theo định dạng phát hành kiểu AMD: năm.tháng.bản-phát-hành, nên 26.7.1 là bản phát hành đầu tiên vào tháng 7 năm 2026.",
+                "Thêm xử lý đường dẫn collection của Anki để truy cập cơ sở dữ liệu theo đúng profile đang hoạt động.",
+                "Thêm helper tải note và khung danh sách note lười để xử lý số lượng note lớn mượt hơn.",
+                "Đã xác minh gói addon đã đóng gồm helper DB mới và các module liên quan trong file .ankiaddon đã build.",
+            ],
+            "ko": [
+                "AMD 스타일 릴리스 형식인 연도.월.배포번호에 따라 애드온 버전을 26.7.1로 업데이트했습니다. 따라서 26.7.1은 2026년 7월의 첫 번째 릴리스입니다.",
+                "활성 프로필 경로를 따라 DB 접근이 이루어지도록 Anki collection 경로 처리를 추가했습니다.",
+                "대량 노트 처리에 더 부드럽게 대응하도록 노트 로딩 헬퍼와 지연 로딩 리스트 구조를 추가했습니다.",
+                "빌드된 .ankiaddon 패키지에 새 DB 헬퍼와 관련 모듈이 포함되도록 확인했습니다.",
+            ],
+            "zh-CN": [
+                "按照 AMD 风格的版本格式更新插件版本为 26.7.1：年.月.发布序号，因此 26.7.1 表示 2026 年 7 月的第 1 个版本。",
+                "新增 Anki collection 路径处理，让数据库访问跟随当前活跃配置文件路径。",
+                "新增笔记加载辅助逻辑与懒加载笔记列表骨架，以更顺畅地处理大量笔记。",
+                "已确认生成的 .ankiaddon 包含新的 DB helper 及相关模块。",
+            ],
+            "zh-TW": [
+                "依照 AMD 風格的版本格式更新外掛版本為 26.7.1：年.月.發布序號，因此 26.7.1 表示 2026 年 7 月的第 1 個版本。",
+                "新增 Anki collection 路徑處理，讓資料庫存取跟隨目前使用中的設定檔路徑。",
+                "新增筆記載入輔助邏輯與延遲載入筆記清單骨架，以更順暢處理大量筆記。",
+                "已確認產生的 .ankiaddon 套件包含新的 DB helper 與相關模組。",
+            ],
+            "ja": [
+                "AMD 形式のリリース規則に合わせて、アドオンのバージョンを 26.7.1 に更新しました。年.月.リリース番号の形式で、26.7.1 は 2026 年 7 月の第 1 リリースを意味します。",
+                "Anki の collection パスを基準にして、現在のアクティブプロファイルに合わせて DB へアクセスする処理を追加しました。",
+                "大量ノートをより滑らかに扱えるよう、ノート読み込みヘルパーと遅延読み込みリストの土台を追加しました。",
+                "生成した .ankiaddon パッケージに、新しい DB helper と関連モジュールが含まれることを確認しました。",
+            ],
+            "sv": [
+                "Uppdaterade tilläggsversionen till 26.7.1 enligt AMD-stilens releaseformat: år.månad.release, så betyder 26.7.1 den första releasen i juli 2026.",
+                "Lade till hantering av Anki collection-sökväg så att databasanvändning följer den aktiva profilen.",
+                "Lade till hjälpfunktioner för att ladda anteckningar och en lat liststruktur för smidigare hantering av stora anteckningsmängder.",
+                "Verifierade att den packade .ankiaddon-filen innehåller den nya DB-hjälparen och de relaterade modulerna.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="1.4",
         title={
             "en": "Core refactor and sync",

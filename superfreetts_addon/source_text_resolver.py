@@ -1,5 +1,6 @@
 import json
 
+from . import config_models
 from . import constants
 from . import errors
 from . import i18n
@@ -36,8 +37,17 @@ def get_source_text(note, batch_source, text_override, ui_language="en"):
     raise errors.SourceTextEmpty()
 
 
+def _coerce_text_processing_model(text_processing_model):
+    if text_processing_model is None:
+        return config_models.TextProcessing()
+    return text_processing_model
+
+
 def text_processing_cache_key(source_text, text_processing_model):
-    serialized = text_processing_model.serialize()
+    text_processing_model = _coerce_text_processing_model(text_processing_model)
+    serialized = None
+    if text_processing_model is not None:
+        serialized = text_processing_model.serialize()
     return json.dumps(
         {
             "source_text": source_text,

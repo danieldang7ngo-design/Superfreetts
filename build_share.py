@@ -33,6 +33,7 @@ TOP_LEVEL_INCLUDES = [
     "superfreetts_addon",
     "external",
     "graphics",
+    "tools",
 ]
 
 # Anything matching these names anywhere in the tree is dropped.

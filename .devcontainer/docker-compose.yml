@@ -1,0 +1,11 @@
+services:
+  opencode:
+    build: .
+    volumes:
+      - ${USERPROFILE}\.cocoindex_code:/home/vscode/.cocoindex_code
+      - ${USERPROFILE}\.config:/home/vscode/.config
+      - ${USERPROFILE}\.local:/home/vscode/.local
+      - .:/workspace
+    tty: true
+    stdin_open: true
+    user: vscode

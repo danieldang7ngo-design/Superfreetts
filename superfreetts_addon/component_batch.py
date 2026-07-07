@@ -864,6 +864,13 @@ class BatchDialog(aqt.qt.QDialog):
         self.batch_component.load_preset(preset_id)
         self.batch_component.collapse_settings()           
 
+    def configure_browser_from_model(self, note_id_list, batch_model):
+        self.batch_component = ComponentBatch(self.hypertts, self)
+        self.batch_component.configure_browser(note_id_list)
+        self.batch_component.draw(self.main_layout)
+        self.batch_component.load_model(copy.deepcopy(batch_model))
+        self.batch_component.collapse_settings()
+
     def configure_browser_new_preset(self, note_id_list, new_preset_name: str):
         self.batch_component = ComponentBatch(self.hypertts, self)
         self.batch_component.configure_browser(note_id_list)
@@ -907,6 +914,14 @@ def create_component_batch_browser_existing_preset(hypertts, note_id_list, prese
         raise errors.NoNotesSelected()
     dialog = BatchDialog(hypertts)
     dialog.configure_browser_existing_preset(note_id_list, preset_id)
+    hypertts.anki_utils.wait_for_dialog_input(dialog, constants.DIALOG_ID_BATCH)
+
+
+def open_batch_dialog_for_model(hypertts, note_id_list, batch_model) -> ComponentBatch:
+    if len(note_id_list) == 0:
+        raise errors.NoNotesSelected()
+    dialog = BatchDialog(hypertts)
+    dialog.configure_browser_from_model(note_id_list, batch_model)
     hypertts.anki_utils.wait_for_dialog_input(dialog, constants.DIALOG_ID_BATCH)
 
 @sc.event(Event.open, EventMode.advanced_browser_new_preset)

@@ -9,6 +9,7 @@ from datetime import timedelta, datetime
 
 from . import constants
 from . import component_common
+from . import config_models
 from . import batch_status
 from . import batch_progress_ui
 from . import component_failure_report
@@ -31,15 +32,35 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         self.current_page = 0
         self.total_notes = len(self.batch_status.note_id_list)
         self.loaded_note_ids = []
+        self.loaded_pages = set()
+        self.loading_pages = set()
         self.is_loading = False
     
+    def page_count(self):
+        return (self.total_notes + self.page_size - 1) // self.page_size
+
+    def page_for_row(self, row: int):
+        if row < 0:
+            return 0
+        return min(row // self.page_size, max(self.page_count() - 1, 0))
+
     def load_page(self, page: int):
         """Load a specific page of notes into the model"""
+        if page in self.loaded_pages or page in self.loading_pages:
+            return
+        if page < 0 or page >= self.page_count():
+            return
+
         start = page * self.page_size
         end = min(start + self.page_size, self.total_notes)
-        self.loaded_note_ids = self.batch_status.note_id_list[start:end]
-        # Trigger background text processing for this page
-        self._request_processed_text(self.loaded_note_ids)
+        new_note_ids = self.batch_status.note_id_list[start:end]
+        self.loaded_note_ids = sorted(
+            set(self.loaded_note_ids).union(new_note_ids),
+            key=lambda note_id: self.batch_status.note_id_map.get(note_id, 0),
+        )
+        self.loading_pages.add(page)
+        self.is_loading = True
+        self._request_processed_text(new_note_ids, page)
 
     def _get_headers(self):
         lang = self.hypertts.get_ui_language()
@@ -68,26 +89,28 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         self.dataChanged.emit(start_index, end_index)
 
     def has_more_pages(self):
-        return (self.current_page + 1) * self.page_size < self.total_notes
+        highest_page = max(self.loaded_pages) if self.loaded_pages else -1
+        return (highest_page + 1) * self.page_size < self.total_notes
 
     def load_next_page(self):
-        if self.has_more_pages():
-            self.current_page += 1
-            self.load_page(self.current_page)
+        highest_page = max(self.loaded_pages) if self.loaded_pages else -1
+        next_page = highest_page + 1
+        self.load_page(next_page)
 
-    def _request_processed_text(self, note_ids: List[int]):
-        self.is_loading = True
+    def _request_processed_text(self, note_ids: List[int], page: int):
         # Use QueryOp for background
         op = aqt.operations.QueryOp(
             parent=aqt.mw,
             op=lambda col: self.hypertts.populate_batch_status_processed_text(
                 note_ids, self.batch_status.source_model, self.batch_status.text_processing_model, self.batch_status
             ),
-            success=self._on_page_processed,
-        ).failure(self._on_page_failed).run_in_background()
+            success=lambda result, page=page: self._on_page_processed(result, page),
+        ).failure(lambda error, page=page: self._on_page_failed(error, page)).run_in_background()
 
-    def _on_page_processed(self, result):
-        self.is_loading = False
+    def _on_page_processed(self, result, page: int):
+        self.loading_pages.discard(page)
+        self.loaded_pages.add(page)
+        self.is_loading = len(self.loading_pages) > 0
         # emit data changed for rows corresponding to the loaded page
         try:
             if len(self.loaded_note_ids) > 0:
@@ -106,9 +129,33 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
             last_col = max(0, self.columnCount(None) - 1)
             self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
     
-    def _on_page_failed(self, error):
-        self.is_loading = False
-        logger.error(f"Failed to process page: {error}")
+    def _on_page_failed(self, error, page: int):
+        self.loading_pages.discard(page)
+        self.is_loading = len(self.loading_pages) > 0
+        logger.error(f"Failed to process page {page}: {error}")
+
+    def _visible_row_range(self):
+        if self.table_view is None:
+            return 0, min(self.page_size - 1, self.total_notes - 1)
+        viewport = self.table_view.viewport()
+        if viewport is None:
+            return 0, min(self.page_size - 1, self.total_notes - 1)
+        first_row = self.table_view.rowAt(0)
+        if first_row < 0:
+            first_row = 0
+        last_row = self.table_view.rowAt(viewport.height() - 1)
+        if last_row < 0:
+            last_row = min(first_row + self.page_size - 1, self.total_notes - 1)
+        return first_row, last_row
+
+    def _load_visible_pages(self):
+        if self.total_notes == 0:
+            return
+        first_row, last_row = self._visible_row_range()
+        first_page = self.page_for_row(first_row)
+        last_page = self.page_for_row(last_row)
+        for page in range(first_page, min(self.page_count(), last_page + 2)):
+            self.load_page(page)
 
     def data(self, index, role):
         if role != aqt.qt.Qt.ItemDataRole.DisplayRole:
@@ -187,7 +234,7 @@ class BatchPreview(component_common.ComponentBase):
     def load_model(self, model):
         self.batch_model = model
         self.batch_status.source_model = model.source
-        self.batch_status.text_processing_model = model.text_processing
+        self.batch_status.text_processing_model = getattr(model, 'text_processing', None) or config_models.TextProcessing()
         self.apply_to_notes_batch_started = False
         self.generated_batch_results = None
         self.prepared_batch_audio = None
@@ -195,6 +242,8 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_run_mode = 'idle'
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
+        if hasattr(self.batch_preview_table_model, 'table_view') and self.table_view is not None:
+            self.batch_preview_table_model.table_view = self.table_view
         self.batch_preview_table_model.load_page(0)
         self._update_status_label()
 
@@ -210,6 +259,7 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_preview_layout = aqt.qt.QVBoxLayout()
         self.table_view = aqt.qt.QTableView()
         self.table_view.setModel(self.batch_preview_table_model)
+        self.batch_preview_table_model.table_view = self.table_view
         self.table_view.setSelectionMode(aqt.qt.QTableView.SelectionMode.SingleSelection)
         self.table_view.setSelectionBehavior(aqt.qt.QTableView.SelectionBehavior.SelectRows)
         
@@ -297,6 +347,7 @@ class BatchPreview(component_common.ComponentBase):
 
 
     def _check_scroll_load(self, value):
+        self.batch_preview_table_model._load_visible_pages()
         if value >= self.table_view.verticalScrollBar().maximum() - 50:
             self._load_next_page()
 
@@ -549,31 +600,9 @@ class BatchPreview(component_common.ComponentBase):
                 logger.warning(f"Error updating enhanced progress widget: {e}")
 
     def rerun_failed_notes(self, failed_note_ids: List[int]) -> None:
-        """Rerun generation for only the failed notes with the same preset/settings."""
+        """Open a fresh batch dialog for the failed notes without starting the run immediately."""
         if not failed_note_ids:
             return
-        # Filter to only the failed notes
-        self.note_id_list = failed_note_ids
-        # Reset state for new run
-        self.apply_to_notes_batch_started = True
-        self.failed_note_ids_to_tag = []
-        self.generated_batch_results = None
-        self.prepared_batch_audio = None
-        self.generated_batch_model = copy.deepcopy(self.batch_model)
-        self.batch_run_mode = 'generating'
-        self.batch_status = batch_status.BatchStatus(self.hypertts.anki_utils, failed_note_ids, self)
-        self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, self.hypertts)
-        if self.table_view:
-            self.table_view.setModel(self.batch_preview_table_model)
-            # ensure first page loads and status updates so dialog shows rows
-            try:
-                self.batch_preview_table_model.load_page(0)
-                self._update_status_label()
-            except Exception:
-                pass
-        self.batch_status.begin()
-        aqt.operations.QueryOp(
-            parent=self.dialog,
-            op=self.prepare_audio_fn,
-            success=self.finished_prepare_audio_fn,
-        ).failure(self.batch_operation_failed).run_in_background()
+        from . import component_batch
+        batch_model = copy.deepcopy(self.batch_model)
+        component_batch.open_batch_dialog_for_model(self.hypertts, failed_note_ids, batch_model)
