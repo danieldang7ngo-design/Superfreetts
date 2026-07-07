@@ -693,8 +693,39 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     @sc.event(Event.click_preview)
     def sound_preview_button_pressed(self):
-        self.disable_bottom_buttons()
+        # Determine selected note status on main thread. If generated audio exists, play it.
+        note_status = None
+        try:
+            note_status = self.preview.get_selected_note_status()
+        except Exception:
+            note_status = None
+
         lang = self.hypertts.get_ui_language()
+        # if selected and error -> tooltip, do nothing
+        if note_status is not None and note_status.status == constants.BatchNoteStatus.Error:
+            self.hypertts.anki_utils.tooltip_message(i18n.get_text("batch_button_select_note_to_preview", lang))
+            return
+
+        # if selected and cached sound exists -> play cached file
+        if note_status is not None and note_status.sound_file:
+            # compose full path from user_files dir
+            user_files_dir = self.hypertts.anki_utils.get_user_files_dir()
+            full_path = None
+            try:
+                import os
+                full_path = os.path.join(user_files_dir, note_status.sound_file)
+            except Exception:
+                full_path = None
+            if full_path:
+                # show playing state then play
+                self.preview_sound_button.setText(i18n.get_text("easy_button_previewing", lang))
+                self.preview_sound_button.setEnabled(False)
+                self.hypertts.anki_utils.play_sound(full_path)
+                self.hypertts.anki_utils.run_on_main(self.finish_sound_preview)
+                return
+
+        # fallback: generate+play in background (existing behavior)
+        self.disable_bottom_buttons()
         self.preview_sound_button.setText(i18n.get_text("easy_button_previewing", lang))
         self.hypertts.anki_utils.run_in_background(self.sound_preview_task, self.sound_preview_task_done)
 

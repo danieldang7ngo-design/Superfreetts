@@ -1,13 +1,13 @@
 # -*- coding: mbcs -*-
 
 from ctypes import *
-from comtypes.automation import DISPPARAMS, EXCEPINFO, IDispatch, IEnumVARIANT
 from comtypes import (
     _check_version, BSTR, CoClass, COMMETHOD, dispid, DISPMETHOD,
     DISPPROPERTY, GUID, IUnknown
 )
-from ctypes.wintypes import VARIANT_BOOL
+from comtypes.automation import DISPPARAMS, EXCEPINFO, IDispatch, IEnumVARIANT
 from ctypes import HRESULT
+from ctypes.wintypes import VARIANT_BOOL
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,29 +16,29 @@ if TYPE_CHECKING:
 
 _lcid = 0  # change this if required
 typelib_path = 'C:\\Windows\\System32\\stdole2.tlb'
-OLE_XPOS_CONTAINER = c_float
-OLE_HANDLE = c_int
-OLE_XSIZE_HIMETRIC = c_int
 OLE_YSIZE_HIMETRIC = c_int
-OLE_XPOS_HIMETRIC = c_int
-OLE_YPOS_HIMETRIC = c_int
+OLE_XPOS_CONTAINER = c_float
 OLE_YPOS_CONTAINER = c_float
 OLE_XSIZE_CONTAINER = c_float
+OLE_HANDLE = c_int
 OLE_YSIZE_CONTAINER = c_float
 OLE_OPTEXCLUSIVE = VARIANT_BOOL
 OLE_CANCELBOOL = VARIANT_BOOL
+OLE_XSIZE_HIMETRIC = c_int
+OLE_XPOS_HIMETRIC = c_int
+OLE_YPOS_HIMETRIC = c_int
 OLE_ENABLEDEFAULTBOOL = VARIANT_BOOL
 FONTNAME = BSTR
 FONTSIZE = c_longlong
-OLE_COLOR = c_ulong
-FONTBOLD = VARIANT_BOOL
-OLE_XPOS_PIXELS = c_int
-FONTITALIC = VARIANT_BOOL
 OLE_YPOS_PIXELS = c_int
-FONTUNDERSCORE = VARIANT_BOOL
+FONTBOLD = VARIANT_BOOL
+FONTITALIC = VARIANT_BOOL
 OLE_XSIZE_PIXELS = c_int
-FONTSTRIKETHROUGH = VARIANT_BOOL
 OLE_YSIZE_PIXELS = c_int
+FONTUNDERSCORE = VARIANT_BOOL
+FONTSTRIKETHROUGH = VARIANT_BOOL
+OLE_COLOR = c_ulong
+OLE_XPOS_PIXELS = c_int
 
 # values for enumeration 'LoadPictureConstants'
 Default = 0
@@ -55,84 +55,6 @@ OLE_TRISTATE = c_int  # enum
 
 
 
-class Picture(IDispatch):
-    _case_insensitive_ = True
-    _iid_ = GUID('{7BF80981-BF32-101A-8BBB-00AA00300CAB}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        @property  # dispprop
-        def Handle(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def hPal(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Type(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Width(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Height(self) -> hints.Incomplete: ...
-        def Render(self, hdc: hints.Incomplete, x: hints.Incomplete, y: hints.Incomplete, cx: hints.Incomplete, cy: hints.Incomplete, xSrc: hints.Incomplete, ySrc: hints.Incomplete, cxSrc: hints.Incomplete, cySrc: hints.Incomplete, prcWBounds: hints.Incomplete) -> hints.Incomplete: ...
-
-
-Picture._disp_methods_ = [
-    DISPPROPERTY([dispid(0), 'readonly'], OLE_HANDLE, 'Handle'),
-    DISPPROPERTY([dispid(2)], OLE_HANDLE, 'hPal'),
-    DISPPROPERTY([dispid(3), 'readonly'], c_short, 'Type'),
-    DISPPROPERTY([dispid(4), 'readonly'], OLE_XSIZE_HIMETRIC, 'Width'),
-    DISPPROPERTY([dispid(5), 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
-    DISPMETHOD(
-        [dispid(6)],
-        None,
-        'Render',
-        ([], c_int, 'hdc'),
-        ([], c_int, 'x'),
-        ([], c_int, 'y'),
-        ([], c_int, 'cx'),
-        ([], c_int, 'cy'),
-        ([], OLE_XPOS_HIMETRIC, 'xSrc'),
-        ([], OLE_YPOS_HIMETRIC, 'ySrc'),
-        ([], OLE_XSIZE_HIMETRIC, 'cxSrc'),
-        ([], OLE_YSIZE_HIMETRIC, 'cySrc'),
-        ([], c_void_p, 'prcWBounds')
-    ),
-]
-
-IPictureDisp = Picture
-
-
-class StdFont(CoClass):
-    _reg_clsid_ = GUID('{0BE35203-8F91-11CE-9DE3-00AA004BB851}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
-
-
-class Font(IDispatch):
-    _case_insensitive_ = True
-    _iid_ = GUID('{BEF6E003-A874-101A-8BBA-00AA00300CAB}')
-    _idlflags_ = []
-    _methods_ = []
-
-    if TYPE_CHECKING:  # dispmembers
-        @property  # dispprop
-        def Name(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Size(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Bold(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Italic(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Underline(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Strikethrough(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Weight(self) -> hints.Incomplete: ...
-        @property  # dispprop
-        def Charset(self) -> hints.Incomplete: ...
-
-
 class FontEvents(IDispatch):
     """Event interface for the Font object"""
     _case_insensitive_ = True
@@ -142,6 +64,16 @@ class FontEvents(IDispatch):
 
     if TYPE_CHECKING:  # dispmembers
         def FontChanged(self, PropertyName: hints.Incomplete) -> hints.Incomplete: ...
+
+
+FontEvents._disp_methods_ = [
+    DISPMETHOD(
+        [dispid(9)],
+        None,
+        'FontChanged',
+        (['in'], BSTR, 'PropertyName')
+    ),
+]
 
 
 class IFont(IUnknown):
@@ -183,75 +115,6 @@ class IFont(IUnknown):
         def AddRefHfont(self, hFont: hints.Incomplete) -> hints.Hresult: ...
         def ReleaseHfont(self, hFont: hints.Incomplete) -> hints.Hresult: ...
 
-
-StdFont._com_interfaces_ = [Font, IFont]
-StdFont._outgoing_interfaces_ = [FontEvents]
-
-FontEvents._disp_methods_ = [
-    DISPMETHOD(
-        [dispid(9)],
-        None,
-        'FontChanged',
-        (['in'], BSTR, 'PropertyName')
-    ),
-]
-
-IFontEventsDisp = FontEvents
-
-Font._disp_methods_ = [
-    DISPPROPERTY([dispid(0)], BSTR, 'Name'),
-    DISPPROPERTY([dispid(2)], c_longlong, 'Size'),
-    DISPPROPERTY([dispid(3)], VARIANT_BOOL, 'Bold'),
-    DISPPROPERTY([dispid(4)], VARIANT_BOOL, 'Italic'),
-    DISPPROPERTY([dispid(5)], VARIANT_BOOL, 'Underline'),
-    DISPPROPERTY([dispid(6)], VARIANT_BOOL, 'Strikethrough'),
-    DISPPROPERTY([dispid(7)], c_short, 'Weight'),
-    DISPPROPERTY([dispid(8)], c_short, 'Charset'),
-]
-
-IFontDisp = Font
-
-
-class StdPicture(CoClass):
-    _reg_clsid_ = GUID('{0BE35204-8F91-11CE-9DE3-00AA004BB851}')
-    _idlflags_ = []
-    _typelib_path_ = typelib_path
-    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
-
-
-class IPicture(IUnknown):
-    """Picture Object"""
-    _case_insensitive_ = True
-    _iid_ = GUID('{7BF80980-BF32-101A-8BBB-00AA00300CAB}')
-    _idlflags_ = ['hidden']
-
-    if TYPE_CHECKING:  # commembers
-        def _get_Handle(self) -> hints.Incomplete: ...
-        Handle = hints.normal_property(_get_Handle)
-        def _get_hPal(self) -> hints.Incomplete: ...
-        def _set_hPal(self, phpal: hints.Incomplete) -> hints.Hresult: ...
-        hPal = hints.normal_property(_get_hPal, _set_hPal)
-        def _get_Type(self) -> hints.Incomplete: ...
-        Type = hints.normal_property(_get_Type)
-        def _get_Width(self) -> hints.Incomplete: ...
-        Width = hints.normal_property(_get_Width)
-        def _get_Height(self) -> hints.Incomplete: ...
-        Height = hints.normal_property(_get_Height)
-        def Render(self, hdc: hints.Incomplete, x: hints.Incomplete, y: hints.Incomplete, cx: hints.Incomplete, cy: hints.Incomplete, xSrc: hints.Incomplete, ySrc: hints.Incomplete, cxSrc: hints.Incomplete, cySrc: hints.Incomplete, prcWBounds: hints.Incomplete) -> hints.Hresult: ...
-        def _get_CurDC(self) -> hints.Incomplete: ...
-        CurDC = hints.normal_property(_get_CurDC)
-        def SelectPicture(self, hdcIn: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
-        def _get_KeepOriginalFormat(self) -> hints.Incomplete: ...
-        def _set_KeepOriginalFormat(self, pfkeep: hints.Incomplete) -> hints.Hresult: ...
-        KeepOriginalFormat = hints.normal_property(_get_KeepOriginalFormat, _set_KeepOriginalFormat)
-        def PictureChanged(self) -> hints.Hresult: ...
-        def SaveAsFile(self, pstm: hints.Incomplete, fSaveMemCopy: hints.Incomplete) -> hints.Incomplete: ...
-        def _get_Attributes(self) -> hints.Incomplete: ...
-        Attributes = hints.normal_property(_get_Attributes)
-        def SetHdc(self, hdc: hints.Incomplete) -> hints.Hresult: ...
-
-
-StdPicture._com_interfaces_ = [Picture, IPicture]
 
 IFont._methods_ = [
     COMMETHOD(
@@ -475,10 +338,36 @@ IFont._methods_ = [
 #
 
 
-class Library(object):
-    """OLE Automation"""
-    name = 'stdole'
-    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
+class IPicture(IUnknown):
+    """Picture Object"""
+    _case_insensitive_ = True
+    _iid_ = GUID('{7BF80980-BF32-101A-8BBB-00AA00300CAB}')
+    _idlflags_ = ['hidden']
+
+    if TYPE_CHECKING:  # commembers
+        def _get_Handle(self) -> hints.Incomplete: ...
+        Handle = hints.normal_property(_get_Handle)
+        def _get_hPal(self) -> hints.Incomplete: ...
+        def _set_hPal(self, phpal: hints.Incomplete) -> hints.Hresult: ...
+        hPal = hints.normal_property(_get_hPal, _set_hPal)
+        def _get_Type(self) -> hints.Incomplete: ...
+        Type = hints.normal_property(_get_Type)
+        def _get_Width(self) -> hints.Incomplete: ...
+        Width = hints.normal_property(_get_Width)
+        def _get_Height(self) -> hints.Incomplete: ...
+        Height = hints.normal_property(_get_Height)
+        def Render(self, hdc: hints.Incomplete, x: hints.Incomplete, y: hints.Incomplete, cx: hints.Incomplete, cy: hints.Incomplete, xSrc: hints.Incomplete, ySrc: hints.Incomplete, cxSrc: hints.Incomplete, cySrc: hints.Incomplete, prcWBounds: hints.Incomplete) -> hints.Hresult: ...
+        def _get_CurDC(self) -> hints.Incomplete: ...
+        CurDC = hints.normal_property(_get_CurDC)
+        def SelectPicture(self, hdcIn: hints.Incomplete) -> hints.Tuple[hints.Incomplete, hints.Incomplete]: ...
+        def _get_KeepOriginalFormat(self) -> hints.Incomplete: ...
+        def _set_KeepOriginalFormat(self, pfkeep: hints.Incomplete) -> hints.Hresult: ...
+        KeepOriginalFormat = hints.normal_property(_get_KeepOriginalFormat, _set_KeepOriginalFormat)
+        def PictureChanged(self) -> hints.Hresult: ...
+        def SaveAsFile(self, pstm: hints.Incomplete, fSaveMemCopy: hints.Incomplete) -> hints.Incomplete: ...
+        def _get_Attributes(self) -> hints.Incomplete: ...
+        Attributes = hints.normal_property(_get_Attributes)
+        def SetHdc(self, hdc: hints.Incomplete) -> hints.Hresult: ...
 
 
 IPicture._methods_ = [
@@ -650,21 +539,133 @@ IPicture._methods_ = [
 #         #return 
 #
 
-__all__ = [
-    'FONTSTRIKETHROUGH', 'Default', 'StdPicture', 'FontEvents',
-    'OLE_YPOS_PIXELS', 'OLE_XPOS_HIMETRIC', 'FONTBOLD',
-    'IFontEventsDisp', 'OLE_YSIZE_CONTAINER', 'FONTNAME',
-    'OLE_CANCELBOOL', 'Gray', 'OLE_YPOS_HIMETRIC', 'OLE_HANDLE',
-    'OLE_XPOS_CONTAINER', 'Monochrome', 'OLE_COLOR',
-    'OLE_ENABLEDEFAULTBOOL', 'Checked', 'IPicture',
-    'OLE_YSIZE_HIMETRIC', 'FONTSIZE', 'OLE_XSIZE_HIMETRIC',
-    'FONTITALIC', 'Library', 'VgaColor', 'OLE_YSIZE_PIXELS',
-    'OLE_XPOS_PIXELS', 'LoadPictureConstants', 'StdFont',
-    'OLE_XSIZE_CONTAINER', 'OLE_TRISTATE', 'Font', 'IFontDisp',
-    'FONTUNDERSCORE', 'Color', 'OLE_XSIZE_PIXELS', 'IFont', 'Picture',
-    'typelib_path', 'IPictureDisp', 'Unchecked', 'OLE_YPOS_CONTAINER',
-    'OLE_OPTEXCLUSIVE'
+
+class Library(object):
+    """OLE Automation"""
+    name = 'stdole'
+    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
+
+
+class Picture(IDispatch):
+    _case_insensitive_ = True
+    _iid_ = GUID('{7BF80981-BF32-101A-8BBB-00AA00300CAB}')
+    _idlflags_ = []
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        @property  # dispprop
+        def Handle(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def hPal(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Type(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Width(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Height(self) -> hints.Incomplete: ...
+        def Render(self, hdc: hints.Incomplete, x: hints.Incomplete, y: hints.Incomplete, cx: hints.Incomplete, cy: hints.Incomplete, xSrc: hints.Incomplete, ySrc: hints.Incomplete, cxSrc: hints.Incomplete, cySrc: hints.Incomplete, prcWBounds: hints.Incomplete) -> hints.Incomplete: ...
+
+
+Picture._disp_methods_ = [
+    DISPPROPERTY([dispid(0), 'readonly'], OLE_HANDLE, 'Handle'),
+    DISPPROPERTY([dispid(2)], OLE_HANDLE, 'hPal'),
+    DISPPROPERTY([dispid(3), 'readonly'], c_short, 'Type'),
+    DISPPROPERTY([dispid(4), 'readonly'], OLE_XSIZE_HIMETRIC, 'Width'),
+    DISPPROPERTY([dispid(5), 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
+    DISPMETHOD(
+        [dispid(6)],
+        None,
+        'Render',
+        ([], c_int, 'hdc'),
+        ([], c_int, 'x'),
+        ([], c_int, 'y'),
+        ([], c_int, 'cx'),
+        ([], c_int, 'cy'),
+        ([], OLE_XPOS_HIMETRIC, 'xSrc'),
+        ([], OLE_YPOS_HIMETRIC, 'ySrc'),
+        ([], OLE_XSIZE_HIMETRIC, 'cxSrc'),
+        ([], OLE_YSIZE_HIMETRIC, 'cySrc'),
+        ([], c_void_p, 'prcWBounds')
+    ),
 ]
 
-_check_version('1.4.11', 1575709685.550032)
+IPictureDisp = Picture
+
+
+class Font(IDispatch):
+    _case_insensitive_ = True
+    _iid_ = GUID('{BEF6E003-A874-101A-8BBA-00AA00300CAB}')
+    _idlflags_ = []
+    _methods_ = []
+
+    if TYPE_CHECKING:  # dispmembers
+        @property  # dispprop
+        def Name(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Size(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Bold(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Italic(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Underline(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Strikethrough(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Weight(self) -> hints.Incomplete: ...
+        @property  # dispprop
+        def Charset(self) -> hints.Incomplete: ...
+
+
+Font._disp_methods_ = [
+    DISPPROPERTY([dispid(0)], BSTR, 'Name'),
+    DISPPROPERTY([dispid(2)], c_longlong, 'Size'),
+    DISPPROPERTY([dispid(3)], VARIANT_BOOL, 'Bold'),
+    DISPPROPERTY([dispid(4)], VARIANT_BOOL, 'Italic'),
+    DISPPROPERTY([dispid(5)], VARIANT_BOOL, 'Underline'),
+    DISPPROPERTY([dispid(6)], VARIANT_BOOL, 'Strikethrough'),
+    DISPPROPERTY([dispid(7)], c_short, 'Weight'),
+    DISPPROPERTY([dispid(8)], c_short, 'Charset'),
+]
+
+
+class StdFont(CoClass):
+    _reg_clsid_ = GUID('{0BE35203-8F91-11CE-9DE3-00AA004BB851}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
+
+
+StdFont._com_interfaces_ = [Font, IFont]
+StdFont._outgoing_interfaces_ = [FontEvents]
+
+IFontEventsDisp = FontEvents
+IFontDisp = Font
+
+
+class StdPicture(CoClass):
+    _reg_clsid_ = GUID('{0BE35204-8F91-11CE-9DE3-00AA004BB851}')
+    _idlflags_ = []
+    _typelib_path_ = typelib_path
+    _reg_typelib_ = ('{00020430-0000-0000-C000-000000000046}', 2, 0)
+
+
+StdPicture._com_interfaces_ = [Picture, IPicture]
+
+__all__ = [
+    'OLE_XSIZE_PIXELS', 'IFontDisp', 'IFont', 'OLE_HANDLE',
+    'Monochrome', 'OLE_XPOS_HIMETRIC', 'typelib_path',
+    'OLE_CANCELBOOL', 'OLE_TRISTATE', 'IFontEventsDisp',
+    'OLE_YSIZE_PIXELS', 'OLE_YSIZE_CONTAINER', 'FontEvents',
+    'FONTNAME', 'FONTSIZE', 'OLE_OPTEXCLUSIVE', 'IPictureDisp',
+    'LoadPictureConstants', 'OLE_YPOS_PIXELS', 'OLE_YPOS_HIMETRIC',
+    'OLE_XPOS_PIXELS', 'OLE_ENABLEDEFAULTBOOL', 'Checked',
+    'OLE_YPOS_CONTAINER', 'FONTBOLD', 'IPicture', 'Picture',
+    'VgaColor', 'StdFont', 'Font', 'Color', 'FONTSTRIKETHROUGH',
+    'OLE_XSIZE_CONTAINER', 'OLE_XSIZE_HIMETRIC', 'Unchecked',
+    'StdPicture', 'Default', 'FONTUNDERSCORE', 'OLE_XPOS_CONTAINER',
+    'OLE_COLOR', 'FONTITALIC', 'Gray', 'Library', 'OLE_YSIZE_HIMETRIC'
+]
+
+_check_version('1.4.11', 1698465076.605665)
 

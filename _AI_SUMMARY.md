@@ -18,9 +18,8 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 - **`batch_executor.py` (Async Execution):** Implements `UnifiedBatchExecutor` and `MultiEngineExecutor`. Uses a producer-consumer pattern with background threads to ensure non-blocking UI and interleaved audio generation.
 - **`servicemanager.py` (Service Manager):** Handles runtime discovery and lazy-loading of TTS services. It ensures that TTS engines are only initialized when actually needed, preventing slow Anki startup times.
 - **`gui.py` & `component_*.py` (UI Components):** Modular UI split into distinct components:
-  - Unified settings dialog (`component_unified_settings.py`, `component_configuration.py`, `component_preferences.py`).
+  - Unified settings dialog (`component_settings.py`, `component_services.py`, `component_preferences.py`).
   - Batch/Collection Audio dialog (`component_batch.py`).
-  - Easy Mode dialog (`component_easy.py`).
   - Realtime Configuration / Voice Selection / Rules dialogs.
 - **`services/service_*.py` (TTS Engines):** Implementations of various TTS endpoints extending from `ServiceBase`. They enforce a `service_fee = free` requirement to be loaded. Paid services like Naver are skipped.
 
@@ -35,12 +34,12 @@ The project is built using **Python 3.x**, **PyQt5/PyQt6**, and bundles external
 - **Preset Mapping Rules:** Automatically pre-selecting voices or presets based on Anki Deck or Note Type.
 - **Realtime TTS:** Dynamically inserts an Anki tag `{{tts ...}}` to stream audio on the fly during review via `ttsplayer.py` instead of saving files.
 - **Text Processing:** Tools to automatically clean text (e.g., HTML tags, brackets, cloze deletions) prior to TTS.
-- **Localization (i18n):** User interface supports English, Vietnamese, and Korean (en/vi/ko).
+- **Localization (i18n):** User interface supports English, Vietnamese, Korean, Japanese, Chinese (Simplified & Traditional), and Swedish (en, vi, ko, ja, zh-CN, zh-TW, sv).
 
 ## 4. Development Roadmap Summary
 - **Phase P0 & 1 (Completed):** Unified Settings UI & AnkiVN Menu integration. Multi-threading issues fixed, UI freezing reduced, and logging optimized.
 - **Phase 2 & 3 (Completed):** UX, Configuration & Performance. Resolved overlap bugs in Preferences, implemented interleaved batch producer-consumer pattern, and added per-service concurrency capping (EdgeTTS limit=3, adjustable to 20 via `_local_override.py`).
-- **Phase 4 & 5 (Completed/In Progress):** Project is fully cleaned (no cache/logs in release). Automated test suites integrated into `tests/`. Supertonic TTS integrated. Support for Korean i18n added. Continuous batching for large collections.
+- **Phase 4 & 5 (Completed/In Progress):** Project is fully cleaned (no cache/logs in release). Automated test suites integrated into `tests/`. Supertonic TTS integrated. Support for Korean, Japanese, Chinese, and Swedish i18n added. Continuous batching for large collections.
 
 ## 5. Guide for Contributors & AI Agents
 If you wish to debug or expand the project, follow these technical guidelines:

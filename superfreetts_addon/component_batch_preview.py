@@ -54,8 +54,8 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         return aqt.qt.Qt.ItemFlag.ItemIsSelectable | aqt.qt.Qt.ItemFlag.ItemIsEnabled
 
     def rowCount(self, parent):
-        # logger.debug('SourceTextPreviewTableModel.rowCount')
-        return len(self.loaded_note_ids)
+        # Return total notes so view shows full scrollbar even before pages loaded
+        return self.total_notes
 
     def columnCount(self, parent):
         # logger.debug('SourceTextPreviewTableModel.columnCount')
@@ -88,7 +88,23 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
 
     def _on_page_processed(self, result):
         self.is_loading = False
-        self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(len(self.loaded_note_ids), self.columnCount(None)))
+        # emit data changed for rows corresponding to the loaded page
+        try:
+            if len(self.loaded_note_ids) > 0:
+                first_note = self.loaded_note_ids[0]
+                last_note = self.loaded_note_ids[-1]
+                first_row = self.batch_status.note_id_map.get(first_note, 0)
+                last_row = self.batch_status.note_id_map.get(last_note, first_row)
+                last_col = max(0, self.columnCount(None) - 1)
+                self.dataChanged.emit(self.createIndex(first_row, 0), self.createIndex(last_row, last_col))
+            else:
+                # fallback: refresh whole table
+                last_col = max(0, self.columnCount(None) - 1)
+                self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
+        except Exception:
+            # ensure UI doesn't crash on update
+            last_col = max(0, self.columnCount(None) - 1)
+            self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
     
     def _on_page_failed(self, error):
         self.is_loading = False
@@ -101,8 +117,11 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         if not index.isValid():
             return aqt.qt.QVariant()
         data = None
-        
-        note_id = self.loaded_note_ids[index.row()]
+        # map row -> note id from batch_status
+        try:
+            note_id = self.batch_status.note_id_list[index.row()]
+        except Exception:
+            return aqt.qt.QVariant()
         note_status = self.batch_status.note_status_map.get(note_id)
 
         if note_status is None:
@@ -489,6 +508,13 @@ class BatchPreview(component_common.ComponentBase):
         if self.table_view != None:
             # logger.info('table_viewport_repaint')
             self.table_view.viewport().repaint()
+            # If scrollbar reports no room to scroll but more pages exist, attempt to load next page.
+            try:
+                sb = self.table_view.verticalScrollBar()
+                if sb is not None and sb.maximum() <= 0 and self.batch_preview_table_model.has_more_pages():
+                    self.batch_preview_table_model.load_next_page()
+            except Exception:
+                pass
 
     def batch_change(self, note_id: int, row: int, total_count: int, completed_count: int, start_time: timedelta, current_time: timedelta) -> None:
         """
@@ -539,6 +565,12 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, self.hypertts)
         if self.table_view:
             self.table_view.setModel(self.batch_preview_table_model)
+            # ensure first page loads and status updates so dialog shows rows
+            try:
+                self.batch_preview_table_model.load_page(0)
+                self._update_status_label()
+            except Exception:
+                pass
         self.batch_status.begin()
         aqt.operations.QueryOp(
             parent=self.dialog,

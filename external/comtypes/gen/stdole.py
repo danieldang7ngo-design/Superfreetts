@@ -2,19 +2,19 @@ from enum import IntFlag
 
 import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0 as __wrapper_module__
 from comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0 import (
-    FONTSTRIKETHROUGH, Default, OLE_YPOS_PIXELS, CoClass, dispid,
-    OLE_XPOS_HIMETRIC, IFontEventsDisp, OLE_YSIZE_CONTAINER,
-    DISPPARAMS, OLE_CANCELBOOL, Gray, IEnumVARIANT, BSTR,
-    OLE_YSIZE_HIMETRIC, FONTSIZE, EXCEPINFO, Library, VgaColor,
-    OLE_YSIZE_PIXELS, DISPMETHOD, IUnknown, OLE_XSIZE_CONTAINER, Font,
-    IFontDisp, FONTUNDERSCORE, OLE_XSIZE_PIXELS, IFont, HRESULT,
-    StdPicture, Unchecked, Picture, OLE_YPOS_CONTAINER,
-    OLE_OPTEXCLUSIVE, GUID, FontEvents, FONTBOLD, FONTNAME,
-    OLE_YPOS_HIMETRIC, OLE_HANDLE, OLE_XPOS_CONTAINER, Monochrome,
-    OLE_COLOR, OLE_ENABLEDEFAULTBOOL, IPicture, OLE_XSIZE_HIMETRIC,
-    FONTITALIC, VARIANT_BOOL, OLE_XPOS_PIXELS, StdFont, IDispatch,
-    _lcid, Color, _check_version, DISPPROPERTY, typelib_path,
-    COMMETHOD, IPictureDisp, Checked
+    OLE_XSIZE_PIXELS, IFont, OLE_HANDLE, COMMETHOD, OLE_XPOS_HIMETRIC,
+    OLE_CANCELBOOL, OLE_YSIZE_PIXELS, _lcid, OLE_OPTEXCLUSIVE,
+    IEnumVARIANT, IPictureDisp, CoClass, OLE_YPOS_HIMETRIC,
+    OLE_XPOS_PIXELS, Checked, IPicture, StdFont, DISPMETHOD, IUnknown,
+    OLE_YSIZE_HIMETRIC, FONTSTRIKETHROUGH, OLE_XSIZE_CONTAINER,
+    OLE_XSIZE_HIMETRIC, Default, FONTUNDERSCORE, OLE_XPOS_CONTAINER,
+    VARIANT_BOOL, Gray, Library, DISPPARAMS, IFontDisp, BSTR, GUID,
+    Monochrome, typelib_path, IFontEventsDisp, FontEvents, dispid,
+    FONTNAME, FONTSIZE, OLE_YPOS_PIXELS, _check_version,
+    OLE_ENABLEDEFAULTBOOL, OLE_YPOS_CONTAINER, FONTBOLD, Picture,
+    HRESULT, VgaColor, Font, Color, DISPPROPERTY, Unchecked,
+    StdPicture, OLE_COLOR, EXCEPINFO, FONTITALIC, IDispatch,
+    OLE_YSIZE_CONTAINER
 )
 
 
@@ -32,18 +32,17 @@ class OLE_TRISTATE(IntFlag):
 
 
 __all__ = [
-    'FONTSTRIKETHROUGH', 'Default', 'StdPicture', 'FontEvents',
-    'OLE_YPOS_PIXELS', 'OLE_XPOS_HIMETRIC', 'FONTBOLD',
-    'IFontEventsDisp', 'OLE_YSIZE_CONTAINER', 'FONTNAME',
-    'OLE_CANCELBOOL', 'Gray', 'OLE_YPOS_HIMETRIC', 'OLE_HANDLE',
-    'OLE_XPOS_CONTAINER', 'Monochrome', 'OLE_COLOR',
-    'OLE_ENABLEDEFAULTBOOL', 'Checked', 'IPicture',
-    'OLE_YSIZE_HIMETRIC', 'FONTSIZE', 'OLE_XSIZE_HIMETRIC',
-    'FONTITALIC', 'Library', 'VgaColor', 'OLE_YSIZE_PIXELS',
-    'OLE_XPOS_PIXELS', 'LoadPictureConstants', 'StdFont',
-    'OLE_XSIZE_CONTAINER', 'OLE_TRISTATE', 'Font', 'IFontDisp',
-    'FONTUNDERSCORE', 'Color', 'OLE_XSIZE_PIXELS', 'IFont', 'Picture',
-    'typelib_path', 'IPictureDisp', 'Unchecked', 'OLE_YPOS_CONTAINER',
-    'OLE_OPTEXCLUSIVE'
+    'OLE_XSIZE_PIXELS', 'IFontDisp', 'IFont', 'OLE_HANDLE',
+    'Monochrome', 'OLE_XPOS_HIMETRIC', 'typelib_path',
+    'OLE_CANCELBOOL', 'OLE_TRISTATE', 'IFontEventsDisp',
+    'OLE_YSIZE_PIXELS', 'OLE_YSIZE_CONTAINER', 'FontEvents',
+    'FONTNAME', 'FONTSIZE', 'OLE_OPTEXCLUSIVE', 'IPictureDisp',
+    'LoadPictureConstants', 'OLE_YPOS_PIXELS', 'OLE_YPOS_HIMETRIC',
+    'OLE_XPOS_PIXELS', 'OLE_ENABLEDEFAULTBOOL', 'Checked',
+    'OLE_YPOS_CONTAINER', 'FONTBOLD', 'IPicture', 'Picture',
+    'VgaColor', 'StdFont', 'Font', 'Color', 'FONTSTRIKETHROUGH',
+    'OLE_XSIZE_CONTAINER', 'OLE_XSIZE_HIMETRIC', 'Unchecked',
+    'StdPicture', 'Default', 'FONTUNDERSCORE', 'OLE_XPOS_CONTAINER',
+    'OLE_COLOR', 'FONTITALIC', 'Gray', 'Library', 'OLE_YSIZE_HIMETRIC'
 ]
 

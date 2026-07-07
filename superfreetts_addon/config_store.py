@@ -31,6 +31,20 @@ from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 
 
+def _sanitize_for_json(obj):
+    """Recursively convert enum.Enum instances to their name strings so
+    the resulting structure is JSON serializable.
+    """
+    import enum as _enum
+    if isinstance(obj, _enum.Enum):
+        return obj.name
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj
+
+
 class ConfigStore:
     """
     Single source of truth for reading and writing the addon configuration.
@@ -51,7 +65,13 @@ class ConfigStore:
 
     def _write(self) -> None:
         """Persist current config to Anki."""
-        self.anki_utils.write_config(self.config)
+        # Sanitize enums before writing to avoid json serialization errors
+        try:
+            safe_config = _sanitize_for_json(self.config)
+            self.anki_utils.write_config(safe_config)
+        except Exception:
+            # Fallback: attempt to write raw config (will raise in upper layer)
+            self.anki_utils.write_config(self.config)
 
     # ------------------------------------------------------------------
     # Migration

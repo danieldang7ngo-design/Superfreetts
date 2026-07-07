@@ -1,3 +1,4 @@
+import aiohttp
 import asyncio
 import os
 import sys
@@ -76,3 +77,44 @@ def test_edgetts_batch_starts_next_item_when_slot_frees(monkeypatch):
     assert active["max"] == 3
     assert starts["text-3"] < finishes["text-1"]
     assert starts["text-3"] < finishes["text-2"]
+
+
+def test_edgetts_batch_fails_fast_on_connectivity_error(monkeypatch):
+    create_calls = {"count": 0}
+
+    class FakeAudioStream:
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise aiohttp.ClientConnectorError(None, OSError("Network is unreachable"))
+
+    class FakeCommunicate:
+        def __init__(self, text, voice_key, rate=None, pitch=None, volume=None):
+            create_calls["count"] += 1
+
+        def stream(self):
+            return FakeAudioStream()
+
+    monkeypatch.setattr(service_edgetts.edge_tts, "Communicate", FakeCommunicate)
+
+    svc = service_edgetts.EdgeTTS()
+    config = {
+        "concurrency_workers": 1,
+        "max_retries": 5,
+        "initial_delay_min_ms": 0,
+        "initial_delay_max_ms": 0,
+        "wave_start_stagger_ms": 0,
+        "retry_backoff_seconds": 0,
+        "debug_logging": False,
+    }
+    monkeypatch.setattr(
+        svc,
+        "get_configuration_value_optional",
+        lambda key, default=None: config.get(key, default),
+    )
+
+    results = svc.get_tts_audio_batch(["text-0"], SimpleNamespace(voice_key="fake-voice"), {})
+
+    assert results == [None]
+    assert create_calls["count"] == 1

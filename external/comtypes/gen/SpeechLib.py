@@ -2,389 +2,439 @@ from enum import IntFlag
 
 import comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4 as __wrapper_module__
 from comtypes.gen._C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_4 import (
-    SPGS_ENABLED, SpMMAudioEnum, WAVEFORMATEX, _FILETIME,
-    ISpeechRecoContext, SREFalseRecognition, SLOStatic,
-    DISPID_SVEventInterests, SPEI_FALSE_RECOGNITION, SREBookmark,
-    SRADefaultToActive, ISpeechPhraseElements, ISpNotifyTranslator,
-    SASPause, DISPID_SPRulesCount, SDA_Consume_Leading_Spaces,
-    DISPID_SOTGetStorageFileName, DISPID_SVWaitUntilDone,
-    SGRSTTDictation, DISPID_SLWsCount, SpeechTokenKeyAttributes,
-    DISPID_SAStatus, DISPID_SPPEngineConfidence,
-    DISPID_SVSInputWordPosition, DISPID_SOTSetId, WSTRING,
-    ISpRecoResult, DISPID_SPEActualConfidence, SAFT32kHz8BitMono,
-    DISPID_SDKSetLongValue, SPFM_CREATE_ALWAYS, SAFT22kHz16BitStereo,
-    SPEI_MAX_SR, DISPID_SPIAudioSizeBytes, SITooSlow,
-    SAFTCCITT_ALaw_11kHzStereo, SpNotifyTranslator, DISPID_SOTDataKey,
-    DISPID_SRGIsPronounceable, SpeechEngineProperties,
-    DISPID_SGRSTsCount, SGRSTTWord, SVP_0, DISPID_SGRsCommit,
-    SPEI_VOICE_CHANGE, SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE,
-    SPDKL_CurrentUser, eWORDTYPE_ADDED, SVEStartInputStream,
-    SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN, SVP_13, ISpResourceManager,
-    SECFIgnoreKanaType, DISPID_SPERetainedSizeBytes,
-    DISPID_SRGRecoContext, SDKLDefaultLocation, SREPhraseStart,
-    SAFTCCITT_ALaw_22kHzMono, DISPID_SCSBaseStream, SDTReplacement,
-    DISPID_SRSCurrentStreamPosition, SDKLCurrentUser, SVF_None,
-    SPEI_RESERVED2, DISPID_SRRTLength, SGRSTTRule,
-    ISpeechCustomStream, wireHWND, SREStreamEnd, SAFT12kHz16BitMono,
-    ISpeechPhraseReplacement, SVP_3, CoClass,
-    SAFTCCITT_uLaw_11kHzStereo, SpSharedRecoContext,
-    SECNormalConfidence, ISpeechLexiconWord,
-    DISPID_SVSyncronousSpeakTimeout, DISPID_SPPName,
-    DISPID_SVSpeakCompleteEvent, ISpLexicon, SVP_7,
-    SPFM_OPEN_READONLY, SVSFPersistXML, SREStreamStart,
-    SpeechGrammarTagWildcard, SpeechVoiceCategoryTTSRate,
-    DISPID_SPRuleNumberOfElements, SDTAlternates, eLEXTYPE_PRIVATE19,
-    SpFileStream, DISPID_SRCEPhraseStart, SPPS_Unknown,
-    DISPID_SRGCmdLoadFromObject, SPBO_PAUSE, DISPID_SGRsAdd, GUID,
-    SVSFNLPSpeakPunc, ISpDataKey, DISPID_SVGetAudioOutputs,
-    DISPID_SRGDictationUnload, SSSPTRelativeToStart,
-    SpeechTokenValueCLSID, SAFT32kHz16BitMono, SPEI_SOUND_END,
-    SAFTNonStandardFormat, SRARoot, DISPID_SPCPhoneToId,
-    SRESoundStart, SPSMF_UPS, SPSEMANTICERRORINFO, SP_VISEME_19,
-    DISPID_SRGetPropertyNumber, SPSHT_NotOverriden,
-    SECFNoSpecialChars, SSFMCreateForWrite, SPCS_DISABLED,
-    SP_VISEME_3, SAFTADPCM_22kHzMono, DISPID_SPPsItem, SVSFIsFilename,
-    DISPID_SMSADeviceId, SREAudioLevel, DISPID_SAVolume,
-    DISPID_SRRTTickCount, DISPID_SRGCmdLoadFromMemory, SPCS_ENABLED,
-    DISPID_SWFEExtraData, DISPID_SGRSTs_NewEnum,
-    DISPID_SVSInputSentencePosition, SPAR_Medium, SVP_17,
-    SPEI_END_SR_STREAM, DISPID_SVESentenceBoundary,
-    DISPID_SPRuleParent, SRERequestUI, DISPID_SVVolume,
-    SAFT11kHz16BitStereo, ISpeechAudioFormat, SAFT44kHz16BitMono,
-    SAFT32kHz16BitStereo, ISpeechObjectToken, DISPMETHOD,
-    DISPID_SVAllowAudioOuputFormatChangesOnNextSet, DISPID_SASetState,
-    DISPID_SPEsCount, ISpeechRecoResult2,
-    DISPID_SRCEPropertyStringChange, SPVPRI_ALERT, SPSHORTCUTPAIRLIST,
-    SECLowConfidence, DISPID_SRGState, SP_VISEME_4, DISPID_SMSGetData,
-    DISPID_SRCVoicePurgeEvent, DISPID_SRCEAdaptation, SDTLexicalForm,
-    SPAUDIOBUFFERINFO, SVEAudioLevel, SP_VISEME_17,
-    SPEI_SR_AUDIO_LEVEL, SPEI_SOUND_START,
-    DISPID_SVSLastStreamNumberQueued, DISPID_SPIElements,
-    IEnumSpObjectTokens, Speech_Default_Weight, SRADynamic,
-    DISPID_SGRId, SGSEnabled, SpStream, SRERecognition,
-    DISPID_SWFEFormatTag, SITooQuiet, ISpRecognizer3,
-    DISPID_SDKEnumKeys, SFTInput, SpPhoneticAlphabetConverter,
-    SAFT16kHz16BitStereo, ISpeechLexiconPronunciation, _check_version,
-    SAFT11kHz16BitMono, DISPID_SRCreateRecoContext,
-    SpTextSelectionInformation, SpPhraseInfoBuilder, SRAORetainAudio,
-    eLEXTYPE_RESERVED4, DISPID_SRCEEnginePrivate, ISpeechRecognizer,
-    SAFTNoAssignedFormat, ISpRecognizer2, SAFT22kHz8BitMono,
-    DISPID_SABufferNotifySize, DISPID_SVEStreamStart,
-    DISPID_SPPsCount, eLEXTYPE_PRIVATE8, SVP_2,
-    SAFTCCITT_uLaw_11kHzMono, ISpeechPhraseInfoBuilder, SLTApp,
-    ISpRecoGrammar, SGDSActive, DISPID_SPAPhraseInfo,
-    SPSMF_SRGS_SEMANTICINTERPRETATION_MS, DISPID_SRCEventInterests,
-    SpeechRegistryUserRoot, ISpeechGrammarRuleStateTransition,
-    ULONG_PTR, SpeechGrammarTagDictation,
-    DISPID_SLRemovePronunciationByPhoneIds, ISpeechAudioBufferInfo,
-    SLODynamic, SVP_1, ISpGrammarBuilder, DISPID_SPIProperties,
-    SpeechCategoryRecoProfiles, SpAudioFormat, SVSFVoiceMask, SPEVENT,
-    SPGS_DISABLED, DISPID_SPRuleId, DISPID_SOTCreateInstance,
-    SP_VISEME_7, DISPID_SLWWord, ISpeechLexiconPronunciations,
-    DISPID_SVSRunningState, DISPID_SMSSetData, SRAONone,
-    SVSFlagsAsync, DISPID_SOTCEnumerateTokens,
-    SPEI_PROPERTY_STRING_CHANGE, SREPropertyNumChange, DISPID_SGRName,
-    ISpPhoneConverter, SPPS_Verb, ISpRecoGrammar2,
-    ISpeechLexiconWords, DISPID_SRGDictationSetState,
-    ISequentialStream, SpeechGrammarTagUnlimitedDictation,
-    DISPID_SLGenerationId, DISPID_SABIMinNotification, SVP_6,
-    DISPID_SRGSetTextSelection, DISPID_SVIsUISupported,
-    SAFTCCITT_uLaw_44kHzMono, DISPID_SOTDisplayUI, SAFT8kHz8BitMono,
-    DISPID_SRGReset, SRTExtendableParse, SVP_8, SP_VISEME_5,
-    SAFT8kHz16BitMono, ISpeechBaseStream, DISPID_SVEBookmark,
-    DISPID_SLAddPronunciationByPhoneIds, SAFTGSM610_8kHzMono,
-    SRSActiveAlways, DISPID_SGRClear, SAFTADPCM_22kHzStereo,
-    DISPID_SRRRecoContext, SPPHRASEPROPERTY, SPPS_RESERVED4,
-    ISpeechPhraseReplacements, ISpeechMMSysAudio, DISPID_SOTCId,
-    SASStop, DISPID_SRGDictationLoad, SREAdaptation,
-    eLEXTYPE_PRIVATE9, SAFT48kHz8BitMono, DISPID_SPRFirstElement,
-    SPPHRASE, SPVPRI_NORMAL, DISPID_SPPChildren, SPEI_SR_BOOKMARK,
-    SPINTERFERENCE_TOOQUIET, SpPhoneConverter, SPDKL_LocalMachine,
-    DISPID_SRCEStartStream, SPAS_PAUSE, DISPID_SVEAudioLevel,
-    SDA_No_Trailing_Space, SPCT_SLEEP, DISPID_SVRate,
-    SPCT_SUB_COMMAND, ISpAudio, SAFT48kHz8BitStereo, SpeechTokenKeyUI,
-    SAFTCCITT_uLaw_8kHzMono, SASRun, ISpeechPhraseRule,
-    SDTPronunciation, SAFTCCITT_ALaw_8kHzMono,
-    DISPID_SRGCmdLoadFromFile, SPGS_EXCLUSIVE,
-    DISPID_SPRuleFirstElement, eLEXTYPE_PRIVATE18, SPEI_RESERVED5,
-    SDKLCurrentConfig, SAFT16kHz16BitMono, SpeechCategoryRecognizers,
-    DISPID_SRCEFalseRecognition, ISpeechPhraseElement,
-    ISpeechAudioStatus, SAFT48kHz16BitMono, SAFTCCITT_ALaw_8kHzStereo,
-    IEnumString, SPINTERFERENCE_TOOLOUD, DISPID_SBSFormat,
-    DISPID_SRSCurrentStreamNumber, _ISpeechVoiceEvents,
-    DISPID_SLPSymbolic, ISpeechRecoResultTimes, SPSERIALIZEDRESULT,
-    SpeechPropertyAdaptationOn, DISPID_SRSNumberOfActiveRules,
-    DISPID_SPCIdToPhone, SpeechPropertyResourceUsage, SPWORDLIST,
-    STCRemoteServer, SPSHORTCUTPAIR, SpeechAudioFormatGUIDText,
-    SPEI_SR_RETAINEDAUDIO, DISPID_SDKDeleteValue,
-    SPINTERFERENCE_NOSIGNAL, STSF_LocalAppData, SAFTDefault,
-    eLEXTYPE_APP, DISPID_SRCRetainedAudio, SPFM_CREATE, SPRST_ACTIVE,
-    SPXRO_Alternates_SML, DISPID_SRCESoundStart, DISPID_SPIGetText,
-    DISPID_SOTRemove, ISpStreamFormatConverter, SAFT12kHz8BitMono,
-    DISPID_SOTCSetId, DISPID_SLWsItem, SPEI_MAX_TTS, SGRSTTWildcard,
-    SPAO_RETAIN_AUDIO, SpMemoryStream, SP_VISEME_20,
-    DISPID_SDKGetStringValue, SAFTText, _ULARGE_INTEGER, SWTDeleted,
-    DISPID_SVSLastBookmarkId, DISPID_SVEStreamEnd,
-    SPRST_ACTIVE_ALWAYS, SAFT24kHz16BitMono, ISpXMLRecoResult,
-    SPEI_RESERVED1, SVP_11, SpUnCompressedLexicon,
-    DISPID_SPEDisplayAttributes, DISPID_SAFType, SPINTERFERENCE_NONE,
-    SPEI_START_SR_STREAM, SWPUnknownWordPronounceable,
-    SPINTERFERENCE_TOOFAST, DISPID_SRRDiscardResultInfo,
-    DISPID_SRCERecognitionForOtherContext, SpInprocRecognizer,
-    DISPID_SRRSaveToMemory, SVSFParseAutodetect, SPLO_DYNAMIC,
-    DISPID_SRSetPropertyNumber, ISpeechPhraseProperties,
-    DISPID_SLPPhoneIds, SVEPrivate, DISPID_SRAudioInput,
-    eLEXTYPE_RESERVED10, DISPID_SPPBRestorePhraseFromMemory,
-    SSFMOpenReadWrite, SRSEDone, DISPID_SPAStartElementInResult,
-    SVEPhoneme, DISPID_SGRAddState, DISPID_SRGCmdSetRuleIdState,
-    DISPID_SPIStartTime, DISPID_SPRs_NewEnum, DISPID_SGRAddResource,
-    IServiceProvider, DISPID_SRCERequestUI, DISPID_SPARecoResult,
-    SAFT32kHz8BitStereo, DISPID_SRCEPropertyNumberChange,
-    DISPID_SRCESoundEnd, DISPID_SPIAudioSizeTime, DISPID_SLGetWords,
-    helpstring, DISPID_SRProfile, DISPID_SLPs_NewEnum, SBOPause,
-    SVSFIsXML, eLEXTYPE_PRIVATE3, SPRST_INACTIVE_WITH_PURGE,
-    DISPID_SVAudioOutput, HRESULT, DISPID_SRIsShared, DISPID_SASState,
-    STCAll, SVEAllEvents, DISPID_SVGetAudioInputs, tagSTATSTG,
-    SSTTDictation, SVSFDefault, IInternetSecurityMgrSite,
-    DISPID_SRRAlternates, SAFT11kHz8BitStereo, ISpeechPhraseInfo,
-    SPBO_AHEAD, DISPID_SLPType, SITooFast, DISPID_SBSSeek,
-    SAFT24kHz8BitStereo, DISPID_SVSpeakStream,
-    SAFTCCITT_uLaw_22kHzStereo, SPEI_SENTENCE_BOUNDARY, SPAS_CLOSED,
-    eLEXTYPE_PRIVATE15, DISPID_SASCurrentSeekPosition, SVP_4,
-    DISPID_SPANumberOfElementsInResult, SGLexical,
-    DISPID_SASFreeBufferSpace, SRTSMLTimeout, SPXRO_SML, ISpeechVoice,
-    ISpRecognizer, SVF_Stressed, eLEXTYPE_PRIVATE17,
-    SPEI_INTERFERENCE, DISPID_SGRSTPropertyValue, ISpeechVoiceStatus,
-    DISPID_SDKSetStringValue, SpResourceManager, ISpMMSysAudio,
-    DISPID_SGRSTWeight, SPSLMA, DISPID_SRRGetXMLErrorInfo,
-    SPCT_SUB_DICTATION, DISPID_SPIRule, ISpRecoContext2, SRESoundEnd,
-    SPBO_TIME_UNITS, ISpPhrase, DISPID_SPELexicalForm,
-    DISPID_SPERequiredConfidence, DISPID_SPRText, SAFT8kHz16BitStereo,
-    ISpEventSource, SAFT12kHz16BitStereo, DISPID_SRSAudioStatus,
-    SVESentenceBoundary, SAFT22kHz16BitMono,
-    DISPID_SOTRemoveStorageFileName, SpeechRegistryLocalMachineRoot,
-    DISPID_SPIReplacements, SECFIgnoreWidth, SVP_10, SPEI_ADAPTATION,
-    SPSSuppressWord, SVEWordBoundary, SAFTADPCM_8kHzMono,
-    SpeechPropertyLowConfidenceThreshold, DISPID_SDKCreateKey,
-    eLEXTYPE_USER, DISPID_SAFGuid, eLEXTYPE_RESERVED7,
-    SPBINARYGRAMMAR, ISpObjectToken, SPRECORESULTTIMES, SSTTWildcard,
-    DISPID_SPEsItem, DISPIDSPTSI_ActiveOffset,
-    DISPID_SRAudioInputStream, SP_VISEME_15, SPPS_RESERVED3,
-    DISPID_SRGCmdSetRuleState, DISPID_SDKDeleteKey,
-    SGLexicalNoSpecialChars, DISPID_SRCEAudioLevel,
-    ISpeechGrammarRule, SSTTTextBuffer, DISPID_SRGetRecognizers,
-    SpWaveFormatEx, SPRS_INACTIVE,
-    SPINTERFERENCE_LATENCY_TRUNCATE_END, SAFTCCITT_ALaw_22kHzStereo,
-    DISPID_SPRsItem, SDTAll, eLEXTYPE_PRIVATE12,
-    SAFTCCITT_uLaw_44kHzStereo, SAFTGSM610_11kHzMono, SPAS_STOP,
-    SAFTCCITT_uLaw_8kHzStereo, SWPUnknownWordUnpronounceable,
-    SDTProperty, DISPID_SPEAudioTimeOffset, SAFT44kHz8BitStereo,
-    SRCS_Enabled, SpeechMicTraining, SP_VISEME_2,
-    SAFT24kHz16BitStereo, DISPID_SOTGetAttribute, SVSFIsNotXML,
-    DISPID_SPRules_NewEnum, DISPID_SPIEngineId, SREStateChange,
-    DISPID_SGRSTNextState, _ISpeechRecoContextEvents,
-    DISPID_SLWs_NewEnum, DISPID_SPILanguageId, SPBO_NONE,
-    SAFT16kHz8BitMono, SRCS_Disabled, ISpeechPhraseRules,
-    SpeechAddRemoveWord, SPSVerb, SPSMF_SRGS_SAPIPROPERTIES,
-    SPINTERFERENCE_LATENCY_WARNING, DISPID_SRGetPropertyString,
-    DISPID_SGRsDynamic, ISpEventSink, DISPID_SRCERecognition,
-    SGRSTTEpsilon, SRSEIsSpeaking, SPEI_RECO_OTHER_CONTEXT,
-    DISPID_SWFESamplesPerSec, DISPID_SVSVisemeId,
-    __MIDL___MIDL_itf_sapi_0000_0020_0002, DISPID_SAFGetWaveFormatEx,
-    tagSPTEXTSELECTIONINFO, SpLexicon, ISpeechPhraseProperty,
-    SPEI_REQUEST_UI, DISPID_SGRInitialState, SPPHRASEREPLACEMENT,
-    SPWP_KNOWN_WORD_PRONOUNCEABLE, DISPID_SDKOpenKey,
-    Speech_StreamPos_Asap, SPAUDIOSTATUS, SAFTCCITT_ALaw_44kHzStereo,
-    SPEI_RESERVED6, DISPID_SPIGetDisplayAttributes, SRTReSent,
-    SWPKnownWordPronounceable, DISPID_SPPId, eLEXTYPE_PRIVATE7,
-    DISPID_SPIEnginePrivateData, IStream, DISPID_SRDisplayUI,
-    SPPS_RESERVED1, VARIANT_BOOL, DISPID_SABIBufferSize,
-    eLEXTYPE_USER_SHORTCUT, SPAR_Low, SDTAudio,
-    DISPID_SDKSetBinaryValue, SINoise, ISpNotifySource, SPLO_STATIC,
-    IInternetSecurityManager, DISPID_SPRuleChildren, DISPID_SPACommit,
-    SpVoice, DISPID_SRIsUISupported, SGRSTTTextBuffer,
-    DISPID_SPPValue, DISPID_SPISaveToMemory, SPEI_SR_PRIVATE,
+    ISpShortcut, helpstring, SAFTCCITT_uLaw_8kHzMono,
+    ISpeechPhraseAlternate, SPSModifier, DISPIDSPTSI_SelectionLength,
+    ISpeechCustomStream, DISPID_SOTMatchesAttributes,
+    DISPID_SPEDisplayText, SpTextSelectionInformation,
+    DISPID_SDKEnumKeys, DISPID_SRGCmdSetRuleIdState, SPSHORTCUTPAIR,
+    DISPID_SPRs_NewEnum, SRERequestUI, SSSPTRelativeToCurrentPosition,
+    DISPID_SGRSTNextState, SPPS_RESERVED1, SPDKL_CurrentUser,
+    SPSEMANTICERRORINFO, SPEI_MAX_TTS, DISPID_SVEPhoneme,
+    SpeechAllElements, ISpeechTextSelectionInformation,
+    ISpeechGrammarRules, Library, SVSFlagsAsync, BSTR,
+    eLEXTYPE_PRIVATE14, DISPID_SRCPause, SLOStatic,
+    DISPID_SPAs_NewEnum, dispid, SPINTERFERENCE_NONE,
+    DISPID_SABufferInfo, SPPS_Noun, SAFTGSM610_11kHzMono,
+    DISPID_SLGetPronunciations, SAFTCCITT_uLaw_11kHzMono, SPSHT_OTHER,
+    DISPID_SGRSAddSpecialTransition, SPEI_ADAPTATION, SVP_15,
+    SRCS_Enabled, DISPID_SGRAttributes, DISPID_SASNonBlockingIO,
+    SRSActiveAlways, SPSMF_SRGS_SAPIPROPERTIES, SPSNoun,
+    ISpeechAudioBufferInfo, ISpPhoneticAlphabetConverter,
+    DISPID_SPRuleChildren, SpWaveFormatEx, SPSMF_UPS,
+    DISPID_SRGCmdLoadFromProprietaryGrammar, eLEXTYPE_PRIVATE13,
+    SpNullPhoneConverter, eLEXTYPE_PRIVATE7, SVPNormal,
+    DISPID_SRCEPhraseStart, DISPID_SRCCmdMaxAlternates, SPWORDLIST,
+    SVEWordBoundary, Speech_Max_Word_Length, SAFT8kHz8BitStereo,
+    SRERecoOtherContext, ISpeechObjectTokens,
+    SPINTERFERENCE_LATENCY_WARNING, ISpeechPhraseInfo,
+    SpeechGrammarTagWildcard, SPRULE, DISPID_SRRAudio,
+    DISPID_SLWPronunciations, SPBO_TIME_UNITS, SECFIgnoreCase,
+    SRAExport, SAFTCCITT_uLaw_22kHzMono, DISPID_SRCEAudioLevel,
+    STSF_LocalAppData, ISpSerializeState, DISPID_SRCRequestedUIType,
+    SPBO_AHEAD, SPSLMA, ISpeechRecoResult, SpObjectToken,
+    DISPID_SGRSAddWordTransition, SAFT8kHz8BitMono,
+    DISPID_SOTRemoveStorageFileName, ISpeechPhraseReplacements,
+    SP_VISEME_11, DISPID_SASFreeBufferSpace, DISPID_SPRulesItem,
+    SpeechTokenKeyUI, SPEI_END_INPUT_STREAM, ISpRecoResult,
+    SPWT_LEXICAL, SPSMF_SRGS_SEMANTICINTERPRETATION_MS, SVSFVoiceMask,
+    DISPID_SGRClear, SDTReplacement, SAFT11kHz8BitMono, SPRS_ACTIVE,
+    SPRECORESULTTIMES, SAFTCCITT_uLaw_44kHzStereo, DISPID_SVStatus,
+    SDTAlternates, VARIANT, SAFTADPCM_44kHzMono,
+    DISPID_SABIBufferSize, SAFT32kHz16BitMono, SpPhraseInfoBuilder,
+    ISpeechPhraseElements, SpeechPropertyHighConfidenceThreshold,
+    ISpeechPhraseInfoBuilder, SDKLLocalMachine, DISPID_SGRAddResource,
+    eLEXTYPE_PRIVATE4, STSF_CommonAppData, DISPID_SGRSTPropertyName,
+    SAFTADPCM_11kHzMono, ISpeechWaveFormatEx, SPAS_PAUSE,
+    DISPID_SRAudioInputStream, DISPID_SVSCurrentStreamNumber,
+    DISPID_SRCEPropertyNumberChange, ISpPhoneConverter,
+    SpNotifyTranslator, SASClosed, DISPID_SLPLangId, SRAONone,
+    SDTProperty, DISPID_SRSSupportedLanguages, SPPS_Verb,
+    DISPID_SRRDiscardResultInfo, SREFalseRecognition, DISPID_SVVoice,
+    ISpNotifyTranslator, SVP_14, SGRSTTTextBuffer,
+    __MIDL___MIDL_itf_sapi_0000_0020_0001, DISPID_SGRsCommitAndSave,
+    GUID, DISPID_SRAudioInput, eLEXTYPE_USER,
+    __MIDL___MIDL_itf_sapi_0000_0020_0002, SASPause, DISPID_SGRId,
+    DISPID_SPPEngineConfidence, ISpMMSysAudio, SWTAdded,
+    ISpeechPhraseRules, SAFT8kHz16BitStereo, DISPID_SGRAddState,
+    DISPID_SPAStartElementInResult, ISpProperties, SP_VISEME_10,
+    DISPID_SLPType, SpVoice, SpCustomStream, SAFT44kHz16BitMono,
+    SVP_4, SAFT48kHz16BitStereo, DISPID_SVSpeakStream, SVSFParseMask,
+    ISpeechRecognizer, SPGS_ENABLED, ISpStreamFormatConverter,
+    DISPID_SPERetainedStreamOffset, SpeechDictationTopicSpelling,
+    SpeechTokenValueCLSID, SAFTCCITT_ALaw_44kHzStereo, SPEI_RESERVED1,
+    DISPID_SGRSRule, ISpeechLexiconPronunciations,
+    DISPID_SRCRetainedAudioFormat, DISPID_SPEAudioStreamOffset,
+    DISPID_SWFEExtraData, eLEXTYPE_PRIVATE10,
+    DISPID_SRCERecognizerStateChange, SPAS_CLOSED, SVEViseme,
+    SPEI_SR_BOOKMARK, SAFT48kHz16BitMono, eLEXTYPE_RESERVED8,
+    ISpRecoGrammar2, DISPID_SRRRecoContext, ISpeechMemoryStream,
+    SPRST_ACTIVE_ALWAYS, IUnknown, SPWF_SRENGINE,
+    DISPID_SRGDictationUnload, ISpObjectTokenCategory, ISpPhrase,
+    SPCT_COMMAND, SVEAllEvents, DISPID_SRSAudioStatus,
+    Speech_Default_Weight, DISPIDSPTSI_ActiveLength, DISPID_SRGRules,
+    SPVPRI_NORMAL, SpeechTokenIdUserLexicon, STCInprocServer,
+    DISPID_SRCCreateGrammar, SPEI_SR_RETAINEDAUDIO,
+    DISPID_SVSLastResult, SpeechPropertyNormalConfidenceThreshold,
+    SRSEDone, SPSERIALIZEDRESULT, Speech_StreamPos_RealTime,
+    SREPhraseStart, SAFT22kHz16BitMono, eLEXTYPE_PRIVATE5,
+    SECFIgnoreKanaType, SpeechAudioVolume, DISPID_SLWLangId,
+    SPSMF_SAPI_PROPERTIES, eLEXTYPE_PRIVATE11, DISPID_SBSFormat,
+    IStream, SPDKL_CurrentConfig, DISPID_SRCEEndStream,
+    DISPID_SOTGetStorageFileName, DISPID_SASCurrentDevicePosition,
+    SPEI_MIN_SR, DISPID_SOTId, ISpeechXMLRecoResult,
+    SPEI_START_SR_STREAM, SFTInput, SVEAudioLevel, SRCS_Disabled,
+    ISpObjectToken, SpUnCompressedLexicon, DISPID_SOTRemove,
+    DISPID_SPRuleName, DISPID_SPRsItem, SREStreamStart,
+    SAFT11kHz16BitMono, ISpEventSink, DISPID_SPIAudioSizeBytes,
+    SPPS_RESERVED3, SRARoot, SpeechPropertyComplexResponseSpeed,
+    ISpeechLexicon, DISPID_SMSALineId, ISpeechRecoGrammar,
+    DISPID_SVWaitUntilDone, SP_VISEME_1, DISPID_SAFSetWaveFormatEx,
+    SPEI_PROPERTY_STRING_CHANGE, SPEI_PHRASE_START, ISpVoice,
+    SDTPronunciation, DISPID_SLWsItem, DISPID_SGRsItem,
+    SPPHRASEPROPERTY, SAFTCCITT_uLaw_11kHzStereo, DISPID_SRStatus,
+    SAFTADPCM_8kHzMono, SVSFParseSsml, SAFTCCITT_uLaw_8kHzStereo,
+    SAFT24kHz8BitMono, SRTStandard, SPSHT_NotOverriden,
+    SPFM_OPEN_READONLY, SECFIgnoreWidth, ISequentialStream,
+    DISPID_SPPConfidence, SAFT22kHz8BitMono,
+    SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE, SRSInactiveWithPurge,
+    SREPropertyStringChange, SAFT22kHz8BitStereo, eLEXTYPE_PRIVATE15,
+    ISpeechVoice, SPPHRASEREPLACEMENT, SPEI_VISEME, STSF_AppData,
+    SDKLCurrentConfig, DISPID_SVGetProfiles, SPWORDPRONUNCIATIONLIST,
+    SP_VISEME_0, STCAll, ISpeechLexiconWords, ISpRecoContext,
+    SAFTGSM610_8kHzMono, DISPID_SGRSTsCount, SRAORetainAudio,
+    DISPID_SVPriority, HRESULT, DISPID_SRRAlternates, SPAS_STOP,
+    DISPID_SRCSetAdaptationData, ISpeechFileStream, SVPAlert,
+    ISpStreamFormat, SRAInterpreter, DISPID_SVSInputWordPosition,
+    SWPKnownWordPronounceable, SpStreamFormatConverter,
+    DISPID_SPPFirstElement, SPEI_SR_PRIVATE, SECNormalConfidence,
+    SPSHT_EMAIL, SRAImport, Speech_Max_Pron_Length, DISPID_SRCVoice,
+    SPEI_TTS_BOOKMARK, DISPID_SRGSetTextSelection,
+    DISPID_SGRsFindRule, SPVPRI_OVER, DISPID_SOTs_NewEnum,
+    SDKLCurrentUser, SINoise, SPEI_RESERVED6,
+    DISPID_SRGCmdSetRuleState, DISPID_SWFEAvgBytesPerSec, SPAR_High,
+    DISPID_SLWType, SPRST_NUM_STATES, SVP_21, _LARGE_INTEGER,
+    DISPID_SPPValue, SAFTNoAssignedFormat,
+    DISPID_SPERequiredConfidence, SPINTERFERENCE_TOOFAST,
+    SPINTERFERENCE_TOOQUIET, ISpeechGrammarRule,
+    DISPID_SVSRunningState, SPEI_RESERVED3, DISPID_SWFEFormatTag,
+    SAFT12kHz16BitStereo, DISPID_SPRuleEngineConfidence,
+    DISPID_SRRGetXMLErrorInfo, SPSSuppressWord,
+    DISPID_SRCRetainedAudio, DISPID_SRCEFalseRecognition,
+    ISpeechGrammarRuleStateTransition, DISPID_SPEAudioSizeTime,
+    SpStream, SPRST_INACTIVE, DISPID_SGRSTsItem,
+    SPINTERFERENCE_LATENCY_TRUNCATE_END, DISPID_SPIEnginePrivateData,
+    SPEI_SOUND_END, SPEI_ACTIVE_CATEGORY_CHANGED, SSFMOpenForRead,
+    SpSharedRecoContext, SPPS_LMA, DISPID_SGRSTType, tagSTATSTG,
+    SDTLexicalForm, _check_version, SPTEXTSELECTIONINFO,
+    DISPID_SVEStreamEnd, DISPID_SPRules_NewEnum, ISpeechAudioFormat,
+    SAFTCCITT_ALaw_22kHzMono, tagSPPROPERTYINFO, SAFT32kHz8BitStereo,
+    SPAUDIOBUFFERINFO, SPSHORTCUTPAIRLIST, SpeechRegistryUserRoot,
+    SPPS_RESERVED4, DISPID_SRGetPropertyString, SPWORD,
+    DISPID_SPIRule, DISPID_SVAudioOutputStream,
+    SAFTCCITT_ALaw_8kHzMono, DISPID_SRCEStartStream,
+    DISPID_SRCESoundEnd, SGDSInactive, SVSFUnusedFlags,
+    DISPID_SRSClsidEngine, wireHWND, SECFNoSpecialChars,
+    DISPID_SGRInitialState, DISPID_SRCAudioInInterferenceStatus,
+    SPAO_NONE, SpeechUserTraining, SpeechRegistryLocalMachineRoot,
+    DISPID_SVIsUISupported, DISPID_SVSyncronousSpeakTimeout, SVP_6,
+    ISpeechGrammarRuleStateTransitions, SAFTGSM610_22kHzMono,
+    DISPID_SOTCGetDataKey, DISPID_SBSWrite, eLEXTYPE_USER_SHORTCUT,
+    DISPID_SREmulateRecognition, SPEI_PHONEME, SREAudioLevel,
+    SITooFast, DISPID_SRGId, SREInterference, SVF_Emphasis,
+    SSSPTRelativeToEnd, DISPID_SVEEnginePrivate, DISPID_SLWsCount,
+    ISpRecognizer2, DISPID_SAFType, SpSharedRecognizer,
+    DISPID_SMSSetData, DISPID_SRState, SPRS_INACTIVE,
+    SPEVENTSOURCEINFO, SPEI_PROPERTY_NUM_CHANGE, DISPID_SVSVisemeId,
+    DISPID_SPEAudioSizeBytes, SpeechPropertyResponseSpeed, SVP_10,
+    SpPhoneConverter, DISPID_SOTCId, DISPID_SRRTLength,
+    DISPID_SPIGrammarId, DISPID_SOTCSetId, SAFT22kHz16BitStereo,
+    ISpeechAudioStatus, SLODynamic, __MIDL_IWinTypes_0009,
+    SRTSMLTimeout, SPSUnknown, SpMemoryStream, DISPID_SVResume,
+    eLEXTYPE_PRIVATE9, SPCT_SLEEP, SPCS_DISABLED, DISPID_SASetState,
+    DISPID_SWFEChannels, SGSEnabled, DISPID_SRRSetTextFeedback,
+    SVEPhoneme, DISPID_SOTSetId, SFTSREngine, DISPID_SPIStartTime,
+    SPINTERFERENCE_TOOLOUD, SPPS_SuppressWord, SAFTADPCM_22kHzStereo,
+    SAFT12kHz16BitMono, SITooLoud, DISPID_SGRsCommit, SPPHRASERULE,
+    SECHighConfidence, DISPID_SGRSAddRuleTransition, ISpeechDataKey,
+    SVEVoiceChange, SVPOver, DISPID_SWFESamplesPerSec,
+    DISPID_SCSBaseStream, DISPID_SRGState, SP_VISEME_6, SVP_1,
+    DISPID_SRCBookmark, DISPID_SRSCurrentStreamNumber,
+    DISPID_SRCCreateResultFromMemory, DISPID_SPIReplacements,
+    SDA_No_Trailing_Space, SpeechPropertyResourceUsage,
+    DISPID_SPIProperties, ISpGrammarBuilder, UINT_PTR, SGSDisabled,
+    eLEXTYPE_PRIVATE18, ISpXMLRecoResult,
     DISPID_SRAllowVoiceFormatMatchingOnNextSet,
-    DISPID_SDKGetBinaryValue, SPDKL_DefaultLocation,
-    ISpeechGrammarRuleState, SPPROPERTYINFO, dispid, SVP_9,
-    DISPID_SRCRetainedAudioFormat, SRTStandard, SPFM_OPEN_READWRITE,
-    SP_VISEME_13, _RemotableHandle, SPRECOGNIZERSTATUS,
-    DISPID_SRRSpeakAudio, SPCT_COMMAND, DISPID_SLPsCount,
-    SPEI_TTS_AUDIO_LEVEL, SPSNoun, BSTR, SPWT_DISPLAY,
-    ISpeechTextSelectionInformation, DISPID_SRSSupportedLanguages,
-    ISpeechRecoResult, SAFTCCITT_ALaw_11kHzMono, DISPID_SVGetVoices,
-    SpeechRecoProfileProperties, SP_VISEME_18,
-    DISPID_SPIRetainedSizeBytes, DISPID_SGRSAddWordTransition,
-    DISPID_SVSInputSentenceLength, SPEI_HYPOTHESIS, SVP_20,
-    SREHypothesis, DISPID_SLPLangId, SAFTGSM610_44kHzMono,
-    SPTEXTSELECTIONINFO, DISPID_SPRuleEngineConfidence, SPWORD,
-    DISPID_SOTCDefault, DISPID_SRRPhraseInfo, SAFT12kHz8BitStereo,
-    SPDKL_CurrentConfig, DISPID_SRRAudioFormat, SVF_Emphasis,
-    SPPS_Function, DISPID_SLWPronunciations,
-    DISPID_SRCERecognizerStateChange, DISPID_SPEAudioStreamOffset,
-    SVPNormal, DISPID_SBSWrite, SGSExclusive, SPAR_High,
-    SAFTADPCM_8kHzStereo, DISPID_SVEEnginePrivate, eLEXTYPE_PRIVATE20,
-    DISPID_SABufferInfo, DISPID_SVPause, SECFIgnoreCase, SVPOver,
-    SVEBookmark, SPEI_TTS_BOOKMARK, typelib_path, SRAImport,
-    SPWORDPRONUNCIATION, SPPS_SuppressWord, SRTAutopause, SPEI_VISEME,
-    SVP_19, ISpeechMemoryStream, ISpeechGrammarRules,
-    SDA_One_Trailing_Space, DISPID_SGRSRule, DISPID_SRGetFormat,
-    SpeechDictationTopicSpelling, SpObjectToken, SpeechAudioVolume,
-    SpeechUserTraining, DISPID_SVSLastResult, ISpObjectTokenCategory,
-    eLEXTYPE_PRIVATE16, SAFT48kHz16BitStereo, VARIANT, SVEVoiceChange,
-    DISPID_SMSALineId, SRSInactiveWithPurge, SPINTERFERENCE_TOOSLOW,
-    SP_VISEME_6, DISPID_SRCEBookmark, ISpeechPhraseAlternate,
-    ISpeechDataKey, SP_VISEME_9, ISpeechPhraseAlternates, SPSModifier,
-    SASClosed, DISPID_SWFEBlockAlign, DISPID_SLPsItem,
-    DISPID_SOTsCount, SSFMCreate, DISPID_SAFSetWaveFormatEx,
-    SpMMAudioIn, DISPID_SPEDisplayText, DISPID_SPRuleName,
-    DISPID_SOTGetDescription, SVSFPurgeBeforeSpeak,
-    DISPID_SOTs_NewEnum, SAFT11kHz8BitMono, ISpStreamFormat,
-    DISPIDSPTSI_SelectionOffset, SVSFParseSapi, DISPID_SBSRead,
-    SpeechAudioProperties, SAFTADPCM_44kHzStereo,
-    DISPID_SRGSetWordSequenceData, SAFTCCITT_ALaw_44kHzMono,
-    SRATopLevel, SpeechVoiceSkipTypeSentence, __MIDL_IWinTypes_0009,
-    SREPropertyStringChange, DISPID_SGRSTText,
-    DISPID_SOTIsUISupported, SPRS_ACTIVE, eLEXTYPE_RESERVED6,
-    SPEI_MIN_TTS, SGSDisabled, SPWF_INPUT, SPSERIALIZEDPHRASE,
-    DISPID_SGRSTransitions, DISPID_SOTMatchesAttributes,
-    SPWF_SRENGINE, SPSHT_OTHER, SPVOICESTATUS,
-    DISPID_SRCSetAdaptationData, DISPID_SOTsItem,
-    DISPID_SGRSTPropertyName, DISPID_SVEVoiceChange, DISPID_SRCState,
-    DISPID_SRCBookmark, SPEVENTSOURCEINFO, SPEI_UNDEFINED,
-    STCLocalServer, SPPS_LMA, DISPID_SPAs_NewEnum,
-    SpeechTokenIdUserLexicon, DISPID_SFSClose, ISpeechRecoGrammar,
-    eLEXTYPE_PRIVATE1, DISPID_SGRs_NewEnum, LONG_PTR, SVP_18,
-    DISPID_SPAsItem, SREPrivate, DISPID_SDKEnumValues,
-    SGDSActiveWithAutoPause, DISPID_SRCRequestedUIType,
-    SPEI_START_INPUT_STREAM, SRTEmulated, eLEXTYPE_LETTERTOSOUND,
-    SVSFUnusedFlags, SGDSActiveUserDelimited, SWTAdded,
-    DISPID_SVEWord, DISPID_SPRDisplayAttributes,
-    SpeechCategoryAudioIn, ISpSerializeState, SECFDefault, SVP_12,
-    SpeechAudioFormatGUIDWave, eLEXTYPE_PRIVATE6, SVP_16,
-    DISPID_SPRNumberOfElements, ISpeechRecognizerStatus,
-    SPSHT_Unknown, DISPID_SRCRecognizer, STCInprocServer,
-    SpeechTokenKeyFiles, SAFT44kHz8BitMono, DISPID_SRRTStreamTime,
-    DISPID_SWFEAvgBytesPerSec, SAFTADPCM_11kHzMono,
-    DISPID_SAEventHandle, SPEI_RECOGNITION,
-    DISPID_SRCCmdMaxAlternates, DISPID_SPERetainedStreamOffset,
-    DISPID_SVEViseme, DISPID_SRCCreateGrammar, SVP_21, SPRST_INACTIVE,
-    DISPID_SASNonBlockingIO, DISPID_SGRSTType,
-    SpeechPropertyHighConfidenceThreshold, eLEXTYPE_PRIVATE4,
-    DISPID_SPAsCount, SpSharedRecognizer, DISPID_SREmulateRecognition,
-    SECHighConfidence, DISPID_SLRemovePronunciation,
-    DISPID_SGRSTsItem, SGPronounciation, DISPID_SPRsCount,
-    ISpeechPhoneConverter, SVSFParseMask, SpCustomStream,
-    ISpeechLexicon, DISPID_SGRAttributes, tagSPPROPERTYINFO,
-    SpInProcRecoContext, SECFEmulateResult, ISpProperties,
-    DISPIDSPTSI_SelectionLength, DISPID_SGRsCount,
-    DISPID_SABIEventBias, DISPID_SPPParent, SPEI_RESERVED3,
-    SPPS_Interjection, SPSMF_SRGS_SEMANTICINTERPRETATION_W3C,
-    SPRECOCONTEXTSTATUS, SPRS_ACTIVE_WITH_AUTO_PAUSE,
-    DISPID_SPIGrammarId, SFTSREngine, DISPID_SGRsCommitAndSave,
-    SP_VISEME_14, DISPID_SVPriority, DISPID_SRState,
-    DISPID_SRSClsidEngine, SpeechCategoryVoices, SRAInterpreter,
-    ISpPhoneticAlphabetConverter, DISPID_SVGetProfiles,
-    SPWT_LEXICAL_NO_SPECIAL_CHARS, SBONone, STSF_AppData,
-    SPPS_Noncontent, DISPID_SDKGetlongValue, ISpeechXMLRecoResult,
-    SPEI_WORD_BOUNDARY, DISPID_SRCCreateResultFromMemory, _lcid,
-    DISPID_SLWLangId, DISPID_SOTCategory,
-    DISPID_SASCurrentDevicePosition, SGDisplay,
-    DISPID_SVSInputWordLength, SPEI_MIN_SR, SPPS_NotOverriden,
-    SAFT16kHz8BitStereo, DISPID_SWFEChannels, SpeechAllElements,
-    SPPS_Noun, DISPID_SPEAudioSizeBytes, SVSFNLPMask,
-    SPWP_UNKNOWN_WORD_PRONOUNCEABLE, DISPID_SPIAudioStreamPosition,
-    DISPID_SPPConfidence, SP_VISEME_11, SpObjectTokenCategory,
-    Speech_Max_Word_Length, DISPID_SVAlertBoundary, DISPID_SRRTimes,
-    DISPID_SGRSTPropertyId, SPPHRASEELEMENT, SINoSignal, SP_VISEME_10,
-    DISPID_SVSPhonemeId, DISPID_SLGetGenerationChange,
-    SPEI_END_INPUT_STREAM, DISPID_SRSetPropertyString,
-    DISPID_SRStatus, SpStreamFormatConverter, DISPID_SGRsItem,
-    DISPID_SLGetPronunciations, _LARGE_INTEGER, SPEI_PHRASE_START,
-    SPFM_NUM_MODES, DISPID_SVAudioOutputStream, STSF_FlagCreate,
-    SP_VISEME_16, ISpPhoneticAlphabetSelection, DISPID_SPCLangId,
-    SPSHT_EMAIL, DISPID_SRCEHypothesis, SPRST_NUM_STATES,
-    eLEXTYPE_MORPHOLOGY, SVP_14, SPPS_Modifier, SDKLLocalMachine,
-    SP_VISEME_21, DISPID_SRCEEndStream, DISPID_SFSOpen, SRSActive,
-    ISpRecoContext, ISpObjectWithToken, SAFT8kHz8BitStereo,
-    eLEXTYPE_PRIVATE14, SVSFParseSsml, SRERecoOtherContext,
-    SAFT24kHz8BitMono, DISPID_SGRsFindRule, COMMETHOD,
-    DISPID_SPPNumberOfElements,
-    DISPID_SRGCmdLoadFromProprietaryGrammar,
-    DISPID_SGRSAddSpecialTransition, DISPID_SWFEBitsPerSample,
-    DISPID_SRRTOffsetFromStart, SAFT22kHz8BitStereo,
-    SpeechCategoryAudioOut, DISPID_SVDisplayUI, DISPID_SRRAudio,
-    DISPID_SLPPartOfSpeech, SpeechPropertyNormalConfidenceThreshold,
-    DISPID_SVVoice, SITooLoud, SAFTADPCM_44kHzMono, ISpRecoCategory,
-    eLEXTYPE_PRIVATE2, DISPID_SLAddPronunciation, eLEXTYPE_RESERVED9,
-    ISpPhraseAlt, Library, SpNullPhoneConverter, ISpeechObjectTokens,
-    DISPID_SVResume, SAFTExtendedAudioFormat,
-    SPEI_ACTIVE_CATEGORY_CHANGED, SpeechPropertyComplexResponseSpeed,
-    SPSMF_SAPI_PROPERTIES, SP_VISEME_12, DISPID_SVStatus, SPAS_RUN,
-    SVP_5, DISPID_SRRGetXMLResult, DISPID_SPRulesItem,
-    SPEI_TTS_PRIVATE, SP_VISEME_0, SPWT_LEXICAL,
-    SSSPTRelativeToCurrentPosition, SPPS_RESERVED2, SpShortcut,
-    UINT_PTR, SPSFunction, DISPID_SPPFirstElement, SPWT_PRONUNCIATION,
-    DISPID_SRCResume, SAFTADPCM_11kHzStereo, SGDSInactive,
-    SVEEndInputStream, SPEI_PHONEME, SAFTCCITT_uLaw_22kHzMono,
-    SPVPRI_OVER, DISPID_SRRSetTextFeedback, eLEXTYPE_PRIVATE13,
-    DISPID_SPEPronunciation, SAFT44kHz16BitStereo, DISPID_SRGId,
-    DISPID_SGRSAddRuleTransition, SDA_Two_Trailing_Spaces,
-    SpeechPropertyResponseSpeed, DISPID_SRCAudioInInterferenceStatus,
-    SAFTTrueSpeech_8kHz1BitMono, Speech_Max_Pron_Length,
-    SPWORDPRONUNCIATIONLIST, SPCT_DICTATION,
-    SpeechCategoryPhoneConverters, SPINTERFERENCE_NOISE,
-    DISPID_SPPs_NewEnum, DISPID_SGRSTRule, SPRS_ACTIVE_USER_DELIMITED,
-    __MIDL___MIDL_itf_sapi_0000_0020_0001, SDTDisplayText,
-    ISpeechGrammarRuleStateTransitions, SINone, SpCompressedLexicon,
-    SpMMAudioOut, SVPAlert, DISPID_SVSCurrentStreamNumber,
-    DISPID_SPEs_NewEnum, SAFTGSM610_22kHzMono, SSFMOpenForRead,
-    DISPID_SLWType, DISPID_SRAllowAudioInputFormatChangesOnNextSet,
-    DISPID_SOTId, SpeechCategoryAppLexicons,
-    DISPID_SPEEngineConfidence, DISPID_SPRuleConfidence, IUnknown,
-    DISPID_SRGCmdLoadFromResource, SRSInactive, DISPID_SRCVoice,
-    ISpeechFileStream, SDTRule, DISPID_SOTCGetDataKey, ISpStream,
-    ISpeechRecoResultDispatch, DISPID_SRCEInterference, SRAExport,
-    DISPID_SRCPause, DISPID_SRRecognizer, SPEI_PROPERTY_NUM_CHANGE,
-    SPEI_RECO_STATE_CHANGE, eLEXTYPE_RESERVED8, STSF_CommonAppData,
-    DISPID_SVSkip, Speech_StreamPos_RealTime, DISPID_SVSLastBookmark,
-    SPSInterjection, SREAllEvents, ISpeechObjectTokenCategory,
-    SPAR_Unknown, DISPID_SVSpeak, DISPID_SPEAudioSizeTime,
-    DISPID_SRGRules, ISpeechResourceLoader, SPPHRASERULE, ISpVoice,
-    SVEViseme, SPRULE, SP_VISEME_8, DISPID_SADefaultFormat,
-    eWORDTYPE_DELETED, DISPIDSPTSI_ActiveLength, SPSNotOverriden,
-    SPSUnknown, SLTUser, eLEXTYPE_PRIVATE5, DISPID_SVEPhoneme,
-    ISpShortcut, eLEXTYPE_VENDORLEXICON, SSSPTRelativeToEnd,
-    SREInterference, ISpNotifySink, ISpeechAudio, STCInprocHandler,
-    eLEXTYPE_PRIVATE11, DISPID_SMSAMMHandle, SPAO_NONE,
-    ISpeechWaveFormatEx, SVP_15, DISPID_SRGCommit, SP_VISEME_1,
-    eLEXTYPE_PRIVATE10
+    DISPID_SVSInputWordLength, eLEXTYPE_PRIVATE6, eLEXTYPE_PRIVATE20,
+    LONG_PTR, SP_VISEME_15, ISpResourceManager, SITooQuiet,
+    SGDSActiveUserDelimited, SGLexicalNoSpecialChars, ISpNotifySink,
+    SGSExclusive, SPINTERFERENCE_NOISE, SpeechCategoryPhoneConverters,
+    DISPID_SRSCurrentStreamPosition, SpInProcRecoContext,
+    DISPID_SPEsItem, SVP_12, SPAR_Unknown, ISpeechLexiconWord, _lcid,
+    DISPID_SRCEEnginePrivate, DISPID_SPRuleFirstElement,
+    IEnumSpObjectTokens, SRSActive, SAFT16kHz16BitMono,
+    ISpeechMMSysAudio, ISpRecoCategory, SGRSTTWord, SP_VISEME_13,
+    DISPID_SPEAudioTimeOffset, SpAudioFormat, SPEI_RESERVED2, SVP_9,
+    DISPID_SGRSTPropertyId, SAFTCCITT_uLaw_22kHzStereo, SBOPause,
+    DISPID_SASCurrentSeekPosition, SDTAudio, SPGS_EXCLUSIVE,
+    DISPID_SRGCommit, DISPID_SGRSTRule, SPLO_DYNAMIC,
+    SpeechRecoProfileProperties, SGDisplay, DISPID_SPPParent,
+    SVF_Stressed, SRSEIsSpeaking, DISPID_SDKOpenKey,
+    ISpeechLexiconPronunciation, DISPID_SRRTTickCount,
+    DISPID_SLPsCount, SpeechCategoryVoices, ISpLexicon,
+    DISPID_SPPNumberOfElements, SpLexicon, DISPID_SPIGetText,
+    SPPS_Unknown, SDTAll, SAFTCCITT_uLaw_44kHzMono,
+    DISPID_SRCreateRecoContext, SAFTGSM610_44kHzMono, SpMMAudioEnum,
+    SPEI_START_INPUT_STREAM, SAFT12kHz8BitMono, SAFTDefault,
+    SAFTCCITT_ALaw_8kHzStereo, SVP_0, SASRun, DISPID_SRRTStreamTime,
+    SAFT24kHz16BitMono, SpCompressedLexicon, DISPID_SVSpeak,
+    DISPID_SVESentenceBoundary, DISPID_SVEBookmark, DISPID_SPPsItem,
+    SPDKL_LocalMachine, SAFT44kHz8BitStereo,
+    DISPID_SLGetGenerationChange, ISpRecognizer3,
+    DISPID_SOTCreateInstance, SpeechVoiceCategoryTTSRate, SVSFDefault,
+    ULONG_PTR, SGRSTTWildcard, WAVEFORMATEX, SVEEndInputStream,
+    DISPID_SPAsCount, ISpeechBaseStream, ISpEventSource, ISpPhraseAlt,
+    DISPID_SPISaveToMemory, _ULARGE_INTEGER,
+    DISPID_SRGCmdLoadFromResource, DISPID_SPEActualConfidence,
+    eLEXTYPE_RESERVED4, SPFM_CREATE, _ISpeechVoiceEvents,
+    SpeechVoiceSkipTypeSentence, SPEI_SOUND_START, SPGS_DISABLED,
+    DISPID_SDKDeleteKey, DISPID_SRCERequestUI, DISPID_SBSRead,
+    SAFTADPCM_44kHzStereo, DISPID_SRRPhraseInfo, eWORDTYPE_DELETED,
+    SRERecognition, DISPID_SRCEHypothesis, SDA_One_Trailing_Space,
+    SpFileStream, DISPID_SRCEventInterests, DISPID_SRCVoicePurgeEvent,
+    ISpNotifySource, SP_VISEME_2, SITooSlow, SPXRO_Alternates_SML,
+    DISPID_SPPChildren, DISPID_SVAudioOutput, SP_VISEME_3,
+    DISPID_SABIEventBias, ISpeechPhoneConverter, SGLexical, SAFTText,
+    eLEXTYPE_APP, ISpeechAudio, DISPID_SRGRecoContext,
+    eLEXTYPE_PRIVATE12, eLEXTYPE_PRIVATE3, SSTTDictation,
+    DISPID_SPPBRestorePhraseFromMemory, typelib_path,
+    eLEXTYPE_PRIVATE8, SPWP_UNKNOWN_WORD_PRONOUNCEABLE,
+    DISPID_SPRFirstElement, DISPID_SRIsShared, SREStreamEnd,
+    DISPID_SPRulesCount, ISpeechObjectTokenCategory, SPSFunction,
+    SDA_Consume_Leading_Spaces, DISPID_SPRNumberOfElements,
+    DISPID_SPACommit, eLEXTYPE_PRIVATE19, DISPID_SPEsCount,
+    DISPID_SPANumberOfElementsInResult, DISPID_SRSetPropertyNumber,
+    SGPronounciation, SVP_16, DISPID_SLRemovePronunciation,
+    DISPID_SRIsUISupported, SPAR_Low, DISPID_SPPsCount,
+    SPSNotOverriden, SAFT48kHz8BitMono, DISPID_SOTIsUISupported,
+    DISPID_SABIMinNotification, SDA_Two_Trailing_Spaces,
+    SPEI_INTERFERENCE, SPPROPERTYINFO, SWPUnknownWordUnpronounceable,
+    DISPID_SRCEBookmark, DISPID_SPIAudioStreamPosition, SPEI_MAX_SR,
+    ISpeechResourceLoader, SECFEmulateResult, DISPID_SVEViseme,
+    DISPID_SGRsCount, ISpStream, SVSFIsXML, SAFTADPCM_11kHzStereo,
+    DISPID_SDKEnumValues, DISPIDSPTSI_SelectionOffset,
+    eLEXTYPE_RESERVED10, STCRemoteServer, SpeechTokenKeyAttributes,
+    ISpeechVoiceStatus, SP_VISEME_20, SPEI_END_SR_STREAM,
+    DISPID_SPIRetainedSizeBytes, DISPID_SRProfile, DISPID_SRDisplayUI,
+    SPEI_VOICE_CHANGE, SPEI_SENTENCE_BOUNDARY, SRESoundStart,
+    SAFT44kHz16BitStereo, SpeechCategoryRecognizers,
+    SAFT16kHz16BitStereo, DISPID_SVEventInterests,
+    DISPID_SRGetRecognizers, DISPID_SGRSTText,
+    SpPhoneticAlphabetConverter, DISPID_SPRsCount, DISPID_SRCResume,
+    SAFTNonStandardFormat, SPDKL_DefaultLocation,
+    DISPID_SRGDictationSetState, SECFDefault, DISPID_SPAsItem,
+    DISPID_SDKSetStringValue, SPVPRI_ALERT, SP_VISEME_16,
+    SPAUDIOSTATUS, eLEXTYPE_LETTERTOSOUND, DISPID_SLPPartOfSpeech,
+    DISPID_SVGetAudioInputs, DISPID_SPRuleId, SPEI_TTS_PRIVATE,
+    SPEI_TTS_AUDIO_LEVEL, DISPID_SVDisplayUI, DISPID_SRRTimes,
+    DISPID_SGRsAdd, ISpDataKey, SGRSTTDictation, SVEPrivate,
+    SRTAutopause, SpeechGrammarTagUnlimitedDictation,
+    DISPID_SRGCmdLoadFromFile, DISPID_SGRSTPropertyValue,
+    eLEXTYPE_RESERVED6, SVP_8, DISPID_SPCIdToPhone, SP_VISEME_14,
+    SPPS_Function, Speech_StreamPos_Asap, SpResourceManager,
+    SpeechAudioProperties, SPPHRASEELEMENT, SP_VISEME_7,
+    DISPID_SOTDisplayUI, ISpeechObjectToken, SpeechTokenKeyFiles,
+    SPRECOGNIZERSTATUS, SPCT_DICTATION, SPFM_NUM_MODES, SpMMAudioIn,
+    SPLO_STATIC, SVP_5, DISPID_SPEs_NewEnum, DISPID_SRCEAdaptation,
+    SBONone, ISpeechRecoResultTimes, DISPID_SPRuleParent,
+    SPSHT_Unknown, SPEI_FALSE_RECOGNITION, DISPID_SOTGetAttribute,
+    DISPID_SLPPhoneIds, SINoSignal, SVP_20, DISPID_SOTCategory,
+    _RemotableHandle, SVP_13, DISPID_SGRs_NewEnum, SPPS_Interjection,
+    SPEI_UNDEFINED, eLEXTYPE_PRIVATE17, SPEI_HYPOTHESIS, SPAR_Medium,
+    DISPID_SRCESoundStart, SWTDeleted, SPSVerb,
+    DISPID_SRCEPropertyStringChange, SVSFPurgeBeforeSpeak,
+    SpMMAudioOut, STSF_FlagCreate, DISPID_SDKGetBinaryValue,
+    DISPID_SWFEBitsPerSample, DISPID_SRGCmdLoadFromObject,
+    DISPID_SPILanguageId, DISPID_SPPName, SpInprocRecognizer,
+    SVEStartInputStream, DISPID_SPCLangId, SPRST_INACTIVE_WITH_PURGE,
+    DISPID_SOTsCount, DISPID_SRCRecognizer, SPEI_SR_AUDIO_LEVEL,
+    DISPID_SPEPronunciation, DISPID_SVSInputSentenceLength,
+    SAFT44kHz8BitMono, SPBINARYGRAMMAR, SASStop, DISPID_SVGetVoices,
+    SDTDisplayText, SpeechAudioFormatGUIDText, DISPID_SPRText,
+    ISpeechRecoContext, DISPID_SFSClose, SRTExtendableParse,
+    SAFT16kHz8BitStereo, SPWORDPRONUNCIATION, DISPID_SRRAudioFormat,
+    DISPID_SRGCmdLoadFromMemory, SVP_11, SDTRule, DISPID_SVEWord,
+    ISpAudio, SVP_17, DISPID_SPRuleConfidence,
+    DISPID_SLRemovePronunciationByPhoneIds, eWORDTYPE_ADDED,
+    SPINTERFERENCE_NOSIGNAL, DISPMETHOD, SDKLDefaultLocation,
+    SPWP_KNOWN_WORD_PRONOUNCEABLE, DISPID_SPELexicalForm,
+    DISPID_SVPause, SPINTERFERENCE_TOOSLOW,
+    DISPID_SVAllowAudioOuputFormatChangesOnNextSet, VARIANT_BOOL,
+    DISPID_SMSGetData, SREPrivate, SpeechGrammarTagDictation,
+    DISPID_SVSInputSentencePosition, eLEXTYPE_MORPHOLOGY,
+    eLEXTYPE_PRIVATE2, DISPID_SVSLastBookmarkId, SRESoundEnd,
+    DISPID_SGRSTransitions, ISpRecoGrammar, SPRECOCONTEXTSTATUS,
+    SINone, DISPID_SPIEngineId, SVP_3, SGDSActiveWithAutoPause,
+    DISPID_SRAllowAudioInputFormatChangesOnNextSet, SPCS_ENABLED,
+    ISpeechPhraseProperty, DISPID_SPRDisplayAttributes,
+    eLEXTYPE_RESERVED7, SAFTTrueSpeech_8kHz1BitMono,
+    SSFMCreateForWrite, SP_VISEME_18, IInternetSecurityManager,
+    DISPID_SVSLastStreamNumberQueued, SPEI_RECO_STATE_CHANGE,
+    DISPID_SDKSetLongValue, DISPID_SPPs_NewEnum,
+    DISPID_SDKDeleteValue, IInternetSecurityMgrSite,
+    SpObjectTokenCategory, IEnumString, SVP_18, DISPID_SAVolume,
+    SPRS_ACTIVE_USER_DELIMITED, SPPS_RESERVED2,
+    SAFTExtendedAudioFormat, eLEXTYPE_VENDORLEXICON,
+    ISpeechPhraseReplacement, SWPUnknownWordPronounceable,
+    DISPID_SLPsItem, COMMETHOD, SSTTWildcard, SRTReSent,
+    DISPID_SWFEBlockAlign, SECLowConfidence, DISPID_SVRate,
+    DISPID_SLPSymbolic, SVSFNLPSpeakPunc, SGRSTTRule,
+    ISpeechRecoResultDispatch, SAFT32kHz16BitStereo,
+    SAFT48kHz8BitStereo, DISPID_SRRecognizer, eLEXTYPE_PRIVATE16,
+    DISPID_SPRuleNumberOfElements, SREStateChange,
+    _ISpeechRecoContextEvents, DISPID_SPEDisplayAttributes,
+    DISPID_SPARecoResult, DISPID_SRGSetWordSequenceData,
+    DISPID_SOTCEnumerateTokens, SP_VISEME_12, SPPS_Modifier,
+    SpeechCategoryRecoProfiles, DISPID_SLAddPronunciationByPhoneIds,
+    SGRSTTEpsilon, SREAdaptation, DISPID_SVSkip, DISPID_SLWs_NewEnum,
+    SPCT_SUB_DICTATION, DISPID_SGRSTWeight, DISPID_SVEVoiceChange,
+    ISpeechPhraseElement, SPPS_NotOverriden, SPEI_MIN_TTS,
+    SVSFParseAutodetect, SAFT24kHz8BitStereo,
+    ISpPhoneticAlphabetSelection, ISpRecoContext2, IServiceProvider,
+    SAFT12kHz8BitStereo, SVESentenceBoundary, DISPID_SPPId,
+    DISPID_SMSAMMHandle, SLTUser, STCLocalServer,
+    DISPID_SRSetPropertyString, DISPID_SRRSaveToMemory,
+    SpeechPropertyAdaptationOn, SPWT_DISPLAY, SPEI_RESERVED5,
+    SPWF_INPUT, tagSPTEXTSELECTIONINFO, SPVOICESTATUS,
+    SPSMF_SRGS_SEMANTICINTERPRETATION_W3C, SpeechAddRemoveWord,
+    DISPID_SPAPhraseInfo, DISPID_SLGenerationId, DISPID_SMSADeviceId,
+    SPBO_PAUSE, WSTRING, eLEXTYPE_RESERVED9, DISPID_SRCERecognition,
+    SRADefaultToActive, SpeechPropertyLowConfidenceThreshold,
+    SPAS_RUN, DISPID_SGRName, SAFT32kHz8BitMono,
+    DISPID_SVSpeakCompleteEvent, SAFTCCITT_ALaw_44kHzMono,
+    DISPID_SRCERecognitionForOtherContext, DISPID_SADefaultFormat,
+    DISPID_SPIElements, DISPID_SBSSeek, DISPID_SABufferNotifySize,
+    DISPID_SGRSTs_NewEnum, SPSInterjection, DISPID_SAFGetWaveFormatEx,
+    DISPID_SRGIsPronounceable, SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN,
+    SPBO_NONE, SREBookmark, SSSPTRelativeToStart,
+    ISpeechPhraseProperties, ISpeechRecoResult2, ISpRecognizer,
+    SVSFIsFilename, DISPID_SFSOpen, DISPID_SVEAudioLevel,
+    DISPID_SVGetAudioOutputs, SRATopLevel, _FILETIME,
+    DISPID_SRRTOffsetFromStart, DISPID_SVEStreamStart,
+    SAFT16kHz8BitMono, DISPID_SDKSetBinaryValue, DISPID_SVVolume,
+    SPSERIALIZEDPHRASE, DISPID_SLWWord, DISPID_SPIAudioSizeTime,
+    SPWT_PRONUNCIATION, SSFMOpenReadWrite, DISPID_SPEEngineConfidence,
+    DISPID_SVSPhonemeId, SAFTADPCM_8kHzStereo, SREAllEvents, SPEVENT,
+    DISPID_SVSLastBookmark, SpeechCategoryAppLexicons,
+    DISPID_SRSNumberOfActiveRules, SpeechAudioFormatGUIDWave,
+    SPWT_LEXICAL_NO_SPECIAL_CHARS, SP_VISEME_21,
+    SpeechEngineProperties, DISPID_SRGetFormat, DISPID_SAEventHandle,
+    DISPID_SOTGetDescription, SVP_19, DISPID_SPIGetDisplayAttributes,
+    SpeechMicTraining, SAFTCCITT_ALaw_11kHzStereo, DISPID_SAStatus,
+    DISPID_SOTsItem, SVP_7, SPFM_OPEN_READWRITE, DISPID_SOTCDefault,
+    SLTApp, DISPID_SRCState, ISpeechPhraseAlternates,
+    DISPID_SLGetWords, DISPID_SASState, SpeechCategoryAudioIn,
+    SRSInactive, DISPID_SDKGetlongValue, DISPID_SRCEInterference,
+    SSFMCreate, DISPID_SRGetPropertyNumber, DISPID_SPCPhoneToId,
+    DISPID_SDKGetStringValue, DISPID_SDKCreateKey,
+    DISPIDSPTSI_ActiveOffset, SpeechCategoryAudioOut,
+    SPEI_WORD_BOUNDARY, STCInprocHandler, SpShortcut,
+    eLEXTYPE_PRIVATE1, CoClass, DISPID_SPERetainedSizeBytes, SVF_None,
+    DISPID_SGRsDynamic, SP_VISEME_8, SGDSActive,
+    DISPID_SRRGetXMLResult, SPPS_Noncontent, SVSFParseSapi,
+    SVSFPersistXML, DISPID_SRGDictationLoad, SVEBookmark,
+    DISPID_SLPs_NewEnum, SPCT_SUB_COMMAND, ISpeechRecognizerStatus,
+    ISpeechGrammarRuleState, SAFT8kHz16BitMono, SP_VISEME_5,
+    SAFTCCITT_ALaw_11kHzMono, SP_VISEME_19, SPEI_REQUEST_UI,
+    SRADynamic, SP_VISEME_9, SPEI_RECO_OTHER_CONTEXT, SPRST_ACTIVE,
+    SP_VISEME_4, SPEI_RECOGNITION, DISPID_SAFGuid,
+    SREPropertyNumChange, SPFM_CREATE_ALWAYS, SVP_2,
+    DISPID_SRRSpeakAudio, SAFTADPCM_22kHzMono, SPAO_RETAIN_AUDIO,
+    SP_VISEME_17, SAFT11kHz8BitStereo, SAFTCCITT_ALaw_22kHzStereo,
+    SSTTTextBuffer, DISPID_SRGReset, SPXRO_SML, ISpObjectWithToken,
+    SRTEmulated, DISPID_SVAlertBoundary, SAFT11kHz16BitStereo,
+    DISPID_SOTDataKey, SREHypothesis, DISPID_SLAddPronunciation,
+    SAFT24kHz16BitStereo, SVSFIsNotXML, ISpeechPhraseRule, SPPHRASE,
+    SPRS_ACTIVE_WITH_AUTO_PAUSE, SVSFNLPMask
 )
 
 
-class SPWORDPRONOUNCEABLE(IntFlag):
-    SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE = 0
-    SPWP_UNKNOWN_WORD_PRONOUNCEABLE = 1
-    SPWP_KNOWN_WORD_PRONOUNCEABLE = 2
+class SpeechVoiceSpeakFlags(IntFlag):
+    SVSFDefault = 0
+    SVSFlagsAsync = 1
+    SVSFPurgeBeforeSpeak = 2
+    SVSFIsFilename = 4
+    SVSFIsXML = 8
+    SVSFIsNotXML = 16
+    SVSFPersistXML = 32
+    SVSFNLPSpeakPunc = 64
+    SVSFParseSapi = 128
+    SVSFParseSsml = 256
+    SVSFParseAutodetect = 0
+    SVSFNLPMask = 64
+    SVSFParseMask = 384
+    SVSFVoiceMask = 511
+    SVSFUnusedFlags = -512
 
 
-class SPGRAMMARSTATE(IntFlag):
-    SPGS_DISABLED = 0
-    SPGS_ENABLED = 1
-    SPGS_EXCLUSIVE = 3
+class SpeechDiscardType(IntFlag):
+    SDTProperty = 1
+    SDTReplacement = 2
+    SDTRule = 4
+    SDTDisplayText = 8
+    SDTLexicalForm = 16
+    SDTPronunciation = 32
+    SDTAudio = 64
+    SDTAlternates = 128
+    SDTAll = 255
 
 
-class SPINTERFERENCE(IntFlag):
-    SPINTERFERENCE_NONE = 0
-    SPINTERFERENCE_NOISE = 1
-    SPINTERFERENCE_NOSIGNAL = 2
-    SPINTERFERENCE_TOOLOUD = 3
-    SPINTERFERENCE_TOOQUIET = 4
-    SPINTERFERENCE_TOOFAST = 5
-    SPINTERFERENCE_TOOSLOW = 6
-    SPINTERFERENCE_LATENCY_WARNING = 7
-    SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN = 8
-    SPINTERFERENCE_LATENCY_TRUNCATE_END = 9
+class SpeechGrammarState(IntFlag):
+    SGSEnabled = 1
+    SGSDisabled = 0
+    SGSExclusive = 3
+
+
+class SpeechLoadOption(IntFlag):
+    SLOStatic = 0
+    SLODynamic = 1
+
+
+class SpeechRuleState(IntFlag):
+    SGDSInactive = 0
+    SGDSActive = 1
+    SGDSActiveWithAutoPause = 3
+    SGDSActiveUserDelimited = 4
+
+
+class SpeechWordPronounceable(IntFlag):
+    SWPUnknownWordUnpronounceable = 0
+    SWPUnknownWordPronounceable = 1
+    SWPKnownWordPronounceable = 2
+
+
+class SpeechStreamSeekPositionType(IntFlag):
+    SSSPTRelativeToStart = 0
+    SSSPTRelativeToCurrentPosition = 1
+    SSSPTRelativeToEnd = 2
+
+
+class SpeechAudioState(IntFlag):
+    SASClosed = 0
+    SASStop = 1
+    SASPause = 2
+    SASRun = 3
+
+
+class SpeechSpecialTransitionType(IntFlag):
+    SSTTWildcard = 1
+    SSTTDictation = 2
+    SSTTTextBuffer = 3
+
+
+class SpeechEngineConfidence(IntFlag):
+    SECLowConfidence = -1
+    SECNormalConfidence = 0
+    SECHighConfidence = 1
 
 
 class SpeechVisemeType(IntFlag):
@@ -412,6 +462,86 @@ class SpeechVisemeType(IntFlag):
     SVP_21 = 21
 
 
+class SpeechStreamFileMode(IntFlag):
+    SSFMOpenForRead = 0
+    SSFMOpenReadWrite = 1
+    SSFMCreate = 2
+    SSFMCreateForWrite = 3
+
+
+class SpeechRecognizerState(IntFlag):
+    SRSInactive = 0
+    SRSActive = 1
+    SRSActiveAlways = 2
+    SRSInactiveWithPurge = 3
+
+
+class SpeechDisplayAttributes(IntFlag):
+    SDA_No_Trailing_Space = 0
+    SDA_One_Trailing_Space = 2
+    SDA_Two_Trailing_Spaces = 4
+    SDA_Consume_Leading_Spaces = 8
+
+
+class SpeechRuleAttributes(IntFlag):
+    SRATopLevel = 1
+    SRADefaultToActive = 2
+    SRAExport = 4
+    SRAImport = 8
+    SRAInterpreter = 16
+    SRADynamic = 32
+    SRARoot = 64
+
+
+class SpeechVoiceEvents(IntFlag):
+    SVEStartInputStream = 2
+    SVEEndInputStream = 4
+    SVEVoiceChange = 8
+    SVEBookmark = 16
+    SVEWordBoundary = 32
+    SVEPhoneme = 64
+    SVESentenceBoundary = 128
+    SVEViseme = 256
+    SVEAudioLevel = 512
+    SVEPrivate = 32768
+    SVEAllEvents = 33790
+
+
+class SpeechBookmarkOptions(IntFlag):
+    SBONone = 0
+    SBOPause = 1
+
+
+class SpeechFormatType(IntFlag):
+    SFTInput = 0
+    SFTSREngine = 1
+
+
+class SpeechVoicePriority(IntFlag):
+    SVPNormal = 0
+    SVPAlert = 1
+    SVPOver = 2
+
+
+class SpeechRecognitionType(IntFlag):
+    SRTStandard = 0
+    SRTAutopause = 1
+    SRTEmulated = 2
+    SRTSMLTimeout = 4
+    SRTExtendableParse = 8
+    SRTReSent = 16
+
+
+class SpeechLexiconType(IntFlag):
+    SLTUser = 1
+    SLTApp = 2
+
+
+class SpeechWordType(IntFlag):
+    SWTAdded = 1
+    SWTDeleted = 2
+
+
 class SPVISEMES(IntFlag):
     SP_VISEME_0 = 0
     SP_VISEME_1 = 1
@@ -437,256 +567,6 @@ class SPVISEMES(IntFlag):
     SP_VISEME_21 = 21
 
 
-class SPGRAMMARWORDTYPE(IntFlag):
-    SPWT_DISPLAY = 0
-    SPWT_LEXICAL = 1
-    SPWT_PRONUNCIATION = 2
-    SPWT_LEXICAL_NO_SPECIAL_CHARS = 3
-
-
-class SPAUDIOOPTIONS(IntFlag):
-    SPAO_NONE = 0
-    SPAO_RETAIN_AUDIO = 1
-
-
-class SpeechRecognizerState(IntFlag):
-    SRSInactive = 0
-    SRSActive = 1
-    SRSActiveAlways = 2
-    SRSInactiveWithPurge = 3
-
-
-class SPSEMANTICFORMAT(IntFlag):
-    SPSMF_SAPI_PROPERTIES = 0
-    SPSMF_SRGS_SEMANTICINTERPRETATION_MS = 1
-    SPSMF_SRGS_SAPIPROPERTIES = 2
-    SPSMF_UPS = 4
-    SPSMF_SRGS_SEMANTICINTERPRETATION_W3C = 8
-
-
-class SPBOOKMARKOPTIONS(IntFlag):
-    SPBO_NONE = 0
-    SPBO_PAUSE = 1
-    SPBO_AHEAD = 2
-    SPBO_TIME_UNITS = 4
-
-
-class SPCONTEXTSTATE(IntFlag):
-    SPCS_DISABLED = 0
-    SPCS_ENABLED = 1
-
-
-class SPADAPTATIONRELEVANCE(IntFlag):
-    SPAR_Unknown = 0
-    SPAR_Low = 1
-    SPAR_Medium = 2
-    SPAR_High = 3
-
-
-class DISPID_SpeechVoice(IntFlag):
-    DISPID_SVStatus = 1
-    DISPID_SVVoice = 2
-    DISPID_SVAudioOutput = 3
-    DISPID_SVAudioOutputStream = 4
-    DISPID_SVRate = 5
-    DISPID_SVVolume = 6
-    DISPID_SVAllowAudioOuputFormatChangesOnNextSet = 7
-    DISPID_SVEventInterests = 8
-    DISPID_SVPriority = 9
-    DISPID_SVAlertBoundary = 10
-    DISPID_SVSyncronousSpeakTimeout = 11
-    DISPID_SVSpeak = 12
-    DISPID_SVSpeakStream = 13
-    DISPID_SVPause = 14
-    DISPID_SVResume = 15
-    DISPID_SVSkip = 16
-    DISPID_SVGetVoices = 17
-    DISPID_SVGetAudioOutputs = 18
-    DISPID_SVWaitUntilDone = 19
-    DISPID_SVSpeakCompleteEvent = 20
-    DISPID_SVIsUISupported = 21
-    DISPID_SVDisplayUI = 22
-
-
-class SPCATEGORYTYPE(IntFlag):
-    SPCT_COMMAND = 0
-    SPCT_DICTATION = 1
-    SPCT_SLEEP = 2
-    SPCT_SUB_COMMAND = 3
-    SPCT_SUB_DICTATION = 4
-
-
-class SpeechInterference(IntFlag):
-    SINone = 0
-    SINoise = 1
-    SINoSignal = 2
-    SITooLoud = 3
-    SITooQuiet = 4
-    SITooFast = 5
-    SITooSlow = 6
-
-
-class SpeechSpecialTransitionType(IntFlag):
-    SSTTWildcard = 1
-    SSTTDictation = 2
-    SSTTTextBuffer = 3
-
-
-class DISPID_SpeechWaveFormatEx(IntFlag):
-    DISPID_SWFEFormatTag = 1
-    DISPID_SWFEChannels = 2
-    DISPID_SWFESamplesPerSec = 3
-    DISPID_SWFEAvgBytesPerSec = 4
-    DISPID_SWFEBlockAlign = 5
-    DISPID_SWFEBitsPerSample = 6
-    DISPID_SWFEExtraData = 7
-
-
-class DISPID_SpeechVoiceStatus(IntFlag):
-    DISPID_SVSCurrentStreamNumber = 1
-    DISPID_SVSLastStreamNumberQueued = 2
-    DISPID_SVSLastResult = 3
-    DISPID_SVSRunningState = 4
-    DISPID_SVSInputWordPosition = 5
-    DISPID_SVSInputWordLength = 6
-    DISPID_SVSInputSentencePosition = 7
-    DISPID_SVSInputSentenceLength = 8
-    DISPID_SVSLastBookmark = 9
-    DISPID_SVSLastBookmarkId = 10
-    DISPID_SVSPhonemeId = 11
-    DISPID_SVSVisemeId = 12
-
-
-class DISPID_SpeechMemoryStream(IntFlag):
-    DISPID_SMSSetData = 100
-    DISPID_SMSGetData = 101
-
-
-class DISPID_SpeechVoiceEvent(IntFlag):
-    DISPID_SVEStreamStart = 1
-    DISPID_SVEStreamEnd = 2
-    DISPID_SVEVoiceChange = 3
-    DISPID_SVEBookmark = 4
-    DISPID_SVEWord = 5
-    DISPID_SVEPhoneme = 6
-    DISPID_SVESentenceBoundary = 7
-    DISPID_SVEViseme = 8
-    DISPID_SVEAudioLevel = 9
-    DISPID_SVEEnginePrivate = 10
-
-
-class DISPID_SpeechAudioBufferInfo(IntFlag):
-    DISPID_SABIMinNotification = 1
-    DISPID_SABIBufferSize = 2
-    DISPID_SABIEventBias = 3
-
-
-class SPLEXICONTYPE(IntFlag):
-    eLEXTYPE_USER = 1
-    eLEXTYPE_APP = 2
-    eLEXTYPE_VENDORLEXICON = 4
-    eLEXTYPE_LETTERTOSOUND = 8
-    eLEXTYPE_MORPHOLOGY = 16
-    eLEXTYPE_RESERVED4 = 32
-    eLEXTYPE_USER_SHORTCUT = 64
-    eLEXTYPE_RESERVED6 = 128
-    eLEXTYPE_RESERVED7 = 256
-    eLEXTYPE_RESERVED8 = 512
-    eLEXTYPE_RESERVED9 = 1024
-    eLEXTYPE_RESERVED10 = 2048
-    eLEXTYPE_PRIVATE1 = 4096
-    eLEXTYPE_PRIVATE2 = 8192
-    eLEXTYPE_PRIVATE3 = 16384
-    eLEXTYPE_PRIVATE4 = 32768
-    eLEXTYPE_PRIVATE5 = 65536
-    eLEXTYPE_PRIVATE6 = 131072
-    eLEXTYPE_PRIVATE7 = 262144
-    eLEXTYPE_PRIVATE8 = 524288
-    eLEXTYPE_PRIVATE9 = 1048576
-    eLEXTYPE_PRIVATE10 = 2097152
-    eLEXTYPE_PRIVATE11 = 4194304
-    eLEXTYPE_PRIVATE12 = 8388608
-    eLEXTYPE_PRIVATE13 = 16777216
-    eLEXTYPE_PRIVATE14 = 33554432
-    eLEXTYPE_PRIVATE15 = 67108864
-    eLEXTYPE_PRIVATE16 = 134217728
-    eLEXTYPE_PRIVATE17 = 268435456
-    eLEXTYPE_PRIVATE18 = 536870912
-    eLEXTYPE_PRIVATE19 = 1073741824
-    eLEXTYPE_PRIVATE20 = -2147483648
-
-
-class DISPID_SpeechFileStream(IntFlag):
-    DISPID_SFSOpen = 100
-    DISPID_SFSClose = 101
-
-
-class SpeechEmulationCompareFlags(IntFlag):
-    SECFIgnoreCase = 1
-    SECFIgnoreKanaType = 65536
-    SECFIgnoreWidth = 131072
-    SECFNoSpecialChars = 536870912
-    SECFEmulateResult = 1073741824
-    SECFDefault = 196609
-
-
-class DISPID_SpeechRecognizer(IntFlag):
-    DISPID_SRRecognizer = 1
-    DISPID_SRAllowAudioInputFormatChangesOnNextSet = 2
-    DISPID_SRAudioInput = 3
-    DISPID_SRAudioInputStream = 4
-    DISPID_SRIsShared = 5
-    DISPID_SRState = 6
-    DISPID_SRStatus = 7
-    DISPID_SRProfile = 8
-    DISPID_SREmulateRecognition = 9
-    DISPID_SRCreateRecoContext = 10
-    DISPID_SRGetFormat = 11
-    DISPID_SRSetPropertyNumber = 12
-    DISPID_SRGetPropertyNumber = 13
-    DISPID_SRSetPropertyString = 14
-    DISPID_SRGetPropertyString = 15
-    DISPID_SRIsUISupported = 16
-    DISPID_SRDisplayUI = 17
-    DISPID_SRGetRecognizers = 18
-    DISPID_SVGetAudioInputs = 19
-    DISPID_SVGetProfiles = 20
-
-
-class DISPID_SpeechAudio(IntFlag):
-    DISPID_SAStatus = 200
-    DISPID_SABufferInfo = 201
-    DISPID_SADefaultFormat = 202
-    DISPID_SAVolume = 203
-    DISPID_SABufferNotifySize = 204
-    DISPID_SAEventHandle = 205
-    DISPID_SASetState = 206
-
-
-class SPPARTOFSPEECH(IntFlag):
-    SPPS_NotOverriden = -1
-    SPPS_Unknown = 0
-    SPPS_Noun = 4096
-    SPPS_Verb = 8192
-    SPPS_Modifier = 12288
-    SPPS_Function = 16384
-    SPPS_Interjection = 20480
-    SPPS_Noncontent = 24576
-    SPPS_LMA = 28672
-    SPPS_SuppressWord = 61440
-
-
-class DISPID_SpeechMMSysAudio(IntFlag):
-    DISPID_SMSADeviceId = 300
-    DISPID_SMSALineId = 301
-    DISPID_SMSAMMHandle = 302
-
-
-class SpeechLexiconType(IntFlag):
-    SLTUser = 1
-    SLTApp = 2
-
-
 class SpeechPartOfSpeech(IntFlag):
     SPSNotOverriden = -1
     SPSUnknown = 0
@@ -699,16 +579,90 @@ class SpeechPartOfSpeech(IntFlag):
     SPSSuppressWord = 61440
 
 
-class DISPID_SpeechAudioStatus(IntFlag):
-    DISPID_SASFreeBufferSpace = 1
-    DISPID_SASNonBlockingIO = 2
-    DISPID_SASState = 3
-    DISPID_SASCurrentSeekPosition = 4
-    DISPID_SASCurrentDevicePosition = 5
+class _SPAUDIOSTATE(IntFlag):
+    SPAS_CLOSED = 0
+    SPAS_STOP = 1
+    SPAS_PAUSE = 2
+    SPAS_RUN = 3
 
 
-class DISPID_SpeechCustomStream(IntFlag):
-    DISPID_SCSBaseStream = 100
+class SpeechInterference(IntFlag):
+    SINone = 0
+    SINoise = 1
+    SINoSignal = 2
+    SITooLoud = 3
+    SITooQuiet = 4
+    SITooFast = 5
+    SITooSlow = 6
+
+
+class SPSEMANTICFORMAT(IntFlag):
+    SPSMF_SAPI_PROPERTIES = 0
+    SPSMF_SRGS_SEMANTICINTERPRETATION_MS = 1
+    SPSMF_SRGS_SAPIPROPERTIES = 2
+    SPSMF_UPS = 4
+    SPSMF_SRGS_SEMANTICINTERPRETATION_W3C = 8
+
+
+class SpeechGrammarRuleStateTransitionType(IntFlag):
+    SGRSTTEpsilon = 0
+    SGRSTTWord = 1
+    SGRSTTRule = 2
+    SGRSTTDictation = 3
+    SGRSTTWildcard = 4
+    SGRSTTTextBuffer = 5
+
+
+class DISPID_SpeechDataKey(IntFlag):
+    DISPID_SDKSetBinaryValue = 1
+    DISPID_SDKGetBinaryValue = 2
+    DISPID_SDKSetStringValue = 3
+    DISPID_SDKGetStringValue = 4
+    DISPID_SDKSetLongValue = 5
+    DISPID_SDKGetlongValue = 6
+    DISPID_SDKOpenKey = 7
+    DISPID_SDKCreateKey = 8
+    DISPID_SDKDeleteKey = 9
+    DISPID_SDKDeleteValue = 10
+    DISPID_SDKEnumKeys = 11
+    DISPID_SDKEnumValues = 12
+
+
+class DISPID_SpeechObjectToken(IntFlag):
+    DISPID_SOTId = 1
+    DISPID_SOTDataKey = 2
+    DISPID_SOTCategory = 3
+    DISPID_SOTGetDescription = 4
+    DISPID_SOTSetId = 5
+    DISPID_SOTGetAttribute = 6
+    DISPID_SOTCreateInstance = 7
+    DISPID_SOTRemove = 8
+    DISPID_SOTGetStorageFileName = 9
+    DISPID_SOTRemoveStorageFileName = 10
+    DISPID_SOTIsUISupported = 11
+    DISPID_SOTDisplayUI = 12
+    DISPID_SOTMatchesAttributes = 13
+
+
+class DISPID_SpeechObjectTokens(IntFlag):
+    DISPID_SOTsCount = 1
+    DISPID_SOTsItem = 0
+    DISPID_SOTs_NewEnum = -4
+
+
+class DISPID_SpeechObjectTokenCategory(IntFlag):
+    DISPID_SOTCId = 1
+    DISPID_SOTCDefault = 2
+    DISPID_SOTCSetId = 3
+    DISPID_SOTCGetDataKey = 4
+    DISPID_SOTCEnumerateTokens = 5
+
+
+class DISPID_SpeechAudioFormat(IntFlag):
+    DISPID_SAFType = 1
+    DISPID_SAFGuid = 2
+    DISPID_SAFGetWaveFormatEx = 3
+    DISPID_SAFSetWaveFormatEx = 4
 
 
 class DISPID_SpeechBaseStream(IntFlag):
@@ -718,243 +672,42 @@ class DISPID_SpeechBaseStream(IntFlag):
     DISPID_SBSSeek = 4
 
 
-class DISPIDSPRG(IntFlag):
-    DISPID_SRGId = 1
-    DISPID_SRGRecoContext = 2
-    DISPID_SRGState = 3
-    DISPID_SRGRules = 4
-    DISPID_SRGReset = 5
-    DISPID_SRGCommit = 6
-    DISPID_SRGCmdLoadFromFile = 7
-    DISPID_SRGCmdLoadFromObject = 8
-    DISPID_SRGCmdLoadFromResource = 9
-    DISPID_SRGCmdLoadFromMemory = 10
-    DISPID_SRGCmdLoadFromProprietaryGrammar = 11
-    DISPID_SRGCmdSetRuleState = 12
-    DISPID_SRGCmdSetRuleIdState = 13
-    DISPID_SRGDictationLoad = 14
-    DISPID_SRGDictationUnload = 15
-    DISPID_SRGDictationSetState = 16
-    DISPID_SRGSetWordSequenceData = 17
-    DISPID_SRGSetTextSelection = 18
-    DISPID_SRGIsPronounceable = 19
+class DISPID_SpeechAudio(IntFlag):
+    DISPID_SAStatus = 200
+    DISPID_SABufferInfo = 201
+    DISPID_SADefaultFormat = 202
+    DISPID_SAVolume = 203
+    DISPID_SABufferNotifySize = 204
+    DISPID_SAEventHandle = 205
+    DISPID_SASetState = 206
 
 
-class DISPID_SpeechGrammarRuleStateTransitions(IntFlag):
-    DISPID_SGRSTsCount = 1
-    DISPID_SGRSTsItem = 0
-    DISPID_SGRSTs_NewEnum = -4
+class DISPID_SpeechMMSysAudio(IntFlag):
+    DISPID_SMSADeviceId = 300
+    DISPID_SMSALineId = 301
+    DISPID_SMSAMMHandle = 302
 
 
-class DISPID_SpeechGrammarRule(IntFlag):
-    DISPID_SGRAttributes = 1
-    DISPID_SGRInitialState = 2
-    DISPID_SGRName = 3
-    DISPID_SGRId = 4
-    DISPID_SGRClear = 5
-    DISPID_SGRAddResource = 6
-    DISPID_SGRAddState = 7
+class DISPID_SpeechFileStream(IntFlag):
+    DISPID_SFSOpen = 100
+    DISPID_SFSClose = 101
 
 
-class SpeechStreamSeekPositionType(IntFlag):
-    SSSPTRelativeToStart = 0
-    SSSPTRelativeToCurrentPosition = 1
-    SSSPTRelativeToEnd = 2
+class DISPID_SpeechCustomStream(IntFlag):
+    DISPID_SCSBaseStream = 100
 
 
-class SPWORDTYPE(IntFlag):
-    eWORDTYPE_ADDED = 1
-    eWORDTYPE_DELETED = 2
+class DISPID_SpeechMemoryStream(IntFlag):
+    DISPID_SMSSetData = 100
+    DISPID_SMSGetData = 101
 
 
-class SpeechDataKeyLocation(IntFlag):
-    SDKLDefaultLocation = 0
-    SDKLCurrentUser = 1
-    SDKLLocalMachine = 2
-    SDKLCurrentConfig = 5
-
-
-class DISPID_SpeechRecognizerStatus(IntFlag):
-    DISPID_SRSAudioStatus = 1
-    DISPID_SRSCurrentStreamPosition = 2
-    DISPID_SRSCurrentStreamNumber = 3
-    DISPID_SRSNumberOfActiveRules = 4
-    DISPID_SRSClsidEngine = 5
-    DISPID_SRSSupportedLanguages = 6
-
-
-class SPSHORTCUTTYPE(IntFlag):
-    SPSHT_NotOverriden = -1
-    SPSHT_Unknown = 0
-    SPSHT_EMAIL = 4096
-    SPSHT_OTHER = 8192
-    SPPS_RESERVED1 = 12288
-    SPPS_RESERVED2 = 16384
-    SPPS_RESERVED3 = 20480
-    SPPS_RESERVED4 = 61440
-
-
-class DISPID_SpeechGrammarRuleStateTransition(IntFlag):
-    DISPID_SGRSTType = 1
-    DISPID_SGRSTText = 2
-    DISPID_SGRSTRule = 3
-    DISPID_SGRSTWeight = 4
-    DISPID_SGRSTPropertyName = 5
-    DISPID_SGRSTPropertyId = 6
-    DISPID_SGRSTPropertyValue = 7
-    DISPID_SGRSTNextState = 8
-
-
-class DISPID_SpeechGrammarRuleState(IntFlag):
-    DISPID_SGRSRule = 1
-    DISPID_SGRSTransitions = 2
-    DISPID_SGRSAddWordTransition = 3
-    DISPID_SGRSAddRuleTransition = 4
-    DISPID_SGRSAddSpecialTransition = 5
-
-
-class SpeechGrammarState(IntFlag):
-    SGSEnabled = 1
-    SGSDisabled = 0
-    SGSExclusive = 3
-
-
-class SpeechLoadOption(IntFlag):
-    SLOStatic = 0
-    SLODynamic = 1
-
-
-class SpeechRuleState(IntFlag):
-    SGDSInactive = 0
-    SGDSActive = 1
-    SGDSActiveWithAutoPause = 3
-    SGDSActiveUserDelimited = 4
-
-
-class SpeechWordPronounceable(IntFlag):
-    SWPUnknownWordUnpronounceable = 0
-    SWPUnknownWordPronounceable = 1
-    SWPKnownWordPronounceable = 2
-
-
-class DISPID_SpeechGrammarRules(IntFlag):
-    DISPID_SGRsCount = 1
-    DISPID_SGRsDynamic = 2
-    DISPID_SGRsAdd = 3
-    DISPID_SGRsCommit = 4
-    DISPID_SGRsCommitAndSave = 5
-    DISPID_SGRsFindRule = 6
-    DISPID_SGRsItem = 0
-    DISPID_SGRs_NewEnum = -4
-
-
-class SpeechVoiceSpeakFlags(IntFlag):
-    SVSFDefault = 0
-    SVSFlagsAsync = 1
-    SVSFPurgeBeforeSpeak = 2
-    SVSFIsFilename = 4
-    SVSFIsXML = 8
-    SVSFIsNotXML = 16
-    SVSFPersistXML = 32
-    SVSFNLPSpeakPunc = 64
-    SVSFParseSapi = 128
-    SVSFParseSsml = 256
-    SVSFParseAutodetect = 0
-    SVSFNLPMask = 64
-    SVSFParseMask = 384
-    SVSFVoiceMask = 511
-    SVSFUnusedFlags = -512
-
-
-class DISPID_SpeechRecoContext(IntFlag):
-    DISPID_SRCRecognizer = 1
-    DISPID_SRCAudioInInterferenceStatus = 2
-    DISPID_SRCRequestedUIType = 3
-    DISPID_SRCVoice = 4
-    DISPID_SRAllowVoiceFormatMatchingOnNextSet = 5
-    DISPID_SRCVoicePurgeEvent = 6
-    DISPID_SRCEventInterests = 7
-    DISPID_SRCCmdMaxAlternates = 8
-    DISPID_SRCState = 9
-    DISPID_SRCRetainedAudio = 10
-    DISPID_SRCRetainedAudioFormat = 11
-    DISPID_SRCPause = 12
-    DISPID_SRCResume = 13
-    DISPID_SRCCreateGrammar = 14
-    DISPID_SRCCreateResultFromMemory = 15
-    DISPID_SRCBookmark = 16
-    DISPID_SRCSetAdaptationData = 17
-
-
-class DISPID_SpeechRecoContextEvents(IntFlag):
-    DISPID_SRCEStartStream = 1
-    DISPID_SRCEEndStream = 2
-    DISPID_SRCEBookmark = 3
-    DISPID_SRCESoundStart = 4
-    DISPID_SRCESoundEnd = 5
-    DISPID_SRCEPhraseStart = 6
-    DISPID_SRCERecognition = 7
-    DISPID_SRCEHypothesis = 8
-    DISPID_SRCEPropertyNumberChange = 9
-    DISPID_SRCEPropertyStringChange = 10
-    DISPID_SRCEFalseRecognition = 11
-    DISPID_SRCEInterference = 12
-    DISPID_SRCERequestUI = 13
-    DISPID_SRCERecognizerStateChange = 14
-    DISPID_SRCEAdaptation = 15
-    DISPID_SRCERecognitionForOtherContext = 16
-    DISPID_SRCEAudioLevel = 17
-    DISPID_SRCEEnginePrivate = 18
-
-
-class SpeechVisemeFeature(IntFlag):
-    SVF_None = 0
-    SVF_Stressed = 1
-    SVF_Emphasis = 2
-
-
-class _SPAUDIOSTATE(IntFlag):
-    SPAS_CLOSED = 0
-    SPAS_STOP = 1
-    SPAS_PAUSE = 2
-    SPAS_RUN = 3
-
-
-class SpeechRuleAttributes(IntFlag):
-    SRATopLevel = 1
-    SRADefaultToActive = 2
-    SRAExport = 4
-    SRAImport = 8
-    SRAInterpreter = 16
-    SRADynamic = 32
-    SRARoot = 64
-
-
-class SPWAVEFORMATTYPE(IntFlag):
-    SPWF_INPUT = 0
-    SPWF_SRENGINE = 1
-
-
-class SpeechDiscardType(IntFlag):
-    SDTProperty = 1
-    SDTReplacement = 2
-    SDTRule = 4
-    SDTDisplayText = 8
-    SDTLexicalForm = 16
-    SDTPronunciation = 32
-    SDTAudio = 64
-    SDTAlternates = 128
-    SDTAll = 255
-
-
-class SpeechFormatType(IntFlag):
-    SFTInput = 0
-    SFTSREngine = 1
-
-
-class SPXMLRESULTOPTIONS(IntFlag):
-    SPXRO_SML = 0
-    SPXRO_Alternates_SML = 1
+class DISPID_SpeechAudioStatus(IntFlag):
+    DISPID_SASFreeBufferSpace = 1
+    DISPID_SASNonBlockingIO = 2
+    DISPID_SASState = 3
+    DISPID_SASCurrentSeekPosition = 4
+    DISPID_SASCurrentDevicePosition = 5
 
 
 class SpeechRecoEvents(IntFlag):
@@ -984,6 +737,237 @@ class SpeechRecoContextState(IntFlag):
     SRCS_Enabled = 1
 
 
+class SpeechRetainedAudioOptions(IntFlag):
+    SRAONone = 0
+    SRAORetainAudio = 1
+
+
+class DISPID_SpeechAudioBufferInfo(IntFlag):
+    DISPID_SABIMinNotification = 1
+    DISPID_SABIBufferSize = 2
+    DISPID_SABIEventBias = 3
+
+
+class DISPID_SpeechWaveFormatEx(IntFlag):
+    DISPID_SWFEFormatTag = 1
+    DISPID_SWFEChannels = 2
+    DISPID_SWFESamplesPerSec = 3
+    DISPID_SWFEAvgBytesPerSec = 4
+    DISPID_SWFEBlockAlign = 5
+    DISPID_SWFEBitsPerSample = 6
+    DISPID_SWFEExtraData = 7
+
+
+class DISPID_SpeechVoice(IntFlag):
+    DISPID_SVStatus = 1
+    DISPID_SVVoice = 2
+    DISPID_SVAudioOutput = 3
+    DISPID_SVAudioOutputStream = 4
+    DISPID_SVRate = 5
+    DISPID_SVVolume = 6
+    DISPID_SVAllowAudioOuputFormatChangesOnNextSet = 7
+    DISPID_SVEventInterests = 8
+    DISPID_SVPriority = 9
+    DISPID_SVAlertBoundary = 10
+    DISPID_SVSyncronousSpeakTimeout = 11
+    DISPID_SVSpeak = 12
+    DISPID_SVSpeakStream = 13
+    DISPID_SVPause = 14
+    DISPID_SVResume = 15
+    DISPID_SVSkip = 16
+    DISPID_SVGetVoices = 17
+    DISPID_SVGetAudioOutputs = 18
+    DISPID_SVWaitUntilDone = 19
+    DISPID_SVSpeakCompleteEvent = 20
+    DISPID_SVIsUISupported = 21
+    DISPID_SVDisplayUI = 22
+
+
+class DISPID_SpeechVoiceStatus(IntFlag):
+    DISPID_SVSCurrentStreamNumber = 1
+    DISPID_SVSLastStreamNumberQueued = 2
+    DISPID_SVSLastResult = 3
+    DISPID_SVSRunningState = 4
+    DISPID_SVSInputWordPosition = 5
+    DISPID_SVSInputWordLength = 6
+    DISPID_SVSInputSentencePosition = 7
+    DISPID_SVSInputSentenceLength = 8
+    DISPID_SVSLastBookmark = 9
+    DISPID_SVSLastBookmarkId = 10
+    DISPID_SVSPhonemeId = 11
+    DISPID_SVSVisemeId = 12
+
+
+class DISPID_SpeechVoiceEvent(IntFlag):
+    DISPID_SVEStreamStart = 1
+    DISPID_SVEStreamEnd = 2
+    DISPID_SVEVoiceChange = 3
+    DISPID_SVEBookmark = 4
+    DISPID_SVEWord = 5
+    DISPID_SVEPhoneme = 6
+    DISPID_SVESentenceBoundary = 7
+    DISPID_SVEViseme = 8
+    DISPID_SVEAudioLevel = 9
+    DISPID_SVEEnginePrivate = 10
+
+
+class DISPID_SpeechRecognizer(IntFlag):
+    DISPID_SRRecognizer = 1
+    DISPID_SRAllowAudioInputFormatChangesOnNextSet = 2
+    DISPID_SRAudioInput = 3
+    DISPID_SRAudioInputStream = 4
+    DISPID_SRIsShared = 5
+    DISPID_SRState = 6
+    DISPID_SRStatus = 7
+    DISPID_SRProfile = 8
+    DISPID_SREmulateRecognition = 9
+    DISPID_SRCreateRecoContext = 10
+    DISPID_SRGetFormat = 11
+    DISPID_SRSetPropertyNumber = 12
+    DISPID_SRGetPropertyNumber = 13
+    DISPID_SRSetPropertyString = 14
+    DISPID_SRGetPropertyString = 15
+    DISPID_SRIsUISupported = 16
+    DISPID_SRDisplayUI = 17
+    DISPID_SRGetRecognizers = 18
+    DISPID_SVGetAudioInputs = 19
+    DISPID_SVGetProfiles = 20
+
+
+class SpeechEmulationCompareFlags(IntFlag):
+    SECFIgnoreCase = 1
+    SECFIgnoreKanaType = 65536
+    SECFIgnoreWidth = 131072
+    SECFNoSpecialChars = 536870912
+    SECFEmulateResult = 1073741824
+    SECFDefault = 196609
+
+
+class SpeechDataKeyLocation(IntFlag):
+    SDKLDefaultLocation = 0
+    SDKLCurrentUser = 1
+    SDKLLocalMachine = 2
+    SDKLCurrentConfig = 5
+
+
+class DISPID_SpeechRecognizerStatus(IntFlag):
+    DISPID_SRSAudioStatus = 1
+    DISPID_SRSCurrentStreamPosition = 2
+    DISPID_SRSCurrentStreamNumber = 3
+    DISPID_SRSNumberOfActiveRules = 4
+    DISPID_SRSClsidEngine = 5
+    DISPID_SRSSupportedLanguages = 6
+
+
+class DISPID_SpeechRecoContext(IntFlag):
+    DISPID_SRCRecognizer = 1
+    DISPID_SRCAudioInInterferenceStatus = 2
+    DISPID_SRCRequestedUIType = 3
+    DISPID_SRCVoice = 4
+    DISPID_SRAllowVoiceFormatMatchingOnNextSet = 5
+    DISPID_SRCVoicePurgeEvent = 6
+    DISPID_SRCEventInterests = 7
+    DISPID_SRCCmdMaxAlternates = 8
+    DISPID_SRCState = 9
+    DISPID_SRCRetainedAudio = 10
+    DISPID_SRCRetainedAudioFormat = 11
+    DISPID_SRCPause = 12
+    DISPID_SRCResume = 13
+    DISPID_SRCCreateGrammar = 14
+    DISPID_SRCCreateResultFromMemory = 15
+    DISPID_SRCBookmark = 16
+    DISPID_SRCSetAdaptationData = 17
+
+
+class DISPIDSPRG(IntFlag):
+    DISPID_SRGId = 1
+    DISPID_SRGRecoContext = 2
+    DISPID_SRGState = 3
+    DISPID_SRGRules = 4
+    DISPID_SRGReset = 5
+    DISPID_SRGCommit = 6
+    DISPID_SRGCmdLoadFromFile = 7
+    DISPID_SRGCmdLoadFromObject = 8
+    DISPID_SRGCmdLoadFromResource = 9
+    DISPID_SRGCmdLoadFromMemory = 10
+    DISPID_SRGCmdLoadFromProprietaryGrammar = 11
+    DISPID_SRGCmdSetRuleState = 12
+    DISPID_SRGCmdSetRuleIdState = 13
+    DISPID_SRGDictationLoad = 14
+    DISPID_SRGDictationUnload = 15
+    DISPID_SRGDictationSetState = 16
+    DISPID_SRGSetWordSequenceData = 17
+    DISPID_SRGSetTextSelection = 18
+    DISPID_SRGIsPronounceable = 19
+
+
+class DISPID_SpeechRecoContextEvents(IntFlag):
+    DISPID_SRCEStartStream = 1
+    DISPID_SRCEEndStream = 2
+    DISPID_SRCEBookmark = 3
+    DISPID_SRCESoundStart = 4
+    DISPID_SRCESoundEnd = 5
+    DISPID_SRCEPhraseStart = 6
+    DISPID_SRCERecognition = 7
+    DISPID_SRCEHypothesis = 8
+    DISPID_SRCEPropertyNumberChange = 9
+    DISPID_SRCEPropertyStringChange = 10
+    DISPID_SRCEFalseRecognition = 11
+    DISPID_SRCEInterference = 12
+    DISPID_SRCERequestUI = 13
+    DISPID_SRCERecognizerStateChange = 14
+    DISPID_SRCEAdaptation = 15
+    DISPID_SRCERecognitionForOtherContext = 16
+    DISPID_SRCEAudioLevel = 17
+    DISPID_SRCEEnginePrivate = 18
+
+
+class DISPID_SpeechGrammarRule(IntFlag):
+    DISPID_SGRAttributes = 1
+    DISPID_SGRInitialState = 2
+    DISPID_SGRName = 3
+    DISPID_SGRId = 4
+    DISPID_SGRClear = 5
+    DISPID_SGRAddResource = 6
+    DISPID_SGRAddState = 7
+
+
+class DISPID_SpeechGrammarRules(IntFlag):
+    DISPID_SGRsCount = 1
+    DISPID_SGRsDynamic = 2
+    DISPID_SGRsAdd = 3
+    DISPID_SGRsCommit = 4
+    DISPID_SGRsCommitAndSave = 5
+    DISPID_SGRsFindRule = 6
+    DISPID_SGRsItem = 0
+    DISPID_SGRs_NewEnum = -4
+
+
+class DISPID_SpeechGrammarRuleState(IntFlag):
+    DISPID_SGRSRule = 1
+    DISPID_SGRSTransitions = 2
+    DISPID_SGRSAddWordTransition = 3
+    DISPID_SGRSAddRuleTransition = 4
+    DISPID_SGRSAddSpecialTransition = 5
+
+
+class DISPID_SpeechGrammarRuleStateTransitions(IntFlag):
+    DISPID_SGRSTsCount = 1
+    DISPID_SGRSTsItem = 0
+    DISPID_SGRSTs_NewEnum = -4
+
+
+class DISPID_SpeechGrammarRuleStateTransition(IntFlag):
+    DISPID_SGRSTType = 1
+    DISPID_SGRSTText = 2
+    DISPID_SGRSTRule = 3
+    DISPID_SGRSTWeight = 4
+    DISPID_SGRSTPropertyName = 5
+    DISPID_SGRSTPropertyId = 6
+    DISPID_SGRSTPropertyValue = 7
+    DISPID_SGRSTNextState = 8
+
+
 class DISPIDSPTSI(IntFlag):
     DISPIDSPTSI_ActiveOffset = 1
     DISPIDSPTSI_ActiveLength = 2
@@ -1008,9 +992,9 @@ class DISPID_SpeechXMLRecoResult(IntFlag):
     DISPID_SRRGetXMLErrorInfo = 11
 
 
-class SpeechRunState(IntFlag):
-    SRSEDone = 1
-    SRSEIsSpeaking = 2
+class SPXMLRESULTOPTIONS(IntFlag):
+    SPXRO_SML = 0
+    SPXRO_Alternates_SML = 1
 
 
 class DISPID_SpeechRecoResult2(IntFlag):
@@ -1090,26 +1074,6 @@ class DISPID_SpeechPhraseReplacement(IntFlag):
     DISPID_SPRNumberOfElements = 4
 
 
-class SpeechVoiceEvents(IntFlag):
-    SVEStartInputStream = 2
-    SVEEndInputStream = 4
-    SVEVoiceChange = 8
-    SVEBookmark = 16
-    SVEWordBoundary = 32
-    SVEPhoneme = 64
-    SVESentenceBoundary = 128
-    SVEViseme = 256
-    SVEAudioLevel = 512
-    SVEPrivate = 32768
-    SVEAllEvents = 33790
-
-
-class SpeechVoicePriority(IntFlag):
-    SVPNormal = 0
-    SVPAlert = 1
-    SVPOver = 2
-
-
 class DISPID_SpeechPhraseReplacements(IntFlag):
     DISPID_SPRsCount = 1
     DISPID_SPRsItem = 0
@@ -1151,6 +1115,11 @@ class DISPID_SpeechPhraseRules(IntFlag):
     DISPID_SPRules_NewEnum = -4
 
 
+class SpeechRunState(IntFlag):
+    SRSEDone = 1
+    SRSEIsSpeaking = 2
+
+
 class DISPID_SpeechLexicon(IntFlag):
     DISPID_SLGenerationId = 1
     DISPID_SLGetWords = 2
@@ -1173,171 +1142,6 @@ class DISPID_SpeechLexiconWord(IntFlag):
     DISPID_SLWType = 2
     DISPID_SLWWord = 3
     DISPID_SLWPronunciations = 4
-
-
-class DISPID_SpeechLexiconProns(IntFlag):
-    DISPID_SLPsCount = 1
-    DISPID_SLPsItem = 0
-    DISPID_SLPs_NewEnum = -4
-
-
-class DISPID_SpeechLexiconPronunciation(IntFlag):
-    DISPID_SLPType = 1
-    DISPID_SLPLangId = 2
-    DISPID_SLPPartOfSpeech = 3
-    DISPID_SLPPhoneIds = 4
-    DISPID_SLPSymbolic = 5
-
-
-class DISPID_SpeechPhoneConverter(IntFlag):
-    DISPID_SPCLangId = 1
-    DISPID_SPCPhoneToId = 2
-    DISPID_SPCIdToPhone = 3
-
-
-class SPDATAKEYLOCATION(IntFlag):
-    SPDKL_DefaultLocation = 0
-    SPDKL_CurrentUser = 1
-    SPDKL_LocalMachine = 2
-    SPDKL_CurrentConfig = 5
-
-
-class SpeechTokenContext(IntFlag):
-    STCInprocServer = 1
-    STCInprocHandler = 2
-    STCLocalServer = 4
-    STCRemoteServer = 16
-    STCAll = 23
-
-
-class SpeechTokenShellFolder(IntFlag):
-    STSF_AppData = 26
-    STSF_LocalAppData = 28
-    STSF_CommonAppData = 35
-    STSF_FlagCreate = 32768
-
-
-class SpeechStreamFileMode(IntFlag):
-    SSFMOpenForRead = 0
-    SSFMOpenReadWrite = 1
-    SSFMCreate = 2
-    SSFMCreateForWrite = 3
-
-
-class SPLOADOPTIONS(IntFlag):
-    SPLO_STATIC = 0
-    SPLO_DYNAMIC = 1
-
-
-class SpeechBookmarkOptions(IntFlag):
-    SBONone = 0
-    SBOPause = 1
-
-
-class SpeechRecognitionType(IntFlag):
-    SRTStandard = 0
-    SRTAutopause = 1
-    SRTEmulated = 2
-    SRTSMLTimeout = 4
-    SRTExtendableParse = 8
-    SRTReSent = 16
-
-
-class SpeechGrammarWordType(IntFlag):
-    SGDisplay = 0
-    SGLexical = 1
-    SGPronounciation = 2
-    SGLexicalNoSpecialChars = 3
-
-
-class SpeechAudioState(IntFlag):
-    SASClosed = 0
-    SASStop = 1
-    SASPause = 2
-    SASRun = 3
-
-
-class SpeechWordType(IntFlag):
-    SWTAdded = 1
-    SWTDeleted = 2
-
-
-class SPFILEMODE(IntFlag):
-    SPFM_OPEN_READONLY = 0
-    SPFM_OPEN_READWRITE = 1
-    SPFM_CREATE = 2
-    SPFM_CREATE_ALWAYS = 3
-    SPFM_NUM_MODES = 4
-
-
-class SpeechDisplayAttributes(IntFlag):
-    SDA_No_Trailing_Space = 0
-    SDA_One_Trailing_Space = 2
-    SDA_Two_Trailing_Spaces = 4
-    SDA_Consume_Leading_Spaces = 8
-
-
-class SpeechEngineConfidence(IntFlag):
-    SECLowConfidence = -1
-    SECNormalConfidence = 0
-    SECHighConfidence = 1
-
-
-class SPVPRIORITY(IntFlag):
-    SPVPRI_NORMAL = 0
-    SPVPRI_ALERT = 1
-    SPVPRI_OVER = 2
-
-
-class SPEVENTENUM(IntFlag):
-    SPEI_UNDEFINED = 0
-    SPEI_START_INPUT_STREAM = 1
-    SPEI_END_INPUT_STREAM = 2
-    SPEI_VOICE_CHANGE = 3
-    SPEI_TTS_BOOKMARK = 4
-    SPEI_WORD_BOUNDARY = 5
-    SPEI_PHONEME = 6
-    SPEI_SENTENCE_BOUNDARY = 7
-    SPEI_VISEME = 8
-    SPEI_TTS_AUDIO_LEVEL = 9
-    SPEI_TTS_PRIVATE = 15
-    SPEI_MIN_TTS = 1
-    SPEI_MAX_TTS = 15
-    SPEI_END_SR_STREAM = 34
-    SPEI_SOUND_START = 35
-    SPEI_SOUND_END = 36
-    SPEI_PHRASE_START = 37
-    SPEI_RECOGNITION = 38
-    SPEI_HYPOTHESIS = 39
-    SPEI_SR_BOOKMARK = 40
-    SPEI_PROPERTY_NUM_CHANGE = 41
-    SPEI_PROPERTY_STRING_CHANGE = 42
-    SPEI_FALSE_RECOGNITION = 43
-    SPEI_INTERFERENCE = 44
-    SPEI_REQUEST_UI = 45
-    SPEI_RECO_STATE_CHANGE = 46
-    SPEI_ADAPTATION = 47
-    SPEI_START_SR_STREAM = 48
-    SPEI_RECO_OTHER_CONTEXT = 49
-    SPEI_SR_AUDIO_LEVEL = 50
-    SPEI_SR_RETAINEDAUDIO = 51
-    SPEI_SR_PRIVATE = 52
-    SPEI_ACTIVE_CATEGORY_CHANGED = 53
-    SPEI_RESERVED5 = 54
-    SPEI_RESERVED6 = 55
-    SPEI_MIN_SR = 34
-    SPEI_MAX_SR = 55
-    SPEI_RESERVED1 = 30
-    SPEI_RESERVED2 = 33
-    SPEI_RESERVED3 = 63
-
-
-class SPRECOSTATE(IntFlag):
-    SPRST_INACTIVE = 0
-    SPRST_ACTIVE = 1
-    SPRST_ACTIVE_ALWAYS = 2
-    SPRST_INACTIVE_WITH_PURGE = 3
-    SPRST_NUM_STATES = 4
 
 
 class SpeechAudioFormatType(IntFlag):
@@ -1413,70 +1217,36 @@ class SpeechAudioFormatType(IntFlag):
     SAFTGSM610_44kHzMono = 68
 
 
-class SpeechGrammarRuleStateTransitionType(IntFlag):
-    SGRSTTEpsilon = 0
-    SGRSTTWord = 1
-    SGRSTTRule = 2
-    SGRSTTDictation = 3
-    SGRSTTWildcard = 4
-    SGRSTTTextBuffer = 5
+class DISPID_SpeechLexiconProns(IntFlag):
+    DISPID_SLPsCount = 1
+    DISPID_SLPsItem = 0
+    DISPID_SLPs_NewEnum = -4
 
 
-class DISPID_SpeechDataKey(IntFlag):
-    DISPID_SDKSetBinaryValue = 1
-    DISPID_SDKGetBinaryValue = 2
-    DISPID_SDKSetStringValue = 3
-    DISPID_SDKGetStringValue = 4
-    DISPID_SDKSetLongValue = 5
-    DISPID_SDKGetlongValue = 6
-    DISPID_SDKOpenKey = 7
-    DISPID_SDKCreateKey = 8
-    DISPID_SDKDeleteKey = 9
-    DISPID_SDKDeleteValue = 10
-    DISPID_SDKEnumKeys = 11
-    DISPID_SDKEnumValues = 12
+class DISPID_SpeechLexiconPronunciation(IntFlag):
+    DISPID_SLPType = 1
+    DISPID_SLPLangId = 2
+    DISPID_SLPPartOfSpeech = 3
+    DISPID_SLPPhoneIds = 4
+    DISPID_SLPSymbolic = 5
 
 
-class DISPID_SpeechObjectToken(IntFlag):
-    DISPID_SOTId = 1
-    DISPID_SOTDataKey = 2
-    DISPID_SOTCategory = 3
-    DISPID_SOTGetDescription = 4
-    DISPID_SOTSetId = 5
-    DISPID_SOTGetAttribute = 6
-    DISPID_SOTCreateInstance = 7
-    DISPID_SOTRemove = 8
-    DISPID_SOTGetStorageFileName = 9
-    DISPID_SOTRemoveStorageFileName = 10
-    DISPID_SOTIsUISupported = 11
-    DISPID_SOTDisplayUI = 12
-    DISPID_SOTMatchesAttributes = 13
+class DISPID_SpeechPhoneConverter(IntFlag):
+    DISPID_SPCLangId = 1
+    DISPID_SPCPhoneToId = 2
+    DISPID_SPCIdToPhone = 3
 
 
-class SpeechRetainedAudioOptions(IntFlag):
-    SRAONone = 0
-    SRAORetainAudio = 1
+class SPDATAKEYLOCATION(IntFlag):
+    SPDKL_DefaultLocation = 0
+    SPDKL_CurrentUser = 1
+    SPDKL_LocalMachine = 2
+    SPDKL_CurrentConfig = 5
 
 
-class DISPID_SpeechObjectTokenCategory(IntFlag):
-    DISPID_SOTCId = 1
-    DISPID_SOTCDefault = 2
-    DISPID_SOTCSetId = 3
-    DISPID_SOTCGetDataKey = 4
-    DISPID_SOTCEnumerateTokens = 5
-
-
-class DISPID_SpeechAudioFormat(IntFlag):
-    DISPID_SAFType = 1
-    DISPID_SAFGuid = 2
-    DISPID_SAFGetWaveFormatEx = 3
-    DISPID_SAFSetWaveFormatEx = 4
-
-
-class DISPID_SpeechObjectTokens(IntFlag):
-    DISPID_SOTsCount = 1
-    DISPID_SOTsItem = 0
-    DISPID_SOTs_NewEnum = -4
+class SPLOADOPTIONS(IntFlag):
+    SPLO_STATIC = 0
+    SPLO_DYNAMIC = 1
 
 
 class SPRULESTATE(IntFlag):
@@ -1486,455 +1256,681 @@ class SPRULESTATE(IntFlag):
     SPRS_ACTIVE_USER_DELIMITED = 4
 
 
+class SpeechGrammarWordType(IntFlag):
+    SGDisplay = 0
+    SGLexical = 1
+    SGPronounciation = 2
+    SGLexicalNoSpecialChars = 3
+
+
+class SPWORDPRONOUNCEABLE(IntFlag):
+    SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE = 0
+    SPWP_UNKNOWN_WORD_PRONOUNCEABLE = 1
+    SPWP_KNOWN_WORD_PRONOUNCEABLE = 2
+
+
+class SPGRAMMARSTATE(IntFlag):
+    SPGS_DISABLED = 0
+    SPGS_ENABLED = 1
+    SPGS_EXCLUSIVE = 3
+
+
+class SPINTERFERENCE(IntFlag):
+    SPINTERFERENCE_NONE = 0
+    SPINTERFERENCE_NOISE = 1
+    SPINTERFERENCE_NOSIGNAL = 2
+    SPINTERFERENCE_TOOLOUD = 3
+    SPINTERFERENCE_TOOQUIET = 4
+    SPINTERFERENCE_TOOFAST = 5
+    SPINTERFERENCE_TOOSLOW = 6
+    SPINTERFERENCE_LATENCY_WARNING = 7
+    SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN = 8
+    SPINTERFERENCE_LATENCY_TRUNCATE_END = 9
+
+
+class SPAUDIOOPTIONS(IntFlag):
+    SPAO_NONE = 0
+    SPAO_RETAIN_AUDIO = 1
+
+
+class SpeechVisemeFeature(IntFlag):
+    SVF_None = 0
+    SVF_Stressed = 1
+    SVF_Emphasis = 2
+
+
+class SPBOOKMARKOPTIONS(IntFlag):
+    SPBO_NONE = 0
+    SPBO_PAUSE = 1
+    SPBO_AHEAD = 2
+    SPBO_TIME_UNITS = 4
+
+
+class SPCONTEXTSTATE(IntFlag):
+    SPCS_DISABLED = 0
+    SPCS_ENABLED = 1
+
+
+class SPADAPTATIONRELEVANCE(IntFlag):
+    SPAR_Unknown = 0
+    SPAR_Low = 1
+    SPAR_Medium = 2
+    SPAR_High = 3
+
+
+class SPCATEGORYTYPE(IntFlag):
+    SPCT_COMMAND = 0
+    SPCT_DICTATION = 1
+    SPCT_SLEEP = 2
+    SPCT_SUB_COMMAND = 3
+    SPCT_SUB_DICTATION = 4
+
+
+class SPFILEMODE(IntFlag):
+    SPFM_OPEN_READONLY = 0
+    SPFM_OPEN_READWRITE = 1
+    SPFM_CREATE = 2
+    SPFM_CREATE_ALWAYS = 3
+    SPFM_NUM_MODES = 4
+
+
+class SPLEXICONTYPE(IntFlag):
+    eLEXTYPE_USER = 1
+    eLEXTYPE_APP = 2
+    eLEXTYPE_VENDORLEXICON = 4
+    eLEXTYPE_LETTERTOSOUND = 8
+    eLEXTYPE_MORPHOLOGY = 16
+    eLEXTYPE_RESERVED4 = 32
+    eLEXTYPE_USER_SHORTCUT = 64
+    eLEXTYPE_RESERVED6 = 128
+    eLEXTYPE_RESERVED7 = 256
+    eLEXTYPE_RESERVED8 = 512
+    eLEXTYPE_RESERVED9 = 1024
+    eLEXTYPE_RESERVED10 = 2048
+    eLEXTYPE_PRIVATE1 = 4096
+    eLEXTYPE_PRIVATE2 = 8192
+    eLEXTYPE_PRIVATE3 = 16384
+    eLEXTYPE_PRIVATE4 = 32768
+    eLEXTYPE_PRIVATE5 = 65536
+    eLEXTYPE_PRIVATE6 = 131072
+    eLEXTYPE_PRIVATE7 = 262144
+    eLEXTYPE_PRIVATE8 = 524288
+    eLEXTYPE_PRIVATE9 = 1048576
+    eLEXTYPE_PRIVATE10 = 2097152
+    eLEXTYPE_PRIVATE11 = 4194304
+    eLEXTYPE_PRIVATE12 = 8388608
+    eLEXTYPE_PRIVATE13 = 16777216
+    eLEXTYPE_PRIVATE14 = 33554432
+    eLEXTYPE_PRIVATE15 = 67108864
+    eLEXTYPE_PRIVATE16 = 134217728
+    eLEXTYPE_PRIVATE17 = 268435456
+    eLEXTYPE_PRIVATE18 = 536870912
+    eLEXTYPE_PRIVATE19 = 1073741824
+    eLEXTYPE_PRIVATE20 = -2147483648
+
+
+class SPPARTOFSPEECH(IntFlag):
+    SPPS_NotOverriden = -1
+    SPPS_Unknown = 0
+    SPPS_Noun = 4096
+    SPPS_Verb = 8192
+    SPPS_Modifier = 12288
+    SPPS_Function = 16384
+    SPPS_Interjection = 20480
+    SPPS_Noncontent = 24576
+    SPPS_LMA = 28672
+    SPPS_SuppressWord = 61440
+
+
+class SPSHORTCUTTYPE(IntFlag):
+    SPSHT_NotOverriden = -1
+    SPSHT_Unknown = 0
+    SPSHT_EMAIL = 4096
+    SPSHT_OTHER = 8192
+    SPPS_RESERVED1 = 12288
+    SPPS_RESERVED2 = 16384
+    SPPS_RESERVED3 = 20480
+    SPPS_RESERVED4 = 61440
+
+
+class SPVPRIORITY(IntFlag):
+    SPVPRI_NORMAL = 0
+    SPVPRI_ALERT = 1
+    SPVPRI_OVER = 2
+
+
+class SPEVENTENUM(IntFlag):
+    SPEI_UNDEFINED = 0
+    SPEI_START_INPUT_STREAM = 1
+    SPEI_END_INPUT_STREAM = 2
+    SPEI_VOICE_CHANGE = 3
+    SPEI_TTS_BOOKMARK = 4
+    SPEI_WORD_BOUNDARY = 5
+    SPEI_PHONEME = 6
+    SPEI_SENTENCE_BOUNDARY = 7
+    SPEI_VISEME = 8
+    SPEI_TTS_AUDIO_LEVEL = 9
+    SPEI_TTS_PRIVATE = 15
+    SPEI_MIN_TTS = 1
+    SPEI_MAX_TTS = 15
+    SPEI_END_SR_STREAM = 34
+    SPEI_SOUND_START = 35
+    SPEI_SOUND_END = 36
+    SPEI_PHRASE_START = 37
+    SPEI_RECOGNITION = 38
+    SPEI_HYPOTHESIS = 39
+    SPEI_SR_BOOKMARK = 40
+    SPEI_PROPERTY_NUM_CHANGE = 41
+    SPEI_PROPERTY_STRING_CHANGE = 42
+    SPEI_FALSE_RECOGNITION = 43
+    SPEI_INTERFERENCE = 44
+    SPEI_REQUEST_UI = 45
+    SPEI_RECO_STATE_CHANGE = 46
+    SPEI_ADAPTATION = 47
+    SPEI_START_SR_STREAM = 48
+    SPEI_RECO_OTHER_CONTEXT = 49
+    SPEI_SR_AUDIO_LEVEL = 50
+    SPEI_SR_RETAINEDAUDIO = 51
+    SPEI_SR_PRIVATE = 52
+    SPEI_ACTIVE_CATEGORY_CHANGED = 53
+    SPEI_RESERVED5 = 54
+    SPEI_RESERVED6 = 55
+    SPEI_MIN_SR = 34
+    SPEI_MAX_SR = 55
+    SPEI_RESERVED1 = 30
+    SPEI_RESERVED2 = 33
+    SPEI_RESERVED3 = 63
+
+
+class SPWAVEFORMATTYPE(IntFlag):
+    SPWF_INPUT = 0
+    SPWF_SRENGINE = 1
+
+
+class SPWORDTYPE(IntFlag):
+    eWORDTYPE_ADDED = 1
+    eWORDTYPE_DELETED = 2
+
+
+class SPRECOSTATE(IntFlag):
+    SPRST_INACTIVE = 0
+    SPRST_ACTIVE = 1
+    SPRST_ACTIVE_ALWAYS = 2
+    SPRST_INACTIVE_WITH_PURGE = 3
+    SPRST_NUM_STATES = 4
+
+
+class SpeechTokenContext(IntFlag):
+    STCInprocServer = 1
+    STCInprocHandler = 2
+    STCLocalServer = 4
+    STCRemoteServer = 16
+    STCAll = 23
+
+
+class SpeechTokenShellFolder(IntFlag):
+    STSF_AppData = 26
+    STSF_LocalAppData = 28
+    STSF_CommonAppData = 35
+    STSF_FlagCreate = 32768
+
+
+class SPGRAMMARWORDTYPE(IntFlag):
+    SPWT_DISPLAY = 0
+    SPWT_LEXICAL = 1
+    SPWT_PRONUNCIATION = 2
+    SPWT_LEXICAL_NO_SPECIAL_CHARS = 3
+
+
 SPAUDIOSTATE = _SPAUDIOSTATE
 SPSTREAMFORMATTYPE = SPWAVEFORMATTYPE
 
 
 __all__ = [
-    'SPGS_ENABLED', 'DISPID_SPRules_NewEnum', 'SpMMAudioEnum',
-    'WAVEFORMATEX', 'DISPID_SPIEngineId',
-    'DISPID_SpeechGrammarRuleStateTransitions', 'ISpeechRecoContext',
-    'SREStateChange', 'SREFalseRecognition', 'DISPID_SGRSTNextState',
-    'DISPID_SVEventInterests', 'SLOStatic',
-    '_ISpeechRecoContextEvents', 'SREBookmark', 'DISPID_SLWs_NewEnum',
-    'SpeechEmulationCompareFlags', 'SRADefaultToActive', 'SPBO_NONE',
-    'DISPID_SPILanguageId', 'SPEI_FALSE_RECOGNITION',
-    'SAFT16kHz8BitMono', 'SRCS_Disabled', 'SASPause',
-    'ISpeechPhraseRules', 'ISpNotifyTranslator',
-    'SpeechAddRemoveWord', 'ISpeechPhraseElements', 'SPSVerb',
-    'DISPID_SpeechLexicon', 'DISPID_SPRulesCount',
-    'SDA_Consume_Leading_Spaces', 'DISPID_SOTGetStorageFileName',
-    'SPSMF_SRGS_SAPIPROPERTIES', 'DISPID_SVWaitUntilDone',
-    'SGRSTTDictation', 'SPINTERFERENCE_LATENCY_WARNING',
-    'SpeechTokenShellFolder', 'DISPID_SRGetPropertyString',
-    'DISPID_SGRsDynamic', 'ISpEventSink', 'DISPID_SRCERecognition',
-    'SGRSTTEpsilon', 'SRSEIsSpeaking', 'DISPID_SLWsCount',
-    'SpeechTokenKeyAttributes', 'DISPID_SWFESamplesPerSec',
-    'SPEI_RECO_OTHER_CONTEXT', 'DISPID_SVSVisemeId',
-    'DISPID_SpeechRecognizer', 'DISPID_SAStatus',
-    'DISPID_SPPEngineConfidence', 'DISPID_SVSInputWordPosition',
-    'DISPID_SOTSetId', '__MIDL___MIDL_itf_sapi_0000_0020_0002',
-    'ISpRecoResult', 'DISPID_SPEActualConfidence', 'SPFILEMODE',
-    'tagSPTEXTSELECTIONINFO', 'SAFT32kHz8BitMono',
-    'DISPID_SDKSetLongValue', 'SPFM_CREATE_ALWAYS',
-    'DISPID_SAFGetWaveFormatEx', 'SpLexicon', 'ISpeechPhraseProperty',
-    'SAFT22kHz16BitStereo', 'SPEI_REQUEST_UI',
-    'DISPID_SGRInitialState', 'SPEI_MAX_SR',
-    'DISPID_SPIAudioSizeBytes', 'SPPHRASEREPLACEMENT', 'SITooSlow',
-    'SPWP_KNOWN_WORD_PRONOUNCEABLE', 'DISPIDSPTSI',
-    'DISPID_SDKOpenKey', 'SAFTCCITT_ALaw_11kHzStereo',
-    'Speech_StreamPos_Asap', 'SpNotifyTranslator',
-    'DISPID_SOTDataKey', 'SPAUDIOSTATUS', 'DISPID_SRGIsPronounceable',
-    'DISPID_SpeechPhraseProperty', 'SAFTCCITT_ALaw_44kHzStereo',
-    'SpeechEngineProperties', 'DISPID_SGRSTsCount', 'SPEI_RESERVED6',
-    'DISPID_SPIGetDisplayAttributes', 'SGRSTTWord', 'SRTReSent',
-    'SVP_0', 'SWPKnownWordPronounceable', 'eLEXTYPE_PRIVATE7',
-    'DISPID_SGRsCommit', 'DISPID_SPPId',
-    'SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE', 'SPEI_VOICE_CHANGE',
-    'SPDKL_CurrentUser', 'eWORDTYPE_ADDED', 'SVEStartInputStream',
-    'SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN', 'SpeechAudioState',
-    'DISPID_SPIEnginePrivateData', 'DISPID_SpeechGrammarRules',
-    'DISPID_SRDisplayUI', 'IStream', 'SVP_13', 'SVSFIsNotXML',
-    'SPPS_RESERVED1', 'ISpResourceManager', 'SECFIgnoreKanaType',
-    'DISPID_SABIBufferSize', 'DISPID_SPERetainedSizeBytes',
-    'SPEVENTENUM', 'DISPID_SRGRecoContext', 'SDKLDefaultLocation',
-    'SpeechWordType', 'eLEXTYPE_USER_SHORTCUT', 'SREPhraseStart',
-    'SAFTCCITT_ALaw_22kHzMono', 'SPAR_Low', 'DISPID_SCSBaseStream',
-    'SDTReplacement', 'DISPID_SRSCurrentStreamPosition', 'SDTAudio',
-    'SDKLCurrentUser', 'SPLOADOPTIONS', 'SVF_None',
-    'DISPID_SDKSetBinaryValue', 'SINoise', 'ISpNotifySource',
-    'SPEI_RESERVED2', 'SPLO_STATIC', 'DISPID_SRRTLength',
-    'DISPID_SPRuleChildren', 'IInternetSecurityManager',
-    'DISPID_SPACommit', 'SpVoice', 'DISPID_SRIsUISupported',
-    'SGRSTTRule', 'DISPID_SpeechPhraseElements', 'DISPID_SPPValue',
-    'SGRSTTTextBuffer', 'DISPID_SPISaveToMemory',
-    'ISpeechCustomStream', 'SREStreamEnd',
-    'DISPID_SpeechPhraseProperties', 'SPEI_SR_PRIVATE',
-    'SAFT12kHz16BitMono',
-    'DISPID_SRAllowVoiceFormatMatchingOnNextSet',
-    'DISPID_SDKGetBinaryValue', 'SPDKL_DefaultLocation',
-    'ISpeechPhraseReplacement', 'SVP_3', 'ISpeechGrammarRuleState',
-    'SPPROPERTYINFO', 'DISPID_SpeechPhraseBuilder', 'SVP_9',
-    'SAFTCCITT_uLaw_11kHzStereo', 'DISPID_SRCRetainedAudioFormat',
-    'SpSharedRecoContext', 'SRTStandard', 'SPFM_OPEN_READWRITE',
-    'SECNormalConfidence', 'SP_VISEME_13', '_RemotableHandle',
-    'SPRECOGNIZERSTATUS', 'DISPID_SRRSpeakAudio',
-    'DISPID_SVSyncronousSpeakTimeout', 'ISpeechLexiconWord',
-    'DISPID_SPPName', 'DISPID_SVSpeakCompleteEvent', 'SPCT_COMMAND',
-    'ISpLexicon', 'DISPID_SLPsCount', 'SVP_7', 'SPEI_TTS_AUDIO_LEVEL',
-    'DISPID_SpeechDataKey', 'SPFM_OPEN_READONLY', 'SPSNoun',
-    'SVSFPersistXML', 'SPWT_DISPLAY', 'SREStreamStart',
-    'SpeechGrammarTagWildcard', 'ISpeechTextSelectionInformation',
-    'DISPID_SRSSupportedLanguages', 'ISpeechRecoResult',
-    'SAFTCCITT_ALaw_11kHzMono', 'SpeechRecognizerState',
-    'SpeechVoiceCategoryTTSRate', 'DISPID_SpeechLexiconProns',
-    'DISPID_SVGetVoices', 'DISPID_SRGCommit',
-    'DISPID_SPRuleNumberOfElements', 'SpeechRecoProfileProperties',
-    'DISPID_SpeechPhraseElement', 'SDTAlternates', 'SP_VISEME_18',
-    'DISPID_SPIRetainedSizeBytes', 'eLEXTYPE_PRIVATE19',
-    'DISPID_SGRSAddWordTransition', 'DISPID_SVSInputSentenceLength',
-    'SPEI_HYPOTHESIS', 'SVP_20', 'SpFileStream', 'SREHypothesis',
-    'DISPID_SRCEPhraseStart', 'DISPID_SLPLangId', 'SPPS_Unknown',
-    'SAFTGSM610_44kHzMono', 'DISPID_SRGCmdLoadFromObject',
-    'DISPID_SPRuleEngineConfidence', 'SpeechVoiceSpeakFlags',
-    'DISPID_SpeechLexiconWord', 'SPTEXTSELECTIONINFO', 'SPBO_PAUSE',
-    'SPWORD', 'DISPID_SGRsAdd', 'DISPID_SOTCDefault',
-    'SVSFNLPSpeakPunc', 'ISpDataKey',
-    'DISPID_SpeechGrammarRuleStateTransition',
-    'DISPID_SVGetAudioOutputs', 'DISPID_SRRPhraseInfo',
-    'SAFT12kHz8BitStereo', 'DISPID_SRGDictationUnload',
-    'SSSPTRelativeToStart', 'SpeechTokenValueCLSID',
-    'SPDKL_CurrentConfig', 'SPEI_SOUND_END', 'SAFT32kHz16BitMono',
-    'SAFTNonStandardFormat', 'SRARoot', 'DISPID_SRRAudioFormat',
-    'DISPID_SPCPhoneToId', 'SVF_Emphasis', 'SPPS_Function',
-    'SRESoundStart', 'SPSMF_UPS', 'DISPID_SRCERecognizerStateChange',
-    'DISPID_SPEAudioStreamOffset', 'SVPNormal',
-    'DISPID_SLWPronunciations', 'SPSEMANTICERRORINFO', 'SP_VISEME_19',
-    'SpeechPartOfSpeech', 'SPSHORTCUTTYPE',
-    'DISPID_SRGetPropertyNumber', 'DISPID_SBSWrite', 'SGSExclusive',
-    'DISPID_SpeechRecoContextEvents', 'SPSHT_NotOverriden',
-    'SPAR_High', 'SECFNoSpecialChars', 'SAFTADPCM_8kHzStereo',
-    'DISPID_SVEEnginePrivate', 'SSFMCreateForWrite',
-    'eLEXTYPE_PRIVATE20', 'SPCS_DISABLED', 'SPSTREAMFORMATTYPE',
-    'DISPID_SABufferInfo', 'SP_VISEME_3', 'SpeechTokenContext',
-    'SAFTADPCM_22kHzMono', 'DISPID_SpeechPhraseAlternates',
-    'DISPID_SVPause', 'SECFIgnoreCase', 'SVPOver', 'DISPID_SPPsItem',
-    'SVEBookmark', 'SVSFIsFilename', 'DISPID_SMSADeviceId',
-    'SREAudioLevel', '_SPAUDIOSTATE', 'DISPID_SAVolume',
-    'DISPID_SRRTTickCount', 'DISPID_SRGCmdLoadFromMemory',
-    'SPEI_TTS_BOOKMARK', 'typelib_path', 'SRAImport',
-    'SPWORDPRONUNCIATION', 'SPPS_SuppressWord', 'SPCS_ENABLED',
-    'SRTAutopause', 'SPEI_VISEME', 'SVP_19', 'ISpeechMemoryStream',
-    'SPDATAKEYLOCATION', 'ISpeechGrammarRules', 'SPGRAMMARSTATE',
-    'SPLEXICONTYPE', 'SDA_One_Trailing_Space', 'DISPID_SWFEExtraData',
-    'DISPID_SGRSTs_NewEnum', 'DISPID_SGRSRule', 'DISPID_SRGetFormat',
-    'DISPID_SVSInputSentencePosition', 'SPAR_Medium', 'SVP_17',
-    'SPEI_END_SR_STREAM', 'SpeechDictationTopicSpelling',
-    'SpObjectToken', 'SpeechAudioVolume', 'SpeechUserTraining',
-    'DISPID_SVESentenceBoundary', 'DISPID_SPRuleParent',
-    'DISPID_SVSLastResult', 'ISpObjectTokenCategory',
-    'eLEXTYPE_PRIVATE16', 'SRERequestUI', 'DISPID_SVVolume',
-    'SAFT11kHz16BitStereo', 'ISpeechAudioFormat',
-    'SAFT44kHz16BitMono', 'DISPIDSPRG', 'SAFT32kHz16BitStereo',
-    'SAFT48kHz16BitStereo', 'ISpeechObjectToken', 'SVEVoiceChange',
-    'DISPID_SVAllowAudioOuputFormatChangesOnNextSet',
-    'DISPID_SASetState', 'SpeechRuleAttributes', 'DISPID_SMSALineId',
-    'SRSInactiveWithPurge', 'DISPID_SPEsCount', 'ISpeechRecoResult2',
-    'SPINTERFERENCE_TOOSLOW', 'SP_VISEME_6', 'DISPID_SRCEBookmark',
-    'DISPID_SRCEPropertyStringChange', 'ISpeechPhraseAlternate',
-    'SPVPRI_ALERT', 'DISPID_SpeechRecoContext', 'SPSHORTCUTPAIRLIST',
-    'SECLowConfidence', 'ISpeechDataKey', 'DISPID_SRGState',
-    'DISPID_SpeechPhraseAlternate', 'SP_VISEME_9', 'SP_VISEME_4',
-    'DISPID_SMSGetData', 'DISPID_SRCVoicePurgeEvent',
-    'DISPID_SRCEAdaptation', 'SPSModifier', 'ISpeechPhraseAlternates',
-    'SASClosed', 'DISPID_SWFEBlockAlign', 'SDTLexicalForm',
-    'SPAUDIOBUFFERINFO', 'SVEAudioLevel', 'DISPID_SLPsItem',
-    'SP_VISEME_17', 'SPEI_SR_AUDIO_LEVEL', 'SPEI_SOUND_START',
-    'DISPID_SOTsCount', 'DISPID_SVSLastStreamNumberQueued',
-    'DISPID_SPIElements', 'SSFMCreate', 'DISPID_SAFSetWaveFormatEx',
-    'SpMMAudioIn', 'IEnumSpObjectTokens', 'Speech_Default_Weight',
-    'DISPID_SPEDisplayText', 'DISPID_SPRuleName', 'SRADynamic',
-    'DISPID_SGRId', 'SGSEnabled', 'SpStream', 'SRERecognition',
-    'DISPID_SOTGetDescription', 'SVSFPurgeBeforeSpeak',
-    'DISPID_SOTs_NewEnum', 'SAFT11kHz8BitMono', 'ISpStreamFormat',
-    'DISPIDSPTSI_SelectionOffset', 'DISPID_SWFEFormatTag',
-    'DISPID_SpeechMemoryStream', 'SITooQuiet', 'SVSFParseSapi',
-    'DISPID_SBSRead', 'ISpRecognizer3', 'SpeechAudioProperties',
-    'SAFTADPCM_44kHzStereo', 'DISPID_SRGSetWordSequenceData',
-    'SAFTCCITT_ALaw_44kHzMono', 'SpeechWordPronounceable',
-    'DISPID_SpeechPhraseInfo', 'DISPID_SDKEnumKeys', 'SRATopLevel',
-    'SFTInput', 'SpPhoneticAlphabetConverter', 'SAFT16kHz16BitStereo',
-    'ISpeechLexiconPronunciation', 'SPRECOSTATE',
-    'SpeechVoiceSkipTypeSentence', 'DISPID_SpeechObjectTokens',
-    '__MIDL_IWinTypes_0009', 'SREPropertyStringChange',
-    'SAFT11kHz16BitMono', 'DISPID_SRCreateRecoContext',
-    'DISPID_SGRSTText', 'DISPID_SOTIsUISupported', 'SPRS_ACTIVE',
-    'eLEXTYPE_RESERVED6', 'SPEI_MIN_TTS',
-    'SpTextSelectionInformation', 'SGSDisabled', 'SPWF_INPUT',
-    'SPSERIALIZEDPHRASE', 'DISPID_SGRSTransitions',
-    'DISPID_SOTMatchesAttributes', 'SpPhraseInfoBuilder',
-    'SRAORetainAudio', 'eLEXTYPE_RESERVED4', 'SPWF_SRENGINE',
-    'SPSHT_OTHER', 'SPVOICESTATUS', 'DISPID_SRCSetAdaptationData',
-    'DISPID_SOTsItem', 'DISPID_SRCEEnginePrivate',
-    'SpeechVoiceEvents', 'DISPID_SGRSTPropertyName',
-    'ISpeechRecognizer', 'SAFTNoAssignedFormat', 'ISpRecognizer2',
-    'DISPID_SVEVoiceChange', 'DISPID_SRCState', 'DISPID_SRCBookmark',
-    'SAFT22kHz8BitMono', 'DISPID_SABufferNotifySize',
-    'DISPID_SVEStreamStart', 'DISPID_SPPsCount', 'SPEVENTSOURCEINFO',
-    'eLEXTYPE_PRIVATE8', 'SPEI_UNDEFINED', 'STCLocalServer',
-    'SPPS_LMA', 'DISPID_SPAs_NewEnum', 'SpeechTokenIdUserLexicon',
-    'SVP_2', 'DISPID_SpeechRecoResultTimes',
-    'SAFTCCITT_uLaw_11kHzMono', 'DISPID_SFSClose',
-    'ISpeechRecoGrammar', 'SLTApp', 'ISpeechPhraseInfoBuilder',
-    'ISpRecoGrammar', 'SGDSActive', 'eLEXTYPE_PRIVATE1',
-    'DISPID_SGRs_NewEnum', 'SPPARTOFSPEECH', 'DISPID_SPAPhraseInfo',
-    'SPSMF_SRGS_SEMANTICINTERPRETATION_MS',
-    'DISPID_SRCEventInterests', 'SpeechRegistryUserRoot',
-    'ISpeechGrammarRuleStateTransition', 'LONG_PTR', 'SVP_18',
-    'DISPID_SPAsItem', 'SpeechGrammarTagDictation', 'SREPrivate',
-    'DISPID_SLRemovePronunciationByPhoneIds', 'DISPID_SDKEnumValues',
-    'SpeechVisemeType', 'ISpeechAudioBufferInfo', 'SLODynamic',
-    'SVP_1', 'ISpGrammarBuilder', 'SGDSActiveWithAutoPause',
-    'DISPID_SPIProperties', 'DISPID_SRCRequestedUIType',
-    'SpeechCategoryRecoProfiles', 'SPEI_START_INPUT_STREAM',
-    'SpAudioFormat', 'SVSFVoiceMask', 'SRTEmulated', 'SPEVENT',
-    'SPGS_DISABLED', 'DISPID_SPRuleId', 'eLEXTYPE_LETTERTOSOUND',
-    'SVSFUnusedFlags', 'DISPID_SOTCreateInstance', 'SP_VISEME_7',
-    'SGDSActiveUserDelimited', 'DISPID_SLWWord', 'SWTAdded',
-    'DISPID_SOTGetAttribute', 'DISPID_SVEWord',
-    'DISPID_SpeechAudioFormat', 'DISPID_SPRDisplayAttributes',
-    'ISpeechLexiconPronunciations', 'SpeechCategoryAudioIn',
-    'ISpSerializeState', 'DISPID_SVSRunningState',
-    'DISPID_SMSSetData', 'SECFDefault', 'SVSFlagsAsync', 'SRAONone',
-    'SPEI_PROPERTY_STRING_CHANGE', 'DISPID_SOTCEnumerateTokens',
-    'SREPropertyNumChange', 'SPAUDIOSTATE', 'SVP_12',
-    'DISPID_SGRName', 'eLEXTYPE_PRIVATE6',
-    'SpeechAudioFormatGUIDWave', 'SVP_16',
-    'DISPID_SPRNumberOfElements', 'ISpPhoneConverter', 'SPPS_Verb',
-    'ISpRecoGrammar2', 'SpeechStreamSeekPositionType',
-    'ISpeechRecognizerStatus', 'SPSHT_Unknown',
-    'DISPID_SRGDictationSetState', 'DISPID_SRCRecognizer',
-    'ISpeechLexiconWords', 'STCInprocServer', 'DISPID_SLGenerationId',
-    'DISPID_SpeechRecoResult', 'SpeechTokenKeyFiles',
-    'SpeechGrammarTagUnlimitedDictation', 'SPWORDPRONOUNCEABLE',
-    'DISPID_SABIMinNotification', 'DISPID_SRRTStreamTime',
-    'SAFT44kHz8BitMono', 'SVP_6', 'SPBOOKMARKOPTIONS',
-    'DISPID_SWFEAvgBytesPerSec', 'SpeechInterference',
-    'DISPID_SRGSetTextSelection', 'DISPID_SVIsUISupported',
-    'SAFTCCITT_uLaw_44kHzMono', 'DISPID_SOTDisplayUI',
-    'SAFT8kHz8BitMono', 'DISPID_SRGReset', 'SRTExtendableParse',
-    'DISPID_SAEventHandle', 'SAFTADPCM_11kHzMono', 'SVP_8',
-    'SP_VISEME_5', 'SPEI_RECOGNITION', 'DISPID_SRCCmdMaxAlternates',
-    'SAFT8kHz16BitMono', 'SpeechDiscardType',
-    'DISPID_SPERetainedStreamOffset', 'DISPID_SVEViseme',
-    'ISpeechBaseStream', 'DISPID_SVEBookmark',
-    'DISPID_SLAddPronunciationByPhoneIds', 'DISPID_SRCCreateGrammar',
-    'SVP_21', 'SRSActiveAlways', 'SAFTGSM610_8kHzMono',
-    'DISPID_SGRClear', 'SAFTADPCM_22kHzStereo',
-    'DISPID_SRRRecoContext', 'SPRST_INACTIVE',
-    'DISPID_SASNonBlockingIO', 'SPPHRASEPROPERTY', 'SPPS_RESERVED4',
-    'DISPID_SGRSTType', 'SpeechPropertyHighConfidenceThreshold',
-    'ISpeechMMSysAudio', 'ISpeechPhraseReplacements', 'DISPID_SOTCId',
-    'DISPID_SpeechLexiconWords', 'SASStop', 'eLEXTYPE_PRIVATE4',
-    'DISPID_SRGDictationLoad', 'SREAdaptation', 'DISPID_SPAsCount',
-    'SpSharedRecognizer', 'eLEXTYPE_PRIVATE9', 'SAFT48kHz8BitMono',
-    'DISPID_SREmulateRecognition', 'SECHighConfidence',
-    'DISPID_SPRFirstElement', 'DISPID_SGRSTsItem', 'SPPHRASE',
-    'DISPID_SLRemovePronunciation', 'SPAUDIOOPTIONS',
-    'SGPronounciation', 'DISPID_SPRsCount', 'DISPID_SPPChildren',
-    'SPVPRI_NORMAL', 'SPINTERFERENCE_TOOQUIET',
-    'ISpeechPhoneConverter', 'SPEI_SR_BOOKMARK', 'SpPhoneConverter',
-    'SPDKL_LocalMachine', 'DISPID_SRCEStartStream', 'SVSFParseMask',
-    'SpCustomStream', 'ISpeechLexicon', 'SPAS_PAUSE',
-    'DISPID_SVEAudioLevel', 'DISPID_SGRAttributes',
-    'SDA_No_Trailing_Space', 'tagSPPROPERTYINFO',
-    'SpInProcRecoContext', 'SECFEmulateResult', 'ISpProperties',
-    'DISPIDSPTSI_SelectionLength', 'SPCT_SLEEP', 'DISPID_SVRate',
-    'SPCT_SUB_COMMAND', 'ISpAudio', 'SAFT48kHz8BitStereo',
-    'DISPID_SGRsCount', 'DISPID_SABIEventBias', 'DISPID_SPPParent',
-    'SpeechTokenKeyUI', 'SPEI_RESERVED3', 'SPPS_Interjection',
-    'SpeechRecognitionType', 'SPSMF_SRGS_SEMANTICINTERPRETATION_W3C',
-    'SAFTCCITT_uLaw_8kHzMono', 'SPRECOCONTEXTSTATUS',
-    'SPRS_ACTIVE_WITH_AUTO_PAUSE', 'SASRun', 'DISPID_SPIGrammarId',
-    'ISpeechPhraseRule', 'SDTPronunciation', 'DISPID_SpeechAudio',
-    'SAFTCCITT_ALaw_8kHzMono', 'DISPID_SRGCmdLoadFromFile',
-    'SFTSREngine', 'DISPID_SpeechRecoResult2', 'SPGS_EXCLUSIVE',
-    'DISPID_SPRuleFirstElement', 'eLEXTYPE_PRIVATE18',
-    'DISPID_SGRsCommitAndSave', 'SPEI_RESERVED5', 'SDKLCurrentConfig',
-    'SAFT16kHz16BitMono', 'SpeechCategoryRecognizers', 'SP_VISEME_14',
-    'DISPID_SVPriority', 'SpeechGrammarRuleStateTransitionType',
-    'DISPID_SRState', 'DISPID_SRSClsidEngine',
-    'DISPID_SRCEFalseRecognition', 'ISpeechPhraseElement',
-    'SRAInterpreter', 'ISpeechAudioStatus', 'SAFT48kHz16BitMono',
-    'ISpPhoneticAlphabetConverter', 'SAFTCCITT_ALaw_8kHzStereo',
-    'SpeechCategoryVoices', 'DISPID_SVGetProfiles',
-    'SPWT_LEXICAL_NO_SPECIAL_CHARS', 'SBONone', 'IEnumString',
-    'STSF_AppData', 'SPINTERFERENCE_TOOLOUD',
-    'DISPID_SDKGetlongValue', 'DISPID_SBSFormat',
-    'DISPID_SRSCurrentStreamNumber', 'SpeechLexiconType',
-    'ISpeechXMLRecoResult', 'SPEI_WORD_BOUNDARY',
-    '_ISpeechVoiceEvents', 'DISPID_SRCCreateResultFromMemory',
-    'DISPID_SLWLangId', 'DISPID_SOTCategory', 'DISPID_SLPSymbolic',
-    'DISPID_SASCurrentDevicePosition', 'ISpeechRecoResultTimes',
-    'SGDisplay', 'DISPID_SVSInputWordLength', 'SpeechStreamFileMode',
-    'SPSERIALIZEDRESULT', 'SpeechPropertyAdaptationOn', 'SPEI_MIN_SR',
-    'SPPS_NotOverriden', 'DISPID_SpeechRecognizerStatus',
-    'SAFT16kHz8BitStereo', 'DISPID_SWFEChannels', 'SPINTERFERENCE',
-    'SpeechAllElements', 'SPPS_Noun', 'SPVISEMES',
-    'DISPID_SRSNumberOfActiveRules', 'SpeechRecoEvents',
-    'DISPID_SPEAudioSizeBytes', 'DISPID_SpeechPhraseReplacements',
-    'DISPID_SPCIdToPhone', 'SpeechPropertyResourceUsage',
-    'SPWORDLIST', 'STCRemoteServer', 'SVSFNLPMask',
-    'SPWP_UNKNOWN_WORD_PRONOUNCEABLE',
-    'DISPID_SPIAudioStreamPosition', 'SPSHORTCUTPAIR',
-    'DISPID_SPPConfidence', 'SP_VISEME_11', 'SpObjectTokenCategory',
-    'SpeechAudioFormatGUIDText', 'Speech_Max_Word_Length',
-    'DISPID_SVAlertBoundary', 'DISPID_SRRTimes',
-    'SPEI_SR_RETAINEDAUDIO', 'DISPID_SGRSTPropertyId',
-    'SPINTERFERENCE_NOSIGNAL', 'SPPHRASEELEMENT', 'SINoSignal',
-    'SP_VISEME_10', 'STSF_LocalAppData', 'DISPID_SDKDeleteValue',
-    'DISPID_SVSPhonemeId', 'DISPID_SLGetGenerationChange',
-    'SPEI_END_INPUT_STREAM', 'DISPID_SRSetPropertyString',
-    'DISPID_SpeechAudioStatus', 'SAFTDefault', 'eLEXTYPE_APP',
-    'DISPID_SRStatus', 'SpStreamFormatConverter',
-    'DISPID_SRCRetainedAudio', 'SPFM_CREATE', 'DISPID_SGRsItem',
-    'DISPID_SLGetPronunciations', 'DISPID_SpeechVoiceStatus',
-    'SPRST_ACTIVE', 'SPEI_PHRASE_START', 'SPXRO_Alternates_SML',
-    'SPFM_NUM_MODES', 'DISPID_SVAudioOutputStream',
-    'DISPID_SRCESoundStart', 'DISPID_SPIGetText', 'STSF_FlagCreate',
-    'DISPID_SOTRemove', 'SP_VISEME_16', 'SPWORDTYPE',
-    'DISPID_SpeechAudioBufferInfo', 'ISpStreamFormatConverter',
-    'SpeechVoicePriority', 'ISpPhoneticAlphabetSelection',
-    'SAFT12kHz8BitMono', 'DISPID_SOTCSetId', 'DISPID_SPCLangId',
-    'SPSHT_EMAIL', 'DISPID_SLWsItem', 'DISPID_SRCEHypothesis',
-    'SPRST_NUM_STATES', 'SPEI_MAX_TTS', 'eLEXTYPE_MORPHOLOGY',
-    'SGRSTTWildcard', 'SPAO_RETAIN_AUDIO', 'SpMemoryStream', 'SVP_14',
-    'DISPID_SpeechPhraseRules', 'SP_VISEME_20', 'SPPS_Modifier',
-    'SDKLLocalMachine', 'DISPID_SDKGetStringValue',
-    'DISPID_SpeechObjectToken', 'SAFTText', 'SP_VISEME_21',
-    'SpeechLoadOption', 'SWTDeleted', 'DISPID_SRCEEndStream',
-    'DISPID_SVSLastBookmarkId', 'DISPID_SFSOpen',
-    'DISPID_SVEStreamEnd', 'SPRST_ACTIVE_ALWAYS', 'SRSActive',
-    'SAFT24kHz16BitMono', 'ISpObjectWithToken', 'ISpRecoContext',
-    'SAFT8kHz8BitStereo', 'ISpXMLRecoResult', 'SPEI_RESERVED1',
-    'SVP_11', 'SpUnCompressedLexicon', 'DISPID_SPEDisplayAttributes',
-    'DISPID_SpeechFileStream', 'eLEXTYPE_PRIVATE14',
-    'SpeechDataKeyLocation', 'DISPID_SAFType', 'SPINTERFERENCE_NONE',
-    'SPEI_START_SR_STREAM', 'SWPUnknownWordPronounceable',
-    'SPINTERFERENCE_TOOFAST', 'SVSFParseSsml',
-    'DISPID_SRRDiscardResultInfo',
-    'DISPID_SRCERecognitionForOtherContext', 'SRERecoOtherContext',
-    'SAFT24kHz8BitMono', 'SpInprocRecognizer', 'DISPID_SGRsFindRule',
-    'DISPID_SRRSaveToMemory', 'SVSFParseAutodetect',
-    'DISPID_SPPNumberOfElements', 'SpeechGrammarState',
-    'DISPID_SRGCmdLoadFromProprietaryGrammar', 'SPLO_DYNAMIC',
-    'DISPID_SRSetPropertyNumber', 'DISPID_SGRSAddSpecialTransition',
-    'DISPID_SWFEBitsPerSample', 'ISpeechPhraseProperties',
-    'DISPID_SRRTOffsetFromStart', 'SAFT22kHz8BitStereo',
-    'DISPID_SLPPhoneIds', 'SpeechCategoryAudioOut', 'SVEPrivate',
-    'DISPID_SRAudioInput', 'DISPID_SVDisplayUI',
-    'eLEXTYPE_RESERVED10', 'DISPID_SRRAudio',
-    'DISPID_SLPPartOfSpeech', 'DISPID_SPPBRestorePhraseFromMemory',
-    'SpeechRunState', 'SSFMOpenReadWrite', 'SRSEDone',
-    'DISPID_SPAStartElementInResult', 'SVEPhoneme',
-    'SpeechPropertyNormalConfidenceThreshold', 'DISPID_SVVoice',
-    'DISPID_SGRAddState', 'SITooLoud', 'DISPID_SpeechCustomStream',
-    'SPCATEGORYTYPE', 'DISPID_SRGCmdSetRuleIdState',
-    'DISPID_SPIStartTime', 'SAFTADPCM_44kHzMono',
-    'DISPID_SPRs_NewEnum', 'SPVPRIORITY', 'ISpRecoCategory',
-    'eLEXTYPE_PRIVATE2', 'DISPID_SGRAddResource',
-    'DISPID_SRCERequestUI', 'DISPID_SLAddPronunciation',
-    'eLEXTYPE_RESERVED9', 'ISpPhraseAlt', 'Library',
-    'DISPID_SPARecoResult', 'SpeechGrammarWordType',
-    'SAFT32kHz8BitStereo', 'SpNullPhoneConverter',
-    'DISPID_SRCEPropertyNumberChange', 'DISPID_SRCESoundEnd',
-    'DISPID_SPIAudioSizeTime', 'DISPID_SLGetWords',
-    'ISpeechObjectTokens', 'DISPID_SVResume',
-    'SAFTExtendedAudioFormat', 'DISPID_SRProfile',
-    'DISPID_SLPs_NewEnum', 'SPEI_ACTIVE_CATEGORY_CHANGED',
-    'SPRULESTATE', 'SBOPause', 'SpeechPropertyComplexResponseSpeed',
-    'SVSFIsXML', 'eLEXTYPE_PRIVATE3', 'SPSMF_SAPI_PROPERTIES',
-    'SpeechVisemeFeature', 'SP_VISEME_12',
-    'SPRST_INACTIVE_WITH_PURGE', 'DISPID_SVAudioOutput',
-    'DISPID_SRIsShared', 'DISPID_SVStatus', 'SPAS_RUN', 'SVP_5',
-    'DISPID_SASState', 'STCAll', 'DISPID_SRRGetXMLResult',
-    'SVEAllEvents', 'DISPID_SPRulesItem', 'DISPID_SVGetAudioInputs',
-    'SP_VISEME_0', 'SPWT_LEXICAL', 'SSSPTRelativeToCurrentPosition',
-    'SPPS_RESERVED2', 'DISPID_SpeechMMSysAudio', 'tagSTATSTG',
-    'SpShortcut', 'SSTTDictation', 'SVSFDefault',
-    'IInternetSecurityMgrSite', 'UINT_PTR', 'DISPID_SRRAlternates',
-    'SPSFunction', 'SAFT11kHz8BitStereo', 'ISpeechPhraseInfo',
-    'DISPID_SPPFirstElement', 'SPWT_PRONUNCIATION',
-    'DISPID_SRCResume', 'SAFTADPCM_11kHzStereo', 'SPBO_AHEAD',
-    'SGDSInactive', 'DISPID_SLPType', 'SVEEndInputStream',
-    'SITooFast', 'SPEI_PHONEME', 'SAFTCCITT_uLaw_22kHzMono',
-    'DISPID_SBSSeek', 'SpeechRuleState', 'DISPID_SpeechBaseStream',
-    'DISPID_SVSpeakStream', 'SAFT24kHz8BitStereo', 'SPVPRI_OVER',
-    'SAFTCCITT_uLaw_22kHzStereo', 'DISPID_SRRSetTextFeedback',
-    'eLEXTYPE_PRIVATE13', 'DISPID_SPEPronunciation',
-    'SPEI_SENTENCE_BOUNDARY', 'SAFT44kHz16BitStereo',
-    'SpeechFormatType', 'SPAS_CLOSED', 'DISPID_SRGId',
-    'DISPID_SpeechVoiceEvent', 'DISPID_SGRSAddRuleTransition',
-    'eLEXTYPE_PRIVATE15', 'DISPID_SASCurrentSeekPosition',
-    'SDA_Two_Trailing_Spaces', 'SpeechPropertyResponseSpeed', 'SVP_4',
-    'DISPID_SpeechGrammarRuleState',
-    'DISPID_SRCAudioInInterferenceStatus',
+    'SpeechVoiceSpeakFlags', 'SpInProcRecoContext', 'ISpShortcut',
+    'DISPID_SPEsItem', 'SVP_12', 'DISPID_SpeechRecoContext',
+    'SPAR_Unknown', 'SAFTCCITT_uLaw_8kHzMono', 'ISpeechLexiconWord',
+    'ISpeechPhraseAlternate', 'DISPID_SRCEEnginePrivate',
+    'DISPID_SPRuleFirstElement', 'SPSModifier',
+    'DISPIDSPTSI_SelectionLength', 'IEnumSpObjectTokens',
+    'ISpeechCustomStream', 'DISPID_SOTMatchesAttributes',
+    'SpeechSpecialTransitionType', 'DISPID_SPEDisplayText',
+    'SpTextSelectionInformation', 'SpeechRecognizerState',
+    'SRSActive', 'DISPID_SDKEnumKeys', 'DISPID_SRGCmdSetRuleIdState',
+    'SAFT16kHz16BitMono', 'SPSHORTCUTPAIR', 'DISPID_SPRs_NewEnum',
+    'SRERequestUI', 'DISPID_SpeechGrammarRules', 'ISpeechMMSysAudio',
+    'SSSPTRelativeToCurrentPosition', 'ISpRecoCategory',
+    'DISPID_SGRSTNextState', 'SGRSTTWord', 'SP_VISEME_13',
+    'DISPID_SPEAudioTimeOffset', 'SPPS_RESERVED1', 'SpAudioFormat',
+    'SPEI_RESERVED2', 'DISPID_SpeechCustomStream', 'SVP_9',
+    'DISPID_SGRSTPropertyId', 'SAFTCCITT_uLaw_22kHzStereo',
+    'SPDKL_CurrentUser', 'SBOPause', 'SPSEMANTICERRORINFO',
+    'DISPID_SASCurrentSeekPosition', 'SDTAudio', 'SPGS_EXCLUSIVE',
+    'SPEI_MAX_TTS', 'SpeechLexiconType', 'DISPID_SVEPhoneme',
+    'DISPID_SRGCommit', 'DISPID_SGRSTRule', 'SPLO_DYNAMIC',
+    'SpeechRecoProfileProperties', 'SpeechAllElements', 'SGDisplay',
+    'ISpeechTextSelectionInformation', 'DISPID_SPPParent',
+    'SVF_Stressed', 'ISpeechGrammarRules', 'DISPID_SDKOpenKey',
+    'SRSEIsSpeaking', 'ISpeechLexiconPronunciation', 'Library',
+    'DISPID_SRRTTickCount', 'DISPID_SLPsCount', 'SVSFlagsAsync',
+    'SpeechRecognitionType', 'DISPID_SpeechBaseStream',
+    'SpeechCategoryVoices', 'SPSTREAMFORMATTYPE',
+    'SpeechVoicePriority', 'DISPID_SpeechAudioFormat',
+    'eLEXTYPE_PRIVATE14', 'ISpLexicon', 'SPEVENTENUM',
+    'DISPID_SPPNumberOfElements', 'DISPID_SpeechVoiceStatus',
+    'SpLexicon', 'DISPID_SPIGetText', 'DISPID_SRCPause', 'SLOStatic',
+    'DISPID_SPAs_NewEnum', 'SpeechGrammarWordType', 'SPPS_Unknown',
+    'SDTAll', 'SAFTCCITT_uLaw_44kHzMono',
+    'DISPID_SRCreateRecoContext', 'SAFTGSM610_44kHzMono',
+    'SpMMAudioEnum', '_SPAUDIOSTATE', 'SPINTERFERENCE_NONE',
+    'SPEI_START_INPUT_STREAM', 'DISPID_SABufferInfo',
+    'SAFT12kHz8BitMono', 'SAFTDefault', 'SPPS_Noun',
+    'SAFTGSM610_11kHzMono', 'DISPID_SLGetPronunciations',
+    'SpeechDataKeyLocation', 'SAFTCCITT_ALaw_8kHzStereo', 'SVP_0',
+    'SASRun', 'DISPID_SRRTStreamTime', 'SAFT24kHz16BitMono',
+    'SAFTCCITT_uLaw_11kHzMono', 'SpCompressedLexicon', 'SPSHT_OTHER',
+    'DISPID_SVSpeak', 'DISPID_SVESentenceBoundary',
+    'DISPID_SGRSAddSpecialTransition', 'SVP_15',
+    'DISPID_SpeechLexiconWord', 'DISPID_SpeechRecoResult2',
+    'SRCS_Enabled', 'SPEI_ADAPTATION', 'DISPID_SVEBookmark',
+    'DISPID_SGRAttributes', 'DISPID_SPPsItem',
+    'DISPID_SpeechPhraseProperties', 'SAFT44kHz8BitStereo',
+    'SPDKL_LocalMachine', 'DISPID_SASNonBlockingIO',
+    'DISPID_SLGetGenerationChange', 'DISPID_SpeechGrammarRule',
+    'ISpRecognizer3', 'SRSActiveAlways', 'SPSMF_SRGS_SAPIPROPERTIES',
+    'DISPID_SOTCreateInstance', 'SpeechVoiceCategoryTTSRate',
+    'SVSFDefault', 'SGRSTTWildcard', 'WAVEFORMATEX',
+    'SVEEndInputStream', 'DISPID_SPAsCount', 'SPSNoun',
+    'ISpeechAudioBufferInfo', 'ISpPhoneticAlphabetConverter',
+    'ISpeechBaseStream', 'SpWaveFormatEx', 'DISPID_SPRuleChildren',
+    'SPSMF_UPS', 'DISPID_SRGCmdLoadFromProprietaryGrammar',
+    'eLEXTYPE_PRIVATE13', 'DISPID_SpeechLexiconWords',
+    'SpNullPhoneConverter', 'eLEXTYPE_PRIVATE7', 'SVPNormal',
+    'DISPID_SRCEPhraseStart', 'ISpEventSource',
+    'DISPID_SRCCmdMaxAlternates', 'ISpPhraseAlt',
+    'DISPID_SPISaveToMemory', 'SPWORDLIST',
+    'DISPID_SRGCmdLoadFromResource', 'SVEWordBoundary',
+    'Speech_Max_Word_Length', 'DISPID_SPEActualConfidence',
+    'eLEXTYPE_RESERVED4', 'DISPID_SpeechMemoryStream',
+    'SPBOOKMARKOPTIONS', 'SpeechRuleAttributes', 'SPFM_CREATE',
+    'SAFT8kHz8BitStereo', 'SRERecoOtherContext', 'SPVPRIORITY',
+    '_ISpeechVoiceEvents', 'ISpeechObjectTokens',
+    'SpeechVoiceSkipTypeSentence', 'SPEI_SOUND_START',
+    'SPGS_DISABLED', 'DISPID_SDKDeleteKey', 'DISPID_SRCERequestUI',
+    'DISPID_SBSRead', 'SAFTADPCM_44kHzStereo',
+    'SPINTERFERENCE_LATENCY_WARNING', 'SpeechVisemeType',
+    'SPAUDIOSTATE', 'DISPID_SRRPhraseInfo', 'eWORDTYPE_DELETED',
+    'DISPID_SpeechXMLRecoResult', 'SRERecognition',
+    'DISPID_SRCEHypothesis', 'SDA_One_Trailing_Space', 'SpFileStream',
+    'DISPID_SRCEventInterests', 'DISPID_SRCVoicePurgeEvent',
+    'ISpNotifySource', 'SPGRAMMARSTATE', 'ISpeechPhraseInfo',
+    'SP_VISEME_2', 'SpeechGrammarTagWildcard', 'SITooSlow',
+    'SPXRO_Alternates_SML', 'SPRULE', 'DISPID_SPPChildren',
+    'DISPID_SRRAudio', 'DISPID_SLWPronunciations', 'SPBO_TIME_UNITS',
+    'DISPID_SVAudioOutput', 'SP_VISEME_3', 'SpeechAudioFormatType',
+    'DISPID_SABIEventBias', 'SECFIgnoreCase', 'SRAExport',
+    'SAFTCCITT_uLaw_22kHzMono', 'DISPID_SRCEAudioLevel', 'SAFTText',
+    'SGLexical', 'ISpeechPhoneConverter', 'STSF_LocalAppData',
+    'DISPID_SRCRequestedUIType', 'eLEXTYPE_APP', 'ISpSerializeState',
+    'ISpeechAudio', 'DISPID_SRGRecoContext', 'eLEXTYPE_PRIVATE12',
+    'SPBO_AHEAD', 'SSTTDictation', 'SPSLMA', 'ISpeechRecoResult',
+    'DISPID_SPPBRestorePhraseFromMemory', 'typelib_path',
+    'eLEXTYPE_PRIVATE3', 'eLEXTYPE_PRIVATE8', 'SpObjectToken',
+    'DISPID_SGRSAddWordTransition', 'SPWP_UNKNOWN_WORD_PRONOUNCEABLE',
+    'DISPID_SPRFirstElement', 'SPSEMANTICFORMAT', 'DISPID_SRIsShared',
+    'DISPID_SpeechAudio', 'SREStreamEnd', 'DISPID_SPRulesCount',
+    'SAFT8kHz8BitMono', 'ISpeechObjectTokenCategory', 'SPSFunction',
+    'SDA_Consume_Leading_Spaces', 'DISPID_SPRNumberOfElements',
+    'DISPID_SOTRemoveStorageFileName', 'DISPID_SPACommit',
+    'DISPID_SpeechDataKey', 'eLEXTYPE_PRIVATE19', 'DISPID_SPEsCount',
     'DISPID_SPANumberOfElementsInResult',
-    'DISPID_SpeechPhraseReplacement', 'SGLexical',
-    'SAFTTrueSpeech_8kHz1BitMono', 'DISPID_SASFreeBufferSpace',
-    'Speech_Max_Pron_Length', 'SRTSMLTimeout', 'SPXRO_SML',
-    'SPWORDPRONUNCIATIONLIST', 'SPCT_DICTATION', 'ISpeechVoice',
-    'SpeechCategoryPhoneConverters', 'DISPID_SpeechPhoneConverter',
-    'ISpRecognizer', 'SPINTERFERENCE_NOISE', 'SVF_Stressed',
-    'eLEXTYPE_PRIVATE17', 'SPEI_INTERFERENCE',
-    'DISPID_SGRSTPropertyValue', 'DISPID_SPPs_NewEnum',
-    'DISPID_SGRSTRule', 'SPRS_ACTIVE_USER_DELIMITED',
-    '__MIDL___MIDL_itf_sapi_0000_0020_0001', 'SDTDisplayText',
-    'ISpeechVoiceStatus', 'SpResourceManager',
-    'ISpeechGrammarRuleStateTransitions', 'DISPID_SDKSetStringValue',
-    'ISpMMSysAudio', 'DISPID_SGRSTWeight', 'SPSLMA', 'SINone',
-    'DISPID_SRRGetXMLErrorInfo', 'SpCompressedLexicon',
-    'SpMMAudioOut', 'SPGRAMMARWORDTYPE', 'SPCT_SUB_DICTATION',
-    'DISPID_SPIRule', 'SPXMLRESULTOPTIONS',
-    'DISPID_SpeechObjectTokenCategory', 'SVPAlert', 'ISpRecoContext2',
-    'DISPID_SVSCurrentStreamNumber', 'SRESoundEnd',
-    'DISPID_SpeechVoice', 'SPBO_TIME_UNITS', 'ISpPhrase',
-    'SPSEMANTICFORMAT', 'DISPID_SPELexicalForm',
-    'DISPID_SPERequiredConfidence', 'DISPID_SPEs_NewEnum',
-    'DISPID_SPRText', 'SSFMOpenForRead', 'ISpEventSource',
-    'SAFT8kHz16BitStereo', 'SAFT12kHz16BitStereo',
-    'SAFTGSM610_22kHzMono', 'DISPID_SLWType', 'DISPID_SRSAudioStatus',
-    'SVESentenceBoundary',
-    'DISPID_SRAllowAudioInputFormatChangesOnNextSet',
-    'SpeechEngineConfidence', 'SpeechAudioFormatType', 'DISPID_SOTId',
-    'SAFT22kHz16BitMono', 'DISPID_SOTRemoveStorageFileName',
-    'SpeechCategoryAppLexicons', 'SpeechRegistryLocalMachineRoot',
-    'DISPID_SPEEngineConfidence', 'DISPID_SPIReplacements',
-    'DISPID_SPRuleConfidence', 'SpeechRecoContextState',
-    'SECFIgnoreWidth', 'DISPID_SRGCmdLoadFromResource', 'SRSInactive',
-    'SVP_10', 'SPCONTEXTSTATE', 'SPSSuppressWord',
-    'DISPID_SpeechPhraseRule', 'SVEWordBoundary',
-    'SpeechDisplayAttributes', 'SPEI_ADAPTATION', 'DISPID_SRCVoice',
-    'ISpeechFileStream', 'SDTRule', 'SAFTADPCM_8kHzMono', 'ISpStream',
-    'ISpeechRecoResultDispatch',
-    'SpeechPropertyLowConfidenceThreshold', 'DISPID_SOTCGetDataKey',
-    'DISPID_SRCEInterference', 'DISPID_SpeechXMLRecoResult',
-    'SRAExport', 'DISPID_SRCPause', 'DISPID_SDKCreateKey',
-    'eLEXTYPE_USER', 'DISPID_SRRecognizer',
-    'SPEI_PROPERTY_NUM_CHANGE', 'SPEI_RECO_STATE_CHANGE',
-    'DISPID_SAFGuid', 'eLEXTYPE_RESERVED7', 'eLEXTYPE_RESERVED8',
-    'SPADAPTATIONRELEVANCE', 'SPBINARYGRAMMAR', 'STSF_CommonAppData',
-    'ISpObjectToken', 'SPEI_TTS_PRIVATE', 'DISPID_SVSkip',
-    'SPRECORESULTTIMES', 'Speech_StreamPos_RealTime',
-    'DISPID_SVSLastBookmark', 'SPSInterjection', 'SREAllEvents',
-    'SSTTWildcard', 'SPAR_Unknown', 'ISpeechObjectTokenCategory',
-    'DISPID_SPEsItem', 'DISPIDSPTSI_ActiveOffset',
-    'DISPID_SRAudioInputStream', 'SP_VISEME_15', 'DISPID_SVSpeak',
-    'SPPS_RESERVED3', 'DISPID_SRGCmdSetRuleState',
-    'DISPID_SPEAudioSizeTime', 'DISPID_SRGRules',
-    'ISpeechResourceLoader', 'SPPHRASERULE', 'DISPID_SDKDeleteKey',
-    'SGLexicalNoSpecialChars', 'DISPID_SRCEAudioLevel',
-    'ISpeechGrammarRule', 'SVEViseme', 'SPRULE', 'ISpVoice',
-    'DISPID_SpeechGrammarRule', 'SP_VISEME_8',
-    'DISPID_SADefaultFormat', 'eWORDTYPE_DELETED',
-    'DISPIDSPTSI_ActiveLength', 'SPSNotOverriden', 'SSTTTextBuffer',
-    'SPSUnknown', 'SLTUser', 'DISPID_SRGetRecognizers',
-    'eLEXTYPE_PRIVATE5', 'DISPID_SpeechWaveFormatEx',
-    'DISPID_SVEPhoneme', 'ISpShortcut', 'SpWaveFormatEx',
-    'SPINTERFERENCE_LATENCY_TRUNCATE_END', 'eLEXTYPE_VENDORLEXICON',
-    'DISPID_SPRsItem', 'SSSPTRelativeToEnd',
-    'SAFTCCITT_ALaw_22kHzStereo', 'SPRS_INACTIVE', 'SREInterference',
-    'ISpNotifySink', 'SDTAll', 'SpeechRetainedAudioOptions',
-    'ISpeechAudio', 'eLEXTYPE_PRIVATE12', 'STCInprocHandler',
-    'SAFTCCITT_uLaw_44kHzStereo', 'SAFTGSM610_11kHzMono',
-    'eLEXTYPE_PRIVATE11', 'DISPID_SMSAMMHandle',
-    'SWPUnknownWordUnpronounceable', 'SPAS_STOP', 'SPAO_NONE',
-    'SDTProperty', 'DISPID_SPEAudioTimeOffset',
-    'SpeechBookmarkOptions', 'SAFTCCITT_uLaw_8kHzStereo',
-    'ISpeechWaveFormatEx', 'SAFT44kHz8BitStereo', 'SRCS_Enabled',
-    'SpeechMicTraining', 'DISPID_SpeechLexiconPronunciation',
-    'SP_VISEME_2', 'SpeechSpecialTransitionType', 'SVP_15',
-    'SPWAVEFORMATTYPE', 'SAFT24kHz16BitStereo', 'SPPS_Noncontent',
-    'SP_VISEME_1', 'eLEXTYPE_PRIVATE10'
+    'DISPID_SRSetPropertyNumber', 'SGPronounciation',
+    'ISpeechPhraseReplacements', 'SVP_16',
+    'DISPID_SLRemovePronunciation', 'SP_VISEME_11',
+    'DISPID_SRIsUISupported', 'SPAR_Low', 'DISPID_SPPsCount',
+    'SPSNotOverriden', 'DISPID_SASFreeBufferSpace',
+    'DISPID_SPRulesItem', 'SpeechTokenKeyUI', 'SAFT48kHz8BitMono',
+    'SpeechWordType', 'SPEI_END_INPUT_STREAM',
+    'DISPID_SOTIsUISupported', 'ISpRecoResult',
+    'DISPID_SABIMinNotification', 'SDA_Two_Trailing_Spaces',
+    'SPEI_INTERFERENCE', 'SPPROPERTYINFO',
+    'SPSMF_SRGS_SEMANTICINTERPRETATION_MS', 'SVSFVoiceMask',
+    'SWPUnknownWordUnpronounceable', 'SPWT_LEXICAL',
+    'DISPID_SRCEBookmark', 'DISPID_SPIAudioStreamPosition',
+    'DISPID_SGRClear', 'SPEI_MAX_SR', 'ISpeechResourceLoader',
+    'SECFEmulateResult', 'DISPID_SVEViseme', 'DISPID_SGRsCount',
+    'ISpStream', 'SpeechTokenShellFolder', 'SVSFIsXML',
+    'SDTReplacement', 'SAFT11kHz8BitMono', 'SPRS_ACTIVE',
+    'SAFTADPCM_11kHzStereo', 'SPRECORESULTTIMES',
+    'SAFTCCITT_uLaw_44kHzStereo', 'DISPID_SDKEnumValues',
+    'DISPID_SVStatus', 'SDTAlternates', 'DISPID_SpeechWaveFormatEx',
+    'SAFTADPCM_44kHzMono', 'DISPID_SABIBufferSize',
+    'SAFT32kHz16BitMono', 'DISPIDSPTSI_SelectionOffset',
+    'eLEXTYPE_RESERVED10', 'SpeechPropertyHighConfidenceThreshold',
+    'SpPhraseInfoBuilder', 'STCRemoteServer', 'ISpeechPhraseElements',
+    'SpeechTokenKeyAttributes', 'ISpeechPhraseInfoBuilder',
+    'SDKLLocalMachine', 'SPSHORTCUTTYPE', 'DISPID_SGRAddResource',
+    'eLEXTYPE_PRIVATE4', 'ISpeechVoiceStatus', 'STSF_CommonAppData',
+    'DISPID_SGRSTPropertyName', 'SAFTADPCM_11kHzMono',
+    'DISPID_SpeechLexiconProns', 'ISpeechWaveFormatEx',
+    'SP_VISEME_20', 'SpeechTokenContext', 'SPAS_PAUSE',
+    'SPLOADOPTIONS', 'SPEI_END_SR_STREAM',
+    'DISPID_SPIRetainedSizeBytes', 'DISPID_SRProfile',
+    'DISPID_SRAudioInputStream', 'DISPID_SRDisplayUI',
+    'SPEI_VOICE_CHANGE', 'DISPID_SVSCurrentStreamNumber',
+    'SRESoundStart', 'DISPID_SRCEPropertyNumberChange',
+    'SpNotifyTranslator', 'SAFT44kHz16BitStereo',
+    'SpeechCategoryRecognizers', 'SAFT16kHz16BitStereo',
+    'SPEI_SENTENCE_BOUNDARY', 'DISPID_SVEventInterests', 'SASClosed',
+    'ISpPhoneConverter', 'DISPID_SLPLangId', 'SRAONone',
+    'SDTProperty', 'SpeechPartOfSpeech', 'DISPID_SRGetRecognizers',
+    'DISPID_SRSSupportedLanguages', 'DISPID_SGRSTText',
+    'SpPhoneticAlphabetConverter', 'SPPS_Verb',
+    'DISPID_SRRDiscardResultInfo', 'DISPID_SPRsCount',
+    'SREFalseRecognition', 'DISPID_SRCResume', 'DISPID_SVVoice',
+    'SAFTNonStandardFormat', 'ISpNotifyTranslator', 'SVP_14',
+    'SGRSTTTextBuffer', '__MIDL___MIDL_itf_sapi_0000_0020_0001',
+    'DISPID_SpeechVoice', 'DISPID_SGRsCommitAndSave',
+    'DISPID_SRAudioInput', 'DISPID_SRGDictationSetState',
+    'SPDKL_DefaultLocation', 'SPAUDIOOPTIONS', 'eLEXTYPE_USER',
+    'SpeechWordPronounceable', 'SECFDefault',
+    '__MIDL___MIDL_itf_sapi_0000_0020_0002', 'DISPID_SPAsItem',
+    'SASPause', 'DISPID_SGRId', 'DISPID_SPPEngineConfidence',
+    'DISPID_SDKSetStringValue', 'SPCS_DISABLED', 'ISpMMSysAudio',
+    'DISPID_SpeechObjectToken', 'SWTAdded',
+    'DISPID_SpeechPhraseElements', 'ISpeechPhraseRules',
+    'SAFT8kHz16BitStereo', 'DISPID_SGRAddState',
+    'DISPID_SPAStartElementInResult', 'SPVPRI_ALERT', 'ISpProperties',
+    'SP_VISEME_10', 'DISPID_SLPType', 'SpVoice', 'SP_VISEME_16',
+    'SPAUDIOSTATUS', 'eLEXTYPE_LETTERTOSOUND', 'SpCustomStream',
+    'SAFT44kHz16BitMono', 'SVP_4', 'SAFT48kHz16BitStereo',
+    'DISPID_SLPPartOfSpeech', 'DISPID_SVGetAudioInputs',
+    'DISPID_SPRuleId', 'SPEI_TTS_PRIVATE', 'DISPID_SVSpeakStream',
+    'SPEI_TTS_AUDIO_LEVEL', 'DISPID_SVDisplayUI', 'DISPID_SRRTimes',
+    'SVSFParseMask', 'DISPID_SGRsAdd', 'ISpeechRecognizer',
+    'ISpDataKey', 'SPGS_ENABLED', 'SGRSTTDictation',
+    'ISpStreamFormatConverter', 'DISPID_SPERetainedStreamOffset',
+    'SpeechDictationTopicSpelling', 'SpeechTokenValueCLSID',
+    'SVEPrivate', 'SRTAutopause',
+    'SpeechGrammarTagUnlimitedDictation', 'DISPID_SRGCmdLoadFromFile',
+    'DISPID_SGRSTPropertyValue', 'eLEXTYPE_RESERVED6', 'SVP_8',
+    'SAFTCCITT_ALaw_44kHzStereo', 'DISPID_SPCIdToPhone',
+    'SP_VISEME_14', 'SPEI_RESERVED1', 'DISPID_SGRSRule',
+    'SPPS_Function', 'ISpeechLexiconPronunciations',
+    'Speech_StreamPos_Asap', 'DISPID_SRCRetainedAudioFormat',
+    'DISPID_SPEAudioStreamOffset', 'DISPID_SWFEExtraData',
+    'eLEXTYPE_PRIVATE10', 'SpeechAudioProperties', 'SPPHRASEELEMENT',
+    'DISPID_SRCERecognizerStateChange', 'SPCATEGORYTYPE',
+    'SpResourceManager', 'SP_VISEME_7', 'SpeechInterference',
+    'DISPID_SOTDisplayUI', 'SPAS_CLOSED', 'SpeechTokenKeyFiles',
+    'SPRECOGNIZERSTATUS', 'ISpeechObjectToken', 'SVEViseme',
+    'SPCT_DICTATION', 'SPFM_NUM_MODES', 'SPEI_SR_BOOKMARK',
+    'SAFT48kHz16BitMono', 'SpMMAudioIn', 'SPLO_STATIC',
+    'eLEXTYPE_RESERVED8', 'SVP_5', 'DISPID_SPEs_NewEnum',
+    'ISpRecoGrammar2', 'DISPID_SRCEAdaptation',
+    'DISPID_SRRRecoContext', 'SBONone', 'ISpeechRecoResultTimes',
+    'DISPID_SPRuleParent', 'ISpeechMemoryStream', 'SPSHT_Unknown',
+    'SPRST_ACTIVE_ALWAYS', 'SPEI_FALSE_RECOGNITION',
+    'SPXMLRESULTOPTIONS', 'DISPID_SOTGetAttribute',
+    'DISPID_SpeechPhraseElement', 'DISPID_SLPPhoneIds',
+    'SPWF_SRENGINE', 'SINoSignal', 'SVP_20',
+    'DISPID_SRGDictationUnload', 'DISPID_SOTCategory',
+    'ISpObjectTokenCategory', '_RemotableHandle', 'ISpPhrase',
+    'SPCT_COMMAND', 'SVP_13', 'SVEAllEvents', 'DISPID_SGRs_NewEnum',
+    'DISPID_SRSAudioStatus', 'SpeechRecoContextState',
+    'SPPS_Interjection', 'SPEI_UNDEFINED', 'Speech_Default_Weight',
+    'DISPID_SpeechObjectTokens', 'eLEXTYPE_PRIVATE17',
+    'DISPIDSPTSI_ActiveLength', 'DISPID_SRGRules', 'SPVPRI_NORMAL',
+    'SpeechTokenIdUserLexicon', 'SPEI_HYPOTHESIS', 'STCInprocServer',
+    'DISPID_SRCCreateGrammar', 'SPEI_SR_RETAINEDAUDIO', 'SPAR_Medium',
+    'DISPID_SVSLastResult', 'SpeechPropertyNormalConfidenceThreshold',
+    'DISPID_SRCESoundStart', 'SWTDeleted', 'SRSEDone',
+    'SPEI_TTS_BOOKMARK', 'SPSVerb', 'DISPID_SRCEPropertyStringChange',
+    'SVSFPurgeBeforeSpeak', 'SPSERIALIZEDRESULT',
+    'Speech_StreamPos_RealTime', 'SREPhraseStart',
+    'SAFT22kHz16BitMono', 'SpMMAudioOut', 'STSF_FlagCreate',
+    'eLEXTYPE_PRIVATE5', 'DISPID_SDKGetBinaryValue',
+    'DISPID_SWFEBitsPerSample', 'SECFIgnoreKanaType',
+    'DISPID_SRGCmdLoadFromObject', 'SpeechAudioVolume',
+    'DISPID_SLWLangId', 'DISPID_SPILanguageId', 'DISPID_SPPName',
+    'SpInprocRecognizer', 'SPSMF_SAPI_PROPERTIES',
+    'eLEXTYPE_PRIVATE11', 'SVEStartInputStream', 'DISPID_SPCLangId',
+    'DISPID_SBSFormat', 'SPRST_INACTIVE_WITH_PURGE',
+    'DISPID_SOTsCount', 'DISPID_SRSCurrentStreamPosition',
+    'DISPID_SRCRecognizer', 'SPDKL_CurrentConfig', 'IStream',
+    'DISPID_SRCEEndStream', 'DISPID_SOTGetStorageFileName',
+    'DISPID_SASCurrentDevicePosition', 'SPEI_SR_AUDIO_LEVEL',
+    'SPEI_MIN_SR', 'DISPID_SOTId', 'ISpeechXMLRecoResult',
+    'DISPID_SPEPronunciation', 'SPEI_START_SR_STREAM',
+    'DISPID_SVSInputSentenceLength', 'SAFT44kHz8BitMono',
+    'SPBINARYGRAMMAR', 'DISPID_SpeechMMSysAudio',
+    'DISPID_SpeechGrammarRuleState', 'SASStop', 'SFTInput',
+    'DISPID_SVGetVoices', 'SVEAudioLevel', 'SRCS_Disabled',
+    'SDTDisplayText', 'SpeechAudioFormatGUIDText', 'ISpObjectToken',
+    'SpUnCompressedLexicon', 'DISPID_SPRText', 'DISPID_SOTRemove',
+    'ISpeechRecoContext', 'DISPID_SFSClose', 'SRTExtendableParse',
+    'DISPID_SPRuleName', 'DISPID_SPRsItem', 'SAFT16kHz8BitStereo',
+    'SREStreamStart', 'SAFT11kHz16BitMono', 'ISpEventSink',
+    'DISPID_SPIAudioSizeBytes', 'SPWORDPRONUNCIATION',
+    'SpeechLoadOption', 'DISPID_SRRAudioFormat',
+    'DISPID_SpeechVoiceEvent', 'SPPS_RESERVED3', 'SRARoot',
+    'SpeechRunState', 'SpeechDisplayAttributes',
+    'SpeechPropertyComplexResponseSpeed', 'SVP_11', 'ISpeechLexicon',
+    'DISPID_SRGCmdLoadFromMemory', 'DISPID_SMSALineId',
+    'ISpeechRecoGrammar', 'DISPID_SVWaitUntilDone', 'SP_VISEME_1',
+    'SDTRule', 'DISPID_SVEWord', 'DISPID_SAFSetWaveFormatEx',
+    'SVP_17', 'ISpAudio', 'DISPID_SPRuleConfidence',
+    'DISPID_SLRemovePronunciationByPhoneIds', 'eWORDTYPE_ADDED',
+    'SPEI_PROPERTY_STRING_CHANGE', 'SPEI_PHRASE_START',
+    'DISPID_SpeechPhraseReplacement', 'SPGRAMMARWORDTYPE', 'ISpVoice',
+    'SPINTERFERENCE_NOSIGNAL', 'SDTPronunciation', 'DISPID_SLWsItem',
+    'DISPID_SGRsItem', 'SDKLDefaultLocation', 'SPPHRASEPROPERTY',
+    'SPWP_KNOWN_WORD_PRONOUNCEABLE', 'SpeechVoiceEvents',
+    'DISPID_SPELexicalForm', 'SAFTCCITT_uLaw_11kHzStereo',
+    'DISPID_SVPause', 'DISPID_SRStatus', 'SPINTERFERENCE_TOOSLOW',
+    'SAFTADPCM_8kHzMono', 'SpeechFormatType',
+    'DISPID_SVAllowAudioOuputFormatChangesOnNextSet', 'SVSFParseSsml',
+    'SAFTCCITT_uLaw_8kHzStereo', 'DISPID_SMSGetData',
+    'SAFT24kHz8BitMono', 'SRTStandard', 'SpeechEmulationCompareFlags',
+    'DISPID_SpeechGrammarRuleStateTransition', 'SREPrivate',
+    'SpeechGrammarTagDictation', 'DISPID_SVSInputSentencePosition',
+    'eLEXTYPE_MORPHOLOGY', 'eLEXTYPE_PRIVATE2', 'SPSHT_NotOverriden',
+    'DISPID_SVSLastBookmarkId', 'SPFM_OPEN_READONLY', 'SRESoundEnd',
+    'DISPID_SGRSTransitions', 'SECFIgnoreWidth', 'DISPIDSPTSI',
+    'SPRECOCONTEXTSTATUS', 'DISPID_SpeechPhraseAlternates',
+    'DISPID_SPPConfidence', 'ISpRecoGrammar', 'SAFT22kHz8BitMono',
+    'SPWP_UNKNOWN_WORD_UNPRONOUNCEABLE', 'SINone',
+    'SRSInactiveWithPurge', 'SREPropertyStringChange',
+    'DISPID_SPIEngineId', 'SAFT22kHz8BitStereo', 'eLEXTYPE_PRIVATE15',
+    'ISpeechVoice', 'SVP_3', 'SPPHRASEREPLACEMENT',
+    'DISPID_SpeechPhraseBuilder', 'SGDSActiveWithAutoPause',
+    'DISPID_SRAllowAudioInputFormatChangesOnNextSet', 'SPCS_ENABLED',
+    'SPEI_VISEME', 'ISpeechPhraseProperty', 'STSF_AppData',
+    'DISPID_SPRDisplayAttributes', 'SDKLCurrentConfig',
+    'eLEXTYPE_RESERVED7', 'SAFTTrueSpeech_8kHz1BitMono',
+    'DISPID_SVGetProfiles', 'SPWORDPRONUNCIATIONLIST',
+    'DISPID_SpeechPhraseInfo', 'SSFMCreateForWrite', 'SP_VISEME_0',
+    'STCAll', 'SP_VISEME_18', 'IInternetSecurityManager',
+    'DISPID_SVSLastStreamNumberQueued', 'ISpeechLexiconWords',
+    'SPEI_RECO_STATE_CHANGE', 'ISpRecoContext', 'SAFTGSM610_8kHzMono',
+    'DISPID_SDKSetLongValue', 'DISPID_SGRSTsCount', 'SRAORetainAudio',
+    'DISPID_SVPriority', 'DISPID_SPPs_NewEnum',
+    'DISPID_SRRAlternates', 'SPAS_STOP', 'DISPID_SDKDeleteValue',
+    'DISPID_SRCSetAdaptationData', 'ISpeechFileStream', 'SVPAlert',
+    'ISpStreamFormat', 'SRAInterpreter',
+    'DISPID_SVSInputWordPosition', 'IInternetSecurityMgrSite',
+    'SpObjectTokenCategory', 'SWPKnownWordPronounceable',
+    'SpStreamFormatConverter', 'IEnumString', 'SpeechRuleState',
+    'DISPID_SPPFirstElement', 'SVP_18', 'SECNormalConfidence',
+    'DISPID_SpeechAudioBufferInfo', 'SPSHT_EMAIL', 'SPEI_SR_PRIVATE',
+    'DISPID_SAVolume', 'SRAImport', 'Speech_Max_Pron_Length',
+    'DISPID_SRCVoice', 'DISPID_SRGSetTextSelection',
+    'SPRS_ACTIVE_USER_DELIMITED', 'DISPID_SGRsFindRule',
+    'SPPS_RESERVED2', 'SAFTExtendedAudioFormat',
+    'eLEXTYPE_VENDORLEXICON', 'ISpeechPhraseReplacement',
+    'SPVPRI_OVER', 'DISPID_SOTs_NewEnum', 'DISPID_SpeechRecoResult',
+    'SWPUnknownWordPronounceable', 'SINoise', 'SDKLCurrentUser',
+    'SPEI_RESERVED6', 'DISPID_SLPsItem', 'DISPID_SRGCmdSetRuleState',
+    'SSTTWildcard', 'SRTReSent', 'DISPID_SWFEAvgBytesPerSec',
+    'DISPID_SWFEBlockAlign', 'DISPID_SLWType', 'SPAR_High',
+    'SPRST_NUM_STATES', 'SECLowConfidence', 'SVP_21', 'DISPID_SVRate',
+    'DISPID_SLPSymbolic', 'SVSFNLPSpeakPunc', 'SGRSTTRule',
+    'ISpeechRecoResultDispatch', 'SAFT32kHz16BitStereo',
+    'DISPID_SPPValue', 'SAFTNoAssignedFormat', 'SAFT48kHz8BitStereo',
+    'DISPID_SRRecognizer', 'eLEXTYPE_PRIVATE16',
+    'DISPID_SPRuleNumberOfElements', 'SREStateChange',
+    '_ISpeechRecoContextEvents', 'DISPID_SPEDisplayAttributes',
+    'SPPARTOFSPEECH', 'DISPID_SPARecoResult',
+    'DISPID_SPERequiredConfidence', 'DISPID_SRGSetWordSequenceData',
+    'DISPID_SOTCEnumerateTokens', 'SP_VISEME_12', 'SPPS_Modifier',
+    'SpeechCategoryRecoProfiles',
+    'DISPID_SLAddPronunciationByPhoneIds', 'SPINTERFERENCE_TOOFAST',
+    'SGRSTTEpsilon', 'SREAdaptation', 'DISPID_SVSkip',
+    'DISPID_SLWs_NewEnum', 'SPCT_SUB_DICTATION',
+    'SPINTERFERENCE_TOOQUIET', 'ISpeechGrammarRule',
+    'DISPID_SVSRunningState', 'DISPID_SGRSTWeight', 'SPRULESTATE',
+    'DISPID_SVEVoiceChange', 'ISpeechPhraseElement',
+    'SPPS_NotOverriden', 'SPEI_MIN_TTS', 'SVSFParseAutodetect',
+    'SAFT24kHz8BitStereo', 'SPEI_RESERVED3',
+    'ISpPhoneticAlphabetSelection', 'ISpRecoContext2',
+    'DISPID_SWFEFormatTag', 'SVESentenceBoundary',
+    'SAFT12kHz8BitStereo', 'DISPID_SPPId', 'DISPID_SMSAMMHandle',
+    'SLTUser', 'SAFT12kHz16BitStereo',
+    'DISPID_SPRuleEngineConfidence', 'DISPID_SRRGetXMLErrorInfo',
+    'SPADAPTATIONRELEVANCE', 'SPVISEMES', 'SPFILEMODE',
+    'STCLocalServer', 'DISPID_SRSetPropertyString', 'SPSSuppressWord',
+    'DISPID_SRCRetainedAudio', 'DISPID_SRCEFalseRecognition',
+    'DISPID_SRRSaveToMemory', 'SpeechPropertyAdaptationOn',
+    'DISPID_SpeechPhraseRules', 'ISpeechGrammarRuleStateTransition',
+    'DISPID_SPEAudioSizeTime', 'SpStream', 'SPRST_INACTIVE',
+    'SPWT_DISPLAY', 'DISPID_SGRSTsItem', 'SPEI_RESERVED5',
+    'SPINTERFERENCE_LATENCY_TRUNCATE_END', 'SpeechEngineConfidence',
+    'SpeechDiscardType', 'DISPID_SPIEnginePrivateData',
+    'SPEI_SOUND_END', 'SPWF_INPUT', 'SPEI_ACTIVE_CATEGORY_CHANGED',
+    'tagSPTEXTSELECTIONINFO', 'SPVOICESTATUS', 'SPWORDTYPE',
+    'SPSMF_SRGS_SEMANTICINTERPRETATION_W3C', 'SSFMOpenForRead',
+    'SpSharedRecoContext', 'SpeechAddRemoveWord', 'DISPID_SGRSTType',
+    'DISPID_SPAPhraseInfo', 'tagSTATSTG', 'SDTLexicalForm',
+    'SPPS_LMA', 'DISPID_SLGenerationId', 'SpeechBookmarkOptions',
+    'DISPID_SMSADeviceId', 'SPBO_PAUSE', 'eLEXTYPE_RESERVED9',
+    'SPTEXTSELECTIONINFO', 'DISPID_SVEStreamEnd',
+    'DISPID_SPRules_NewEnum', 'ISpeechAudioFormat',
+    'DISPID_SRCERecognition', 'SRADefaultToActive',
+    'SpeechPropertyLowConfidenceThreshold', 'SPAS_RUN',
+    'DISPID_SpeechRecoContextEvents', 'DISPID_SGRName',
+    'SAFT32kHz8BitMono', 'SAFTCCITT_ALaw_22kHzMono',
+    'DISPID_SVSpeakCompleteEvent', 'SAFT32kHz8BitStereo',
+    'tagSPPROPERTYINFO', 'SAFTCCITT_ALaw_44kHzMono',
+    'DISPID_SRCERecognitionForOtherContext',
+    'SpeechRetainedAudioOptions', 'DISPID_SADefaultFormat',
+    'DISPID_SpeechLexiconPronunciation', 'SPWAVEFORMATTYPE',
+    'DISPID_SPIElements', 'DISPID_SBSSeek',
+    'DISPID_SABufferNotifySize', 'DISPID_SGRSTs_NewEnum',
+    'SPAUDIOBUFFERINFO', 'SPSInterjection', 'SPSHORTCUTPAIRLIST',
+    'DISPID_SAFGetWaveFormatEx', 'SpeechRegistryUserRoot',
+    'SPPS_RESERVED4', 'DISPID_SRGIsPronounceable',
+    'DISPID_SRGetPropertyString',
+    'SPINTERFERENCE_LATENCY_TRUNCATE_BEGIN', 'SPWORD',
+    'DISPID_SPIRule', 'SPBO_NONE', 'SREBookmark',
+    'SSSPTRelativeToStart', 'DISPID_SVAudioOutputStream',
+    'ISpeechPhraseProperties', 'SAFTCCITT_ALaw_8kHzMono',
+    'ISpeechRecoResult2', 'ISpRecognizer', 'SVSFIsFilename',
+    'DISPID_SpeechPhraseRule', 'DISPID_SFSOpen',
+    'DISPID_SVEAudioLevel', 'DISPID_SVGetAudioOutputs', 'SRATopLevel',
+    'DISPID_SRCEStartStream', 'DISPID_SRCESoundEnd',
+    'DISPID_SRRTOffsetFromStart', 'SPINTERFERENCE', 'SGDSInactive',
+    'SVSFUnusedFlags', 'DISPID_SVEStreamStart',
+    'DISPID_SRSClsidEngine', 'SAFT16kHz8BitMono',
+    'DISPID_SDKSetBinaryValue', 'DISPID_SVVolume',
+    'SPSERIALIZEDPHRASE', 'SECFNoSpecialChars', 'SpeechRecoEvents',
+    'DISPID_SLWWord', 'DISPID_SGRInitialState',
+    'DISPID_SRCAudioInInterferenceStatus', 'DISPID_SPIAudioSizeTime',
+    'SpeechVisemeFeature', 'SPAO_NONE',
+    'SpeechGrammarRuleStateTransitionType', 'SpeechUserTraining',
+    'SpeechRegistryLocalMachineRoot', 'SPWT_PRONUNCIATION',
+    'DISPID_SVIsUISupported', 'SSFMOpenReadWrite',
+    'DISPID_SVSyncronousSpeakTimeout', 'DISPID_SPEEngineConfidence',
+    'DISPID_SVSPhonemeId', 'DISPID_SpeechObjectTokenCategory',
+    'SAFTADPCM_8kHzStereo', 'SREAllEvents', 'SVP_6', 'DISPIDSPRG',
+    'SPEVENT', 'DISPID_SVSLastBookmark', 'SAFTGSM610_22kHzMono',
+    'ISpeechGrammarRuleStateTransitions', 'DISPID_SOTCGetDataKey',
+    'DISPID_SpeechRecognizer', 'SPLEXICONTYPE',
+    'SpeechCategoryAppLexicons', 'DISPID_SBSWrite',
+    'eLEXTYPE_USER_SHORTCUT', 'DISPID_SRSNumberOfActiveRules',
+    'SpeechAudioFormatGUIDWave', 'DISPID_SREmulateRecognition',
+    'SPWT_LEXICAL_NO_SPECIAL_CHARS', 'SPEI_PHONEME', 'SREAudioLevel',
+    'SITooFast', 'SP_VISEME_21', 'SpeechEngineProperties',
+    'DISPID_SRGId', 'SREInterference',
+    'DISPID_SpeechGrammarRuleStateTransitions', 'SVF_Emphasis',
+    'SSSPTRelativeToEnd', 'DISPID_SVEEnginePrivate',
+    'DISPID_SLWsCount', 'ISpRecognizer2', 'DISPID_SAFType',
+    'DISPID_SRGetFormat', 'SpSharedRecognizer', 'DISPID_SMSSetData',
+    'DISPID_SAEventHandle', 'SpeechGrammarState', 'DISPID_SRState',
+    'SPWORDPRONOUNCEABLE', 'DISPID_SOTGetDescription',
+    'SPRS_INACTIVE', 'SVP_19', 'SPEVENTSOURCEINFO',
+    'DISPID_SPIGetDisplayAttributes', 'SPEI_PROPERTY_NUM_CHANGE',
+    'SpeechAudioState', 'SpeechMicTraining', 'DISPID_SVSVisemeId',
+    'SAFTCCITT_ALaw_11kHzStereo', 'DISPID_SPEAudioSizeBytes',
+    'DISPID_SAStatus', 'SpeechPropertyResponseSpeed', 'SVP_10',
+    'SpPhoneConverter', 'DISPID_SOTsItem', 'SVP_7',
+    'SpeechStreamSeekPositionType', 'DISPID_SOTCId',
+    'DISPID_SpeechAudioStatus', 'DISPID_SRRTLength', 'SPRECOSTATE',
+    'DISPID_SPIGrammarId', 'DISPID_SpeechPhraseAlternate',
+    'DISPID_SOTCSetId', 'SPFM_OPEN_READWRITE', 'DISPID_SOTCDefault',
+    'SAFT22kHz16BitStereo', 'SLTApp', 'DISPID_SRCState', 'SLODynamic',
+    '__MIDL_IWinTypes_0009', 'ISpeechAudioStatus', 'SRTSMLTimeout',
+    'SPSUnknown', 'SpMemoryStream', 'DISPID_SpeechFileStream',
+    'DISPID_SASState', 'DISPID_SLGetWords', 'ISpeechPhraseAlternates',
+    'DISPID_SVResume', 'SpeechCategoryAudioIn', 'eLEXTYPE_PRIVATE9',
+    'SPCT_SLEEP', 'SRSInactive', 'DISPID_SDKGetlongValue',
+    'DISPID_SASetState', 'DISPID_SWFEChannels',
+    'DISPID_SRCEInterference', 'SGSEnabled', 'SSFMCreate',
+    'DISPID_SRGetPropertyNumber', 'DISPID_SRRSetTextFeedback',
+    'DISPID_SDKGetStringValue', 'DISPID_SDKCreateKey', 'SVEPhoneme',
+    'DISPIDSPTSI_ActiveOffset', 'DISPID_SPCPhoneToId',
+    'DISPID_SOTSetId', 'SpeechCategoryAudioOut', 'SPEI_WORD_BOUNDARY',
+    'STCInprocHandler', 'SpShortcut', 'eLEXTYPE_PRIVATE1',
+    'DISPID_SPERetainedSizeBytes', 'SFTSREngine',
+    'DISPID_SPIStartTime', 'SPINTERFERENCE_TOOLOUD', 'SVF_None',
+    'SPPS_SuppressWord', 'DISPID_SGRsDynamic',
+    'SAFTADPCM_22kHzStereo', 'SPCONTEXTSTATE', 'SAFT12kHz16BitMono',
+    'SP_VISEME_8', 'SITooLoud', 'DISPID_SGRsCommit', 'SGDSActive',
+    'SPPHRASERULE', 'SECHighConfidence',
+    'DISPID_SGRSAddRuleTransition', 'DISPID_SRRGetXMLResult',
+    'SPPS_Noncontent', 'ISpeechDataKey', 'SVEVoiceChange',
+    'SVSFParseSapi', 'SVPOver', 'SVSFPersistXML',
+    'DISPID_SWFESamplesPerSec', 'DISPID_SRGDictationLoad',
+    'SVEBookmark', 'DISPID_SLPs_NewEnum', 'SPCT_SUB_COMMAND',
+    'ISpeechRecognizerStatus', 'ISpeechGrammarRuleState',
+    'DISPID_SCSBaseStream', 'DISPID_SRGState', 'SP_VISEME_5',
+    'SAFT8kHz16BitMono', 'SpeechStreamFileMode', 'SP_VISEME_6',
+    'SAFTCCITT_ALaw_11kHzMono', 'SPDATAKEYLOCATION', 'SP_VISEME_19',
+    'SPEI_REQUEST_UI', 'SVP_1', 'SRADynamic', 'DISPID_SRCBookmark',
+    'DISPID_SRSCurrentStreamNumber', 'SP_VISEME_9',
+    'DISPID_SRCCreateResultFromMemory', 'DISPID_SPIReplacements',
+    'SDA_No_Trailing_Space', 'SPEI_RECO_OTHER_CONTEXT',
+    'SpeechPropertyResourceUsage', 'SPRST_ACTIVE',
+    'DISPID_SPIProperties', 'ISpGrammarBuilder', 'UINT_PTR',
+    'SP_VISEME_4', 'SPEI_RECOGNITION', 'SGSDisabled',
+    'eLEXTYPE_PRIVATE18', 'ISpXMLRecoResult',
+    'SpeechCategoryPhoneConverters',
+    'DISPID_SRAllowVoiceFormatMatchingOnNextSet',
+    'DISPID_SVSInputWordLength', 'DISPID_SAFGuid',
+    'SREPropertyNumChange', 'eLEXTYPE_PRIVATE6', 'SPFM_CREATE_ALWAYS',
+    'eLEXTYPE_PRIVATE20', 'LONG_PTR', 'SP_VISEME_15', 'SVP_2',
+    'DISPID_SpeechRecognizerStatus', 'DISPID_SRRSpeakAudio',
+    'SAFTADPCM_22kHzMono', 'SPAO_RETAIN_AUDIO', 'SP_VISEME_17',
+    'SAFT11kHz8BitStereo', 'SAFTCCITT_ALaw_22kHzStereo',
+    'ISpResourceManager', 'SSTTTextBuffer', 'DISPID_SRGReset',
+    'SITooQuiet', 'DISPID_SpeechRecoResultTimes',
+    'SGDSActiveUserDelimited', 'SPXRO_SML', 'ISpObjectWithToken',
+    'SRTEmulated', 'SGLexicalNoSpecialChars',
+    'DISPID_SVAlertBoundary', 'DISPID_SpeechPhraseReplacements',
+    'ISpNotifySink', 'SAFT11kHz16BitStereo', 'DISPID_SOTDataKey',
+    'SREHypothesis', 'DISPID_SLAddPronunciation',
+    'SAFT24kHz16BitStereo', 'SGSExclusive', 'SVSFIsNotXML',
+    'DISPID_SpeechPhraseProperty', 'DISPID_SpeechPhoneConverter',
+    'SPPHRASE', 'SPRS_ACTIVE_WITH_AUTO_PAUSE', 'ISpeechPhraseRule',
+    'SPINTERFERENCE_NOISE', 'DISPID_SpeechLexicon', 'SVSFNLPMask'
 ]
 

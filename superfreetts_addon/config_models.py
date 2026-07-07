@@ -626,14 +626,50 @@ class Preferences:
     audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
 
 def serialize_preferences(preferences):
-    return databind.json.dump(preferences, Preferences)
-        
+    # Use the same dataclass -> dict conversion used elsewhere to ensure
+    # enum fields are converted to their name strings for JSON safety.
+    return _dataclass_to_dict(preferences)
+
+
 def deserialize_preferences(preferences_config):
-    return databind.json.load(
-        preferences_config, 
-        Preferences,
-        settings=[databind.core.settings.ExtraKeys(True)]
+    # Accept either an empty/missing config or a dict produced by
+    # `serialize_preferences()` and rebuild a `Preferences` instance.
+    if not preferences_config:
+        return Preferences()
+
+    kb = preferences_config.get('keyboard_shortcuts', {}) or {}
+    ks = KeyboardShortcuts(
+        shortcut_editor_add_audio=kb.get('shortcut_editor_add_audio'),
+        shortcut_editor_preview_audio=kb.get('shortcut_editor_preview_audio'),
     )
+
+    eh = preferences_config.get('error_handling', {}) or {}
+    rtd = eh.get('realtime_tts_errors_dialog_type')
+    # Convert dialog type back to enum if it's a string
+    if isinstance(rtd, str):
+        try:
+            rtd = constants.ErrorDialogType[rtd]
+        except Exception:
+            rtd = constants.ErrorDialogType.Dialog
+    elif not isinstance(rtd, constants.ErrorDialogType):
+        rtd = constants.ErrorDialogType.Dialog
+
+    error_handling = ErrorHandling(
+        realtime_tts_errors_dialog_type=rtd,
+        error_stats_reporting=eh.get('error_stats_reporting', True),
+        disable_ssl_verification=eh.get('disable_ssl_verification', False),
+        debug_mode=eh.get('debug_mode', False),
+    )
+
+    prefs = Preferences(
+        keyboard_shortcuts=ks,
+        error_handling=error_handling,
+        ui_language=preferences_config.get('ui_language', 'en'),
+        cache_retention_days=preferences_config.get('cache_retention_days', 30),
+        cache_enabled=preferences_config.get('cache_enabled', True),
+        audio_format=preferences_config.get('audio_format', 'mp3'),
+    )
+    return prefs
 
 @dataclass
 class PresetInfo:

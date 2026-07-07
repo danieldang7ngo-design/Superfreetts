@@ -620,7 +620,9 @@ class BatchOrchestrator:
         
         submit_thread = threading.Thread(target=_submit_all, daemon=True)
         submit_thread.start()
-        
+        stall_timeout_seconds = 60.0
+        last_progress_time = time.time()
+
         while submit_thread.is_alive() or future_to_chunk:
             if not batch_status.must_continue:
                 with future_lock:
@@ -652,6 +654,31 @@ class BatchOrchestrator:
                         )
                     )
                     last_heartbeat_time = current_time
+
+                # detect stall: no completed futures for a while -> cancel pending and mark errors
+                if current_time - last_progress_time > stall_timeout_seconds and len(future_to_chunk) > 0:
+                    logger.error(f"[BATCH] Generation stalled for {stall_timeout_seconds}s, cancelling pending tasks")
+                    with future_lock:
+                        pending = list(future_to_chunk.items())
+                        future_to_chunk.clear()
+                        for pending_future, chunk in pending:
+                            try:
+                                pending_future.cancel()
+                            except Exception:
+                                pass
+                            # mark each task in chunk as failed due to stall
+                            for dedup_key, task_data, task_indices in chunk:
+                                audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))
+                                completed_count += 1
+                                batch_status.unique_tasks_completed = completed_count
+                                for task_idx in task_indices:
+                                    note_id = tasks[task_idx]['note_id']
+                                    with batch_status.get_note_action_context(note_id, False) as ctx:
+                                        ctx.set_error(Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))
+                                    batch_status.notify_change(note_id)
+                    # Mark stalled tasks and continue processing remaining futures instead of aborting
+                    batch_status.set_status_message(i18n.get_text("status_batch_stalled", lang) if i18n.get_text("status_batch_stalled", lang) else None)
+
                 time.sleep(0.05)
                 continue
             
@@ -684,7 +711,7 @@ class BatchOrchestrator:
                     batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
                     self.executor.monitor.maybe_gc(completed_count)
                     del batch_results
-                    
+                    last_progress_time = time.time()
                 except Exception as e:
                     logger.error(f"[BATCH] Batch execution failed: {e}")
                     for dedup_key, _, task_indices in chunk:

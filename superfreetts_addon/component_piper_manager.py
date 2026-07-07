@@ -194,7 +194,8 @@ class PiperManagerDialog(QDialog):
         self.setMinimumHeight(val)
 
     def open_log_folder(self):
-        log_dir = os.path.join(os.environ.get('APPDATA'), 'Anki2', 'addons21', 'Superfreetts', 'user_files')
+        addon_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        log_dir = os.path.join(addon_dir, 'user_files')
         if not os.path.exists(log_dir):
             os.makedirs(log_dir, exist_ok=True)
         os.startfile(log_dir)

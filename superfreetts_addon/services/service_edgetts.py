@@ -1,6 +1,8 @@
+import aiohttp
 import asyncio
 import random
 import re
+import socket
 import threading
 import time
 import unicodedata
@@ -23,10 +25,12 @@ DEFAULT_INITIAL_DELAY_MAX_MS = 250
 DEFAULT_WAVE_START_STAGGER_MS = 150
 DEFAULT_RETRY_BACKOFF_SECONDS = 3
 DEFAULT_BATCH_WAVE_SIZE = 1
+DEFAULT_EDGE_CONNECTIVITY_BACKOFF_SECONDS = 15
 
 _request_gate_lock = threading.Lock()
 _request_gate = None
 _request_gate_size = None
+_edge_connectivity_failure_until = 0.0
 
 
 def _get_request_gate(size):
@@ -37,6 +41,26 @@ def _get_request_gate(size):
             _request_gate = threading.BoundedSemaphore(size)
             _request_gate_size = size
         return _request_gate
+
+
+def _is_recent_connectivity_failure():
+    return time.time() < _edge_connectivity_failure_until
+
+
+def _mark_edge_connectivity_failure():
+    global _edge_connectivity_failure_until
+    _edge_connectivity_failure_until = time.time() + DEFAULT_EDGE_CONNECTIVITY_BACKOFF_SECONDS
+
+
+def _is_edge_connectivity_available():
+    if _is_recent_connectivity_failure():
+        return False
+    try:
+        with socket.create_connection(("www.bing.com", 443), timeout=5):
+            return True
+    except Exception:
+        _mark_edge_connectivity_failure()
+        return False
 
 def run_async_safe(coro):
     """
@@ -100,6 +124,9 @@ class EdgeTTS(service.ServiceBase):
         volume_str = f"{'+' if volume_val >= 0 else ''}{volume_val}%"
         return rate_str, pitch_str, volume_str
 
+    def _is_connectivity_error(self, exception: Exception) -> bool:
+        return isinstance(exception, (aiohttp.ClientConnectionError, asyncio.TimeoutError))
+
     def _is_no_audio_error(self, exception: Exception):
         error_type = type(exception).__name__
         error_message = str(exception)
@@ -110,6 +137,12 @@ class EdgeTTS(service.ServiceBase):
         )
 
     def _friendly_error_message(self, exception: Exception, text: str, voice_key: str):
+        if self._is_connectivity_error(exception):
+            return (
+                "Microsoft Edge TTS could not connect to the internet. "
+                "Please check your connection and try again. "
+                f"Voice: {voice_key}; text: {text[:120]}"
+            )
         if self._is_no_audio_error(exception):
             return (
                 "Microsoft Edge TTS returned no audio. This usually means the service "
@@ -192,6 +225,11 @@ class EdgeTTS(service.ServiceBase):
         if not source_texts:
             return []
 
+        if not _is_edge_connectivity_available():
+            if self.get_configuration_value_optional('debug_logging', False):
+                logger.warning("EdgeTTS: connectivity check failed before batch execution")
+            return [None] * len(source_texts)
+
         debug_enabled = self.get_configuration_value_optional('debug_logging', False)
         max_retries = self._get_int_config('max_retries', DEFAULT_MAX_RETRIES)
         initial_delay_min_ms = self._get_int_config('initial_delay_min_ms', DEFAULT_INITIAL_DELAY_MIN_MS)
@@ -245,7 +283,7 @@ class EdgeTTS(service.ServiceBase):
 
                         data = await asyncio.wait_for(
                             _collect_audio(),
-                            timeout=batch_constants.TASK_TIMEOUT_SECONDS,
+                            timeout=batch_constants.EDGETTS_TASK_TIMEOUT_SECONDS,
                         )
 
                         if data:
@@ -253,7 +291,14 @@ class EdgeTTS(service.ServiceBase):
 
                         raise errors.RequestError(text, voice, "EdgeTTS returned empty audio")
                     except Exception as e:
-                        if attempt < max_retries:
+                        if self._is_connectivity_error(e):
+                            _mark_edge_connectivity_failure()
+                            friendly_message = self._friendly_error_message(e, text, voice.voice_key)
+                            logger.warning(
+                                f"EdgeTTS Batch: Connectivity exception for text '{text[:20]}...': {friendly_message}"
+                            )
+                            return index, None
+                        elif attempt < max_retries:
                             retry_delay = (attempt + 1) * retry_backoff_seconds
                             if debug_enabled:
                                 logger.debug(

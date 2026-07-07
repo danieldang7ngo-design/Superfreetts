@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 !external/psutil/_psutil_windows.pyd
 *$py.class
+external/comtypes/gen/
 
 # --- Anki addon runtime data (per-user, must never be tracked) ---
 meta.json
