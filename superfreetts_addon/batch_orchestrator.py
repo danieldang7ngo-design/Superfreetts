@@ -197,6 +197,52 @@ class BatchOrchestrator:
         logger.info(f'[BATCH] Audio generation ready to apply: {len(results)} note results')
         return results
 
+    def apply_generated_batch_audio_chunk(self, generated_results_chunk: List[Tuple], batch: config_models.BatchConfig, batch_status: Any, anki_collection: Any) -> int:
+        """
+        Apply ONE chunk of generated audio results to Anki media and notes.
+
+        This is the chunked counterpart of apply_generated_batch_audio().
+        It does the same per-note work (media file copy + field write) and
+        the same single collection.update_notes() call, but only for the
+        notes passed in generated_results_chunk — NOT the whole batch.
+
+        Important: unlike apply_generated_batch_audio(), this method does
+        NOT reset batch_status.total_unique_tasks or
+        batch_status.unique_tasks_completed to 0. The caller is responsible
+        for setting batch_status.total_unique_tasks ONCE, before applying
+        the first chunk, so progress accumulates correctly across chunks.
+
+        Returns the number of notes actually written in this chunk.
+        """
+        notes_to_update = []
+        for (note_id, source_text, processed_text, sound_file, full_filename, is_error) in generated_results_chunk:
+            if not batch_status.must_continue:
+                break
+
+            with batch_status.get_note_action_context(note_id, False) as note_action_context:
+                try:
+                    if is_error:
+                        note_action_context.set_error(is_error)
+                    else:
+                        note = self.anki_utils.get_note_by_id(note_id)
+                        self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
+                        notes_to_update.append(note)
+                        note_action_context.set_source_text(source_text)
+                        note_action_context.set_processed_text(processed_text)
+                        note_action_context.set_sound(sound_file)
+                        note_action_context.set_status(constants.BatchNoteStatus.Done)
+                except Exception as e:
+                    logger.error(f"Error updating note {note_id}: {e}")
+                    note_action_context.set_error(e)
+
+            batch_status.unique_tasks_completed += 1
+            batch_status.notify_change(note_id)
+
+        if notes_to_update and batch_status.must_continue:
+            anki_collection.update_notes(notes_to_update)
+
+        return len(notes_to_update)
+
     def apply_generated_batch_audio(self, generated_results: List[Tuple], batch: config_models.BatchConfig, batch_status: Any, anki_collection: Any) -> None:
         """Apply generated audio results to Anki media and notes."""
         lang = self.hypertts.get_ui_language()
@@ -511,26 +557,18 @@ class BatchOrchestrator:
         audio_cache = {}
         completed_count = 0
         unique_count = len(dedup_map)
-        sequence_mode = (
-            len(tasks) > 0
-            and tasks[0].get('batch')
-            and tasks[0]['batch'].voice_selection.selection_mode == constants.VoiceSelectionMode.sequence
-        )
-        
         engine_groups = {}
+        for dedup_key, task_indices in dedup_map.items():
+            task_idx = task_indices[0]
+            task_data = tasks[task_idx]
+            service_name = self.executor.detect_service(task_data)
+            chosen_voice = task_data.get('chosen_voice')
+            voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
 
-        if not sequence_mode:
-            for dedup_key, task_indices in dedup_map.items():
-                task_idx = task_indices[0]
-                task_data = tasks[task_idx]
-                service_name = self.executor.detect_service(task_data)
-                chosen_voice = task_data.get('chosen_voice')
-                voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
-
-                group_key = (service_name, voice_id_str)
-                if group_key not in engine_groups:
-                    engine_groups[group_key] = []
-                engine_groups[group_key].append((dedup_key, task_data, task_indices))
+            group_key = (service_name, voice_id_str)
+            if group_key not in engine_groups:
+                engine_groups[group_key] = []
+            engine_groups[group_key].append((dedup_key, task_data, task_indices))
 
         BATCH_SIZE_BY_ENGINE = {
             'EdgeTTS': 1,
@@ -544,56 +582,25 @@ class BatchOrchestrator:
         DEFAULT_BATCH_SIZE = 1
         all_chunks = []
 
-        sequence_service_gates: Dict[str, threading.BoundedSemaphore] = {}
-        sequence_pool: Optional[concurrent.futures.ThreadPoolExecutor] = None
+        for (service_name, _), group_tasks in engine_groups.items():
+            max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
+            chunk = []
+            chunk_chars = 0
+            for item in group_tasks:
+                dedup_key, task_data, task_indices = item
+                text = task_data['source_text']
+                text_len = len(text)
 
-        if sequence_mode:
-            ordered_items = []
-            for dedup_key, task_indices in dedup_map.items():
-                task_idx = task_indices[0]
-                ordered_items.append((dedup_key, tasks[task_idx], task_indices))
-
-            service_limits = self.hypertts._get_sequence_service_limits(ordered_items)
-            total_seq_workers = max(1, sum(service_limits.values()))
-
-            sequence_service_gates = {
-                svc: threading.BoundedSemaphore(limit)
-                for svc, limit in service_limits.items()
-            }
-
-            sequence_pool = batch_executor.BoundedThreadPoolExecutor(
-                max_workers=total_seq_workers,
-                thread_name_prefix="TTS-Seq",
-                max_waiting_tasks=20,
-            )
-
-            logger.info(
-                f"[BATCH] Sequence mode — continuous filling: service_limits={service_limits}, "
-                f"pool_workers={total_seq_workers}, notes={len(ordered_items)}"
-            )
-
-            for item in ordered_items:
-                all_chunks.append(('__sequence_single__', [item]))
-        else:
-            for (service_name, _), group_tasks in engine_groups.items():
-                max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
-                chunk = []
-                chunk_chars = 0
-                for item in group_tasks:
-                    dedup_key, task_data, task_indices = item
-                    text = task_data['source_text']
-                    text_len = len(text)
-
-                    if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
-                        all_chunks.append((service_name, list(chunk)))
-                        chunk = []
-                        chunk_chars = 0
-
-                    chunk.append(item)
-                    chunk_chars += text_len
-
-                if chunk:
+                if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
                     all_chunks.append((service_name, list(chunk)))
+                    chunk = []
+                    chunk_chars = 0
+
+                chunk.append(item)
+                chunk_chars += text_len
+
+            if chunk:
+                all_chunks.append((service_name, list(chunk)))
 
         future_to_chunk = {}
         future_lock = threading.Lock()
@@ -606,18 +613,8 @@ class BatchOrchestrator:
                 for service_name, chunk_items in all_chunks:
                     if not batch_status.must_continue:
                         break
-                    if service_name == '__sequence_single__':
-                        future = sequence_pool.submit(
-                            self.hypertts._generate_audio_single_sequence_task,
-                            chunk_items[0],
-                            sequence_service_gates,
-                        )
-                    elif service_name == '__sequence__':
-                        executor_pool = self.executor.get_executor(service_name)
-                        future = executor_pool.submit(self.hypertts._generate_audio_sequence_task, list(chunk_items))
-                    else:
-                        executor_pool = self.executor.get_executor(service_name)
-                        future = executor_pool.submit(self.hypertts._generate_audio_batch_task, list(chunk_items))
+                    executor_pool = self.executor.get_executor(service_name)
+                    future = executor_pool.submit(self.hypertts._generate_audio_batch_task, list(chunk_items))
                     with future_lock:
                         future_to_chunk[future] = list(chunk_items)
                         batch_status.futures_to_cancel.append(future)
@@ -734,12 +731,6 @@ class BatchOrchestrator:
         submit_thread.join(timeout=5.0)
         if submit_error[0]:
             logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
-
-        if sequence_pool is not None:
-            try:
-                sequence_pool.shutdown(wait=False)
-            except Exception:
-                pass
 
         return audio_cache
 

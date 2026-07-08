@@ -35,6 +35,8 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         self.loaded_pages = set()
         self.loading_pages = set()
         self.is_loading = False
+        self.generation = 0
+        self.table_view = None
     
     def page_count(self):
         return (self.total_notes + self.page_size - 1) // self.page_size
@@ -43,6 +45,23 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         if row < 0:
             return 0
         return min(row // self.page_size, max(self.page_count() - 1, 0))
+
+    def invalidate_all(self):
+        """Invalidate all cached pages and trigger visible page reload on preset switch."""
+        self.generation += 1
+        self.loaded_pages = set()
+        self.loading_pages = set()
+        self.loaded_note_ids = []
+        self.is_loading = False
+        self.total_notes = len(self.batch_status.note_id_list)
+        self.beginResetModel()
+        self.endResetModel()
+        # Re-load visible pages under new preset
+        if self.table_view is not None:
+            self._load_visible_pages()
+        else:
+            # table_view not yet initialized (dialog just opened), load page 0 only
+            self.load_page(0)
 
     def load_page(self, page: int):
         """Load a specific page of notes into the model"""
@@ -60,7 +79,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         )
         self.loading_pages.add(page)
         self.is_loading = True
-        self._request_processed_text(new_note_ids, page)
+        self._request_processed_text(new_note_ids, page, self.generation)
 
     def _get_headers(self):
         lang = self.hypertts.get_ui_language()
@@ -97,17 +116,21 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         next_page = highest_page + 1
         self.load_page(next_page)
 
-    def _request_processed_text(self, note_ids: List[int], page: int):
+    def _request_processed_text(self, note_ids: List[int], page: int, generation: int):
         # Use QueryOp for background
         op = aqt.operations.QueryOp(
             parent=aqt.mw,
             op=lambda col: self.hypertts.populate_batch_status_processed_text(
                 note_ids, self.batch_status.source_model, self.batch_status.text_processing_model, self.batch_status
             ),
-            success=lambda result, page=page: self._on_page_processed(result, page),
-        ).failure(lambda error, page=page: self._on_page_failed(error, page)).run_in_background()
+            success=lambda result, page=page, gen=generation: self._on_page_processed(result, page, gen),
+        ).failure(lambda error, page=page, gen=generation: self._on_page_failed(error, page, gen)).run_in_background()
 
-    def _on_page_processed(self, result, page: int):
+    def _on_page_processed(self, result, page: int, generation: int):
+        # Discard stale result from previous preset generation
+        if generation != self.generation:
+            self.loading_pages.discard(page)
+            return
         self.loading_pages.discard(page)
         self.loaded_pages.add(page)
         self.is_loading = len(self.loading_pages) > 0
@@ -129,7 +152,11 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
             last_col = max(0, self.columnCount(None) - 1)
             self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
     
-    def _on_page_failed(self, error, page: int):
+    def _on_page_failed(self, error, page: int, generation: int):
+        # Discard stale error from previous preset generation
+        if generation != self.generation:
+            self.loading_pages.discard(page)
+            return
         self.loading_pages.discard(page)
         self.is_loading = len(self.loading_pages) > 0
         logger.error(f"Failed to process page {page}: {error}")
@@ -227,6 +254,8 @@ class BatchPreview(component_common.ComponentBase):
         self.prepared_batch_audio = None
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
+        self._apply_chunk_index = 0
+        self._apply_undo_id = None
 
         self.table_repaint_timer = TableRepaintTimer(500)
         self.status_label = None
@@ -240,11 +269,13 @@ class BatchPreview(component_common.ComponentBase):
         self.prepared_batch_audio = None
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
+        self._apply_chunk_index = 0
+        self._apply_undo_id = None
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
         if hasattr(self.batch_preview_table_model, 'table_view') and self.table_view is not None:
             self.batch_preview_table_model.table_view = self.table_view
-        self.batch_preview_table_model.load_page(0)
+        self.batch_preview_table_model.invalidate_all()
         self._update_status_label()
 
     def update_batch_status_task(self):
@@ -423,18 +454,75 @@ class BatchPreview(component_common.ComponentBase):
     def apply_audio_to_notes(self):
         self.generate_audio_to_cache()
 
+    # Chunk size for the chunked Apply step. Smaller = more frequent gaps
+    # for Anki's own background jobs (like automatic backups) to run
+    # between chunks, at the cost of slightly more per-chunk overhead.
+    # 25 is a starting value — see FIX_PLAN Section 6, test 4, for how to
+    # tune it. Do not set below 1.
+    APPLY_CHUNK_SIZE = 25
+
     def apply_generated_audio_to_notes(self):
         if not self.has_pending_generated_audio():
             return
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
         self.batch_run_mode = 'applying'
+        try:
+            self._apply_undo_id = aqt.mw.col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
+        except Exception as e:
+            logger.error(f'failed to open undo entry for chunked apply: {e}')
+            self.apply_to_notes_batch_started = False
+            self.batch_run_mode = 'idle'
+            raise
         self.batch_status.begin()
+        self.batch_status.total_unique_tasks = len(self.generated_batch_results)
+        self.batch_status.unique_tasks_completed = 0
+        self._apply_chunk_index = 0
+        self._run_next_apply_chunk()
+
+    def _run_next_apply_chunk(self):
+        start = self._apply_chunk_index * self.APPLY_CHUNK_SIZE
+        end = start + self.APPLY_CHUNK_SIZE
+        chunk = self.generated_batch_results[start:end]
+
+        if not chunk or not self.batch_status.must_continue:
+            self._finish_apply_chain()
+            return
+
+        self._apply_chunk_index += 1
+
         aqt.operations.QueryOp(
             parent=self.dialog,
-            op=self.apply_generated_audio_with_undo_fn,
-            success=self.finished_apply_audio_fn,
-        ).failure(self.batch_operation_failed).run_in_background()
+            op=lambda col, c=chunk: self.hypertts.apply_generated_batch_audio_chunk(
+                c, self.generated_batch_model, self.batch_status, col
+            ),
+            success=lambda result: self._run_next_apply_chunk(),
+        ).failure(self._apply_chunk_failed).run_in_background()
+
+    def _apply_chunk_failed(self, exception):
+        """
+        Failure handler for a single chunk in the chunked Apply chain.
+
+        Unlike the plain self.batch_operation_failed handler (which is also
+        used by the Generate step, where no undo entry is open), this
+        handler MUST merge the undo entry opened in
+        apply_generated_audio_to_notes before doing anything else. If this
+        step is skipped, the undo entry is left open on the collection,
+        which blocks every other undoable operation in Anki (including
+        Workflow mode's own Apply/Generate) until Anki is restarted.
+        """
+        try:
+            aqt.mw.col.merge_undo_entries(self._apply_undo_id)
+        except Exception as e:
+            logger.warning(f'exception merging undo entries after failed chunk: {e}')
+        self.batch_operation_failed(exception)
+
+    def _finish_apply_chain(self):
+        try:
+            aqt.mw.col.merge_undo_entries(self._apply_undo_id)
+        except Exception as e:
+            logger.warning(f'exception merging undo entries after chunked apply: {e}')
+        self.finished_apply_audio_fn(None)
 
     def stop_button_pressed(self):
         self.batch_status.stop()
@@ -467,15 +555,6 @@ class BatchPreview(component_common.ComponentBase):
                 self.batch_status.end(False)
         except Exception as e:
             self.batch_operation_failed(e)
-
-    def apply_generated_audio_with_undo_fn(self, anki_collection):
-        undo_id = aqt.mw.col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
-        self.hypertts.apply_generated_batch_audio(self.generated_batch_results, self.generated_batch_model, self.batch_status, anki_collection)
-        try:
-            return aqt.mw.col.merge_undo_entries(undo_id)
-        except Exception as e:
-            logger.warning(f'exception in undo_end_fn: {str(e)}, undo_id: {undo_id}')
-            return False
 
     def finished_apply_audio_fn(self, result):
         logger.debug(f'finished_apply_audio_fn, result: {result}')
