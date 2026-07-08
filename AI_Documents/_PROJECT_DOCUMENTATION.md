@@ -4,13 +4,6 @@
 
 ## Table of Contents
 
-### 2026-07-07 Update
-
-- The addon version is now 26.7.1 in the AMD-style format: year.month.release.
-- The DB helper in [tools/notes_db.py](../tools/notes_db.py) centralizes collection-path lookup, index application, note paging, and note counting so the note-loading flow relies on one place for database access.
-- The lazy-loading note-list path is split across [superfreetts_addon/worker.py](../superfreetts_addon/worker.py) and [superfreetts_addon/model.py](../superfreetts_addon/model.py): the worker performs the DB fetch inside `run()`, while the model tracks loaded rows and total count to expose a paged list interface.
-- The UI glue in [superfreetts_addon/component_note_list.py](../superfreetts_addon/component_note_list.py) connects `QListView` and debounced search behavior without mixing DB logic into the UI layer.
-- The packaging logic in [build_share.py](../build_share.py) now explicitly includes the new helper package so the generated .ankiaddon archive contains the DB helper and related modules.
 
 
 - [Overview](#overview)

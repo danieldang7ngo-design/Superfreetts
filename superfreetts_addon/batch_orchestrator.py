@@ -85,13 +85,20 @@ class BatchOrchestrator:
         logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
         extract_start = time.time()
 
+        field_maps = self.anki_utils.get_note_field_maps(note_id_list)
+
         for note_id in note_id_list:
             if not batch_status.must_continue:
                 break
 
-            note = self.anki_utils.get_note_by_id(note_id)
+            if note_id not in field_maps:
+                with batch_status.get_note_action_context(note_id, False) as note_action_context:
+                    note_action_context.set_error(errors.NoteNotFoundError(note_id))
+                continue
+
+            note_fields = field_maps[note_id]
             try:
-                source_text = self.hypertts.get_source_text(note, batch.source, None)
+                source_text = self.hypertts.get_source_text(note_fields, batch.source, None)
 
                 cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
                 if cache_key not in self.text_processing_cache:
@@ -761,14 +768,18 @@ class BatchOrchestrator:
     def populate_batch_status_processed_text(self, note_id_list: Optional[List[int]], batch_source: Any, text_processing: Any, batch_status: Any) -> None:
         if note_id_list is None:
             note_id_list = batch_status.note_id_list
+        field_maps = self.anki_utils.get_note_field_maps(note_id_list)
         with batch_status.get_batch_running_action_context():
             for note_id in note_id_list:
                 with batch_status.get_note_action_context(note_id, True) as note_action_context:
-                    note = self.anki_utils.get_note_by_id(note_id)
-                    source_text, processed_text = self.get_source_processed_text(note, batch_source, text_processing)
-                    note_action_context.set_source_text(source_text)
-                    note_action_context.set_processed_text(processed_text)
-                    note_action_context.set_status(constants.BatchNoteStatus.OK)
+                    if note_id not in field_maps:
+                        note_action_context.set_error(errors.NoteNotFoundError(note_id))
+                    else:
+                        note_fields = field_maps[note_id]
+                        source_text, processed_text = self.get_source_processed_text(note_fields, batch_source, text_processing)
+                        note_action_context.set_source_text(source_text)
+                        note_action_context.set_processed_text(processed_text)
+                        note_action_context.set_status(constants.BatchNoteStatus.OK)
                 if not batch_status.must_continue:
                     logger.info('batch_status execution interrupted')
                     break

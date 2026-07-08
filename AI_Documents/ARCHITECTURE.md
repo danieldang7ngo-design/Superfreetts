@@ -97,13 +97,4 @@ Card renders {{tts superfreetts_preset=X ...}}
 - **Resource monitoring**: `SimpleResourceMonitor` tracks RAM during batch
   runs, triggers `gc.collect()` when thresholds are crossed.
 
-## 4. Recent addition — lazy-loading note list (2026-07)
 
-- `tools/notes_db.py`: resolves Anki collection path, applies notes index,
-  paged fetch/count.
-- `superfreetts_addon/worker.py`: runs the DB fetch in `run()` (background thread).
-- `superfreetts_addon/model.py`: consumes that data, populates rows
-  progressively, tracks total count.
-- `superfreetts_addon/component_note_list.py`: `QListView` + debounced search,
-  kept free of DB logic.
-- `build_share.py`: packages `tools/` into the `.ankiaddon` archive.

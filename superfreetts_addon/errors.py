@@ -28,6 +28,12 @@ class SourceFieldNotFoundError(HyperTTSError):
         super().__init__(message)    
 
 
+class NoteNotFoundError(HyperTTSError):
+    def __init__(self, note_id):
+        message = f'Note <b>{note_id}</b> not found (may have been deleted)'
+        super().__init__(message)
+
+
 class TargetFieldNotFoundError(HyperTTSError):
     def __init__(self, field_name):
         message = f'Target Field <b>{field_name}</b> not found'

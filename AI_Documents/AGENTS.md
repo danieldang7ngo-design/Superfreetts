@@ -29,7 +29,6 @@ data flow diagrams), `API_INDEX.md` (class/method reference),
 | `superfreetts_addon/gui.py` + `component_*.py` | UI windows (Settings, Batch, Easy Mode, note list). |
 | `superfreetts_addon/i18n.py` | UI text, multiple locales (see §6). |
 | `tools/notes_db.py` | Resolves Anki collection path, paged note fetch/count for lazy-loading UI. |
-| `superfreetts_addon/worker.py` + `model.py` | DB fetch in background thread; model populates rows progressively. |
 | `tests/` | Automated tests. `mock_anki.py` fakes Anki, no real install needed. |
 | `build_share.py` | Packages everything into `.ankiaddon` for release. |
 

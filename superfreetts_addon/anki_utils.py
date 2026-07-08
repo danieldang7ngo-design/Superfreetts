@@ -117,6 +117,40 @@ class AnkiUtils():
         note = aqt.mw.col.get_note(note_id)
         return note
 
+    def get_note_field_maps(self, note_ids):
+        """
+        Batched replacement for calling get_note_by_id() once per note when
+        only field text is needed (not a full mutable Note object).
+
+        Returns {note_id: {field_name: field_value, ...}, ...}. note_ids
+        that don't exist (e.g. deleted between snapshot and this call) are
+        simply absent from the returned dict — callers must handle a
+        missing key, they will NOT get an exception per note_id like
+        get_note_by_id() would raise.
+        """
+        ensure_anki_collection_open()
+        field_maps = {}
+        model_field_names_cache = {}
+        ids = list(note_ids)
+        CHUNK = 500  # stay well under SQLite's default 999 bound-parameter limit
+        for i in range(0, len(ids), CHUNK):
+            chunk = ids[i:i + CHUNK]
+            placeholders = ",".join("?" * len(chunk))
+            rows = aqt.mw.col.db.all(
+                f"SELECT id, mid, flds FROM notes WHERE id IN ({placeholders})",
+                *chunk,
+            )
+            for note_id, mid, flds in rows:
+                if mid not in model_field_names_cache:
+                    notetype = aqt.mw.col.models.get(mid)
+                    model_field_names_cache[mid] = (
+                        [f['name'] for f in notetype['flds']] if notetype else []
+                    )
+                field_names = model_field_names_cache[mid]
+                values = flds.split('\x1f')
+                field_maps[note_id] = dict(zip(field_names, values))
+        return field_maps
+
     def get_model(self, model_id):
         ensure_anki_collection_open()
         return aqt.mw.col.models.get(model_id)
