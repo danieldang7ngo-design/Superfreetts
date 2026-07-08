@@ -607,27 +607,51 @@ class BatchOrchestrator:
         submit_error = [None]
         last_heartbeat_time = 0
         heartbeat_interval_seconds = 2.0
-        
-        def _submit_all():
+        submit_threads = []
+        chunks_by_service = {}
+        for service_name, chunk_items in all_chunks:
+            chunks_by_service.setdefault(service_name, []).append(chunk_items)
+
+        def _submit_service_chunks(service_name: str, chunk_items_list: List[List[Tuple]]) -> None:
             try:
-                for service_name, chunk_items in all_chunks:
+                for chunk_items in chunk_items_list:
                     if not batch_status.must_continue:
                         break
                     executor_pool = self.executor.get_executor(service_name)
-                    future = executor_pool.submit(self.hypertts._generate_audio_batch_task, list(chunk_items))
-                    with future_lock:
-                        future_to_chunk[future] = list(chunk_items)
-                        batch_status.futures_to_cancel.append(future)
+                    while batch_status.must_continue:
+                        try:
+                            submit_kwargs = {}
+                            if isinstance(executor_pool, batch_executor.BoundedThreadPoolExecutor):
+                                submit_kwargs['timeout'] = 0.1
+                            future = executor_pool.submit(
+                                self.hypertts._generate_audio_batch_task,
+                                list(chunk_items),
+                                **submit_kwargs,
+                            )
+                            with future_lock:
+                                future_to_chunk[future] = list(chunk_items)
+                                batch_status.futures_to_cancel.append(future)
+                            break
+                        except TimeoutError:
+                            time.sleep(0.05)
+                        except Exception as e:
+                            logger.error(f"[BATCH] Submit error for {service_name}: {e}")
+                            submit_error[0] = e
+                            break
+                    if not batch_status.must_continue:
+                        break
             except Exception as e:
-                logger.error(f"[BATCH] Submit thread error: {e}")
+                logger.error(f"[BATCH] Submit thread error for {service_name}: {e}")
                 submit_error[0] = e
-        
-        submit_thread = threading.Thread(target=_submit_all, daemon=True)
-        submit_thread.start()
+
+        for service_name, chunk_items_list in chunks_by_service.items():
+            thread = threading.Thread(target=_submit_service_chunks, args=(service_name, chunk_items_list), daemon=True)
+            thread.start()
+            submit_threads.append(thread)
         stall_timeout_seconds = 60.0
         last_progress_time = time.time()
 
-        while submit_thread.is_alive() or future_to_chunk:
+        while any(thread.is_alive() for thread in submit_threads) or future_to_chunk:
             if not batch_status.must_continue:
                 with future_lock:
                     for pending_future in list(future_to_chunk):
@@ -728,7 +752,8 @@ class BatchOrchestrator:
                             batch_status.notify_change(note_id)
                     self.executor.monitor.maybe_gc(completed_count)
         
-        submit_thread.join(timeout=5.0)
+        for thread in submit_threads:
+            thread.join(timeout=5.0)
         if submit_error[0]:
             logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
 

@@ -33,18 +33,24 @@ logger = logging_utils.get_child_logger(__name__)
 
 class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     """
-    ThreadPoolExecutor with a bounded queue. 
-    Blocks submit() when the queue reaches max_workers + max_waiting_tasks.
+    ThreadPoolExecutor with a bounded queue.
+    Uses a semaphore to cap queued submissions and avoids indefinite blocking
+    when the caller is trying to stop a large batch.
     """
     def __init__(self, max_workers, thread_name_prefix='', max_waiting_tasks=50):
         super().__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix)
         self._semaphore = threading.Semaphore(max_workers + max_waiting_tasks)
 
     def submit(self, fn, *args, **kwargs):
-        self._semaphore.acquire()
+        timeout = kwargs.pop('timeout', None)
+        if timeout is None:
+            self._semaphore.acquire()
+        else:
+            if not self._semaphore.acquire(timeout=timeout):
+                raise TimeoutError('Timed out waiting for executor slot')
         try:
             future = super().submit(fn, *args, **kwargs)
-        except:
+        except Exception:
             self._semaphore.release()
             raise
         future.add_done_callback(lambda x: self._semaphore.release())
@@ -438,16 +444,18 @@ class MultiEngineExecutor:
         self.checkpoint = CheckpointManager()
     
     def get_executor(self, service_name: str) -> concurrent.futures.ThreadPoolExecutor:
-        """Get executor for given service/engine"""
-        # Normalize service name: "PiperTTS" → "Piper", "KokoroTTS" → "Kokoro", "MmsTTS" → "MMS"
-        normalized = service_name
-        if service_name.endswith('TTS'):
-            # Extract base name: PiperTTS → Piper, KokoroTTS → Kokoro, MmsTTS → MMS
-            base = service_name[:-3]  # remove 'TTS' suffix
-            # Special case: "EdgeTTS" stays as "EdgeTTS", but our config uses "EdgeTTS" too
-            normalized = base if base != 'Edge' else 'EdgeTTS'
+        """Get executor for given service/engine."""
+        service_pool_map = {
+            'EdgeTTS': 'EdgeTTS',
+            'SupertonicTTS': 'Supertonic',
+            'PiperTTS': 'Piper',
+            'KokoroTTS': 'Kokoro',
+            'MmsTTS': 'MMS',
+        }
+        normalized = service_pool_map.get(service_name, service_name)
+        if normalized != service_name:
             logger.info(f"[BATCH] Normalized service name: {service_name} → {normalized}")
-        
+
         executor = self.executors.get(normalized, self.default_executor)
         logger.info(f"[BATCH] get_executor({service_name}): using {normalized} with {executor._max_workers} workers")
         return executor

@@ -1,4 +1,5 @@
 import sys
+import time
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 
@@ -121,9 +122,12 @@ class BatchStatus():
         self.must_continue: bool = False
         self.status_message: Optional[str] = None
         self.phase: str = batch_progress_ui.BatchProgressPhase.LOADING
+        self.start_time: Optional[Any] = None
         self.unique_tasks_completed: int = 0
         self.total_unique_tasks: int = 0
         self.futures_to_cancel: List[Any] = []
+        self._change_notify_min_interval = 0.1
+        self._last_change_notify_time = None
         i = 0
         for note_id in self.note_id_list:
             note_status = NoteStatus(note_id)
@@ -273,9 +277,15 @@ class BatchStatus():
         self.change_listener.batch_start()
 
     def notify_change(self, note_id):
+        now = time.monotonic()
+        if self._last_change_notify_time is not None and (now - self._last_change_notify_time) < self._change_notify_min_interval:
+            return
+        self._last_change_notify_time = now
+
         row = self.note_id_map[note_id]
         completed_count, total_count = self.get_progress_counts()
-        self.change_listener.batch_change(note_id, row, total_count, completed_count, self.start_time, self.anki_utils.get_current_time())
+        start_time = self.start_time if self.start_time is not None else self.anki_utils.get_current_time()
+        self.change_listener.batch_change(note_id, row, total_count, completed_count, start_time, self.anki_utils.get_current_time())
 
     def notify_end(self, completed):
         self.change_listener.batch_end(completed)

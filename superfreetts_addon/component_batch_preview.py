@@ -256,9 +256,11 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_run_mode = 'idle'
         self._apply_chunk_index = 0
         self._apply_undo_id = None
+        self._last_batch_change_time = 0.0
 
         self.table_repaint_timer = TableRepaintTimer(500)
         self.status_label = None
+        self._last_batch_change_time = 0.0
 
     def load_model(self, model):
         self.batch_model = model
@@ -658,6 +660,16 @@ class BatchPreview(component_common.ComponentBase):
             start_time: Batch start time
             current_time: Current time
         """
+        now = time.monotonic()
+        should_throttle = (
+            completed_count != total_count and
+            completed_count % 25 != 0 and
+            (now - self._last_batch_change_time) < 0.2
+        )
+        if should_throttle:
+            return
+        self._last_batch_change_time = now
+
         # Update table row and progress bar separately on main thread
         self.hypertts.anki_utils.run_on_main(lambda: self.batch_preview_table_model.notifyChange(row))
         self.hypertts.anki_utils.run_on_main(lambda: self.update_progress_bar(row, total_count, completed_count, start_time, current_time))
