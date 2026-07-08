@@ -57,7 +57,9 @@ component_batch.py (Qt Dialog)
       │    → miss: ServiceManager → service.get_tts_audio_batch()
       │    → write atomically to audio_file_store
       └─ Phase 4 Saving: write [sound:...] tags to fields, add media via
-           anki_utils, commit all notes in one Anki transaction
+           anki_utils, commit in chunks of APPLY_CHUNK_SIZE notes (chained
+           QueryOp calls, single undo entry spanning all chunks — see
+           AGENTS.md "Undo entries")
 ```
 
 ### 2.2 Editor "Add Audio"

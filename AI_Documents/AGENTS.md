@@ -152,3 +152,13 @@ rtk pip list  rtk pnpm install  rtk npm run <script>
 Chain commands with `rtk` on each segment: `rtk git add . && rtk git commit -m "msg"`.
 Debugging → use raw command, no rtk prefix. `rtk proxy <cmd>` = unfiltered but tracked.
 <!-- /headroom:rtk-instructions -->
+
+## Undo entries (Apply flow)
+
+Any `aqt.mw.col.add_custom_undo_entry(...)` MUST be merged
+(`merge_undo_entries`) on every exit path — success AND failure — before
+the calling method returns. An unmerged entry blocks all other undoable
+collection ops (Batch, Workflow, everything) until Anki restarts. If you
+add a new `.failure(...)` handler to any `QueryOp` between an open undo
+entry and its merge, that handler must merge the entry first. See
+`component_batch_preview.py`, `_apply_chunk_failed`, for the pattern.

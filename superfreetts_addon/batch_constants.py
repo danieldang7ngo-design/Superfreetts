@@ -41,10 +41,6 @@ EDGETTS_MAX_WORKERS: Final[int] = 3
 if _local_override is not None:
     EDGETTS_MAX_WORKERS = int(getattr(_local_override, "EDGETTS_MAX_WORKERS", EDGETTS_MAX_WORKERS))
 
-# Sequence mode can mix services, so keep its nested pool small enough that
-# service-specific caps and memory pressure are not bypassed.
-SEQUENCE_MAX_WORKER_THREADS: Final[int] = 4
-
 # Default number of worker threads (4 = auto-detect CPU cores)
 DEFAULT_BATCH_CONCURRENCY: Final[int] = 4
 

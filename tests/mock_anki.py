@@ -49,6 +49,31 @@ def mock_all():
 
     # Special case: aqt.qt wildcard import support
     # QObject must be a type for subclassing to work
+    
+    # Create a base class that can accept arbitrary __init__ arguments
+    class MockSignal:
+        def emit(self, *args, **kwargs):
+            pass
+        
+        def connect(self, *args, **kwargs):
+            pass
+    
+    class MockQtBase:
+        def __init__(self, *args, **kwargs):
+            self.dataChanged = MockSignal()
+        
+        def beginResetModel(self):
+            pass
+        
+        def endResetModel(self):
+            pass
+        
+        def createIndex(self, row, col):
+            return MagicMock()
+        
+        def columnCount(self, parent):
+            return 0
+    
     qt_classes = [
         'QObject', 'QWidget', 'QDialog', 'QVBoxLayout', 'QHBoxLayout', 'pyqtSignal', 'Qt', 'QApplication',
         'QAbstractTableModel', 'QAbstractListModel', 'QModelIndex', 'QListView', 'QTableView', 'QHeaderView',
@@ -58,7 +83,7 @@ def mock_all():
         if cls in ['pyqtSignal', 'Qt']:
             setattr(sys.modules['aqt.qt'], cls, MagicMock())
         else:
-            setattr(sys.modules['aqt.qt'], cls, type(cls, (object,), {}))
+            setattr(sys.modules['aqt.qt'], cls, type(cls, (MockQtBase,), {}))
     
     # We must set __all__ for from aqt.qt import * to work
     sys.modules['aqt.qt'].__all__ = qt_classes

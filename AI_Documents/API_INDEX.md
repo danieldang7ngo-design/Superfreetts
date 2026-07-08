@@ -12,6 +12,7 @@ Deps: `ConfigStore`, `AudioFileStore`, `RealtimeManager`, `BatchOrchestrator`,
 - `generate_audio_write_file(source_text, voice_id, options, ctx)` — generates + caches one file.
 - `get_audio_file(processed_text, voice_selection, ctx)` — finds/generates audio, handles priority fallback.
 - `process_note_audio(batch, note, add_mode, ctx, ...)` — generates audio + writes field tag for one note.
+- `apply_generated_batch_audio_chunk(generated_results_chunk, batch, batch_status, anki_collection) -> int` — chunked counterpart, does not reset progress counters (caller sets once before first chunk).
 - `play_sound(source_text, voice_id, options)` — generate + play instantly.
 - `cleanup_user_files()` — deletes cached audio past TTL.
 
@@ -48,6 +49,7 @@ Batch pipeline: prepare → dedup → generate → save. Deps: `AnkiUtils`,
 - `prepare_batch_audio_generation(note_ids, batch, batch_status) -> dict`
 - `generate_prepared_batch_audio(prepared_batch, batch_status) -> List[tuple]`
 - `apply_generated_batch_audio(generated_results, batch, batch_status, col)` — writes tags, commits in one transaction.
+- `apply_generated_batch_audio_chunk(generated_results_chunk, batch, batch_status, anki_collection) -> int` — chunked counterpart, does not reset progress counters (caller sets once before first chunk).
 - `_execute_unique_tasks_unified(tasks, dedup_map, batch_status) -> Dict`
 
 ### `AudioGenerator` — `superfreetts_addon/audio_generator.py`
