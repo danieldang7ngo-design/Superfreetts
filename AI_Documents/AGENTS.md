@@ -5,7 +5,13 @@ GoogleTranslate, Windows SAPI, macOS TTS, eSpeak-ng, also 6 dictionary services)
 Forked from HyperTTS, paid services stripped. Anki addon ID: `351217314`.
 Everything here is live user data — careful with git.
 
-Deeper detail: `REFERENCE.md` (architecture, API index, deps, test suite).
+Read `AGENTS.md` first. Reach for `REFERENCE.md` only when:
+- Need architecture diagram / data flow
+- Need vendored deps list
+- Running tests (skip-list, full command)
+- Need file location of a class (API Index or Module Index)
+- Need list of UI components
+Otherwise AGENTS.md covers 90% of tasks.
 
 ## 1. Folder Map
 
