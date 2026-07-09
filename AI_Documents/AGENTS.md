@@ -1,14 +1,11 @@
 # AGENTS.md — SuperFreeTTS
 
-Anki add-on, 100% free TTS engines only (EdgeTTS, Piper, Kokoro, MMS, Supertonic,
-Google Translate, Windows SAPI, macOS TTS, eSpeak-ng). Fork of HyperTTS with
-paid services removed. Repo root = addon install dir at
-`%APPDATA%\Anki2\addons21\351217314`. Everything here is live user data — be
-careful with git.
+Anki add-on, free TTS engines only (EdgeTTS, Piper, Kokoro, MMS, Supertonic,
+GoogleTranslate, Windows SAPI, macOS TTS, eSpeak-ng, also 6 dictionary services).
+Forked from HyperTTS, paid services stripped. Anki addon ID: `111623432`.
+Everything here is live user data — careful with git.
 
-Deeper detail if this file isn't enough: `ARCHITECTURE.md` (system design,
-data flow diagrams), `API_INDEX.md` (class/method reference),
-`_EXTERNAL_LIBRARIES_EXPLAINED.md` (vendored deps in `external/`).
+Deeper detail: `REFERENCE.md` (architecture, API index, deps, test suite).
 
 ## 1. Folder Map
 
@@ -48,7 +45,7 @@ data flow diagrams), `API_INDEX.md` (class/method reference),
    IPs that burst EdgeTTS requests. `MAX_WORKER_THREADS = 20` is a *separate*
    cap, for CPU-bound engines (Piper/Kokoro/MMS) only — fine to use, not EdgeTTS.
    4 code points touch worker logic if you ever change it: `batch_constants.py`,
-   `service_edgetts.py` (runtime clamp at line ~202), `superfreetts.py`,
+    `service_edgetts.py` (runtime clamp at line ~251), `superfreetts.py`,
    `config.json`.
 5. **No blocking calls on the main thread.** Any slow op (network, file write,
    TTS generation) runs in a background thread, never directly in a
@@ -71,11 +68,11 @@ Creates gitignored `_local_override.py`. Don't edit `batch_constants.py` directl
 
 **Tests:**
 ```
-pytest                              # all
-pytest -m unit                      # unit only
-pytest -m integration               # filesystem/thread tests
-pytest tests/test_edgetts_direct.py # one file
+python -m pytest tests/ -v --tb=short       # all (~200, 2s)
+python -m pytest tests/test_batch_flow.py   # single file
 ```
+`rtk pytest` swallows stdout on Windows — use `python -m pytest` directly.
+See `REFERENCE.md §5` for skip-list and details.
 
 **Build the `.ankiaddon`:**
 ```
