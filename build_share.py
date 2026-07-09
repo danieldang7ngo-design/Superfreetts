@@ -47,17 +47,16 @@ EXCLUDE_DIR_NAMES = {
     "user_files",     # mp3 cache, batch state, etc.
     "git-objects-tmp",
     "superfreetts-mirror.git",
+    "test",           # comtypes/test, gtts/tests — irrelevant at runtime
 }
 
-EXCLUDE_FILE_SUFFIXES = (".pyc", ".pyo", ".ankiaddon")
+EXCLUDE_FILE_SUFFIXES = (".pyc", ".pyo", ".ankiaddon", ".so", ".pyd")
 EXCLUDE_FILE_NAMES = {
     "meta.json",                       # Anki regenerates this on install
     "superfreetts-work.index",
-    "EDGE_TTS_WORKER_20_REPORT.md",
     "_local_override.py",
     "build_share.py",
     "set_edge_workers_20.py",
-    "set_edge_workers_3.py",
 }
 
 
@@ -73,6 +72,9 @@ def should_skip_file(path: Path) -> bool:
     if path.name in EXCLUDE_FILE_NAMES:
         return True
     if path.suffix.lower() in EXCLUDE_FILE_SUFFIXES:
+        return True
+    # Skip test files inside vendored libs (comtypes/test, gtts/tests, *_test.py)
+    if path.name.endswith("_test.py") or path.name.startswith("test_"):
         return True
     return False
 

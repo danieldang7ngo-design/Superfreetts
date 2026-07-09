@@ -2,7 +2,7 @@
 
 Anki add-on, free TTS engines only (EdgeTTS, Piper, Kokoro, MMS, Supertonic,
 GoogleTranslate, Windows SAPI, macOS TTS, eSpeak-ng, also 6 dictionary services).
-Forked from HyperTTS, paid services stripped. Anki addon ID: `111623432`.
+Forked from HyperTTS, paid services stripped. Anki addon ID: `351217314`.
 Everything here is live user data — careful with git.
 
 Deeper detail: `REFERENCE.md` (architecture, API index, deps, test suite).
