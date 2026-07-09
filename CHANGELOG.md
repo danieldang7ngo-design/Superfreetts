@@ -1,5 +1,63 @@
 # Changelog
 
+## 26.7.3 - 2026-07-09
+
+### English
+
+- Fixed Kokoro uninstall killing Anki itself (`taskkill /F /IM python.exe /T` replaced with PowerShell path-filtered kill).
+- Fixed semaphore deadlock in SherpaProcessPool (`threading.Semaphore` replaced with `DynamicSemaphore` supporting runtime max adjustment).
+- Fixed silent error suppression: 7 `except: pass` sites in Kokoro manager now log warnings.
+- Fixed bare `except:` in MMS safe_terminate, macOS safe_terminate, and system_utils CPU detection.
+- Added fix plan for remaining 11 issues in `AI_Documents/Plan.md`.
+
+### Tiếng Việt
+
+- Sửa lỗi gỡ Kokoro giết chết Anki (thay `taskkill /F /IM python.exe /T` bằng PowerShell lọc đường dẫn).
+- Sửa lỗi deadlock semaphore trong SherpaProcessPool (thay `threading.Semaphore` bằng `DynamicSemaphore` hỗ trợ điều chỉnh max runtime).
+- Sửa lỗi im lặng nuốt lỗi: 7 chỗ `except: pass` trong Kokoro manager giờ ghi log warning.
+- Sửa `except:` bare trong MMS safe_terminate, macOS safe_terminate và system_utils CPU detection.
+- Thêm kế hoạch sửa cho 11 vấn đề còn lại trong `AI_Documents/Plan.md`.
+
+### 🇰🇷 한국어
+
+- Kokoro 제거 시 Anki 자체를 종료하던 버그 수정 (`taskkill /F /IM python.exe /T`를 PowerShell 경로 필터로 대체).
+- SherpaProcessPool의 세마포어 데드락 수정 (`threading.Semaphore`를 런타임 최대값 조정을 지원하는 `DynamicSemaphore`로 대체).
+- 무음 오류 억제 수정: Kokoro 관리자의 7개 `except: pass` 위치가 이제 경고를 로깅합니다.
+- MMS safe_terminate, macOS safe_terminate 및 system_utils CPU 감지의 bare `except:` 수정.
+- 남은 11개 문제에 대한 수정 계획을 `AI_Documents/Plan.md`에 추가.
+
+### 🇨🇳 简体中文
+
+- 修复了 Kokoro 卸载会杀死 Anki 本身的问题（将 `taskkill /F /IM python.exe /T` 替换为 PowerShell 路径过滤）。
+- 修复了 SherpaProcessPool 中的信号量死锁（将 `threading.Semaphore` 替换为支持运行时最大并发调整的 `DynamicSemaphore`）。
+- 修复了静默错误抑制：Kokoro 管理器中的 7 个 `except: pass` 位置现在记录警告日志。
+- 修复了 MMS safe_terminate、macOS safe_terminate 和 system_utils CPU 检测中的裸 `except:`。
+- 将剩余 11 个问题的修复计划添加到 `AI_Documents/Plan.md`。
+
+### 🇹🇼 繁體中文
+
+- 修復了 Kokoro 解除安裝會殺死 Anki 本身的問題（將 `taskkill /F /IM python.exe /T` 替換為 PowerShell 路徑過濾）。
+- 修復了 SherpaProcessPool 中的信號量死鎖（將 `threading.Semaphore` 替換為支援執行時最大調整的 `DynamicSemaphore`）。
+- 修復了靜默錯誤抑制：Kokoro 管理器中的 7 個 `except: pass` 現在記錄警告日誌。
+- 修復了 MMS safe_terminate、macOS safe_terminate 和 system_utils CPU 檢測中的裸 `except:`。
+- 將剩餘 11 個問題的修復計劃添加到 `AI_Documents/Plan.md`。
+
+### 🇯🇵 日本語
+
+- Kokoro アンインストール時に Anki 自体を強制終了していた問題を修正（`taskkill /F /IM python.exe /T` を PowerShell のパスフィルターに置き換え）。
+- SherpaProcessPool のセマフォデッドロックを修正（`threading.Semaphore` を実行時に最大値を調整できる `DynamicSemaphore` に置き換え）。
+- サイレントエラー抑止を修正：Kokoro マネージャーの 7 箇所の `except: pass` が警告をログ出力するように。
+- MMS safe_terminate、macOS safe_terminate、system_utils CPU 検出の裸の `except:` を修正。
+- 残りの 11 の問題の修正計画を `AI_Documents/Plan.md` に追加。
+
+### 🇸🇪 Svenska
+
+- Fixade att Kokoro-avinstallation dödade Anki själv (`taskkill /F /IM python.exe /T` ersatt med PowerShell-sökvägsfiltrering).
+- Fixade semaforlåsning i SherpaProcessPool (`threading.Semaphore` ersatt med `DynamicSemaphore` som stöder runtime max-justering).
+- Fixade tyst felsuppression: 7 `except: pass`-platser i Kokoro-hanteraren loggar nu varningar.
+- Fixade bar `except:` i MMS safe_terminate, macOS safe_terminate och system_utils CPU-detektering.
+- Lade till fixplan för återstående 11 problem i `AI_Documents/Plan.md`.
+
 ## 26.7.2 - 2026-07-09
 
 ### English
@@ -48,6 +106,76 @@
 - Cập nhật worker mặc định cho engine TTS ngoại tuyến từ 1 lên dựa trên số CPU.
 - Hiển thị tổng số notes trong nhãn progress bar khi generation có dedup.
 - Tạo script helper set_edge_workers_20.py.
+
+### 🇰🇷 한국어
+
+- must_continue=False로 인해 미리보기 페이지당 1개 노트만 표시되던 배치 미리보기 버그 수정.
+- dataChanged 범위가 정확한 페이지 행 대신 확장된 loaded_note_ids를 사용하던 문제 수정.
+- 대화상자 열릴 때 스크롤이 아닌 모든 페이지를 순차적으로 로드하도록 변경.
+- 모든 노트가 로드될 때까지 생성 버튼 비활성화, 설정 변경 시 다시 비활성화.
+- 상태 레이블에 'X/Y 노트 로딩 중' 표시.
+- EdgeTTS TimeoutError를 연결 오류와 분리, 타임아웃이 더 이상 60s 백오프 트리거하지 않음.
+- EdgeTTS 요청 타임아웃 30s→180s로 증가 (베트남어/발음 구별 부호).
+- 재시도 백오프 3s→5s, 연결 백오프 15s→60s 증가, 지터 추가.
+- EdgeTTS 연결 실패 시 즉시 반환 대신 재시도.
+- Anki 백업 대화상자와 주기적 백업 타이머를 억제하는 backup_guard 모듈 추가.
+- 전체 체인 하나의 실행 취소 대신 각 청크 내부로 실행 취소 이동.
+- get_all_fields_from_notes SQL 청크(배치당 500개)로 최적화.
+- 오프라인 TTS 엔진 기본 작업자 1→CPU 수 기반으로 업데이트.
+- 중복 제거 생성 중 진행률 표시줄에 총 노트 수 표시.
+
+### 🇨🇳 简体中文
+
+- 修复了预览期间每页仅显示1条笔记的批量预览错误（must_continue=False导致第一条后中断）。
+- 修复了dataChanged范围使用扩展的loaded_note_ids而非精确页面行的问题。
+- 批量预览在对话框打开时改为顺序加载所有页面，而非滚动时加载。
+- 生成按钮在所有笔记完全加载前保持禁用，设置更改后重新禁用。
+- 状态标签在预览加载期间显示'正在加载 X/Y 条笔记'。
+- 将EdgeTTS TimeoutError与连接错误分离；超时不再触发60秒全局退避。
+- EdgeTTS每次请求超时从30秒增加到180秒（越南语/变音符号文本）。
+- 重试退避从3秒增加到5秒，连接退避从15秒增加到60秒；添加抖动。
+- EdgeTTS连接失败现在会重试而非立即返回。
+- 添加backup_guard模块以抑制Anki的备份对话框和定期备份计时器。
+- 将撤销条目移入每个应用块内，而非整个链使用一个撤销条目。
+- 优化get_all_fields_from_notes为SQL分块查询（每批500条）。
+- 离线TTS引擎的默认工作线程从1更新为基于CPU数量。
+- 在去重生成期间，进度条显示笔记总数。
+
+### 🇹🇼 繁體中文
+
+- 修復了預覽期間每頁僅顯示1條筆記的批量預覽錯誤。
+- 修復了dataChanged範圍使用擴展的loaded_note_ids而非精確頁面行的問題。
+- 批量預覽在對話框開啟時改為順序載入所有頁面，而非滾動時載入。
+- 產生按鈕在所有筆記完全載入前保持禁用，設定變更後重新禁用。
+- 狀態標籤在預覽載入期間顯示'正在載入 X/Y 條筆記'。
+- 將EdgeTTS TimeoutError與連線錯誤分離；逾時不再觸發60秒全域退避。
+- EdgeTTS每次請求逾時從30秒增加到180秒。
+- 新增backup_guard模組以抑制Anki的備份對話框和定期備份計時器。
+- 將復原條目移入每個應用區塊內。
+
+### 🇯🇵 日本語
+
+- プレビュー中に1ページに1ノートしか表示されなかったバッチプレビューのバグを修正。
+- dataChanged範囲が拡張されたloaded_note_idsを使用していた問題を修正。
+- ダイアログを開いたときにスクロールではなく全ページを順次読み込むように変更。
+- すべてのノートが読み込まれるまで生成ボタンを無効にし、設定変更時に再び無効化。
+- ステータスラベルに'X/Y ノートを読み込み中'と表示。
+- EdgeTTS TimeoutErrorを接続エラーから分離。タイムアウトが60秒のグローバルバックオフをトリガーしない。
+- EdgeTTSのリクエストタイムアウトを30秒から180秒に増加。
+- backup_guardモジュールを追加してAnkiのバックアップダイアログと定期バックアップタイマーを抑制。
+- 各適用チャンク内に元に戻すエントリを移動。
+
+### 🇸🇪 Svenska
+
+- Fixade batch-preview som endast visade 1 anteckning per sida under förhandsvisning.
+- Fixade dataChanged-intervall som använde utökade loaded_note_ids istället för exakta sidrader.
+- Batch-preview laddar nu alla sidor sekventiellt när dialogrutan öppnas istället för vid scrollning.
+- Generera-knappen inaktiveras tills alla anteckningar har laddats; återinaktiveras vid inställningsändring.
+- Statusetiketten visar 'Laddar X av Y anteckningar' under förhandsvisning.
+- Separerade EdgeTTS TimeoutError från anslutningsfel; timeout utlöser inte längre 60s global backoff.
+- EdgeTTS timeout per förfrågan ökad från 30s till 180s för vietnamesisk/diakritisk text.
+- Lade till backup_guard-modul för att dämpa Ankis backup-dialog och periodisk backup-timer.
+- Flyttade ångra-post inuti varje appliceringsbit istället för en ångra-post för hela kedjan.
 
 ### English
 

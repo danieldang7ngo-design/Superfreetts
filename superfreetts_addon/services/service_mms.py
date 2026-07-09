@@ -15,13 +15,36 @@ from .. import logging_utils
 
 logger = logging.getLogger(__name__)
 
+class DynamicSemaphore:
+    """Semaphore with dynamic max count. Adjust limit at runtime without leaking permits."""
+    def __init__(self, value=1):
+        self._max = value
+        self._count = 0
+        self._cond = threading.Condition()
+
+    def acquire(self):
+        with self._cond:
+            while self._count >= self._max:
+                self._cond.wait()
+            self._count += 1
+
+    def release(self):
+        with self._cond:
+            self._count -= 1
+            self._cond.notify()
+
+    def set_max(self, new_max):
+        with self._cond:
+            self._max = new_max
+            self._cond.notify_all()
+
 class SherpaProcessPool:
     def __init__(self, name="Shared", max_processes=4):
         self.name = name
         self._max_processes = max_processes
         self._pool = [] # List of (process, current_executable, current_script, last_used_time)
         self._lock = threading.Lock()
-        self._semaphore = threading.Semaphore(max_processes)
+        self._semaphore = DynamicSemaphore(max_processes)
         self._cleanup_timer = None
         self._max_idle_age = 180 # 180s idle timeout as mandated
         self._total_spawned = 0 # Track total processes (active + idle)
@@ -60,7 +83,7 @@ class SherpaProcessPool:
             except subprocess.TimeoutExpired:
                 proc.kill()
                 proc.wait(timeout=1.0)
-        except:
+        except Exception:
             pass
         finally:
             # Guaranteed triple pipe closure
@@ -144,11 +167,7 @@ class SherpaProcessPool:
                 return
             logger.info(f"SherpaPool[{self.name}]: Updating max_processes from {self._max_processes} to {new_max}")
             self._max_processes = new_max
-            # Recreate semaphore with new value
-            # Note: This affects new requests. Existing requests holding the old semaphore 
-            # will still release against the old semaphore logic, but we replace the 
-            # reference for all future get_process() calls.
-            self._semaphore = threading.Semaphore(new_max)
+            self._semaphore.set_max(new_max)
 
     def _start_new(self, executable_path, script_path, debug_enabled=False):
         cwd = os.path.dirname(executable_path)
@@ -198,8 +217,6 @@ class SherpaProcessPool:
                 stderr_sink = open(log_path, "a", encoding='utf-8', buffering=1, errors='replace') # Line-buffered
             except Exception as e:
                 logger.warning(f"SherpaPool[{self.name}]: Failed to create log sink: {e}")
-                stderr_sink = subprocess.DEVNULL
-                logger.warning(f"Failed to initialize file logging for {self.name}: {e}")
                 stderr_sink = subprocess.DEVNULL
 
         # IPC BREAKING BUG FIX: 

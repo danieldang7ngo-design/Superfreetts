@@ -192,7 +192,9 @@ UNDO_ENTRY_NAME = ADDON_NAME + ': Add Audio to Notes'
 UNDO_ENTRY_ADD_TTS_TAG = ADDON_NAME + ': Configure Realtime TTS Tag'
 
 GREEN_COLOR_REGULAR = '#69F0AE'
+GREEN_COLOR_NIGHTMODE = '#4CAF50'
 RED_COLOR_REGULAR = '#FFCDD2'
+RED_COLOR_NIGHTMODE = '#EF5350'
 
 # ── Primary palette (Elegant Monochrome) ──
 # ── Modern Swiss/Slate Design System ──

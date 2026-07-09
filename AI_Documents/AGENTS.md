@@ -58,6 +58,10 @@ Otherwise AGENTS.md covers 90% of tasks.
    button-click handler. Wrap UI actions via `error_manager.get_single_action_context()`.
 6. **New TTS engine must declare `service_fee = constants.ServiceFee.free`.**
    `ServiceManager` skips anything else automatically.
+7. **Every new constant needs a matching attribute in `constants.py`.** When
+   referencing `constants.SOME_NAME`, verify it's defined — or define it.
+   Same for any import: `grep -rn "pprint\."` before using `pprint.pformat`
+   to check the import exists in that file.
 
 ## 3. Common Tasks
 

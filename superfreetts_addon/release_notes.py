@@ -12,6 +12,69 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.7.3",
+        title={
+            "en": "Critical bug fixes: Kokoro uninstall kills Anki, semaphore deadlock, silent error suppression",
+            "vi": "Sửa lỗi nghiêm trọng: gỡ Kokoro giết Anki, deadlock semaphore, nuốt lỗi im lặng",
+            "ko": "심각한 버그 수정: Kokoro 제거 시 Anki 종료, 세마포어 데드락, 무음 오류 억제",
+            "zh-CN": "关键错误修复：Kokoro卸载杀死Anki、信号量死锁、静默错误抑制",
+            "zh-TW": "關鍵錯誤修復：Kokoro解除安裝殺死Anki、信號量死鎖、靜默錯誤抑制",
+            "ja": "重大バグ修正：KokoroアンインストールによるAnki強制終了、セマフォデッドロック、サイレントエラー抑止",
+            "sv": "Kritiska buggfixar: Kokoro-avinstallation dödar Anki, semaforlåsning, tyst felsuppression",
+        },
+        bullets={
+            "en": [
+                "Fixed Kokoro uninstall killing Anki itself (taskkill /F /IM python.exe /T replaced with PowerShell path-filtered kill).",
+                "Fixed semaphore deadlock in SherpaProcessPool (threading.Semaphore replaced with DynamicSemaphore supporting runtime max adjustment).",
+                "Fixed silent error suppression: 7 except: pass sites in Kokoro manager now log warnings.",
+                "Fixed bare except: in MMS safe_terminate, macOS safe_terminate, and system_utils CPU detection.",
+                "Added fix plan for remaining 11 issues in AI_Documents/Plan.md.",
+            ],
+            "vi": [
+                "Sửa lỗi gỡ Kokoro giết chết Anki (thay taskkill /F /IM python.exe /T bằng PowerShell lọc đường dẫn).",
+                "Sửa lỗi deadlock semaphore trong SherpaProcessPool (thay threading.Semaphore bằng DynamicSemaphore hỗ trợ điều chỉnh max runtime).",
+                "Sửa lỗi im lặng nuốt lỗi: 7 chỗ except: pass trong Kokoro manager giờ ghi log warning.",
+                "Sửa except: bare trong MMS safe_terminate, macOS safe_terminate và system_utils CPU detection.",
+                "Thêm kế hoạch sửa cho 11 vấn đề còn lại trong AI_Documents/Plan.md.",
+            ],
+            "ko": [
+                "Kokoro 제거 시 Anki 자체를 종료하던 버그 수정 (taskkill /F /IM python.exe /T를 PowerShell 경로 필터로 대체).",
+                "SherpaProcessPool의 세마포어 데드락 수정 (threading.Semaphore를 런타임 최대값 조정을 지원하는 DynamicSemaphore로 대체).",
+                "무음 오류 억제 수정: Kokoro 관리자의 7개 except: pass 위치가 이제 경고를 로깅합니다.",
+                "MMS safe_terminate, macOS safe_terminate 및 system_utils CPU 감지의 bare except: 수정.",
+                "남은 11개 문제에 대한 수정 계획을 AI_Documents/Plan.md에 추가.",
+            ],
+            "zh-CN": [
+                "修复了 Kokoro 卸载会杀死 Anki 本身的问题（将 taskkill /F /IM python.exe /T 替换为 PowerShell 路径过滤）。",
+                "修复了 SherpaProcessPool 中的信号量死锁（将 threading.Semaphore 替换为支持运行时最大并发调整的 DynamicSemaphore）。",
+                "修复了静默错误抑制：Kokoro 管理器中的 7 个 except: pass 位置现在记录警告日志。",
+                "修复了 MMS safe_terminate、macOS safe_terminate 和 system_utils CPU 检测中的裸 except:。",
+                "将剩余 11 个问题的修复计划添加到 AI_Documents/Plan.md。",
+            ],
+            "zh-TW": [
+                "修復了 Kokoro 解除安裝會殺死 Anki 本身的問題（將 taskkill /F /IM python.exe /T 替換為 PowerShell 路徑過濾）。",
+                "修復了 SherpaProcessPool 中的信號量死鎖（將 threading.Semaphore 替換為支援執行時最大調整的 DynamicSemaphore）。",
+                "修復了靜默錯誤抑制：Kokoro 管理器中的 7 個 except: pass 現在記錄警告日誌。",
+                "修復了 MMS safe_terminate、macOS safe_terminate 和 system_utils CPU 檢測中的裸 except:。",
+                "將剩餘 11 個問題的修復計劃添加到 AI_Documents/Plan.md。",
+            ],
+            "ja": [
+                "Kokoro アンインストール時に Anki 自体を強制終了していた問題を修正（taskkill /F /IM python.exe /T を PowerShell のパスフィルターに置き換え）。",
+                "SherpaProcessPool のセマフォデッドロックを修正（threading.Semaphore を実行時に最大値を調整できる DynamicSemaphore に置き換え）。",
+                "サイレントエラー抑止を修正：Kokoro マネージャーの 7 箇所の except: pass が警告をログ出力するように。",
+                "MMS safe_terminate、macOS safe_terminate、system_utils CPU 検出の裸の except: を修正。",
+                "残りの 11 の問題の修正計画を AI_Documents/Plan.md に追加。",
+            ],
+            "sv": [
+                "Fixade att Kokoro-avinstallation dödade Anki själv (taskkill /F /IM python.exe /T ersatt med PowerShell-sökvägsfiltrering).",
+                "Fixade semaforlåsning i SherpaProcessPool (threading.Semaphore ersatt med DynamicSemaphore som stöder runtime max-justering).",
+                "Fixade tyst felsuppression: 7 except: pass-platser i Kokoro-hanteraren loggar nu varningar.",
+                "Fixade bar except: i MMS safe_terminate, macOS safe_terminate och system_utils CPU-detektering.",
+                "Lade till fixplan för återstående 11 problem i AI_Documents/Plan.md.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.7.2",
         title={
             "en": "Batch preview loading, EdgeTTS timeout separation, and backup guard",

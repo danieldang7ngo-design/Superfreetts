@@ -129,20 +129,22 @@ class KokoroInstallManager(QDialog):
             # 1. Kill active runner processes from our pool
             try:
                 from .services.service_mms import _sherpa_pool
-                script_path = os.path.join(os.path.dirname(__file__), 'services', 'kokoro_runner.py')
-                _sherpa_pool.cleanup_all(_get_python_exe(), script_path)
-            except: pass
+                _sherpa_pool.stop_all()
+            except Exception as e:
+                logger.warning(f"Pool cleanup failed: {e}")
 
-            # 2. Nuclear option: Kill any process running from this directory
-            # This is important on Windows if a process crashed or is dangling
+            # 2. Kill only python processes from KOKORO_ENGINE_DIR, not Anki itself
+            # PowerShell filters by path so Anki's own python.exe survives.
             try:
-                import subprocess
-                # Use taskkill to kill any python processes running from KOKORO_ENGINE_DIR
-                # We filter by path to avoid killing Anki's own python or other extras
                 self.log("Clearing file locks...")
-                subprocess.run(['taskkill', '/F', '/IM', 'python.exe', '/T'], capture_output=True)
-                time.sleep(1) # Wait for OS to release locks
-            except: pass
+                engine_dir = constants.KOKORO_ENGINE_DIR
+                subprocess.run([
+                    'powershell', '-NoProfile', '-Command',
+                    f"Get-Process python -ErrorAction SilentlyContinue | Where-Object {{ $_.Path -like '{engine_dir}*' }} | Stop-Process -Force"
+                ], capture_output=True, timeout=10)
+                time.sleep(1)
+            except Exception as e:
+                logger.warning(f"Targeted process kill failed (non-fatal): {e}")
 
             if os.path.exists(constants.KOKORO_ENGINE_DIR):
                 self.log(f"Wiping directory: {constants.KOKORO_ENGINE_DIR}")
@@ -229,7 +231,8 @@ class KokoroInstallManager(QDialog):
             mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_status_optimizing", self.lang)))
             try:
                 self._optimize_worker_internal()
-            except: pass
+            except Exception as e:
+                logger.warning(f"Optimization failed: {e}")
 
             mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_complete", self.lang)))
             mw.taskman.run_on_main(lambda: self.update_progress(100))
@@ -253,7 +256,7 @@ class KokoroInstallManager(QDialog):
                 p = os.path.join(root, "__pycache__")
                 size_saved += self._get_dir_size(p)
                 try: shutil.rmtree(p, ignore_errors=True)
-                except: pass
+                except Exception as e: logger.warning(f"Failed to remove __pycache__: {e}")
                 count += 1
         # 2. Clear dist-info (DISABLED: Critical for rdflib/onnxruntime)
         # site_packages = os.path.join(KOKORO_ENGINE_DIR, 'Lib', 'site-packages')
@@ -272,7 +275,8 @@ class KokoroInstallManager(QDialog):
         try:
             if hasattr(mw, 'hyper_tts'):
                 debug_mode = mw.hyper_tts.get_preferences().error_handling.debug_mode
-        except: pass
+        except Exception:
+            pass
 
         def on_progress(data):
             percent = data['percent']
@@ -293,7 +297,7 @@ class KokoroInstallManager(QDialog):
         
         # Cleanup zip
         try: os.remove(zip_path)
-        except: pass
+        except OSError as e: logger.warning(f"Failed to remove zip {zip_path}: {e}")
 
     def _configure_python_pth(self):
         # We need to uncomment 'import site' in python3xx._pth to make pip work
@@ -340,7 +344,8 @@ class KokoroInstallManager(QDialog):
             if hasattr(process, 'stdout') and process.stdout:
                 process.stdout.seek(0)
                 stdout_text = process.stdout.read() if hasattr(process.stdout, 'read') else ''
-        except: pass
+        except Exception as e:
+            logger.warning(f"Failed to read stdout: {e}")
         service_logger.write_install_result('kokoro', process.returncode, stdout_text or 'see UI log', stderr_text)
         
         if process.returncode != 0:
