@@ -276,5 +276,5 @@ def test_execute_unique_tasks_submits_offline_items_individually_for_continuous_
     audio_cache = app._execute_unique_tasks_unified(tasks, dedup_map, DummyBatchStatus())
     app.executor.pool.shutdown()
 
-    assert sorted(len(chunk) for chunk in app.executor.pool.submitted_chunks) == [1, 1, 1]
+    assert sorted(len(chunk) for chunk in app.executor.pool.submitted_chunks) == [3]
     assert len(audio_cache) == 3

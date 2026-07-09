@@ -342,24 +342,20 @@ class TestBatchPreviewPresetSwitch:
         # Should fall back to load_page(0)
         mock_load_page.assert_called_with(0)
 
-    def test_table_view_load_visible_pages(self):
-        """invalidate_all() should call _load_visible_pages() when table_view exists."""
+    def test_invalidate_all_loads_all_pages(self):
+        """invalidate_all() should load all pages, not just visible ones."""
         mock_hypertts = make_mock_hypertts()
-        note_ids = [1, 2, 3, 4, 5]
+        note_ids = list(range(1, 251))
         bs = make_batch_status_with_notes(mock_hypertts, note_ids)
         
         table_model = BatchPreviewTableModel(bs, mock_hypertts)
-        
-        # Create a mock table_view
         table_model.table_view = MagicMock()
-        table_model.table_view.viewport.return_value = MagicMock()
-        table_model.table_view.rowAt.side_effect = [0, 2]  # First visible row, last visible row
         
-        with patch.object(table_model, '_load_visible_pages') as mock_load_visible:
+        with patch.object(table_model, 'load_page') as mock_load_page:
             table_model.invalidate_all()
         
-        # Should call _load_visible_pages when table_view is set
-        mock_load_visible.assert_called_once()
+        # Should call load_page for page 0 (first pending page, others chained from _on_page_processed)
+        mock_load_page.assert_called_once_with(0)
 
 
 if __name__ == '__main__':

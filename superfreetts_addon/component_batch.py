@@ -91,7 +91,8 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.voice_selection = component_voiceselection.VoiceSelection(self.hypertts, self.dialog, self.voice_selection_model_updated)
         self.text_processing = component_text_processing.TextProcessing(self.hypertts, self.text_processing_model_updated)
         self.preview = component_batch_preview.BatchPreview(self.hypertts, self.dialog, self.note_id_list, 
-            self.sample_selected, self.apply_notes_batch_start, self.apply_notes_batch_end)
+            self.sample_selected, self.apply_notes_batch_start, self.apply_notes_batch_end,
+            notes_loaded_callback=self._on_all_notes_loaded)
         self.editor_mode = False
         self.show_settings = True
 
@@ -227,6 +228,8 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.apply_button.setText(i18n.get_text("batch_button_apply_to_note", lang))
         else:
             self.apply_button.setText(i18n.get_text("batch_button_generate_audio", lang))
+
+    def _on_all_notes_loaded(self):
         self.apply_button.setEnabled(True)
 
     def get_model(self):
@@ -256,6 +259,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
 
     def model_part_updated_common(self):
         self.preview.load_model(self.batch_model)
+        self.apply_button.setEnabled(False)
         self.model_changed = True
         # are we in editor mode ? if so, set the sample text on the voice component
         if self.note != None:
@@ -553,7 +557,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         else:
             apply_text = i18n.get_text("batch_button_generate_audio", lang)
         self.apply_button.setText(apply_text)
-        self.apply_button.setEnabled(True)
+        self.apply_button.setEnabled(False)
         if self.editor_mode == False:
             gui_utils.configure_pastel_button(self.apply_button, style_name="emerald", is_primary=True, font_size=11)
         hlayout.addWidget(self.apply_button)

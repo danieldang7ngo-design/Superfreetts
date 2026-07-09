@@ -178,6 +178,15 @@ class BatchOrchestrator:
         )
         logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
 
+        # Pre-populate note_status_map so preview shows text even before
+        # individual chunks complete (lazy-load only covers visible pages)
+        for task in tasks:
+            note_id = task['note_id']
+            ns = batch_status.note_status_map.get(note_id)
+            if ns is not None and ns.source_text is None:
+                ns.source_text = task['source_text']
+                ns.processed_text = task['processed_text']
+
         audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
         logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {time.time() - start_time:.2f}s')
 
@@ -571,13 +580,15 @@ class BatchOrchestrator:
             engine_groups[group_key].append((dedup_key, task_data, task_indices))
 
         BATCH_SIZE_BY_ENGINE = {
-            'EdgeTTS': 1,
-            'PiperTTS': 1,
-            'KokoroTTS': 1,
-            'MmsTTS': 1,
-            'Piper': 1,
-            'Kokoro': 1,
-            'MMS': 1,
+            'EdgeTTS': 3,
+            'PiperTTS': 5,
+            'KokoroTTS': 5,
+            'MmsTTS': 5,
+            'Piper': 5,
+            'Kokoro': 5,
+            'MMS': 5,
+            'SupertonicTTS': 5,
+            'Supertonic': 5,
         }
         DEFAULT_BATCH_SIZE = 1
         all_chunks = []
@@ -757,6 +768,17 @@ class BatchOrchestrator:
         if submit_error[0]:
             logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
 
+        # Fill any dedup_keys that were never submitted (submit thread error, cancel, etc.)
+        for dedup_key, task_indices in dedup_map.items():
+            if dedup_key not in audio_cache:
+                audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                completed_count += 1
+                for task_idx in task_indices:
+                    note_id = tasks[task_idx]['note_id']
+                    with batch_status.get_note_action_context(note_id, False) as ctx:
+                        ctx.set_error(Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                    batch_status.notify_change(note_id)
+
         return audio_cache
 
     def _apply_batch_deduplication(self, tasks: List[Dict], dedup_map: Dict, audio_cache: Dict, batch_status: Any) -> List[Tuple]:
@@ -785,20 +807,23 @@ class BatchOrchestrator:
         if note_id_list is None:
             note_id_list = batch_status.note_id_list
         field_maps = self.anki_utils.get_note_field_maps(note_id_list)
-        with batch_status.get_batch_running_action_context():
-            for note_id in note_id_list:
-                with batch_status.get_note_action_context(note_id, True) as note_action_context:
-                    if note_id not in field_maps:
-                        note_action_context.set_error(errors.NoteNotFoundError(note_id))
-                    else:
-                        note_fields = field_maps[note_id]
-                        source_text, processed_text = self.get_source_processed_text(note_fields, batch_source, text_processing)
-                        note_action_context.set_source_text(source_text)
-                        note_action_context.set_processed_text(processed_text)
-                        note_action_context.set_status(constants.BatchNoteStatus.OK)
-                if not batch_status.must_continue:
-                    logger.info('batch_status execution interrupted')
-                    break
+        TERMINAL = (constants.BatchNoteStatus.Generated, constants.BatchNoteStatus.Done, constants.BatchNoteStatus.Error)
+        for note_id in note_id_list:
+            existing = batch_status.note_status_map.get(note_id)
+            if existing is not None and existing.status in TERMINAL:
+                continue
+            with batch_status.get_note_action_context(note_id, True) as note_action_context:
+                if note_id not in field_maps:
+                    note_action_context.set_error(errors.NoteNotFoundError(note_id))
+                else:
+                    note_fields = field_maps[note_id]
+                    source_text, processed_text = self.get_source_processed_text(note_fields, batch_source, text_processing)
+                    note_action_context.set_source_text(source_text)
+                    note_action_context.set_processed_text(processed_text)
+                    note_action_context.set_status(constants.BatchNoteStatus.OK)
+            if not batch_status.must_continue:
+                logger.info('batch_status execution interrupted')
+                break
 
     def get_source_processed_text(self, note: Any, batch_source: Any, text_processing: Any) -> Tuple[str, str]:
         source_text = self.hypertts.get_source_text(note, batch_source, None)

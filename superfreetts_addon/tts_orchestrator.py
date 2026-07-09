@@ -17,12 +17,13 @@ class TTSOrchestrator:
         self.executor = None
 
     def build_engine_config(self, service_config_map: dict) -> dict:
+        cpu_default = max(2, system_utils.get_max_workers())
         defaults = {
-            'PiperTTS': 1,
-            'KokoroTTS': 1,
+            'PiperTTS': cpu_default,
+            'KokoroTTS': cpu_default,
             'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
-            'MmsTTS': 1,
-            'SupertonicTTS': 1,
+            'MmsTTS': cpu_default,
+            'SupertonicTTS': cpu_default,
         }
         service_pool_map = {
             'PiperTTS': 'Piper',

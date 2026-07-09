@@ -228,14 +228,15 @@ class BatchProgressWidget(aqt.qt.QWidget):
         # Update label
         self.current_phase_label.setText(f"Phase: {phase}")
     
-    def update_progress(self, completed: int, total: int, start_time: datetime) -> None:
+    def update_progress(self, completed: int, total: int, start_time: datetime, total_notes: Optional[int] = None) -> None:
         """
         Update progress bar and statistics.
         
         Args:
             completed: Number of completed items
-            total: Total number of items
+            total: Total number of items (unique tasks after dedup)
             start_time: When the batch started
+            total_notes: Total notes in batch (including duplicates)
         """
         self.completed_count = completed
         self.total_count = total
@@ -244,8 +245,10 @@ class BatchProgressWidget(aqt.qt.QWidget):
         # Update progress bar
         if total > 0:
             percentage = int((completed / total) * 100)
-            self.progress_bar.setValue(percentage)
-            self.progress_label.setText(f"{percentage}% ({completed}/{total})")
+            if total_notes is not None and total_notes != total:
+                self.progress_label.setText(f"{percentage}% ({completed}/{total} unique • {total_notes} notes)")
+            else:
+                self.progress_label.setText(f"{percentage}% ({completed}/{total})")
         
         # Update statistics
         if start_time:

@@ -51,8 +51,11 @@ EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS: Final[int] = 5
 # Set high because some engines may take longer for first request or on slow networks.
 TASK_TIMEOUT_SECONDS: Final[int] = 120  # 2 minutes per task
 
-# Per-request timeout for EdgeTTS. This is shorter to fail fast on network issues.
-EDGETTS_TASK_TIMEOUT_SECONDS: Final[int] = 30
+# Per-request timeout for EdgeTTS. Raised to 120s because Vietnamese and other
+# non-English text with diacritics can take significantly longer on Microsoft's
+# server (multi-segment SSML, each with its own WebSocket round-trip).
+# Set back to 30s if you prefer quick failure and rely on the retry mechanism.
+EDGETTS_TASK_TIMEOUT_SECONDS: Final[int] = 180
 
 # Sleep duration after status message update (seconds) to allow user to see the message
 STATUS_MESSAGE_DISPLAY_DELAY_SECONDS: Final[float] = 0.1

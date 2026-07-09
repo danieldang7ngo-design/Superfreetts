@@ -1,6 +1,53 @@
 # Changelog
 
-## 26.7.1 - 2026-07-07
+## 26.7.2 - 2026-07-09
+
+### English
+
+- Fixed batch preview showing only 1 note per page during preview (must_continue=False causing break after first note).
+- Fixed batch preview dataChanged range using widened loaded_note_ids instead of exact page rows, causing cached empty values for unloaded rows.
+- Changed batch preview to load all pages sequentially on dialog open instead of 2-3 visible pages on scroll.
+- Added viewport repaint after each page load to force table UI refresh.
+- Added notes-loaded callback so the Generate button stays disabled until all notes are fully loaded; re-disabled on settings change until reload completes.
+- Updated status label to show "Loading X of Y notes" during preview page loading, then "Loaded X of Y notes" when done.
+- Separated EdgeTTS TimeoutError from connectivity errors; timeouts no longer trigger 60s global connectivity backoff and are retried like other errors.
+- Increased EdgeTTS per-request timeout from 30s to 180s for Vietnamese/diacritic text.
+- Increased EdgeTTS retry backoff from 3s to 5s and connectivity backoff from 15s to 60s.
+- Added retry delay jitter and connectivity-failure-aware retry delay extension to EdgeTTS.
+- Connectivity failures in EdgeTTS no longer return immediately but retry like other errors.
+- Connectivity check no longer double-marks failure on repeated checks.
+- Added `backup_guard` module to suppress Anki's "Creating backup" dialog and periodic backup timer during batch generate/apply phases.
+- Moved undo entry creation inside each apply chunk (instead of one undo entry spanning all chunks), matching `col.update_notes()` read/write pattern.
+- Added `backup_guard.disable_backups()`/`restore_backups()` calls during generate and apply phases.
+- Optimized `get_all_fields_from_notes` to chunk SQL queries (500 per batch) instead of one `get_note_by_id` call per note.
+- Updated default offline TTS engine workers (Piper, Kokoro, etc.) from 1 to CPU-count-based default.
+- Removed `timeout` parameter from executor shutdown calls.
+- Show total note count in progress bar label during deduped generation: "{completed}/{unique} unique • {total} notes".
+- Pre-populate note_status_map during generation for notes missed by lazy loading.
+- Fill missing dedup keys with error when submit thread fails or is cancelled.
+- Created `set_edge_workers_20.py` helper script.
+- Added regression tests for EdgeTTS sequence mode and Vietnamese batch behavior.
+- Enabled debug logging by default for troubleshooting.
+
+### Tiếng Việt
+
+- Sửa lỗi batch preview chỉ hiển thị 1 note mỗi trang trong giai đoạn xem trước.
+- Sửa lỗi dataChanged dùng loaded_note_ids bị mở rộng thay vì hàng chính xác của trang, khiến các hàng chưa tải bị cache giá trị rỗng.
+- Đổi batch preview sang tải tuần tự tất cả các trang khi mở hộp thoại thay vì chỉ tải 2-3 trang khi cuộn.
+- Thêm viewport.update() sau mỗi lần tải trang để buộc refresh bảng.
+- Thêm callback tải xong để nút Generate bị vô hiệu hóa cho đến khi tất cả notes được tải đầy đủ.
+- Cập nhật nhãn trạng thái hiển thị "Đang tải X của Y notes" và "Đã tải X của Y notes".
+- Tách TimeoutError khỏi lỗi kết nối EdgeTTS; timeout không còn kích hoạt backoff 60s toàn cục nữa.
+- Tăng timeout mỗi request EdgeTTS từ 30s lên 180s cho text tiếng Việt có dấu.
+- Tăng retry backoff EdgeTTS từ 3s lên 5s và connectivity backoff từ 15s lên 60s.
+- Thêm jitter cho retry delay và mở rộng retry delay khi có lỗi kết nối.
+- Lỗi kết nối EdgeTTS không còn trả về ngay lập tức mà được retry như các lỗi khác.
+- Thêm module backup_guard để chặn hộp thoại "Creating backup" và timer backup định kỳ.
+- Di chuyển undo entry vào từng chunk apply thay vì một undo entry cho toàn bộ chuỗi apply.
+- Tối ưu get_all_fields_from_notes bằng chunk SQL (500 note mỗi batch).
+- Cập nhật worker mặc định cho engine TTS ngoại tuyến từ 1 lên dựa trên số CPU.
+- Hiển thị tổng số notes trong nhãn progress bar khi generation có dedup.
+- Tạo script helper set_edge_workers_20.py.
 
 ### English
 

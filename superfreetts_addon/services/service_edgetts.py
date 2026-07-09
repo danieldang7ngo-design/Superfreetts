@@ -23,9 +23,9 @@ DEFAULT_MAX_RETRIES = 3
 DEFAULT_INITIAL_DELAY_MIN_MS = 0
 DEFAULT_INITIAL_DELAY_MAX_MS = 250
 DEFAULT_WAVE_START_STAGGER_MS = 150
-DEFAULT_RETRY_BACKOFF_SECONDS = 3
+DEFAULT_RETRY_BACKOFF_SECONDS = 5
 DEFAULT_BATCH_WAVE_SIZE = 1
-DEFAULT_EDGE_CONNECTIVITY_BACKOFF_SECONDS = 15
+DEFAULT_EDGE_CONNECTIVITY_BACKOFF_SECONDS = 60
 
 _request_gate_lock = threading.Lock()
 _request_gate = None
@@ -53,13 +53,12 @@ def _mark_edge_connectivity_failure():
 
 
 def _is_edge_connectivity_available():
-    if _is_recent_connectivity_failure():
-        return False
     try:
         with socket.create_connection(("www.bing.com", 443), timeout=5):
             return True
     except Exception:
-        _mark_edge_connectivity_failure()
+        if not _is_recent_connectivity_failure():
+            _mark_edge_connectivity_failure()
         return False
 
 def run_async_safe(coro):
@@ -125,7 +124,13 @@ class EdgeTTS(service.ServiceBase):
         return rate_str, pitch_str, volume_str
 
     def _is_connectivity_error(self, exception: Exception) -> bool:
-        return isinstance(exception, (aiohttp.ClientConnectionError, asyncio.TimeoutError))
+        if isinstance(exception, (aiohttp.ClientConnectionError,)):
+            return True
+        err = str(exception).lower()
+        return any(x in err for x in ['429', '503', 'too many requests', 'rate limit'])
+
+    def _is_timeout_error(self, exception: Exception) -> bool:
+        return isinstance(exception, asyncio.TimeoutError)
 
     def _is_no_audio_error(self, exception: Exception):
         error_type = type(exception).__name__
@@ -137,6 +142,12 @@ class EdgeTTS(service.ServiceBase):
         )
 
     def _friendly_error_message(self, exception: Exception, text: str, voice_key: str):
+        if self._is_timeout_error(exception):
+            return (
+                "Microsoft Edge TTS request timed out. "
+                "The server took too long to respond for this text. "
+                f"Voice: {voice_key}; text: {text[:120]}"
+            )
         if self._is_connectivity_error(exception):
             return (
                 "Microsoft Edge TTS could not connect to the internet. "
@@ -291,15 +302,19 @@ class EdgeTTS(service.ServiceBase):
 
                         raise errors.RequestError(text, voice, "EdgeTTS returned empty audio")
                     except Exception as e:
-                        if self._is_connectivity_error(e):
+                        is_connectivity = self._is_connectivity_error(e)
+                        is_timeout = not is_connectivity and self._is_timeout_error(e)
+                        if is_connectivity:
                             _mark_edge_connectivity_failure()
-                            friendly_message = self._friendly_error_message(e, text, voice.voice_key)
                             logger.warning(
-                                f"EdgeTTS Batch: Connectivity exception for text '{text[:20]}...': {friendly_message}"
+                                f"EdgeTTS Batch: Connectivity exception for text '{text[:20]}...': {self._friendly_error_message(e, text, voice.voice_key)}"
                             )
-                            return index, None
-                        elif attempt < max_retries:
-                            retry_delay = (attempt + 1) * retry_backoff_seconds
+                        elif is_timeout:
+                            logger.warning(
+                                f"EdgeTTS Batch: Timeout for text '{text[:20]}...': {self._friendly_error_message(e, text, voice.voice_key)}"
+                            )
+                        if attempt < max_retries:
+                            retry_delay = (attempt + 1) * retry_backoff_seconds * random.uniform(0.75, 1.25)
                             if debug_enabled:
                                 logger.debug(
                                     f"EdgeTTS: retrying '{text[:20]}...' in {retry_delay}s after: {e}"
@@ -311,6 +326,9 @@ class EdgeTTS(service.ServiceBase):
                     finally:
                         request_gate.release()
                     if retry_delay is not None:
+                        if _is_recent_connectivity_failure():
+                            remaining = _edge_connectivity_failure_until - time.time()
+                            retry_delay = max(retry_delay, remaining) + random.uniform(0, 0.5)
                         await asyncio.sleep(retry_delay)
                         continue
 

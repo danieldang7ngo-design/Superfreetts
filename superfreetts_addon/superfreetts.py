@@ -410,10 +410,19 @@ class SuperFreeTTS():
 
     def get_all_fields_from_notes(self, note_id_list):
         field_name_set = {}
-        for note_id in note_id_list:
-            note = self.anki_utils.get_note_by_id(note_id)
-            for field in self.get_fields_from_note(note):
-                field_name_set[field] = True
+        CHUNK = 500
+        for i in range(0, len(note_id_list), CHUNK):
+            chunk = note_id_list[i:i + CHUNK]
+            placeholders = ",".join("?" * len(chunk))
+            rows = aqt.mw.col.db.all(
+                f"SELECT DISTINCT mid FROM notes WHERE id IN ({placeholders})",
+                *chunk,
+            )
+            for (mid,) in rows:
+                notetype = aqt.mw.col.models.get(mid)
+                if notetype:
+                    for f in notetype['flds']:
+                        field_name_set[f['name']] = True
         return list(field_name_set.keys())
 
     def get_fields_from_note(self, note):

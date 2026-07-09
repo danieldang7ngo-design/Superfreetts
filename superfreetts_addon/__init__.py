@@ -67,6 +67,7 @@ else:
     # get or create user_uuid
     from . import config_models
     from . import constants
+    from . import backup_guard
 
     def get_configuration_dict() -> dict:
         """
@@ -295,6 +296,7 @@ else:
     def on_profile_did_open():
         setup_data_directory()
         show_startup_popup()
+        backup_guard.check_and_heal_stale_disable()
 
     if not hasattr(sys, "_pytest_mode"):
         # Tránh chồng callback sau Tools → Add-ons → Reload (module mới append thêm, handler cũ vẫn nằm trong list)

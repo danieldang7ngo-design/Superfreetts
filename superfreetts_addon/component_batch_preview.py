@@ -15,6 +15,7 @@ from . import batch_progress_ui
 from . import component_failure_report
 from . import logging_utils
 from . import i18n
+from . import backup_guard
 logger = logging_utils.get_child_logger(__name__)
 
 class TableRepaintTimer():
@@ -37,6 +38,8 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         self.is_loading = False
         self.generation = 0
         self.table_view = None
+        self.on_all_loaded: Optional[Callable] = None
+        self._pending_pages: List[int] = []
     
     def page_count(self):
         return (self.total_notes + self.page_size - 1) // self.page_size
@@ -47,7 +50,6 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         return min(row // self.page_size, max(self.page_count() - 1, 0))
 
     def invalidate_all(self):
-        """Invalidate all cached pages and trigger visible page reload on preset switch."""
         self.generation += 1
         self.loaded_pages = set()
         self.loading_pages = set()
@@ -56,12 +58,19 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         self.total_notes = len(self.batch_status.note_id_list)
         self.beginResetModel()
         self.endResetModel()
-        # Re-load visible pages under new preset
-        if self.table_view is not None:
-            self._load_visible_pages()
-        else:
-            # table_view not yet initialized (dialog just opened), load page 0 only
-            self.load_page(0)
+        # load every page sequentially: each page's completion triggers the next
+        self._load_all_pages()
+
+    def _load_all_pages(self):
+        self._pending_pages = list(range(self.page_count()))
+        self._load_next_pending_page()
+
+    def _load_next_pending_page(self):
+        while self._pending_pages:
+            page = self._pending_pages.pop(0)
+            if page not in self.loaded_pages and page not in self.loading_pages:
+                self.load_page(page)
+                return
 
     def load_page(self, page: int):
         """Load a specific page of notes into the model"""
@@ -79,6 +88,10 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         )
         self.loading_pages.add(page)
         self.is_loading = True
+        # ponytail: must_continue guards cancellation during generation;
+        # during preview it's False by default, so _request_processed_text
+        # would break after one note. Set True for preview page loads.
+        self.batch_status.must_continue = True
         self._request_processed_text(new_note_ids, page, self.generation)
 
     def _get_headers(self):
@@ -133,24 +146,19 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
             return
         self.loading_pages.discard(page)
         self.loaded_pages.add(page)
+        self._load_next_pending_page()
         self.is_loading = len(self.loading_pages) > 0
-        # emit data changed for rows corresponding to the loaded page
-        try:
-            if len(self.loaded_note_ids) > 0:
-                first_note = self.loaded_note_ids[0]
-                last_note = self.loaded_note_ids[-1]
-                first_row = self.batch_status.note_id_map.get(first_note, 0)
-                last_row = self.batch_status.note_id_map.get(last_note, first_row)
-                last_col = max(0, self.columnCount(None) - 1)
-                self.dataChanged.emit(self.createIndex(first_row, 0), self.createIndex(last_row, last_col))
-            else:
-                # fallback: refresh whole table
-                last_col = max(0, self.columnCount(None) - 1)
-                self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
-        except Exception:
-            # ensure UI doesn't crash on update
-            last_col = max(0, self.columnCount(None) - 1)
-            self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(max(0, self.total_notes - 1), last_col))
+        if not self.is_loading and len(self.loaded_pages) >= self.page_count() and self.on_all_loaded:
+            self.on_all_loaded()
+        # emit data changed for rows corresponding to the loaded page only
+        # (must use `page * page_size`, not loaded_note_ids, because
+        # _load_next_pending_page already widened loaded_note_ids)
+        start_row = page * self.page_size
+        end_row = min(start_row + self.page_size, self.total_notes) - 1
+        last_col = max(0, self.columnCount(None) - 1)
+        self.dataChanged.emit(self.createIndex(start_row, 0), self.createIndex(end_row, last_col))
+        if self.table_view is not None:
+            self.table_view.viewport().update()
     
     def _on_page_failed(self, error, page: int, generation: int):
         # Discard stale error from previous preset generation
@@ -158,6 +166,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
             self.loading_pages.discard(page)
             return
         self.loading_pages.discard(page)
+        self._load_next_pending_page()
         self.is_loading = len(self.loading_pages) > 0
         logger.error(f"Failed to process page {page}: {error}")
 
@@ -221,7 +230,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
         return aqt.qt.QVariant()
 
 class BatchPreview(component_common.ComponentBase):
-    def __init__(self, hypertts: Any, dialog: Any, note_id_list: List[int], sample_selection_fn: Callable, batch_start_fn: Callable, batch_end_fn: Callable) -> None:
+    def __init__(self, hypertts: Any, dialog: Any, note_id_list: List[int], sample_selection_fn: Callable, batch_start_fn: Callable, batch_end_fn: Callable, notes_loaded_callback: Optional[Callable] = None) -> None:
         """
         Initialize batch preview component.
         
@@ -243,6 +252,7 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_status = batch_status.BatchStatus(hypertts.anki_utils, note_id_list, self)
         self.batch_preview_table_model = BatchPreviewTableModel(self.batch_status, hypertts)
         self.table_view = None
+        self._notes_loaded_callback = notes_loaded_callback
         # create certain widgets right away
         self.stack = aqt.qt.QStackedWidget()
 
@@ -255,7 +265,6 @@ class BatchPreview(component_common.ComponentBase):
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
         self._apply_chunk_index = 0
-        self._apply_undo_id = None
         self._last_batch_change_time = 0.0
 
         self.table_repaint_timer = TableRepaintTimer(500)
@@ -272,12 +281,14 @@ class BatchPreview(component_common.ComponentBase):
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
         self._apply_chunk_index = 0
-        self._apply_undo_id = None
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
         if hasattr(self.batch_preview_table_model, 'table_view') and self.table_view is not None:
             self.batch_preview_table_model.table_view = self.table_view
+        self.batch_preview_table_model.on_all_loaded = self._on_all_notes_loaded
         self.batch_preview_table_model.invalidate_all()
+        if not self.batch_preview_table_model.is_loading and len(self.batch_preview_table_model.loaded_pages) >= self.batch_preview_table_model.page_count():
+            self._on_all_notes_loaded()
         self._update_status_label()
 
     def update_batch_status_task(self):
@@ -388,9 +399,21 @@ class BatchPreview(component_common.ComponentBase):
         if not self.batch_preview_table_model.is_loading and self.batch_preview_table_model.has_more_pages():
             self.batch_preview_table_model.load_next_page()
 
+    def _on_all_notes_loaded(self):
+        if self._notes_loaded_callback:
+            cb = self._notes_loaded_callback
+            self._notes_loaded_callback = None
+            cb()
+
     def _update_status_label(self):
         if self.status_label:
-            self.status_label.setText(f"Showing {len(self.batch_preview_table_model.loaded_note_ids)} of {self.batch_preview_table_model.total_notes} notes")
+            loaded = len(self.batch_preview_table_model.loaded_note_ids)
+            total = self.batch_preview_table_model.total_notes
+            is_loading = total > 0 and (self.batch_preview_table_model.is_loading or loaded < total)
+            if is_loading:
+                self.status_label.setText(f"Loading {loaded} of {total} notes")
+            else:
+                self.status_label.setText(f"Loaded {loaded} of {total} notes")
 
     def show_not_running_stack(self):
         self.stack.setCurrentIndex(0)
@@ -440,6 +463,7 @@ class BatchPreview(component_common.ComponentBase):
         return self.batch_run_mode == 'applying'
 
     def generate_audio_to_cache(self):
+        backup_guard.disable_backups()
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
         self.generated_batch_results = None
@@ -466,20 +490,19 @@ class BatchPreview(component_common.ComponentBase):
     def apply_generated_audio_to_notes(self):
         if not self.has_pending_generated_audio():
             return
+        backup_guard.disable_backups()
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
         self.batch_run_mode = 'applying'
-        try:
-            self._apply_undo_id = aqt.mw.col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
-        except Exception as e:
-            logger.error(f'failed to open undo entry for chunked apply: {e}')
-            self.apply_to_notes_batch_started = False
-            self.batch_run_mode = 'idle'
-            raise
         self.batch_status.begin()
         self.batch_status.total_unique_tasks = len(self.generated_batch_results)
         self.batch_status.unique_tasks_completed = 0
         self._apply_chunk_index = 0
+        self._run_next_apply_chunk()
+
+    def _chunk_success(self, result):
+        elapsed = time.monotonic() - getattr(self, '_chunk_start_time', time.monotonic())
+        logger.info(f'CHUNK_DONE: index={self._apply_chunk_index-1} elapsed={elapsed:.3f}s notes_written={result}')
         self._run_next_apply_chunk()
 
     def _run_next_apply_chunk(self):
@@ -488,42 +511,37 @@ class BatchPreview(component_common.ComponentBase):
         chunk = self.generated_batch_results[start:end]
 
         if not chunk or not self.batch_status.must_continue:
+            logger.info(f'CHUNK: index={self._apply_chunk_index} chunk_empty={not chunk} must_continue={self.batch_status.must_continue} → _finish_apply_chain')
             self._finish_apply_chain()
             return
 
         self._apply_chunk_index += 1
+        logger.info(f'CHUNK: launching chunk index={self._apply_chunk_index-1} start={start} end={end} chunk_len={len(chunk)}')
+        self._chunk_start_time = time.monotonic()
+
+        def chunk_op(col, chunk=chunk):
+            undo_id = col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
+            try:
+                return self.hypertts.apply_generated_batch_audio_chunk(
+                    chunk, self.generated_batch_model, self.batch_status, col
+                )
+            finally:
+                try:
+                    col.merge_undo_entries(undo_id)
+                except Exception as e:
+                    logger.warning(f'exception merging undo entries in chunk: {e}')
 
         aqt.operations.QueryOp(
             parent=self.dialog,
-            op=lambda col, c=chunk: self.hypertts.apply_generated_batch_audio_chunk(
-                c, self.generated_batch_model, self.batch_status, col
-            ),
-            success=lambda result: self._run_next_apply_chunk(),
+            op=chunk_op,
+            success=lambda result: self._chunk_success(result),
         ).failure(self._apply_chunk_failed).run_in_background()
 
     def _apply_chunk_failed(self, exception):
-        """
-        Failure handler for a single chunk in the chunked Apply chain.
-
-        Unlike the plain self.batch_operation_failed handler (which is also
-        used by the Generate step, where no undo entry is open), this
-        handler MUST merge the undo entry opened in
-        apply_generated_audio_to_notes before doing anything else. If this
-        step is skipped, the undo entry is left open on the collection,
-        which blocks every other undoable operation in Anki (including
-        Workflow mode's own Apply/Generate) until Anki is restarted.
-        """
-        try:
-            aqt.mw.col.merge_undo_entries(self._apply_undo_id)
-        except Exception as e:
-            logger.warning(f'exception merging undo entries after failed chunk: {e}')
+        logger.info(f'CHUNK_FAILED: index={getattr(self, "_apply_chunk_index", -1)-1} exception={exception}')
         self.batch_operation_failed(exception)
 
     def _finish_apply_chain(self):
-        try:
-            aqt.mw.col.merge_undo_entries(self._apply_undo_id)
-        except Exception as e:
-            logger.warning(f'exception merging undo entries after chunked apply: {e}')
         self.finished_apply_audio_fn(None)
 
     def stop_button_pressed(self):
@@ -557,9 +575,12 @@ class BatchPreview(component_common.ComponentBase):
                 self.batch_status.end(False)
         except Exception as e:
             self.batch_operation_failed(e)
+            return
+        backup_guard.restore_backups()
 
     def finished_apply_audio_fn(self, result):
-        logger.debug(f'finished_apply_audio_fn, result: {result}')
+        logger.info(f'finished_apply_audio_fn called, result={result}')
+        backup_guard.restore_backups()
         self.generated_batch_results = None
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
@@ -591,7 +612,8 @@ class BatchPreview(component_common.ComponentBase):
         self.failed_note_ids_to_tag = []
 
     def batch_operation_failed(self, exception):
-        logger.error(f'batch operation failed: {exception}')
+        logger.info(f'BATCH_OP_FAILED: exception={exception}')
+        backup_guard.restore_backups()
         self.batch_run_mode = 'idle'
         self.prepared_batch_audio = None
         self.generated_batch_results = None
@@ -627,9 +649,9 @@ class BatchPreview(component_common.ComponentBase):
             self.batch_end_fn(completed)
         self.apply_to_notes_batch_started = False
 
-    def update_progress_bar(self, row: int, total_count: int, completed_count: int, start_time: timedelta, current_time: timedelta) -> None:
+    def update_progress_bar(self, row: int, total_count: int, completed_count: int, start_time: timedelta, current_time: timedelta, total_notes: Optional[int] = None) -> None:
         """Single path for progress updates."""
-        self._update_enhanced_progress(completed_count, total_count, start_time, current_time)
+        self._update_enhanced_progress(completed_count, total_count, start_time, current_time, total_notes=total_notes)
 
 
     def table_viewport_repaint_refresh_timer(self):
@@ -671,20 +693,21 @@ class BatchPreview(component_common.ComponentBase):
         self._last_batch_change_time = now
 
         # Update table row and progress bar separately on main thread
+        total_notes = len(self.note_id_list)
         self.hypertts.anki_utils.run_on_main(lambda: self.batch_preview_table_model.notifyChange(row))
-        self.hypertts.anki_utils.run_on_main(lambda: self.update_progress_bar(row, total_count, completed_count, start_time, current_time))
+        self.hypertts.anki_utils.run_on_main(lambda: self.update_progress_bar(row, total_count, completed_count, start_time, current_time, total_notes=total_notes))
         self.hypertts.anki_utils.run_on_main(lambda: self.table_viewport_repaint_refresh_timer())
         if row == self.selected_row:
             self.hypertts.anki_utils.run_on_main(self.update_error_label_for_selected)
             self.hypertts.anki_utils.run_on_main(self.report_sample_text)
     
-    def _update_enhanced_progress(self, completed_count: int, total_count: int, start_time: timedelta, current_time: timedelta) -> None:
+    def _update_enhanced_progress(self, completed_count: int, total_count: int, start_time: timedelta, current_time: timedelta, total_notes: Optional[int] = None) -> None:
         """Update the enhanced progress widget with current statistics."""
         if hasattr(self, 'enhanced_progress_widget'):
             try:
                 # Convert timedelta to datetime for the widget
                 start_datetime = datetime.now() - (current_time - start_time)
-                self.enhanced_progress_widget.update_progress(completed_count, total_count, start_datetime)
+                self.enhanced_progress_widget.update_progress(completed_count, total_count, start_datetime, total_notes=total_notes)
                 self.enhanced_progress_widget.set_phase(self.batch_status.phase)
                 self.enhanced_progress_widget.set_status_text(self.batch_status.status_message)
             except Exception as e:

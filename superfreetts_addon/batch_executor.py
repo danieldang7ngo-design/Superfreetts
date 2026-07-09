@@ -367,10 +367,10 @@ class UnifiedBatchExecutor:
         cache_key = f"{processed_text}_{voice_id}"
         self.cache.put(cache_key, (source_text, audio_filename, full_filename))
     
-    def shutdown(self, wait: bool = True, timeout: int = 5):
+    def shutdown(self, wait: bool = True):
         """Shutdown thread pool"""
         try:
-            self.executor.shutdown(wait=wait, timeout=timeout)
+            self.executor.shutdown(wait=wait)
         except Exception as e:
             logger.warning(f"[BATCH] Executor shutdown error: {e}")
     
@@ -413,12 +413,14 @@ class MultiEngineExecutor:
             engine_config: Dict mapping engine name → worker count
             cache_size_mb: Unified cache size in MB
         """
+        from . import system_utils
+        cpu_default = max(2, system_utils.get_max_workers())
         self.engine_config = engine_config or {
-            'Piper': 1,
-            'Kokoro': 1,
+            'Piper': cpu_default,
+            'Kokoro': cpu_default,
             'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
-            'Supertonic': 1,
-            'default': 1
+            'Supertonic': cpu_default,
+            'default': cpu_default
         }
         
         # Create executors per engine
@@ -624,16 +626,16 @@ class MultiEngineExecutor:
         cache_key = f"{processed_text}_{voice_id}"
         self.cache.put(cache_key, (source_text, audio_filename, full_filename))
     
-    def shutdown(self, wait: bool = True, timeout: int = 5):
+    def shutdown(self, wait: bool = True):
         """Shutdown all executors"""
         for service, executor in self.executors.items():
             try:
-                executor.shutdown(wait=wait, timeout=timeout)
+                executor.shutdown(wait=wait)
             except Exception as e:
                 logger.warning(f"[BATCH] {service} executor shutdown error: {e}")
         
         try:
-            self.default_executor.shutdown(wait=wait, timeout=timeout)
+            self.default_executor.shutdown(wait=wait)
         except Exception as e:
             logger.warning(f"[BATCH] Default executor shutdown error: {e}")
     
