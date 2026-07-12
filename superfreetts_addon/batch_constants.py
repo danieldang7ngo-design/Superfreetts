@@ -1,11 +1,15 @@
 # Batch Processing Configuration Constants
 # This module centralizes all magic numbers and configuration values used in batch processing
 
+import logging
 from typing import Final
+
+logger = logging.getLogger(__name__)
 
 try:
     from . import _local_override
-except Exception:
+except Exception as e:
+    logger.debug(f"No _local_override or failed to load: {e}")
     _local_override = None
 
 # ============================================================================

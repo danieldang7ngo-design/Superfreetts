@@ -126,7 +126,8 @@ class KokoroTTS(service.ServiceBase):
 
                 process = _kokoro_pool.get_process(engine_path, script_path, debug_enabled=True)
                 _kokoro_pool.release_process(process, engine_path, script_path)
-        except: pass
+        except Exception as e:
+                logger.warning(f"Kokoro warmup failed: {e}")
 
     @property
     def name(self):
@@ -220,7 +221,8 @@ class KokoroTTS(service.ServiceBase):
                     'Voice': voice.voice_key,
                     'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
                 })
-            except: pass
+            except Exception as e:
+                logger.warning(f"Debug logging setup failed: {e}")
 
         for attempt in [1, 2]:
             try:

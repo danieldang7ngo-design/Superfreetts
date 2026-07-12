@@ -1,14 +1,13 @@
 """
 runner_base.py — Shared IPC boilerplate for subprocess runner scripts.
 
-Provides: setup_stdio(), log(), write_response(), read_request().
+Provides: setup_stdio(), log(), write_response().
 
 Each runner script (kokoro_runner, piper_runner, sherpa_runner_v2,
 supertonic_runner) imports from here instead of re-defining identical
 boilerplate.  Only unique logic (model loading, TTS call) stays per-runner.
 """
 
-import json
 import os
 import sys
 import time
@@ -50,14 +49,3 @@ def write_response(response: str) -> bool:
         log(f"stdout closed while writing response: {exc}")
         return False
 
-
-def read_request():
-    """Blocking read of one JSON line from stdin.
-
-    Returns parsed dict, or None if EOF / empty line.
-    Raises json.JSONDecodeError on malformed input (caller handles).
-    """
-    line = sys.stdin.readline()
-    if not line:
-        return None
-    return json.loads(line)

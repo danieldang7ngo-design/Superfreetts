@@ -63,23 +63,27 @@ class BatchOrchestrator:
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
         lang = self.hypertts.get_ui_language()
 
-        self._set_batch_status_with_ui_refresh(
-            batch_status,
-            i18n.get_text("status_loading_voices", lang),
-            batch_progress_ui.BatchProgressPhase.LOADING,
-        )
-        logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
-        pre_load_start = time.time()
-        try:
-            _ = self.service_manager.full_voice_list()
-            pre_load_time = time.time() - pre_load_start
-            logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
-        except Exception as e:
-            logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
+        LARGE_BATCH_THRESHOLD = 1000
+        if len(note_id_list) >= LARGE_BATCH_THRESHOLD:
+            self._set_batch_status_with_ui_refresh(
+                batch_status,
+                i18n.get_text("status_loading_voices", lang),
+                batch_progress_ui.BatchProgressPhase.LOADING,
+            )
+            logger.info(f'[BATCH] Pre-loading voice list ({len(note_id_list)} notes >= {LARGE_BATCH_THRESHOLD})...')
+            pre_load_start = time.time()
+            try:
+                _ = self.service_manager.full_voice_list()
+                pre_load_time = time.time() - pre_load_start
+                logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
+            except Exception as e:
+                logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
+        else:
+            logger.info(f'[BATCH] Skipping voice pre-load ({len(note_id_list)} notes < threshold {LARGE_BATCH_THRESHOLD})')
 
         self._set_batch_status_with_ui_refresh(
             batch_status,
-            i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
+            f"Loaded 0 of {len(note_id_list)}",
             batch_progress_ui.BatchProgressPhase.PREPARING,
         )
         logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
@@ -87,9 +91,14 @@ class BatchOrchestrator:
 
         field_maps = self.anki_utils.get_note_field_maps(note_id_list)
 
+        total_notes = len(note_id_list)
+        loaded = 0
         for note_id in note_id_list:
             if not batch_status.must_continue:
                 break
+
+            loaded += 1
+            batch_status.set_status_message(f"Loaded {loaded} of {total_notes}")
 
             if note_id not in field_maps:
                 with batch_status.get_note_action_context(note_id, False) as note_action_context:
@@ -133,6 +142,9 @@ class BatchOrchestrator:
 
         extract_time = time.time() - extract_start
         logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
+
+        if total_notes > 0:
+            batch_status.set_status_message(f"Loaded {total_notes} of {total_notes}")
 
         self._set_batch_status_with_ui_refresh(
             batch_status,
@@ -335,19 +347,23 @@ class BatchOrchestrator:
         with batch_status.get_batch_running_action_context():
             try:
                 lang = self.hypertts.get_ui_language()
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_loading_voices", lang),
-                    batch_progress_ui.BatchProgressPhase.LOADING,
-                )
-                logger.info(f'[BATCH] Pre-loading voice list for faster audio generation...')
-                pre_load_start = time.time()
-                try:
-                    _ = self.service_manager.full_voice_list()
-                    pre_load_time = time.time() - pre_load_start
-                    logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
-                except Exception as e:
-                    logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
+                LARGE_BATCH_THRESHOLD = 1000
+                if len(note_id_list) >= LARGE_BATCH_THRESHOLD:
+                    self._set_batch_status_with_ui_refresh(
+                        batch_status,
+                        i18n.get_text("status_loading_voices", lang),
+                        batch_progress_ui.BatchProgressPhase.LOADING,
+                    )
+                    logger.info(f'[BATCH] Pre-loading voice list ({len(note_id_list)} notes >= {LARGE_BATCH_THRESHOLD})...')
+                    pre_load_start = time.time()
+                    try:
+                        _ = self.service_manager.full_voice_list()
+                        pre_load_time = time.time() - pre_load_start
+                        logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
+                    except Exception as e:
+                        logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
+                else:
+                    logger.info(f'[BATCH] Skipping voice pre-load ({len(note_id_list)} notes < threshold {LARGE_BATCH_THRESHOLD})')
 
                 self._set_batch_status_with_ui_refresh(
                     batch_status,
@@ -703,8 +719,8 @@ class BatchOrchestrator:
                         for pending_future, chunk in pending:
                             try:
                                 pending_future.cancel()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.error(f"Failed to cancel pending future during stall: {e}")
                             # mark each task in chunk as failed due to stall
                             for dedup_key, task_data, task_indices in chunk:
                                 audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))

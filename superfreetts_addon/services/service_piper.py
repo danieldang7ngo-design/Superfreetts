@@ -291,7 +291,8 @@ class PiperTTS(service.ServiceBase):
                     'Voice': voice.voice_key,
                     'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
                 })
-            except: pass
+            except Exception as e:
+                logger.warning(f"Debug logging setup failed: {e}")
 
         if not models_path:
             raise errors.RequestError(source_text, voice, "No Piper models directory found. Please set 'Piper Models Directory' in configuration or run Setup Piper.")

@@ -156,10 +156,10 @@ def generate_single(piper_exe, data, global_threads=1):
         except subprocess.TimeoutExpired:
             try:
                 process.kill()
-            except: pass
+            except Exception: pass
             try:
                 process.wait(timeout=1)
-            except: pass
+            except Exception: pass
             tb = traceback.format_exc()
             log(f"Piper timeout: {tb}")
             return {"status": "error", "message": "piper.exe timed out after 30s", "traceback": tb}
@@ -181,7 +181,7 @@ def generate_single(piper_exe, data, global_threads=1):
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                     sample_rate = config.get('audio', {}).get('sample_rate', 22050)
-        except: pass
+        except Exception: pass
 
         wav_data = pcm_to_wav(stdout, sample_rate=sample_rate)
         audio_b64 = base64.b64encode(wav_data).decode('utf-8')

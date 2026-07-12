@@ -1,10 +1,13 @@
 import sys
 import abc
 import dataclasses
+import logging
+
+logger = logging.getLogger(__name__)
 try:
     import databind
 except Exception:
-    # Minimal fallback shim so static checks and simple serializations won't crash
+    logger.debug("databind not available, using fallback shim")
     import json as _json
 
     class _DataBindShim:
@@ -186,10 +189,6 @@ class TtsVoice_v3:
                     f"service={self.service!r}, gender={self.gender!r}, audio_languages={self.audio_languages!r}, "
                     f"service_fee={self.service_fee!r}, voice_id={self.voice_id!r})")
 
-# only used for testing
-def serialize_voice_v3(voice: TtsVoice_v3) -> str:
-    return databind.json.dump(voice, TtsVoice_v3)
-
 def serialize_voice_id_v3(voice_id: TtsVoiceId_v3) -> str:
     return databind.json.dump(voice_id, TtsVoiceId_v3)
 
@@ -203,7 +202,7 @@ def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_
             if isinstance(parsed, dict) or isinstance(parsed, str):
                 voice_id = parsed
         except Exception:
-            pass
+            logger.debug(f"Failed to parse voice_id: {voice_id}")
     if isinstance(voice_id, dict):
         vk = voice_id.get('voice_key')
         if isinstance(vk, dict):

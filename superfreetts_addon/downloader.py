@@ -60,27 +60,26 @@ class TurboDownloader:
                     if resp.status != 206 and self.concurrency > 1:
                         self.log_debug(f"Warning: Server returned {resp.status} instead of 206 for chunk.")
                     
-                    # Handle WinError 32: Process cannot access file
                     f = None
                     file_retries = 5
                     while file_retries > 0:
                         try:
                             f = open(part_file, 'wb')
                             break
-                        except PermissionError as e: # Catch WinError 32
+                        except PermissionError as e:
                             if e.errno == 13 or (hasattr(e, 'winerror') and e.winerror == 32):
                                 self.log_debug(f"File lock detected on {part_file}, retrying in 1s...")
                                 time.sleep(1)
                                 file_retries -= 1
                             else:
                                 raise
-                    
+
                     if not f:
                         raise Exception(f"Could not open part file {part_file} after retries")
 
                     try:
                         while not self._stop_event.is_set():
-                            chunk = resp.read(1024 * 64) # Balanced buffer
+                            chunk = resp.read(1024 * 64)
                             if not chunk:
                                 break
                             f.write(chunk)
@@ -90,10 +89,10 @@ class TurboDownloader:
                                 now = time.time()
                                 while self.last_bytes and now - self.last_bytes[0][0] > 2.0:
                                     self.last_bytes.pop(0)
-                        
+
                         if not self._stop_event.is_set():
                             self._report_progress()
-                            return # Success
+                            return
                     finally:
                         f.close()
                         
@@ -181,7 +180,7 @@ class TurboDownloader:
         finally:
             if os.path.exists(temp_merged):
                 try: os.remove(temp_merged)
-                except: pass
+                except Exception: pass
         self._cleanup_parts()
 
     def _cleanup_parts(self):

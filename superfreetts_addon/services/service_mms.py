@@ -90,7 +90,7 @@ class SherpaProcessPool:
             for pipe in [proc.stdin, proc.stdout, proc.stderr]:
                 if pipe:
                     try: pipe.close()
-                    except: pass
+                    except Exception: pass
             proc.is_healthy = False
 
     def get_process(self, executable_path, script_path, debug_enabled=False):
@@ -157,7 +157,7 @@ class SherpaProcessPool:
                 try:
                     proc.stdin.close()
                     proc.terminate()
-                except: pass
+                except Exception: pass
             self._pool = []
             self._total_spawned = 0
 
@@ -247,7 +247,7 @@ class SherpaProcessPool:
                         pass
             finally:
                 try: p.stderr.close()
-                except: pass
+                except Exception: pass
 
         if not debug_enabled:
             threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
@@ -256,7 +256,7 @@ class SherpaProcessPool:
         if debug_enabled and hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
             try:
                 stderr_sink.close()
-            except:
+            except Exception:
                 pass
 
         return proc
@@ -396,7 +396,8 @@ class MmsTTS(service.ServiceBase):
                     'Voice': voice.voice_key,
                     'Text': f'"{source_text[:50]}..." ({len(source_text)} chars)'
                 })
-            except: pass
+            except Exception as e:
+                logger.warning(f"Debug logging failed: {e}")
 
         if voice.voice_key == "mms_none": return None
         
@@ -485,7 +486,7 @@ class MmsTTS(service.ServiceBase):
         finally:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
-                except: pass
+                except Exception: pass
 
     def get_tts_audio_batch(self, source_texts: typing.List[str], voice: voice.TtsVoice_v3, options: dict) -> typing.List[typing.Optional[bytes]]:
         if not source_texts:
@@ -570,7 +571,8 @@ class MmsTTS(service.ServiceBase):
                     for t_path in temp_paths:
                         try:
                             if os.path.exists(t_path): os.remove(t_path)
-                        except: pass
+                        except Exception:
+                            pass
                         
                     return results
                             

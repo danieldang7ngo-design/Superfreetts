@@ -118,8 +118,8 @@ class PiperDownloadWorker(QObject):
         try:
             if hasattr(mw, 'hyper_tts'):
                 debug_mode = mw.hyper_tts.get_preferences().error_handling.debug_mode
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to check debug mode: {e}")
 
         def on_progress(data):
             percent = data['percent']

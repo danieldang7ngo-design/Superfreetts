@@ -68,33 +68,8 @@ class NonAliasedImage(aqt.qt.QWidget):
         painter.setRenderHint(aqt.qt.QPainter.RenderHint.Antialiasing)
         painter.drawPixmap(self.rect(), self._pixmap)
 
-def set_bold_font(label):
-    font = label.font()
-    font.setBold(True)
-    label.setFont(font)
-
 def get_graphic(graphic_name):
     return NonAliasedImage(aqt.qt.QPixmap(get_graphics_path(graphic_name)))
-
-def get_header_label(text):
-    header = aqt.qt.QLabel()
-    header.setText(text)
-    font = aqt.qt.QFont()
-    font.setBold(True)
-    font.setWeight(75)  
-    font.setPointSize(20)
-    header.setFont(font)
-    return header
-
-def get_medium_label(text):
-    label = aqt.qt.QLabel()
-    label.setText(text)
-    font = aqt.qt.QFont()
-    label_font_size = 12
-    font.setBold(True)
-    font.setPointSize(label_font_size)
-    label.setFont(font)
-    return label
 
 def get_service_header_label(text):
     header = aqt.qt.QLabel(text)
@@ -104,20 +79,6 @@ def get_service_header_label(text):
     header.setFont(font)
     return header
 
-def get_small_cta_label(text):
-    label = aqt.qt.QLabel()
-    label.setText(text)
-    font = aqt.qt.QFont()
-    label_font_size = 8
-    font.setItalic(True)
-    font.setPointSize(label_font_size)
-    label.setFont(font)
-    return label
-
-def get_large_button_font():
-    font2 = aqt.qt.QFont()
-    font2.setPointSize(14)
-    return font2        
 
 def get_large_checkbox_font():
     font2 = aqt.qt.QFont()
@@ -199,26 +160,6 @@ def configure_pastel_button(button, style_name="emerald", min_height=34, min_wid
     button.style().polish(button)
 
 
-def get_vocab_ai_url(url_path, utm_campaign, distinct_id=None):
-    """Generate a vocab.ai URL with UTM parameters
-    
-    Args:
-        url_path: Path after the domain (e.g., 'tips/hypertts-adding-audio')
-        utm_campaign: Campaign name for UTM tracking
-        distinct_id: Optional distinct ID for tracking
-    
-    Returns:
-        Complete URL with UTM parameters
-    """
-    base_url = f"https://www.vocab.ai/{url_path}"
-    utm_params = "utm_source=superfreetts&utm_medium=addon"
-    utm_params += f"&utm_campaign={utm_campaign}"
-    
-    if distinct_id is not None:
-        utm_params += f"&distinct_id={distinct_id}"
-    
-    return f"{base_url}?{utm_params}"
-
 def get_status_badge(text, bg_color=None, text_color=None):
     """Return a compact rounded QLabel suitable for 'Free', 'Recommended', etc."""
     label = aqt.qt.QLabel(text)
@@ -262,21 +203,6 @@ def get_superfreetts_label_header(superfreetts_pro_enabled, variant='adaptive'):
     hlayout.addStretch()
     return hlayout
 
-
-def get_superfreetts_label_sidebar_compact(max_logo_width=120):
-    """Return a compact logo row sized for narrow sidebars."""
-    hlayout = aqt.qt.QHBoxLayout()
-    hlayout.setContentsMargins(0, 0, 0, 0)
-    hlayout.setSpacing(4)
-
-    pixmap = aqt.qt.QPixmap(get_graphics_path(constants.GRAPHICS_LITE_BANNER))
-    if max_logo_width and pixmap.width() > max_logo_width:
-        pixmap = pixmap.scaledToWidth(max_logo_width, aqt.qt.Qt.TransformationMode.SmoothTransformation)
-
-    logo_widget = NonAliasedImage(pixmap)
-    hlayout.addWidget(logo_widget)
-    hlayout.addStretch()
-    return hlayout
 
 def is_night_mode() -> bool:
     """Helper to check if Anki is currently in night mode."""

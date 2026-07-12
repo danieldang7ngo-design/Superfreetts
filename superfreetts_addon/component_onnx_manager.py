@@ -252,7 +252,8 @@ class OnnxManagerComponent:
             try:
                 with open(meta_path, 'w', encoding='utf-8') as f:
                     json.dump({"name": name, "category": cat, "repo": repo_id}, f, indent=4)
-            except: pass
+            except Exception as e:
+                logger.warning(f"Failed to write model meta: {e}")
                 
             return True, "Xong"
 

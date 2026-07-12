@@ -654,13 +654,6 @@ def get_batch_executor(max_workers: int = 1) -> UnifiedBatchExecutor:
     return _executor
 
 
-def reset_batch_executor():
-    """Reset global executor"""
-    global _executor
-    if _executor:
-        _executor.shutdown()
-        _executor = None
-
 
 # Multi-engine executor singleton
 _multi_executor: Optional[MultiEngineExecutor] = None

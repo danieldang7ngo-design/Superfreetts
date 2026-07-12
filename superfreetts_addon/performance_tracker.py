@@ -215,22 +215,3 @@ def get_performance_tracker() -> PerformanceTracker:
     """Get the global performance tracker instance"""
     return _global_tracker
 
-
-def track_generation(text: str, voice_name: str) -> PerformanceTracker:
-    """
-    Context manager for tracking audio generation.
-    
-    Usage:
-        with track_generation('hello', 'en-US-AriaNeural') as tracker:
-            # generate audio
-            pass
-    """
-    class GenerationContext:
-        def __enter__(self):
-            _global_tracker.start_generation(text, voice_name)
-            return _global_tracker
-        
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            _global_tracker.end_generation()
-    
-    return GenerationContext()

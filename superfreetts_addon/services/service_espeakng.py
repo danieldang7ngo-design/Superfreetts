@@ -25,7 +25,6 @@ AUDIO_LANGUAGE_OVERRIDE_MAP = {
     'en-gb-x-gbcwmd': languages.AudioLanguage.en_GB,
     'en-gb-x-rp': languages.AudioLanguage.en_GB,
     'en-029': languages.AudioLanguage.en_CB,
-    'en-029': languages.AudioLanguage.en_CB,
     'es-419': languages.AudioLanguage.es_LA,
     'fr-be': languages.AudioLanguage.fr_BE,
     'fr-ch': languages.AudioLanguage.fr_CH,
@@ -156,12 +155,9 @@ class ESpeakNg(service.ServiceBase):
             if os.path.exists(wav_temp_file_name):
                 os.remove(wav_temp_file_name)
 
-        # read final mp3 file
-        f = open(mp3_temp_file_name, 'rb')
-        content = f.read()
-        f.close()        
+        with open(mp3_temp_file_name, 'rb') as f:
+            content = f.read()
 
-        # remove temporary mp3 file
         os.remove(mp3_temp_file_name)
 
         return content

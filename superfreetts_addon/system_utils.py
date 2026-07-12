@@ -19,7 +19,7 @@ def get_cpu_threads():
         ideal = max(1, count - 1)
         # Cap at 8 to prevent excessive overhead
         return min(ideal, 8)
-    except:
+    except Exception:
         return 1
 
 def get_max_workers():
@@ -36,7 +36,7 @@ def get_total_cpu_count():
     """Returns the total number of logical processors."""
     try:
         return multiprocessing.cpu_count()
-    except:
+    except Exception:
         return 4 # Safety fallback
 
 def is_amd_gpu_detected():

@@ -346,13 +346,9 @@ class Windows(service.ServiceBase):
         logger.debug(f'converting from {full_path_wav} to {full_path_mp3}')
         aqt.sound._encode_mp3(full_path_wav, full_path_mp3)
 
-        # read filename contents
-        f = open(full_path_mp3, 'rb')
-        content = f.read()
-        f.close()
+        with open(full_path_mp3, 'rb') as f:
+            content = f.read()
 
-        # remove temporary files
-        # note: the conversion process seems to have removed the original wav file
         os.remove(full_path_mp3)
 
         return content

@@ -249,7 +249,6 @@ def init(hypertts):
                         hypertts,
                         browser.selectedNotes(),
                         workflow_id=workflow_id,
-                        autorun=True,
                     )
             return launch
 

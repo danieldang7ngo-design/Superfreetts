@@ -187,6 +187,3 @@ class PiperSetupDialog(QDialog):
         dlg = component_piper_manager.PiperManagerDialog(self, constants.PIPER_MODELS_DIR)
         dlg.exec()
 
-def show_piper_setup(parent=None):
-    dlg = PiperSetupDialog(parent)
-    dlg.exec()

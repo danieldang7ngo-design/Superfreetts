@@ -12,6 +12,69 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.7.4",
+        title={
+            "en": "Batch mode optimization for small runs, refactored service management, and UI improvements",
+            "vi": "Tối ưu hóa chế độ lô nhỏ, tái cấu trúc quản lý dịch vụ và cải thiện giao diện",
+            "ko": "소규모 배치 모드 최적화, 서비스 관리 리팩토링 및 UI 개선",
+            "zh-CN": "小批量模式优化、服务管理重构及界面改进",
+            "zh-TW": "小批次模式優化、服務管理重構及介面改進",
+            "ja": "小規模バッチの最適化、サービス管理のリファクタリング、UI改善",
+            "sv": "Optimerat batchläge för små körningar, refaktorerad tjänstehantering och UI-förbättringar",
+        },
+        bullets={
+            "en": [
+                "Optimized batch mode: Skip upfront voice pre-loading for batches under 1,000 notes, speeding up batch startup for small sets.",
+                "Refactored service management: Merged service management component and removed legacy service component and unused code files.",
+                "Voice selection preview: Automatically update sample text in voice selection widget when batch configuration or selected voice changes.",
+                "Improved code quality: Cleaned up bare except blocks and unused functions across all service drivers for better reliability.",
+                "Workflow UI adjustments: Removed unused autorun mode and improved button state handling in workflow dialog.",
+            ],
+            "vi": [
+                "Tối ưu hóa chế độ lô (batch): Bỏ qua việc tải trước danh sách giọng nói cho các lô dưới 1.000 ghi chú, giúp tăng tốc độ bắt đầu cho lô nhỏ.",
+                "Tái cấu trúc quản lý dịch vụ: Hợp nhất giao diện quản lý dịch vụ, loại bỏ thành phần cũ và các tệp mã nguồn không sử dụng.",
+                "Xem trước lựa chọn giọng nói: Tự động cập nhật văn bản mẫu trong cửa sổ chọn giọng khi cấu hình lô hoặc giọng nói thay đổi.",
+                "Cải thiện chất lượng mã: Dọn dẹp các khối ngoại lệ không rõ ràng (bare except) và các hàm không dùng đến trong các trình điều khiển dịch vụ.",
+                "Điều chỉnh giao diện quy trình làm việc (workflow): Loại bỏ chế độ tự động chạy (autorun) không sử dụng và cải thiện trạng thái nút bấm.",
+            ],
+            "ko": [
+                "배치 모드 최적화: 1,000개 미만의 배치에 대해 음성 목록 사전 로드를 건너뛰어 소규모 배치의 시작 속도를 향상했습니다.",
+                "서비스 관리 리팩토링: 서비스 관리 컴포넌트를 병합하고 기존 레거시 컴포넌트와 미사용 코드 파일을 제거했습니다.",
+                "음성 선택 미리보기: 배치 구성 또는 선택한 음성이 변경될 때 음성 선택 위젯의 샘플 텍스트를 자동으로 업데이트합니다.",
+                "코드 품질 개선: 안정성 향상을 위해 모든 서비스 드라이버에서 불완전한 예외 처리(bare except)와 미사용 함수를 정리했습니다.",
+                "워크플로 UI 조정: 미사용 자동 실행(autorun) 모드를 제거하고 버튼 상태 처리를 개선했습니다.",
+            ],
+            "zh-CN": [
+                "优化批量模式：针对 1,000 条以下的批量操作跳过前置语音预加载，加快小批量的启动速度。",
+                "重构服务管理：合并服务管理组件，移除旧版服务组件及未使用的代码文件。",
+                "语音选择预览：当批量配置或所选语音发生变化时，自动更新语音选择控件中的示例文本。",
+                "改善代码质量：清理所有服务驱动程序中不规范的异常捕获（bare except）和未使用函数，提升稳定性。",
+                "工作流界面调整：移除未使用的工作流自动运行（autorun）模式，优化按钮状态处理。",
+            ],
+            "zh-TW": [
+                "優化批次模式：針對 1,000 條以下的批次操作跳過前置語音預載，加快小批次的啟動速度。",
+                "重構服務管理：合併服務管理元件，移除舊版服務元件及未使用的程式碼檔案。",
+                "語音選擇預覽：當批次設定或所選語音發生變化時，自動更新語音選擇控制項中的範例文字。",
+                "改善程式碼品質：清理所有服務驅動程式中不規範的異常擷取（bare except）和未使用函式，提升穩定性。",
+                "工作流介面調整：移除未使用的工作流自動執行（autorun）模式，優化按鈕狀態處理。",
+            ],
+            "ja": [
+                "バッチモードの最適化：1,000件未満のバッチ処理において音声リストの事前ロードをスキップし、小規模バッチの起動を高速化。",
+                "サービス管理のリファクタリング：サービス管理コンポーネントを統合し、レガシーコンポーネントおよび未使用のコードファイルを削除。",
+                "音声選択プレビュー：バッチ設定や選択音声の変更時に、音声選択ウィジェットのサンプルテキストを自動更新。",
+                "コード品質の向上：安定性向上のため、すべてのサービスドライバーで裸の例外処理（bare except）および未使用の関数をクリーンアップ。",
+                "ワークフローUIの調整：未使用の自動実行（autorun）モードの削除と、ボタンの状態制御の改善。",
+            ],
+            "sv": [
+                "Optimerat batchläge: Hoppa över förhandsladdning av röstlista för batcher under 1 000 anteckningar, vilket snabvar upp batchstart för små set.",
+                "Refaktorerat tjänstehantering: Slog samman gränssnittet för tjänstehantering och tog bort föråldrade komponenter samt oanvända filer.",
+                "Förhandsvisning av röstval: Uppdatera automatiskt exempeltext i röstvalswidgeten när batchkonfiguration eller vald röst ändras.",
+                "Förbättrad kodkvalitet: Rensade upp osäkra undantagsblock (bare except) och oanvända funktioner i alla tjänstedrivrutiner för bättre stabilitet.",
+                "Arbetsflödesjusteringar: Tog bort oanvänt autokörningsläge (autorun) och förbättrade knappstatusar i arbetsflödesdialogen.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.7.3",
         title={
             "en": "Critical bug fixes: Kokoro uninstall kills Anki, semaphore deadlock, silent error suppression",

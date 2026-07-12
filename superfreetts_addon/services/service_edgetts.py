@@ -370,7 +370,8 @@ class EdgeTTS(service.ServiceBase):
                         'Count': f'{success_count}/{len(source_texts)}',
                         'Duration': f'{duration:.2f}s'
                     })
-                except: pass
+                except Exception as e:
+                    logger.warning(f"Debug logging failed: {e}")
             
             return results
         except Exception as e:

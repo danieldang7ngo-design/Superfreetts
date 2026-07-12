@@ -371,19 +371,3 @@ class ResourceManager:
         logger.info("[RESOURCE] Resource manager reset")
 
 
-# Global singleton instance
-_resource_manager = None
-
-def get_resource_manager(max_ram_mb: int = 3000, max_cores: int = 8) -> ResourceManager:
-    """Get or create global resource manager"""
-    global _resource_manager
-    if _resource_manager is None:
-        _resource_manager = ResourceManager(max_ram_mb, max_cores)
-    return _resource_manager
-
-def reset_resource_manager():
-    """Reset global resource manager"""
-    global _resource_manager
-    if _resource_manager:
-        _resource_manager.reset()
-        _resource_manager = None

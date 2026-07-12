@@ -84,15 +84,6 @@ class StatsGlobal:
     def init_load(self):
         pass
 
-def event_global(event):
-    pass
-
-def send_event(context, event, event_mode, event_properties):
-    pass
-
-def send_event_bg(context, event, event_mode, event_properties):
-    pass
-
 class StatsEvent:
     def __init__(self, context, event, event_mode):
         pass
@@ -110,8 +101,3 @@ class StatsContext:
     def send_event(self, event, event_mode = None, properties = {}):
         pass
 
-def feature_flag_enabled(flag_key: str):
-    return False
-
-def feature_flag_value(flag_key: str) -> str:
-    return 'control'

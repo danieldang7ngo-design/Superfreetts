@@ -548,7 +548,7 @@ class MacOS(service.ServiceBase):
             with open(mp3_temp_audio_path, 'rb') as audio_file:
                 audio = audio_file.read()
                 return audio
-        except:
+        except Exception:
             logger.exception(f'could not generate audio with service {self.name}')
             raise
         finally:

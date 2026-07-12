@@ -65,13 +65,8 @@ class ConfigStore:
 
     def _write(self) -> None:
         """Persist current config to Anki."""
-        # Sanitize enums before writing to avoid json serialization errors
-        try:
-            safe_config = _sanitize_for_json(self.config)
-            self.anki_utils.write_config(safe_config)
-        except Exception:
-            # Fallback: attempt to write raw config (will raise in upper layer)
-            self.anki_utils.write_config(self.config)
+        safe_config = _sanitize_for_json(self.config)
+        self.anki_utils.write_config(safe_config)
 
     # ------------------------------------------------------------------
     # Migration

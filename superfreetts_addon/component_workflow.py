@@ -22,7 +22,6 @@ class WorkflowDialog(aqt.qt.QDialog):
         hypertts: Any,
         note_id_list: List[int],
         workflow_id: Optional[str] = None,
-        autorun: bool = False,
     ) -> None:
         super(aqt.qt.QDialog, self).__init__()
         self.hypertts = hypertts
@@ -38,7 +37,6 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.model_changed = False
         self.last_saved_workflow_id = None
         self.combobox_suspend_events = False
-        self.autorun = autorun
         self.workflow_failure_records: List[batch_status.FailureRecord] = []
         self.failed_note_ids_to_tag: List[int] = []
         self.pending_generated_audio = {}
@@ -57,9 +55,6 @@ class WorkflowDialog(aqt.qt.QDialog):
 
         if workflow_id != None:
             self.load_workflow(workflow_id)
-
-        if self.autorun:
-            aqt.qt.QTimer.singleShot(0, self.run_workflow_button_pressed)
 
     def _text(self, key: str, **kwargs: Any) -> str:
         text = i18n.get_text(key, self.hypertts.get_ui_language())
@@ -279,6 +274,10 @@ class WorkflowDialog(aqt.qt.QDialog):
             item.setData(aqt.qt.Qt.ItemDataRole.UserRole, preset_id)
             self.workflow_list.addItem(item)
         self.model_changed = False
+        self._on_all_notes_loaded()
+
+    def _on_all_notes_loaded(self) -> None:
+        # enable action buttons now that notes are loaded
         self.refresh_button_states()
 
     def new_workflow(self, workflow_name: Optional[str] = None) -> None:
@@ -863,10 +862,9 @@ def create_workflow_dialog_browser(
     hypertts: Any,
     note_id_list: List[int],
     workflow_id: Optional[str] = None,
-    autorun: bool = False,
 ) -> None:
     if len(note_id_list) == 0:
         raise errors.NoNotesSelected()
 
-    dialog = WorkflowDialog(hypertts, note_id_list, workflow_id=workflow_id, autorun=autorun)
+    dialog = WorkflowDialog(hypertts, note_id_list, workflow_id=workflow_id)
     hypertts.anki_utils.wait_for_dialog_input(dialog, constants.DIALOG_ID_WORKFLOW)
