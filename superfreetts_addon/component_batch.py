@@ -248,7 +248,6 @@ class ComponentBatch(component_common.ConfigComponentBase):
     def voice_selection_model_updated(self, model):
         logger.info('voice_selection_model_updated')
         self.batch_model.set_voice_selection(model)
-        self.apply_button.setEnabled(False)
         self.model_changed = True
         self.update_save_profile_button_state()
         if self.note != None and self.batch_model.source != None and self.batch_model.text_processing != None:
@@ -257,6 +256,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
                 self.voice_selection.sample_text_selected(processed_text)
             except Exception as e:
                 logger.warning(f'could not set sample text: {e}')
+
 
     def text_processing_model_updated(self, model):
         logger.info('text_processing_model_updated')

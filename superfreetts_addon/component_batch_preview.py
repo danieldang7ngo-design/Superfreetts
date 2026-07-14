@@ -401,9 +401,7 @@ class BatchPreview(component_common.ComponentBase):
 
     def _on_all_notes_loaded(self):
         if self._notes_loaded_callback:
-            cb = self._notes_loaded_callback
-            self._notes_loaded_callback = None
-            cb()
+            self._notes_loaded_callback()
 
     def _update_status_label(self):
         if self.status_label:
