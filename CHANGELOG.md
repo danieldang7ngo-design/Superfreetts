@@ -1,5 +1,49 @@
 # Changelog
 
+## 26.7.5 - 2026-07-23
+
+### English
+
+- macOS RAM & Crash Fixes: Implemented RAM-aware concurrency limits for neural process pools (Piper, Kokoro, MMS, Supertonic), 20s timeout for realtime audio playback, EdgeTTS background event loop reuse, and semaphore gating for macOS `say` subprocesses.
+- Platform Guards: Added fail-fast checks on macOS/Linux for Windows-only Python embeddable installers (Kokoro/MMS) with user-friendly warning dialogs.
+- Unsaved Preset Audio Preview: Enabled instant audio preview using current in-memory UI selections without requiring a saved preset name or pre-configured mapping rules.
+
+### Tiếng Việt
+
+- Khắc phục lỗi RAM & Crash trên macOS: Giới hạn số tiến trình đồng thời theo RAM khả dụng (Piper, Kokoro, MMS, Supertonic), bổ sung timeout 20s cho realtime playback, tái sử dụng event loop EdgeTTS và giới hạn subprocess `say`.
+- Cảnh báo nền tảng: Bổ sung guard phát hiện hệ điều hành, thông báo rõ ràng trên macOS/Linux khi cố cài đặt engine Windows-only (Kokoro/MMS).
+- Nghe thử chưa cần lưu: Hỗ trợ nghe thử âm thanh trực tiếp từ các tuỳ chọn đang chọn trên UI ngay cả khi chưa lưu Preset hoặc chưa có Mapping Rules.
+
+### 🇰🇷 한국어
+
+- macOS RAM 및 크래시 수정: 신경망 프로세스 풀에 RAM 인지 동시성 제한 구현, 실시간 재생 제한 시간(20초) 설정, EdgeTTS 백그라운드 이벤트 루프 재사용 및 macOS `say` 서브프로세스 제한 적용.
+- 플랫폼 가드: macOS/Linux에서 Windows 전용 Python 설치 프로그램(Kokoro/MMS) 다운로드를 방지하고 명확한 경고 대화상자 표시.
+- 미저장 프리셋 미리보기: 저장된 프리셋 이름이나 기존 매핑 규칙 없이도 현재 UI 설정으로 즉시 오디오 미리보기 지원.
+
+### 🇨🇳 简体中文
+
+- 修复 macOS 内存过载与崩溃：为神经引擎进程池增加内存感知并发限制，设置实时播放超时（20秒），复用 EdgeTTS 后台事件循环，并限制 macOS `say` 子进程并发。
+- 平台保护：在 macOS/Linux 上阻止下载 Windows 专用 Python 安装程序（Kokoro/MMS），并弹出清晰警告。
+- 未保存预设预览：支持直接根据当前 UI 选项进行实时音频预览，无需事先保存预设名称或配置映射规则。
+
+### 🇹🇼 繁體中文
+
+- 修復 macOS 記憶體過載與崩潰：為神經引擎處理程序池增加記憶體感知並發限制，設定即時播放超時（20秒），複用 EdgeTTS 後台事件循環，並限制 macOS `say` 子處理程序並發。
+- 平台保護：在 macOS/Linux 上阻止下載 Windows 專用 Python 安裝程式（Kokoro/MMS），並彈出清晰警告。
+- 未儲存預設預覽：支援直接根據當前 UI 選項進行即時音訊預覽，無需事先儲存預設名稱或設定對應規則。
+
+### 🇯🇵 日本語
+
+- macOSのメモリ過負荷とクラッシュの修正：ニューラルエンジンのプロセスプールにメモリ認識並行制限を導入、リアルタイム再生タイムアウト（20秒）を設定、EdgeTTSバックグラウンドイベントループを再利用、macOS `say`サブプロセスの並行数を制限。
+- プラットフォームガード：macOS/LinuxでWindows専用のPythonインストーラー（Kokoro/MMS）のダウンロードをブロックし、明確な警告を表示。
+- 未保存プリセットのプレビュー：保存されたプリセット名やマッピングルールがなくても、現在のUI設定で即座に音声プレビューが可能に。
+
+### 🇸🇪 Svenska
+
+- macOS-minnes- och stabilitetsfixar: Implementerade minnesmedvetna konkurrensbegränsningar för neurala processpooler, tidsgräns för realtidsuppspelning (20s), återanvändning av EdgeTTS händelseslinga och semaforspärr för macOS `say`-underprocesser.
+- Plattformsspärrar: Förhindrade nedladdning av Windows-exklusiva Python-installerare (Kokoro/MMS) på macOS/Linux med tydliga varningsdialoger.
+- Förhandsgranskning av osparade förinställningar: Aktiverade omedelbar förhandsgranskning av ljud med aktuella UI-inställningar utan krav på sparad förinställning eller befintliga regler.
+
 ## 26.7.4 - 2026-07-12
 
 ### English

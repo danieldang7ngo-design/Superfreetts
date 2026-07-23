@@ -12,7 +12,57 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.7.5",
+        title={
+            "en": "macOS RAM and stability fixes, unsaved preset audio preview support",
+            "vi": "Khắc phục lỗi RAM và crash trên macOS, hỗ trợ nghe thử âm thanh khi chưa lưu preset",
+            "ko": "macOS RAM 및 안정성 수정, 미저장 프리셋 오디오 미리보기 지원",
+            "zh-CN": "macOS 内存与稳定性修复，支持未保存预设的音频预览",
+            "zh-TW": "macOS 記憶體與穩定性修復，支援未儲存預設的音訊預覽",
+            "ja": "macOSのメモリおよび安定性の修正、未保存プリセットの音声プレビュー対応",
+            "sv": "macOS-minnes- och stabilitetsfixar, stöd för förhandsgranskning av osparade förinställningar",
+        },
+        bullets={
+            "en": [
+                "Fixed macOS RAM overload & crashes: Implemented RAM-aware concurrency limits for neural process pools, bounded realtime playback timeout (20s), reused EdgeTTS background event loop, and added semaphore gating for macOS `say` subprocesses.",
+                "Platform guards: Prevented Windows-only Python installers (Kokoro/MMS) from downloading on macOS/Linux with clear warning dialogs.",
+                "Unsaved preset preview: Enabled instant audio preview using current in-memory UI options without requiring a saved preset name or existing mapping rules.",
+            ],
+            "vi": [
+                "Sửa lỗi tràn RAM & crash trên macOS: Giới hạn số tiến trình đồng thời theo dung lượng RAM khả dụng (Piper, Kokoro, MMS, Supertonic), thêm timeout 20s cho realtime playback, tái sử dụng event loop EdgeTTS và giới hạn subprocess `say`.",
+                "Cảnh báo nền tảng: Bổ sung guard phát hiện hệ điều hành, thông báo rõ ràng trên macOS/Linux khi cố cài đặt engine Windows-only (Kokoro/MMS).",
+                "Nghe thử chưa cần lưu: Hỗ trợ nghe thử âm thanh trực tiếp từ các tuỳ chọn đang chọn trên UI ngay cả khi chưa lưu Preset hoặc chưa có Mapping Rules.",
+            ],
+            "ko": [
+                "macOS RAM 과부하 및 크래시 수정: 신경망 프로세스 풀에 RAM 인지 동시성 제한 구현, 실시간 재생 제한 시간(20초) 설정, EdgeTTS 백그라운드 이벤트 루프 재사용 및 macOS `say` 서브프로세스 제한 적용.",
+                "플랫폼 가드: macOS/Linux에서 Windows 전용 Python 설치 프로그램(Kokoro/MMS) 다운로드를 방지하고 명확한 경고 대화상자 표시.",
+                "미저장 프리셋 미리보기: 저장된 프리셋 이름이나 기존 매핑 규칙 없이도 현재 UI 설정으로 즉시 오디오 미리보기 지원.",
+            ],
+            "zh-CN": [
+                "修复 macOS 内存过载与崩溃：为神经引擎进程池增加内存感知并发限制，设置实时播放超时（20秒），复用 EdgeTTS 后台事件循环，并限制 macOS `say` 子进程并发。",
+                "平台保护：在 macOS/Linux 上阻止下载 Windows 专用 Python 安装程序（Kokoro/MMS），并弹出清晰警告。",
+                "未保存预设预览：支持直接根据当前 UI 选项进行实时音频预览，无需事先保存预设名称或配置映射规则。",
+            ],
+            "zh-TW": [
+                "修復 macOS 記憶體過載與崩潰：為神經引擎處理程序池增加記憶體感知並發限制，設定即時播放超時（20秒），複用 EdgeTTS 後台事件循環，並限制 macOS `say` 子處理程序並發。",
+                "平台保護：在 macOS/Linux 上阻止下載 Windows 專用 Python 安裝程式（Kokoro/MMS），並彈出清晰警告。",
+                "未儲存預設預覽：支援直接根據當前 UI 選項進行即時音訊預覽，無需事先儲存預設名稱或設定對應規則。",
+            ],
+            "ja": [
+                "macOSのメモリ過負荷とクラッシュの修正：ニューラルエンジンのプロセスプールにメモリ認識並行制限を導入、リアルタイム再生タイムアウト（20秒）を設定、EdgeTTSバックグラウンドイベントループを再利用、macOS `say`サブプロセスの並行数を制限。",
+                "プラットフォームガード：macOS/LinuxでWindows専用のPythonインストーラー（Kokoro/MMS）のダウンロードをブロックし、明確な警告を表示。",
+                "未保存プリセットのプレビュー：保存されたプリセット名やマッピングルールがなくても、現在のUI設定で即座に音声プレビューが可能に。",
+            ],
+            "sv": [
+                "Fixat macOS-minnesöverbelastning och krascher: Implementerade minnesmedvetna konkurrensbegränsningar för neurala processpooler, tidsgräns för realtidsuppspelning (20s), återanvändning av EdgeTTS händelseslinga och semaforspärr för macOS `say`-underprocesser.",
+                "Plattformsspärrar: Förhindrade nedladdning av Windows-exklusiva Python-installerare (Kokoro/MMS) på macOS/Linux med tydliga varningsdialoger.",
+                "Förhandsgranskning av osparade förinställningar: Aktiverade omedelbar förhandsgranskning av ljud med aktuella UI-inställningar utan krav på sparad förinställning eller befintliga regler.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.7.4",
+
         title={
             "en": "Batch mode optimization for small runs, refactored service management, and UI improvements",
             "vi": "Tối ưu hóa chế độ lô nhỏ, tái cấu trúc quản lý dịch vụ và cải thiện giao diện",
