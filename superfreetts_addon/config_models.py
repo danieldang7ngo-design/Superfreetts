@@ -85,6 +85,13 @@ class BatchConfig:
         if self.voice_selection: self.voice_selection.validate()
         if self.text_processing: self.text_processing.validate()
 
+    def validate_for_preview(self):
+        """Lighter validation for preview-only: does NOT require preset name or target."""
+        if self.source: self.source.validate()
+        if self.voice_selection: self.voice_selection.validate()
+        if self.text_processing: self.text_processing.validate()
+
+
 
 @dataclass
 class BatchSource():

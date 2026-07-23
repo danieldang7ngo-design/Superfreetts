@@ -308,7 +308,11 @@ def init(hypertts):
     def run_superfreetts_preview(editor):
         with hypertts.error_manager.get_single_action_context('Previewing Audio'):
             editor_context = hypertts.get_editor_context(editor)
-            hypertts.preview_all_mapping_rules(editor_context)
+            mapping_rules = hypertts.load_mapping_rules()
+            if len(mapping_rules.rules) > 0:
+                hypertts.preview_all_mapping_rules(editor_context, mapping_rules)
+            else:
+                hypertts.preview_with_quick_preset_picker(editor_context)
 
     def run_superfreetts_apply(editor):
         with hypertts.error_manager.get_single_action_context('Generating Audio'):

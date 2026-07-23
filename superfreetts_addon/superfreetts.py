@@ -395,6 +395,9 @@ class SuperFreeTTS():
     def preview_all_mapping_rules(self, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules = None):
         return self.editor_manager.preview_all_mapping_rules(editor_context, preset_mapping_rules)
 
+    def preview_with_quick_preset_picker(self, editor_context: config_models.EditorContext):
+        return self.editor_manager.preview_with_quick_preset_picker(editor_context)
+
     def get_apply_all_rules_task(self, deck_note_type: config_models.DeckNoteType, editor_context: config_models.EditorContext, preset_mapping_rules: config_models.PresetMappingRules):
         return self.editor_manager.get_apply_all_rules_task(deck_note_type, editor_context, preset_mapping_rules)
 

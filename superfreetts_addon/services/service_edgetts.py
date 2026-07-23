@@ -32,6 +32,59 @@ _request_gate = None
 _request_gate_size = None
 _edge_connectivity_failure_until = 0.0
 
+# Root cause 2.1 (see superfreetts_macos_crash_fix_plan.md, section 2.1 /
+# Phase 4): run_async_safe() used to create a brand new
+# concurrent.futures.ThreadPoolExecutor + a brand new event loop (via
+# asyncio.run(), which creates AND closes a fresh loop every call) for
+# every single request made from a thread that already had its own running
+# event loop. That is exactly the situation Anki's realtime TTS playback
+# runs in (ttsplayer.py's background thread), so every card flip that
+# needed fresh (non-cached) audio paid the full cost of spinning up a new
+# thread + event loop + aiohttp/TLS setup, and tore it all down again right
+# after - wasted CPU/RAM on every call, and more threads/loops in flight
+# than necessary if several calls overlapped. This singleton background
+# loop is created once (lazily, on first use) and reused for every
+# subsequent call via asyncio.run_coroutine_threadsafe(), which is the
+# standard, thread-safe way to submit work to a loop running in another
+# thread - multiple calling threads may safely share it concurrently.
+_background_loop = None
+_background_loop_thread = None
+_background_loop_lock = threading.Lock()
+
+
+def _get_background_loop():
+    """
+    Returns a singleton asyncio event loop running forever in its own
+    daemon thread, starting it on first use. Returns None if the loop
+    thread failed to start in time, so callers can fall back to the
+    old (slower but always-correct) per-call approach rather than crash.
+    """
+    global _background_loop, _background_loop_thread
+    with _background_loop_lock:
+        if _background_loop is not None and _background_loop.is_running():
+            return _background_loop
+
+        loop_ready = threading.Event()
+        loop_holder = {}
+
+        def _run_loop():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop_holder['loop'] = loop
+            loop_ready.set()
+            loop.run_forever()
+
+        thread = threading.Thread(target=_run_loop, name='sftts-edgetts-loop', daemon=True)
+        thread.start()
+
+        if not loop_ready.wait(timeout=10):
+            logger.warning("EdgeTTS: background event loop failed to start within 10s")
+            return None
+
+        _background_loop = loop_holder.get('loop')
+        _background_loop_thread = thread
+        return _background_loop
+
 
 def _get_request_gate(size):
     global _request_gate, _request_gate_size
@@ -70,7 +123,16 @@ def run_async_safe(coro):
         # Check if there's a running loop in the current thread
         asyncio.get_running_loop()
         # If yes, we can't use asyncio.run() or run_until_complete() here.
-        # We run it in a separate thread with its own loop to avoid blocking/crashing.
+        # Submit to the reused background loop instead of creating a new
+        # thread + event loop for this single call (root cause 2.1 fix).
+        background_loop = _get_background_loop()
+        if background_loop is not None:
+            return asyncio.run_coroutine_threadsafe(coro, background_loop).result()
+
+        # Safety net: background loop failed to start - fall back to the
+        # old, slower but always-correct per-call approach rather than
+        # crash the caller.
+        logger.warning("EdgeTTS: background loop unavailable, falling back to a one-off thread+loop for this call")
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             return executor.submit(asyncio.run, coro).result()

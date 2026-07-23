@@ -5,6 +5,7 @@ import subprocess
 import hashlib
 import platform
 import tempfile
+import threading
 import aqt.sound
 from typing import List
 
@@ -15,6 +16,31 @@ from .. import constants
 from .. import languages
 from .. import logging_utils
 logger = logging_utils.get_child_logger(__name__)
+
+# Root cause 2.4 (see superfreetts_macos_crash_fix_plan.md, section 2.4 /
+# Phase 5): get_tts_audio() below spawns two subprocesses per call ('say'
+# and the ffmpeg-based aqt.sound._encode_mp3 encode step) with no limit on
+# how many can run at once - unlike service_edgetts.py, which already gates
+# concurrent requests through _get_request_gate(). This mirrors that exact
+# same gate pattern (module-level lazily-sized threading.BoundedSemaphore)
+# for consistency with the rest of the codebase, rather than inventing a
+# new mechanism.
+DEFAULT_MACOS_CONCURRENCY_WORKERS = 2
+MAX_MACOS_CONCURRENCY_WORKERS = 8
+
+_request_gate_lock = threading.Lock()
+_request_gate = None
+_request_gate_size = None
+
+
+def _get_request_gate(size):
+    global _request_gate, _request_gate_size
+    size = max(1, int(size or 1))
+    with _request_gate_lock:
+        if _request_gate is None or _request_gate_size != size:
+            _request_gate = threading.BoundedSemaphore(size)
+            _request_gate_size = size
+        return _request_gate
 
 class MacOS(service.ServiceBase):
     MIN_SPEECH_RATE=150
@@ -439,6 +465,24 @@ class MacOS(service.ServiceBase):
     def service_fee(self) -> constants.ServiceFee:
         return constants.ServiceFee.free
 
+    def advanced_configuration_options(self):
+        """Advanced settings for the macOS 'say' service (hidden in dropdown).
+        Added as part of root cause 2.4 fix - previously there was no way
+        to limit how many 'say'+ffmpeg subprocess pairs could run at once."""
+        return {
+            'concurrency_workers': (
+                'number',
+                f'Concurrency Workers (1-{MAX_MACOS_CONCURRENCY_WORKERS})',
+                DEFAULT_MACOS_CONCURRENCY_WORKERS, 1, MAX_MACOS_CONCURRENCY_WORKERS
+            ),
+        }
+
+    def _get_int_config(self, key, default_value):
+        try:
+            return int(self.get_configuration_value_optional(key, default_value))
+        except (TypeError, ValueError):
+            return default_value
+
     def voice_list(self) -> List[voice.TtsVoice_v3]:
         if platform.system() != "Darwin":
             logger.info(f'running on os {os.name}, disabling {self.name} service')
@@ -538,11 +582,17 @@ class MacOS(service.ServiceBase):
             fd, mp3_temp_audio_path = tempfile.mkstemp(suffix='.mp3', prefix='superfreetts_macos')
             os.close(fd)
 
-            arg_list = ['say', '-v', voice_name, '-r', str(rate), '-o', temp_audio_path, '--', source_text]
-            logger.debug(f"calling 'say' with {arg_list}")
-            subprocess.check_call(arg_list)
+            concurrency_workers = self._get_int_config('concurrency_workers', DEFAULT_MACOS_CONCURRENCY_WORKERS)
+            request_gate = _get_request_gate(concurrency_workers)
+            request_gate.acquire()
+            try:
+                arg_list = ['say', '-v', voice_name, '-r', str(rate), '-o', temp_audio_path, '--', source_text]
+                logger.debug(f"calling 'say' with {arg_list}")
+                subprocess.check_call(arg_list)
 
-            aqt.sound._encode_mp3(temp_audio_path, mp3_temp_audio_path)
+                aqt.sound._encode_mp3(temp_audio_path, mp3_temp_audio_path)
+            finally:
+                request_gate.release()
 
             logger.debug(f'opening {mp3_temp_audio_path} to read in contents')
             with open(mp3_temp_audio_path, 'rb') as audio_file:

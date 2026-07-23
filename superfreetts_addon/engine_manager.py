@@ -4,6 +4,7 @@ import shutil
 import zipfile
 import subprocess
 import threading
+import platform
 from typing import Optional, Callable
 
 from . import logging_utils
@@ -39,6 +40,24 @@ class EngineManager:
         """Thread-safe installation of the shared python environment."""
         if cls.is_installed():
             return True
+
+        # Root cause 2.3 (see superfreetts_macos_crash_fix_plan.md, section
+        # 2.3 / Phase 6): this installs a Windows Embeddable Python
+        # distribution (a Windows PE python.exe) and runs pip installs
+        # through it. That can never work on macOS/Linux - previously this
+        # would still download the multi-MB zip, extract it, and only fail
+        # later (inside _run_command's subprocess.run call) with a raw
+        # OSError, wasting bandwidth/time and producing a confusing error.
+        # This is a scope-limited, minimal guard per the fix plan: it does
+        # NOT attempt to add real macOS/Linux support for this engine
+        # bootstrap (that would be a larger architectural change requiring
+        # its own scoping discussion), it only fails fast and clearly.
+        if platform.system() != "Windows":
+            logger.info(
+                f"EngineManager: shared engine bootstrap is Windows-only "
+                f"(Windows Embeddable Python), skipping on {platform.system()}."
+            )
+            return False
 
         with cls._lock:
             if cls._installing:

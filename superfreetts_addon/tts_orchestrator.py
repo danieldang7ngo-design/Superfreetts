@@ -8,6 +8,26 @@ from . import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
+# Best-effort per-process RAM estimates (MB) used only to cap the *default*
+# (CPU-core-derived) concurrency for local engine process pools - see root
+# cause 2.6 in superfreetts_macos_crash_fix_plan.md.
+#
+# IMPORTANT - these numbers are NOT an agent-measured benchmark. They come
+# from a user-reported real-world observation (Piper ~100-200MB/process,
+# Kokoro/MMS/Supertonic ~300-500MB/process) and were not independently
+# verified with psutil against the actual bundled models in this
+# environment (no local engine models are installed here to measure). They
+# are deliberately picked toward the upper/conservative end of the reported
+# range. If these turn out to be inaccurate for a given model/voice, the
+# existing per-service `concurrency_workers` config field always overrides
+# this estimate-driven default - this table only affects the fallback.
+RAM_PER_PROCESS_MB_ESTIMATE = {
+    'PiperTTS': 200,
+    'KokoroTTS': 500,
+    'MmsTTS': 500,
+    'SupertonicTTS': 500,
+}
+
 class TTSOrchestrator:
     def __init__(self, superfreetts):
         self.stts = superfreetts
@@ -18,13 +38,31 @@ class TTSOrchestrator:
 
     def build_engine_config(self, service_config_map: dict) -> dict:
         cpu_default = max(2, system_utils.get_max_workers())
-        defaults = {
-            'PiperTTS': cpu_default,
-            'KokoroTTS': cpu_default,
-            'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
-            'MmsTTS': cpu_default,
-            'SupertonicTTS': cpu_default,
+        # Root cause 2.6 fix: local engine defaults used to be cpu_default
+        # unconditionally, meaning pool size scaled with CPU core count with
+        # no regard for how much RAM each process actually needs. Cap each
+        # engine's default by available RAM too; compute_ram_aware_concurrency
+        # falls back to plain cpu_default if RAM can't be measured (no
+        # psutil) or no estimate exists for a given engine, so this is a
+        # strict subset of the old behavior, never more permissive.
+        ram_capped_default = {
+            engine: system_utils.compute_ram_aware_concurrency(cpu_default, ram_estimate)
+            for engine, ram_estimate in RAM_PER_PROCESS_MB_ESTIMATE.items()
         }
+        defaults = {
+            'PiperTTS': ram_capped_default.get('PiperTTS', cpu_default),
+            'KokoroTTS': ram_capped_default.get('KokoroTTS', cpu_default),
+            'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
+            'MmsTTS': ram_capped_default.get('MmsTTS', cpu_default),
+            'SupertonicTTS': ram_capped_default.get('SupertonicTTS', cpu_default),
+        }
+        for engine_name, ram_value in ram_capped_default.items():
+            if ram_value < cpu_default:
+                logger.info(
+                    f'[RAM-CAP] {engine_name} default concurrency capped to {ram_value} '
+                    f'(cpu_default={cpu_default}) based on available RAM. '
+                    f'Set concurrency_workers manually in Advanced settings to override.'
+                )
         service_pool_map = {
             'PiperTTS': 'Piper',
             'KokoroTTS': 'Kokoro',

@@ -194,7 +194,7 @@ class EditorManager:
         text_override: Optional[str],
     ) -> None:
         """Generate and play audio for *note* without writing to any field."""
-        batch.validate()
+        batch.validate_for_preview()
         full_filename, _ = self.hypertts.get_note_audio(
             batch,
             note,
@@ -202,6 +202,18 @@ class EditorManager:
             text_override,
         )
         self.anki_utils.play_sound(full_filename)
+
+    def preview_with_quick_preset_picker(self, editor_context: config_models.EditorContext) -> None:
+        """Fallback preview when no mapping rules are configured.
+        Opens the ChoosePreset dialog for a one-time preview without
+        adding anything to the mapping rules.
+        """
+        from . import component_choosepreset
+        preset_id = component_choosepreset.get_preset_id(self.hypertts, editor_context)
+        if preset_id is None:
+            return
+        preset = self.hypertts.load_preset(preset_id)
+        self.preview_note_audio_editor(preset, editor_context)
 
     # ------------------------------------------------------------------
     # Preview all mapping rules
@@ -240,13 +252,14 @@ class EditorManager:
         """Preview all Mapping Rules applicable to the current note type (background)."""
         if preset_mapping_rules is None:
             preset_mapping_rules = self.hypertts.load_mapping_rules()
-        if len(preset_mapping_rules.rules) == 0:
-            raise errors.NoPresetMappingRulesDefined()
+            if len(preset_mapping_rules.rules) == 0:
+                raise errors.NoPresetMappingRulesDefined()
         deck_note_type = self.get_editor_deck_note_type(editor_context.editor)
         self.anki_utils.run_in_background(
             self.get_preview_all_rules_task(deck_note_type, editor_context, preset_mapping_rules),
             self.get_preview_all_rules_done(),
         )
+
 
     # ------------------------------------------------------------------
     # Apply all mapping rules

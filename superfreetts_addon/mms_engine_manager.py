@@ -5,6 +5,7 @@ import time
 import zipfile
 import subprocess
 import threading
+import platform
 from typing import Optional, Callable, Tuple
 
 from . import logging_utils
@@ -70,6 +71,23 @@ class MmsEngineManager:
             logger.info("MmsEngineManager: Already installed.")
             service_logger.write_log('mms', 'install', 'INFO', 'Engine already installed, skipping')
             return True
+
+        # Root cause 2.3 (see superfreetts_macos_crash_fix_plan.md, section
+        # 2.3 / Phase 6): same rationale as EngineManager.ensure_installed()
+        # in engine_manager.py - this downloads a Windows-only embeddable
+        # Python distribution, which can never run on macOS/Linux. Fail
+        # fast and clearly instead of downloading it anyway and only
+        # failing later on subprocess execution.
+        if platform.system() != "Windows":
+            logger.info(
+                f"MmsEngineManager: MMS engine bootstrap is Windows-only "
+                f"(Windows Embeddable Python), skipping on {platform.system()}."
+            )
+            service_logger.write_log(
+                'mms', 'install', 'INFO',
+                f'Skipped install: unsupported platform {platform.system()}'
+            )
+            return False
 
         with cls._lock:
             if cls._installing:

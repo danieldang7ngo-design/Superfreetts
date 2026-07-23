@@ -6,6 +6,7 @@ import zipfile
 import urllib.request
 import subprocess
 import threading
+import platform
 import json
 import time
 
@@ -102,6 +103,21 @@ class KokoroInstallManager(QDialog):
         self.progress_bar.setValue(value)
 
     def start_installation(self):
+        # Root cause 2.3 (see superfreetts_macos_crash_fix_plan.md, section
+        # 2.3 / Phase 6): this installer downloads a Windows Embeddable
+        # Python distribution and runs pip/kokoro-onnx setup through it -
+        # that can never work on macOS/Linux. Fail fast with a clear
+        # message here instead of starting a background download that can
+        # only fail later. This is a scope-limited guard, not an attempt to
+        # add real macOS/Linux support for this engine (a larger change,
+        # out of scope here per the fix plan).
+        if platform.system() != "Windows":
+            showWarning(
+                "Kokoro's built-in installer currently only supports Windows "
+                f"(it needs a Windows Python distribution). Detected OS: {platform.system()}."
+            )
+            return
+
         self.install_btn.setEnabled(False)
         self.uninstall_btn.setEnabled(False)
         self.log(i18n.get_text("kokoro_setup_log_starting", self.lang))
