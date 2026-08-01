@@ -31,7 +31,7 @@ Otherwise AGENTS.md covers 90% of tasks.
 | `superfreetts_addon/services/service_*.py` | One file per TTS engine, extends `ServiceBase`. |
 | `superfreetts_addon/gui.py` + `component_*.py` | UI windows (Settings, Batch, Easy Mode, note list). |
 | `superfreetts_addon/i18n.py` | UI text, multiple locales (see §6). |
-| `tools/notes_db.py` | Resolves Anki collection path, paged note fetch/count for lazy-loading UI. |
+| `graphics/` | Banners + editor button icons. Icons are Lucide (ISC), stroke-based SVGs (`icon_speaker`, `icon_play`, `icon_settings`). `NOTICE` holds attribution. |
 | `tests/` | Automated tests. `mock_anki.py` fakes Anki, no real install needed. |
 | `build_share.py` | Packages everything into `.ankiaddon` for release. |
 

@@ -39,6 +39,10 @@ component_batch.py → SuperFreeTTS.process_batch_audio()
 Speaker icon → AudioGenerator.process_note_audio()
   → resolve text, select voice, check cache/generate → write tag
 ```
+Editor button icons (`icon_speaker`, `icon_play`, `icon_settings`) live in
+`graphics/` and are Lucide SVGs (ISC license, attribution in `graphics/NOTICE`).
+Registered in `constants.py` (`GRAPHICS_ICON_*`), wired to buttons in
+`gui.py` `setup_editor_buttons()`.
 ### Realtime Card Review
 ```
 {{tts superfreetts_preset=X}} → RealtimeManager.get_audio_filename_tts_tag()
