@@ -136,4 +136,4 @@ Skip files that run real TTS at import + `sys.exit()` (crash pytest):
 | Voice/realtime | `component_voiceselection.py`, `component_realtime.py`, `component_realtime_source.py`, `component_realtime_side.py` |
 | Mapping | `component_presetmappingrules.py`, `component_mappingrule.py`, `component_choosepreset.py` |
 | Note fields | `component_source.py`, `component_target.py`, `component_text_processing.py`, `component_label_preview.py` |
-| Misc | `component_about.py`, `component_shortcuts.py`, `component_common.py`, `component_changes.py`, `component_donation.py`, `component_failure_report.py`, `component_release_notes.py`, `component_troubleshooting.py`, `component_welcome.py`, `component_workflow.py`, `component_services_legacy.py` |
+| Misc | `component_about.py`, `component_shortcuts.py`, `component_common.py`, `component_changes.py`, `component_donation.py`, `component_failure_report.py`, `component_release_notes.py`, `component_troubleshooting.py`, `component_welcome.py`, `component_workflow.py` |
