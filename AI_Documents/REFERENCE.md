@@ -42,7 +42,11 @@ Speaker icon → AudioGenerator.process_note_audio()
 Editor button icons (`icon_speaker`, `icon_play`, `icon_settings`) live in
 `graphics/` and are Lucide SVGs (ISC license, attribution in `graphics/NOTICE`).
 Registered in `constants.py` (`GRAPHICS_ICON_*`), wired to buttons in
-`gui.py` `setup_editor_buttons()`.
+`gui.py` `setup_editor_buttons()`. Other Lucide icons: `icon_chevron_down`/
+`icon_chevron_right` (Advanced/collapse toggles in `component_services.py`,
+`component_realtime_side.py`), `icon_headphones` (AnkiVN Settings menu action,
+`gui.py`). No runtime dependency — icons are static SVGs loaded via
+`gui_utils.get_graphics_path()`.
 ### Realtime Card Review
 ```
 {{tts superfreetts_preset=X}} → RealtimeManager.get_audio_filename_tts_tag()
