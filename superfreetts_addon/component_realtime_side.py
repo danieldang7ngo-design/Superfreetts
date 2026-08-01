@@ -159,7 +159,8 @@ class ComponentRealtimeSide(component_common.ConfigComponentBase):
         main_layout.addWidget(source_widget)
 
         # Collapsible Text Processing
-        self.text_processing_toggle = aqt.qt.QPushButton('▶ Advanced Text Processing')
+        self.text_processing_toggle = aqt.qt.QPushButton('Advanced Text Processing')
+        self.text_processing_toggle.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_CHEVRON_RIGHT)))
         self.text_processing_toggle.setStyleSheet("""
             QPushButton {
                 background-color: #F1F3F4;
@@ -184,7 +185,8 @@ class ComponentRealtimeSide(component_common.ConfigComponentBase):
 
         def toggle_text_processing(checked):
             self.text_processing_container.setVisible(checked)
-            self.text_processing_toggle.setText('▼ Advanced Text Processing' if checked else '▶ Advanced Text Processing')
+            icon_name = constants.GRAPHICS_ICON_CHEVRON_DOWN if checked else constants.GRAPHICS_ICON_CHEVRON_RIGHT
+            self.text_processing_toggle.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(icon_name)))
 
         self.text_processing_toggle.toggled.connect(toggle_text_processing)
 

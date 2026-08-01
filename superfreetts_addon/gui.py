@@ -202,7 +202,8 @@ def update_menu_language(hypertts):
     if ankivn_menu:
         ankivn_menu.setTitle("AnkiVN")
     if action_unified_settings:
-        action_unified_settings.setText(f'🎧 {i18n.get_text("unified_settings_title", lang)}')
+        action_unified_settings.setText(i18n.get_text("unified_settings_title", lang))
+        action_unified_settings.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_HEADPHONES)))
 
 def init(hypertts):
     gui_utils.install_global_wheel_filter()

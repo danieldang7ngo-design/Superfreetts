@@ -6,9 +6,12 @@ Copyright (c) for portions of Lucide are held by Lucide Contributors.
 https://github.com/lucide-icons/lucide
 
 Files:
-- icon_speaker.svg  (based on Lucide "volume-2")
-- icon_play.svg     (based on Lucide "play")
-- icon_settings.svg (based on Lucide "settings")
+- icon_speaker.svg       (based on Lucide "volume-2")
+- icon_play.svg          (based on Lucide "play")
+- icon_settings.svg      (based on Lucide "settings")
+- icon_chevron_down.svg  (based on Lucide "chevron-down")
+- icon_chevron_right.svg (based on Lucide "chevron-right")
+- icon_headphones.svg    (based on Lucide "headphones")
 
 ISC License:
 

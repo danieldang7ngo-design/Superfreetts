@@ -600,7 +600,8 @@ class ServicesPage(component_common.ConfigComponentBase):
         advanced_hlayout = aqt.qt.QHBoxLayout()
 
         advanced_text = i18n.get_text("button_advanced_settings", lang)
-        advanced_btn = aqt.qt.QPushButton(f"⚙️ {advanced_text}")
+        advanced_btn = aqt.qt.QPushButton(advanced_text)
+        advanced_btn.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_CHEVRON_RIGHT)))
         advanced_btn.setCheckable(True)
         advanced_btn.setChecked(False)
 
@@ -659,7 +660,10 @@ class ServicesPage(component_common.ConfigComponentBase):
 
         def toggle_advanced(checked: bool) -> None:
             advanced_widget.setVisible(checked)
-            advanced_btn.setText(f"⚙️ {advanced_text}" + (" ▼" if checked else " ▶"))
+            if checked:
+                advanced_btn.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_CHEVRON_DOWN)))
+            else:
+                advanced_btn.setIcon(aqt.qt.QIcon(gui_utils.get_graphics_path(constants.GRAPHICS_ICON_CHEVRON_RIGHT)))
 
         advanced_btn.clicked.connect(toggle_advanced)
 

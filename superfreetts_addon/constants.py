@@ -472,6 +472,9 @@ GRAPHICS_SERVICE_ENABLED = 'superfreetts_service_enabled_banner.svg'
 GRAPHICS_ICON_SPEAKER = 'icon_speaker.svg'
 GRAPHICS_ICON_PLAY = 'icon_play.svg'
 GRAPHICS_ICON_SETTINGS = 'icon_settings.svg'
+GRAPHICS_ICON_CHEVRON_DOWN = 'icon_chevron_down.svg'
+GRAPHICS_ICON_CHEVRON_RIGHT = 'icon_chevron_right.svg'
+GRAPHICS_ICON_HEADPHONES = 'icon_headphones.svg'
 
 TEXT_PROCESSING_DEFAULT_ENABLED = True
 TEXT_PROCESSING_DEFAULT_HTMLTOTEXTLINE = True
