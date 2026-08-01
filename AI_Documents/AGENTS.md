@@ -50,9 +50,10 @@ Otherwise AGENTS.md covers 90% of tasks.
    `batch_constants.py`. Never raise this in committed source — Microsoft bans
    IPs that burst EdgeTTS requests. `MAX_WORKER_THREADS = 20` is a *separate*
    cap, for CPU-bound engines (Piper/Kokoro/MMS) only — fine to use, not EdgeTTS.
-   4 code points touch worker logic if you ever change it: `batch_constants.py`,
-    `service_edgetts.py` (runtime clamp at line ~251), `superfreetts.py`,
-   `config.json`.
+    4 code points touch worker logic if you ever change it: `batch_constants.py`
+     (`EDGETTS_MAX_WORKERS`), `tts_orchestrator.py` (`build_engine_config()`
+     default + clamp at line ~78), `service_edgetts.py` (runtime clamp at line
+     ~313), `config.json`.
 5. **No blocking calls on the main thread.** Any slow op (network, file write,
    TTS generation) runs in a background thread, never directly in a
    button-click handler. Wrap UI actions via `error_manager.get_single_action_context()`.
