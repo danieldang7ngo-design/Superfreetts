@@ -27,6 +27,7 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 | 4 | Tính năng nâng cao | Mostly done | Workflow đã ship; naming/folder còn mở |
 | 5 | Test, tài liệu & cộng đồng | Mostly done | CI + regression tests đã ship; còn cập nhật docs |
 | 6 | Refactor + Performance Audit | In Progress | Core split + legacy cleanup đã xong; còn timeout hardcode, voicelist, duplicate import |
+| 7 | macOS RAM: QtWebEngine workaround | Planned | Chờ xác minh trên Mac thật |
 
 ---
 
@@ -72,6 +73,24 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 - ⏳ **Giảm gánh nặng `voicelist.py`**: file 2.5MB / 43k dòng, vẫn được `service.py:16` import trực tiếp → nạp ngay khi Anki khởi động. Cần lazy-load/compress hoặc đưa dữ liệu ra ngoài source.
 - ⏳ **Xoá import trùng lặp trong `superfreetts.py:83-89`**: khối `from .tts_orchestrator import TTSOrchestrator` / `UIController` / `JobPipeline` được import 2 lần y hệt nhau (vô hại nhưng cần dọn). *Nhắc nhở AI agent: khi đọc/refactor file này, kiểm tra và gộp về 1 khối.*
 - Done khi core nhỏ hơn, timeout configurable, `voicelist.py` không còn là file quá lớn trong source, và batch refactor có test bảo vệ.
+
+---
+
+### Phase 7 - macOS RAM: QtWebEngine workaround (Planned)
+
+- Vấn đề: Anki trên macOS tăng RAM không giới hạn theo thời gian; báo cáo từ PR
+  ankitects/anki#4569, forum + Reddit — xảy ra cả khi không cài addon nào.
+- Root cause (dựa trên PR #4569, **chưa verify trên Mac thật**): QtWebEngine dùng GPU
+  compositing (Metal/OpenGL) → tích lũy Metal shader cache vô hạn. Fix của Anki core:
+  `QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu-compositing`.
+- Đã loại trừ addon: không tạo QWebEngineView riêng; mọi cơ chế RAM của addon đều
+  bounded (RAM-cap, gate `say`, executor limit).
+- Hướng làm nếu ship: set `--disable-gpu-compositing` vào đầu root `__init__.py`,
+  chỉ trên macOS, idempotent, opt-out qua env `SUPERFREETTS_SKIP_MACOS_GPU_WORKAROUND`.
+- ⚠️ Mức tin cậy: CHƯA xác minh trên Mac thật (môi trường này không có máy macOS).
+- Gate để chuyển sang In Progress: test lại trên Mac thật + xác định Anki release nào
+  đã mang fix core (issue #4686 / Qt 6.11).
+- Done khi: xác minh được trên Mac thật và quyết định ship/deferred rõ ràng.
 
 ---
 
