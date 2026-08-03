@@ -146,6 +146,16 @@ class PiperTTS(service.ServiceBase):
         path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'espeak-ng-data')
         if os.path.exists(path):
             return path
+        
+        # Fallback: check models directory as alternative location
+        models_path = self._resolve_models_dir()
+        if models_path:
+            alt_path = os.path.join(models_path, 'espeak-ng-data')
+            if os.path.exists(alt_path):
+                logger.info(f"[PiperTTS] ✓ Found espeak-ng-data in models dir: {alt_path}")
+                return alt_path
+        
+        logger.warning(f"[PiperTTS] ⚠ espeak-ng-data not found at {path} or in models directory")
         return None
 
     def _resolve_models_dir(self):
@@ -328,7 +338,9 @@ class PiperTTS(service.ServiceBase):
                     tokens_path = model_file + ".json" 
                     
                     length_scale = options.get('length_scale', 1.0)
-                    data_dir = self._resolve_espeak_data_dir() or os.path.dirname(model_file)
+                    data_dir = self._resolve_espeak_data_dir()
+                    if not data_dir:
+                        raise errors.RequestError(source_text, voice, "espeak-ng-data directory not found. Please run 'Setup Piper' to install the complete Piper engine.")
                     num_threads = self.get_configuration_value_optional('num_threads', 1)
 
                     request = {
@@ -451,13 +463,16 @@ class PiperTTS(service.ServiceBase):
                 
                 try:
                     tokens_path = model_file + ".json"
+                    data_dir = self._resolve_espeak_data_dir()
+                    if not data_dir:
+                        raise errors.RequestError(source_text, voice, "espeak-ng-data directory not found. Please run 'Setup Piper' to install the complete Piper engine.")
                     tasks = []
                     for text in source_texts:
                         tasks.append({
                             "text": text,
                             "model_path": model_file,
                             "tokens_path": tokens_path,
-                            "data_dir": self._resolve_espeak_data_dir() or os.path.dirname(model_file),
+                            "data_dir": data_dir,
                             "sid": 0,
                             "speed": options.get('length_scale', 1.0),
                             "num_threads": self.get_configuration_value_optional('num_threads', 1)
