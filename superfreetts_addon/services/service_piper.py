@@ -14,6 +14,7 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from .. import system_utils
 
 logger = logging_utils.get_child_logger(__name__)
  
@@ -139,13 +140,55 @@ class PiperTTS(service.ServiceBase):
         
         logger.error(f"[PiperTTS] ❌ Python not found (manual: {user_python_folder}, auto: {python_exe})")
         return None
+    
+    def _get_piper_engine_dir(self):
+        """
+        Get the Piper engine directory, using safe path if needed.
+        """
+        default_dir = constants.PIPER_ENGINE_DIR
+        
+        # Check if path has problematic characters
+        if system_utils.has_problematic_path_chars(default_dir):
+            logger.warning(f"[PiperTTS] ⚠ Default engine path contains special characters: {default_dir}")
+            
+            # Use safe location
+            safe_base = system_utils.get_safe_data_dir()
+            safe_engine_dir = os.path.join(safe_base, 'piper_engine')
+            
+            if os.path.exists(safe_engine_dir):
+                logger.info(f"[PiperTTS] ✓ Using safe engine path: {safe_engine_dir}")
+                return safe_engine_dir
+            
+            # Try to migrate if old path exists
+            if os.path.exists(default_dir):
+                logger.info(f"[PiperTTS] Migrating engine from problematic path to safe location...")
+                if system_utils.migrate_data_to_safe_location(default_dir, safe_engine_dir):
+                    logger.info(f"[PiperTTS] ✓ Migration successful. New engine path: {safe_engine_dir}")
+                    return safe_engine_dir
+            
+            # Return safe path anyway (will need setup)
+            return safe_engine_dir
+        
+        return default_dir
 
     def _resolve_espeak_data_dir(self):
         """Resolve the espeak-ng-data directory required for Piper phonemization."""
-        # Based on structure: piper_engine/piper/espeak-ng-data
-        path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'espeak-ng-data')
+        # Get engine dir (handles special characters automatically)
+        engine_dir = self._get_piper_engine_dir()
+        path = os.path.join(engine_dir, 'piper', 'espeak-ng-data')
+        
         if os.path.exists(path):
             return path
+        
+        # Fallback: check models directory as alternative location
+        models_path = self._resolve_models_dir()
+        if models_path:
+            alt_path = os.path.join(models_path, 'espeak-ng-data')
+            if os.path.exists(alt_path):
+                logger.info(f"[PiperTTS] ✓ Found espeak-ng-data in models dir: {alt_path}")
+                return alt_path
+        
+        logger.warning(f"[PiperTTS] ⚠ espeak-ng-data not found at {path} or in models directory")
         return None
 
     def _resolve_models_dir(self):
@@ -161,8 +204,30 @@ class PiperTTS(service.ServiceBase):
             else:
                 logger.warning(f"[PiperTTS] ⚠ Manual path has no .onnx models: {models_path}")
         
-        # Fallback: auto-detect from profile
+        # Check if default path has problematic characters
         default_dir = constants.PIPER_MODELS_DIR
+        
+        if system_utils.has_problematic_path_chars(default_dir):
+            logger.warning(f"[PiperTTS] ⚠ Default models path contains special characters: {default_dir}")
+            
+            # Try safe location
+            safe_base = system_utils.get_safe_data_dir()
+            safe_models_dir = os.path.join(safe_base, 'piper_models')
+            
+            if os.path.exists(safe_models_dir):
+                has_models = any(f.endswith('.onnx.json') for f in os.listdir(safe_models_dir) if os.path.isfile(os.path.join(safe_models_dir, f)))
+                if has_models:
+                    logger.info(f"[PiperTTS] ✓ Using safe models path: {safe_models_dir}")
+                    return safe_models_dir
+            
+            # Try to migrate if old path exists
+            if os.path.exists(default_dir):
+                logger.info(f"[PiperTTS] Migrating models from problematic path to safe location...")
+                if system_utils.migrate_data_to_safe_location(default_dir, safe_models_dir):
+                    logger.info(f"[PiperTTS] ✓ Migration successful. New models path: {safe_models_dir}")
+                    return safe_models_dir
+        
+        # Fallback: auto-detect from profile (original logic)
         if os.path.exists(default_dir):
             has_models = any(f.endswith('.onnx.json') for f in os.listdir(default_dir) if os.path.isfile(os.path.join(default_dir, f)))
             if has_models:
@@ -328,7 +393,9 @@ class PiperTTS(service.ServiceBase):
                     tokens_path = model_file + ".json" 
                     
                     length_scale = options.get('length_scale', 1.0)
-                    data_dir = self._resolve_espeak_data_dir() or os.path.dirname(model_file)
+                    data_dir = self._resolve_espeak_data_dir()
+                    if not data_dir:
+                        raise errors.RequestError(source_text, voice, "espeak-ng-data directory not found. Please run 'Setup Piper' to install the complete Piper engine.")
                     num_threads = self.get_configuration_value_optional('num_threads', 1)
 
                     request = {
@@ -451,13 +518,16 @@ class PiperTTS(service.ServiceBase):
                 
                 try:
                     tokens_path = model_file + ".json"
+                    data_dir = self._resolve_espeak_data_dir()
+                    if not data_dir:
+                        raise errors.RequestError(source_text, voice, "espeak-ng-data directory not found. Please run 'Setup Piper' to install the complete Piper engine.")
                     tasks = []
                     for text in source_texts:
                         tasks.append({
                             "text": text,
                             "model_path": model_file,
                             "tokens_path": tokens_path,
-                            "data_dir": self._resolve_espeak_data_dir() or os.path.dirname(model_file),
+                            "data_dir": data_dir,
                             "sid": 0,
                             "speed": options.get('length_scale', 1.0),
                             "num_threads": self.get_configuration_value_optional('num_threads', 1)

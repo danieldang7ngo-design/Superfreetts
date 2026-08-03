@@ -122,6 +122,7 @@ def generate_single(piper_exe, data, global_threads=1):
         cmd = [
             piper_exe,
             "-m", model_path,
+            "-c", model_path + ".json",
             "--data_dir", data_dir,
             "--length-scale", str(length_scale),
             "--output_raw"

@@ -4,6 +4,8 @@ import multiprocessing
 import platform
 import subprocess
 import logging
+import re
+import shutil
 
 # Try to import psutil for system RAM detection, fallback if not available.
 # Same defensive pattern as resource_manager.py (kept consistent on purpose).
@@ -14,6 +16,68 @@ except Exception:
     HAS_PSUTIL = False
 
 logger = logging.getLogger(__name__)
+
+def has_problematic_path_chars(path):
+    """
+    Check if a path contains characters that may cause issues with C++ tools on Windows.
+    Returns True if the path contains non-ASCII characters or other problematic chars.
+    """
+    if not path:
+        return False
+    
+    # Check for non-ASCII characters (like ä, ö, ü, ñ, etc.)
+    try:
+        # If we can encode to ASCII without errors, it's safe
+        path.encode('ascii')
+        return False
+    except UnicodeEncodeError:
+        # Contains non-ASCII characters
+        return True
+    
+    # Additional checks for other problematic patterns could be added here
+    # For now, non-ASCII is the main issue on Windows with Piper
+    return False
+
+
+def get_safe_data_dir():
+    """
+    Get a safe data directory path without special characters.
+    Returns a path like C:\SuperFreeTTS_Data that is guaranteed to work.
+    """
+    # Use C:\SuperFreeTTS_Data as the safe fallback location
+    safe_dir = r'C:\SuperFreeTTS_Data'
+    return safe_dir
+
+
+def migrate_data_to_safe_location(old_path, new_path):
+    """
+    Migrate data from old path to new safe path.
+    Returns True if migration was successful, False otherwise.
+    """
+    try:
+        if not os.path.exists(old_path):
+            logger.warning(f"Old path does not exist: {old_path}")
+            return False
+        
+        # Create new directory if it doesn't exist
+        os.makedirs(new_path, exist_ok=True)
+        
+        # Copy all contents from old to new
+        for item in os.listdir(old_path):
+            src = os.path.join(old_path, item)
+            dst = os.path.join(new_path, item)
+            
+            if os.path.isdir(src):
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src, dst)
+        
+        logger.info(f"Successfully migrated data from {old_path} to {new_path}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to migrate data: {e}")
+        return False
 
 def get_cpu_threads():
     """
