@@ -298,6 +298,38 @@ else:
         show_startup_popup()
         backup_guard.check_and_heal_stale_disable()
 
+    def on_profile_will_close():
+        """
+        Cleanup resources before profile switch to prevent stale references.
+        
+        When user switches Anki profiles:
+        1. Clear voice cache (points to old profile's cache directory)
+        2. Clear service configurations that may reference old collection
+        3. Reset any state tied to the old profile
+        
+        This ensures the addon works correctly when switching back to this profile.
+        """
+        try:
+            logger.info("Profile will close - cleaning up resources")
+            
+            # Clear voice cache to avoid stale references
+            if hasattr(aqt.mw, 'hyper_tts') and aqt.mw.hyper_tts:
+                # Clear service manager's voice cache
+                if hasattr(aqt.mw.hyper_tts, 'service_manager'):
+                    aqt.mw.hyper_tts.service_manager.clear_voice_list_cache()
+                
+                # Clear resource manager's voice cache if exists
+                if hasattr(aqt.mw.hyper_tts, 'resource_manager'):
+                    aqt.mw.hyper_tts.resource_manager.clear_voice_cache()
+                
+                # Clear batch executor cache
+                if hasattr(aqt.mw.hyper_tts, 'executor') and hasattr(aqt.mw.hyper_tts.executor, 'clear_cache'):
+                    aqt.mw.hyper_tts.executor.clear_cache()
+            
+            logger.info("Profile cleanup completed")
+        except Exception as e:
+            logger.error(f"Failed to cleanup on profile close: {e}")
+
     if not hasattr(sys, "_pytest_mode"):
         # Tránh chồng callback sau Tools → Add-ons → Reload (module mới append thêm, handler cũ vẫn nằm trong list)
         _mw = getattr(aqt, "mw", None)
@@ -309,4 +341,15 @@ else:
                 except ValueError:
                     pass
             _mw._sftts_profile_hook = on_profile_did_open
+            
+            # Register profile_will_close hook for cleanup
+            _prev_close = getattr(_mw, "_sftts_profile_close_hook", None)
+            if _prev_close is not None:
+                try:
+                    aqt.gui_hooks.profile_will_close.remove(_prev_close)
+                except ValueError:
+                    pass
+            _mw._sftts_profile_close_hook = on_profile_will_close
+        
         aqt.gui_hooks.profile_did_open.append(on_profile_did_open)
+        aqt.gui_hooks.profile_will_close.append(on_profile_will_close)

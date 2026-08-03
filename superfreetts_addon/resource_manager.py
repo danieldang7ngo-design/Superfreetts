@@ -370,4 +370,9 @@ class ResourceManager:
         gc.collect()
         logger.info("[RESOURCE] Resource manager reset")
 
+    def clear_voice_cache(self):
+        """Clear voice cache only - used during profile switch"""
+        self.voice_cache.clear()
+        logger.info("[RESOURCE] Voice cache cleared for profile switch")
+
 

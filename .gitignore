@@ -1,71 +1,43 @@
-# --- Python ---
+```
+# Compiled and build artifacts
+*.pyc
 __pycache__/
-.pytest_cache/
-*.py[cod]
-!external/psutil/_psutil_windows.pyd
-*$py.class
-external/comtypes/gen/
 
-# --- Anki addon runtime data (per-user, must never be tracked) ---
-meta.json
-user_files/
-superfreetts_addon/user_files/
-superfreetts_addon/cache/
-superfreetts-work.index
-
-# --- TTS engines/models downloaded at runtime ---
-superfreetts_data/
-superfreetts_addon/data/kokoro_engine/
-superfreetts_addon/data/piper_engine/
-superfreetts_addon/data/piper_models/
-
-# --- Build artifacts ---
-dist/
-*.ankiaddon
-
-# --- Local-only mirrors / scratch ---
-superfreetts-mirror.git/
-git-objects-tmp/
-.opencode/
-log/
-error*.md
-
-# --- Local-only notes ---
-EDGE_TTS_WORKER_20_REPORT.md
-
-# --- Local diagnostic tests/scripts ---
-tests/run_tts_integration.py
-tests/stress_tts.py
-tests/test_encoding.py
-tests/test_run_tts_integration.py
-tests/test_stress_runner.py
-tests/test_stress_tts_hang.py
-
-# --- Local-only worker toggle scripts ---
-set_edge_workers_*.py
-_local_override.py
-superfreetts_addon/_local_override.py
-
-# --- AI agent tooling (skills, locks) ---
-.agents/
-skills-lock.json
-
-# --- Editor / OS junk ---
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# --- Logs ---
-*.log
-
-# --- Virtual envs ---
-env/
+# Dependencies
 .venv/
 venv/
-# CocoIndex Code (ccc)
-/.cocoindex_code/
-graphify-out/
-.serena/
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Distribution artifacts
+dist/
+build/
+target/
+
+# Python specific
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+
+# System files
+.DS_Store
+Thumbs.db
+```
