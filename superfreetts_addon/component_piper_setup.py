@@ -12,11 +12,22 @@ from . import logging_utils
 from . import component_piper_manager
 from . import constants
 from . import service_logger
+from . import system_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
 # Piper Engine release (Standard CPU optimized)
 PIPER_ENGINE_URL = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip"
+
+
+def _get_piper_setup_dir():
+    """Get the directory for Piper setup, using safe path if needed."""
+    # Check if default data dir has problematic characters
+    if system_utils.has_problematic_path_chars(constants.DATA_DIR):
+        # Use safe location
+        safe_base = system_utils.get_safe_data_dir()
+        return safe_base
+    return constants.DATA_DIR
 
 
 
@@ -47,9 +58,13 @@ class PiperSetupDialog(QDialog):
         self.install_btn.clicked.connect(self.start_setup)
         gui_utils.configure_primary_button(self.install_btn)
         
+        # Check if piper.exe exists (using safe path detection)
+        setup_dir = _get_piper_setup_dir()
+        piper_exe_check = os.path.join(setup_dir, 'piper_engine', 'piper', 'piper.exe')
+        
         self.manage_models_btn = QPushButton(i18n.get_text("piper_setup_button_manage", self.lang))
         self.manage_models_btn.clicked.connect(self.open_model_manager)
-        self.manage_models_btn.setEnabled(os.path.exists(constants.PIPER_EXE_PATH))
+        self.manage_models_btn.setEnabled(os.path.exists(piper_exe_check))
 
         self.uninstall_btn = QPushButton(i18n.get_text("piper_setup_button_uninstall", self.lang))
         self.uninstall_btn.clicked.connect(self.start_uninstall)
@@ -77,17 +92,23 @@ class PiperSetupDialog(QDialog):
 
     def _run_setup(self):
         try:
-            if not os.path.exists(constants.PIPER_ENGINE_DIR):
-                os.makedirs(constants.PIPER_ENGINE_DIR, exist_ok=True)
+            # Get the correct setup directory (handles special characters)
+            setup_dir = _get_piper_setup_dir()
+            piper_engine_dir = os.path.join(setup_dir, 'piper_engine')
+            piper_models_dir = os.path.join(setup_dir, 'piper_models')
             
-            if not os.path.exists(constants.PIPER_MODELS_DIR):
-                os.makedirs(constants.PIPER_MODELS_DIR, exist_ok=True)
-
-            service_logger.write_log('piper', 'install', 'INFO', 'Starting Piper setup')
-
-            zip_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip")
+            if not os.path.exists(piper_engine_dir):
+                os.makedirs(piper_engine_dir, exist_ok=True)
             
-            if not os.path.exists(constants.PIPER_EXE_PATH):
+            if not os.path.exists(piper_models_dir):
+                os.makedirs(piper_models_dir, exist_ok=True)
+
+            service_logger.write_log('piper', 'install', 'INFO', f'Starting Piper setup in {setup_dir}')
+
+            zip_path = os.path.join(piper_engine_dir, "piper.zip")
+            
+            piper_exe_path = os.path.join(piper_engine_dir, 'piper', 'piper.exe')
+            if not os.path.exists(piper_exe_path):
                 mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_downloading_engine", self.lang)))
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_downloading_github", self.lang)))
                 
@@ -97,7 +118,7 @@ class PiperSetupDialog(QDialog):
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extracting_zip", self.lang)))
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(constants.PIPER_ENGINE_DIR)
+                    zip_ref.extractall(piper_engine_dir)
                 
                 os.remove(zip_path)
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extraction_complete", self.lang)))
@@ -145,13 +166,18 @@ class PiperSetupDialog(QDialog):
         try:
             mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_status_uninstalling", self.lang)))
             
+            # Get the correct setup directory (handles special characters)
+            setup_dir = _get_piper_setup_dir()
+            piper_engine_dir = os.path.join(setup_dir, 'piper_engine')
+            piper_models_dir = os.path.join(setup_dir, 'piper_models')
+            
             # Delete Engine
-            if os.path.exists(constants.PIPER_ENGINE_DIR):
-                shutil.rmtree(constants.PIPER_ENGINE_DIR, ignore_errors=True)
+            if os.path.exists(piper_engine_dir):
+                shutil.rmtree(piper_engine_dir, ignore_errors=True)
                 
             # Delete Models
-            if os.path.exists(constants.PIPER_MODELS_DIR):
-                shutil.rmtree(constants.PIPER_MODELS_DIR, ignore_errors=True)
+            if os.path.exists(piper_models_dir):
+                shutil.rmtree(piper_models_dir, ignore_errors=True)
                 
             mw.taskman.run_on_main(self.uninstall_complete)
         except Exception as e:
@@ -183,7 +209,9 @@ class PiperSetupDialog(QDialog):
         QMessageBox.critical(self, i18n.get_text("generic_error", self.lang), i18n.get_text("piper_setup_failed_msg", self.lang).format(err))
 
     def open_model_manager(self):
-        # Open the existing Piper Manager to download voices
-        dlg = component_piper_manager.PiperManagerDialog(self, constants.PIPER_MODELS_DIR)
+        # Open the existing Piper Manager to download voices (using safe path)
+        setup_dir = _get_piper_setup_dir()
+        models_dir = os.path.join(setup_dir, 'piper_models')
+        dlg = component_piper_manager.PiperManagerDialog(self, models_dir)
         dlg.exec()
 
