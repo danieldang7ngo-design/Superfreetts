@@ -13,7 +13,7 @@
         },
         "service_config": {
             "EdgeTTS": {
-                "concurrency_workers": 20
+                "concurrency_workers": 100
             },
             "SupertonicTTS": {
                 "concurrency_workers": 1
