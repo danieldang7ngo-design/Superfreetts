@@ -12,6 +12,62 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.7.6",
+        title={
+            "en": "Local-only Usage dashboard and startup crash fix",
+            "vi": "Bảng thống kê sử dụng cục bộ và sửa lỗi crash khi khởi động",
+            "ko": "로컬 전용 사용량 대시보드 및 시작 충돌 수정",
+            "zh-CN": "仅本地使用情况仪表盘与启动崩溃修复",
+            "zh-TW": "僅本機使用情況儀表板與啟動崩潰修復",
+            "ja": "ローカルのみの使用状況ダッシュボードと起動クラッシュの修正",
+            "sv": "Lokal användningsinstrumentpanel och startkraschfix",
+        },
+        bullets={
+            "en": [
+                "New Usage tab in Settings: see how many audio files, notes, characters and realtime plays you have created — plus generation time, per-engine breakdown, monthly activity and recent sessions.",
+                "Money saved estimate: the dashboard estimates how much you saved versus a paid TTS plan ($5/month for 250,000 characters).",
+                "100% private: all usage stats are stored only on your computer (user_files/usage_log.json) and are never sent anywhere. No telemetry.",
+                "Fixed startup crash on Anki 25.09+: replaced the removed profile_did_close hook with profile_will_close so the addon loads correctly.",
+            ],
+            "vi": [
+                "Tab Usage mới trong Cài đặt: xem bạn đã tạo bao nhiêu tệp âm thanh, ghi chú, ký tự và lượt phát realtime — kèm thời gian tạo, phân theo engine, hoạt động theo tháng và phiên gần đây.",
+                "Ước tính tiền đã tiết kiệm: bảng điều khiển ước tính số tiền bạn tiết kiệm so với gói TTS trả phí ($5/tháng cho 250.000 ký tự).",
+                "100% riêng tư: mọi thống kê chỉ lưu trên máy bạn (user_files/usage_log.json) và không gửi đi bất cứ đâu. Không telemetry.",
+                "Sửa lỗi crash khi khởi động trên Anki 25.09+: thay hook profile_did_close đã bị loại bỏ bằng profile_will_close để addon tải chính xác.",
+            ],
+            "ko": [
+                "설정에 새 사용량 탭: 생성한 오디오 파일, 노트, 문자, 실시간 재생 횟수와 생성 시간, 엔진별 분류, 월별 활동, 최근 세션을 확인할 수 있습니다.",
+                "절약 금액 추정: 유료 TTS 요금제($5/월, 250,000자) 대비 절약한 금액을 추정합니다.",
+                "100% 프라이빗: 모든 사용 통계는 컴퓨터에만 저장되며(user_files/usage_log.json) 어디로도 전송되지 않습니다. 텔레메트리 없음.",
+                "Anki 25.09+에서의 시작 충돌 수정: 제거된 profile_did_close 훅을 profile_will_close로 교체하여 애드온이 올바르게 로드됩니다.",
+            ],
+            "zh-CN": [
+                "设置中新增使用情况选项卡：查看已生成的音频文件数、笔记数、字符数和实时播放次数——以及生成时间、按引擎分类、每月活动和最近会话。",
+                "节省金额估算：仪表盘会估算您相对于付费 TTS 套餐（每月 5 美元/250,000 字符）节省的金额。",
+                "100% 隐私：所有使用统计仅存储在您的计算机上（user_files/usage_log.json），绝不会发送到任何地方。无遥测。",
+                "修复 Anki 25.09+ 上的启动崩溃：将已移除的 profile_did_close 挂钩替换为 profile_will_close，确保插件正确加载。",
+            ],
+            "zh-TW": [
+                "設定中新增使用情況索引標籤：查看已產生的音訊檔數、筆記數、字元數和即時播放次數——以及產生時間、依引擎分類、每月活動和最近工作階段。",
+                "節省金額估算：儀表板會估算您相對於付費 TTS 方案（每月 5 美元/250,000 字元）節省的金額。",
+                "100% 隱私：所有使用統計僅儲存在您的電腦上（user_files/usage_log.json），絕不會傳送到任何地方。無遙測。",
+                "修復 Anki 25.09+ 上的啟動崩潰：將已移除的 profile_did_close 掛鉤替換為 profile_will_close，確保外掛正確載入。",
+            ],
+            "ja": [
+                "設定に新しい使用状況タブ: 作成した音声ファイル数、ノート数、文字数、リアルタイム再生回数に加え、生成時間、エンジン別の内訳、月ごとのアクティビティ、最近のセッションを確認できます。",
+                "節約額の見積もり: 有料TTSプラン（月額5ドル/250,000文字）と比較した節約額を推定します。",
+                "100%プライベート: すべての使用統計はお使いのコンピューターにのみ保存され（user_files/usage_log.json）、どこにも送信されません。テレメトリーはありません。",
+                "Anki 25.09+ での起動クラッシュを修正: 削除された profile_did_close フックを profile_will_close に置き換え、アドオンが正しく読み込まれるようにしました。",
+            ],
+            "sv": [
+                "Ny flik Användning i Inställningar: se hur många ljudfiler, anteckningar, tecken och realtidsspelningar du har skapat — plus genereringstid, uppdelning per motor, månatlig aktivitet och senaste sessioner.",
+                "Besparingsuppskattning: instrumentpanelen uppskattar hur mycket du sparat jämfört med en betald TTS-plan ($5/månad för 250 000 tecken).",
+                "100% privat: alla användningsstatistik lagras bara på din dator (user_files/usage_log.json) och skickas aldrig någonstans. Ingen telemetri.",
+                "Fixade startkrasch på Anki 25.09+: ersatte den borttagna profile_did_close-kroken med profile_will_close så att tillägget laddas korrekt.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.7.5",
         title={
             "en": "macOS RAM and stability fixes, unsaved preset audio preview support",
