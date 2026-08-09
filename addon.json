@@ -1,0 +1,12 @@
+{
+    "display_name": "Super Free TTS",
+    "module_name": "superfreetts",
+    "repo_name": "SuperFreeTTS",
+    "ankiweb_id": "351217314",
+    "author": "Phuc",
+    "homepage": "https://github.com/danieldang7ngo-design/Superfreetts",
+    "tags": "text-to-speech, tts, free, edge-tts, piper, kokoro",
+    "description": "High-quality free Text-to-Speech for Anki using free services and local engines.",
+    "conflicts": [],
+    "targets": ["qt6"]
+}

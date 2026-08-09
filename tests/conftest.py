@@ -11,8 +11,9 @@ import os
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-# Add parent directory to path for imports
-addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Add addon root (src/superfreetts) and its bundled deps to path for imports
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+addon_dir = os.path.join(project_root, 'src', 'superfreetts')
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
@@ -135,7 +136,7 @@ def tmp_media_dir(tmp_path):
 def sample_config_dict():
     """Returns a clean version-8 config dict based on config.json"""
     import json
-    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.json')
+    config_path = os.path.join(project_root, 'src', 'superfreetts', 'config.json')
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
     from superfreetts_addon import constants

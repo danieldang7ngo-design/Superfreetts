@@ -2,22 +2,22 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
-!external/psutil/_psutil_windows.pyd
+!src/superfreetts/external/psutil/_psutil_windows.pyd
 *$py.class
-external/comtypes/gen/
+src/superfreetts/external/comtypes/gen/
 
 # --- Anki addon runtime data (per-user, must never be tracked) ---
 meta.json
 user_files/
-superfreetts_addon/user_files/
-superfreetts_addon/cache/
+src/superfreetts/superfreetts_addon/user_files/
+src/superfreetts/superfreetts_addon/cache/
 superfreetts-work.index
 
 # --- TTS engines/models downloaded at runtime ---
 superfreetts_data/
-superfreetts_addon/data/kokoro_engine/
-superfreetts_addon/data/piper_engine/
-superfreetts_addon/data/piper_models/
+src/superfreetts/superfreetts_addon/data/kokoro_engine/
+src/superfreetts/superfreetts_addon/data/piper_engine/
+src/superfreetts/superfreetts_addon/data/piper_models/
 
 # --- Build artifacts ---
 dist/
@@ -44,7 +44,7 @@ tests/test_stress_tts_hang.py
 # --- Local-only worker toggle scripts ---
 set_edge_workers_*.py
 _local_override.py
-superfreetts_addon/_local_override.py
+src/superfreetts/superfreetts_addon/_local_override.py
 
 # --- AI agent tooling (skills, locks) ---
 .agents/

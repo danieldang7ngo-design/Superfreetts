@@ -33,7 +33,7 @@ jobs:
         run: |
           python -c "
           import sys
-          sys.path.insert(0, '.')
+          sys.path.insert(0, 'src/superfreetts')
           from tests import mock_anki
           mock_anki.mock_all()
           import superfreetts_addon.config_models
