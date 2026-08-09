@@ -12,7 +12,7 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
-        version="26.7.6",
+        version="26.8.9",
         title={
             "en": "Local-only Usage dashboard and startup crash fix",
             "vi": "Bảng thống kê sử dụng cục bộ và sửa lỗi crash khi khởi động",
