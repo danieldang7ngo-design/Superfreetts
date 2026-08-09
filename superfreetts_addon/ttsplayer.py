@@ -114,6 +114,10 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
             audio_filename = ret.result()
             if audio_filename != None:
                 logger.info(f'got audio_filename: {audio_filename}')
+                try:
+                    self.hypertts.usage_tracker.record_realtime_play()
+                except Exception as e:
+                    logger.debug(f'[USAGE] record_realtime_play failed: {e}')
                 aqt.sound.av_player.insert_file(audio_filename)
             else:
                 logger.warning(f'no audio filename, not playing any audio')

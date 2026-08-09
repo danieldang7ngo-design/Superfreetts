@@ -415,6 +415,9 @@ def init(hypertts):
     # Update on profile load
     aqt.gui_hooks.profile_did_open.append(lambda: update_menu_language(hypertts)) 
 
+    # Flush local usage stats when profile closes
+    aqt.gui_hooks.profile_did_close.append(lambda: hypertts.flush_usage())
+
     # browser menus
     aqt.gui_hooks.browser_menus_did_init.append(browerMenusInit)
 

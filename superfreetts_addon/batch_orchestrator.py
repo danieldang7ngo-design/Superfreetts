@@ -27,13 +27,13 @@ from . import i18n
 from . import source_text_resolver
 from . import batch_executor
 from . import text_utils
+from . import usage_tracker
 
 logger = logging_utils.get_child_logger(__name__)
 
 
 class BatchOrchestrator:
-    """
-    Orchestrates pre-processing, generation, progress-tracking, deduplication,
+    """Orchestrates pre-processing, generation, progress-tracking, deduplication,
     and application of batch audio generation tasks.
     Delegates audio store writes, voice mapping, and note updates back to ``SuperFreeTTS``.
     """
@@ -57,11 +57,30 @@ class BatchOrchestrator:
             batch_status.set_phase(phase)
         batch_status.set_status_message(message)
 
+    def _bind_usage_session(self, batch_status: Any, audio_request_context: Any) -> None:
+        """Attach the usage-tracking session id to the batch status so later
+        apply phases record note_updated against the same session."""
+        try:
+            session_id = audio_request_context.get_batch_uuid_str()
+            batch_status.usage_session_id = session_id
+            self.hypertts.usage_tracker.start_batch_session(session_id)
+        except Exception as e:
+            logger.debug(f"[USAGE] failed to bind batch session: {e}")
+
+    def _record_note_updated(self, batch_status: Any) -> None:
+        try:
+            session_id = getattr(batch_status, 'usage_session_id', None)
+            if session_id:
+                self.hypertts.usage_tracker.record_note_updated(session_id)
+        except Exception as e:
+            logger.debug(f"[USAGE] failed to record note_updated: {e}")
+
     def prepare_batch_audio_generation(self, note_id_list: List[int], batch: config_models.BatchConfig, batch_status: Any) -> Dict[str, Any]:
         """Prepare note/text/voice tasks without generating audio or updating notes."""
         tasks = []
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
         lang = self.hypertts.get_ui_language()
+        self._bind_usage_session(batch_status, audio_request_context)
 
         LARGE_BATCH_THRESHOLD = 1000
         if len(note_id_list) >= LARGE_BATCH_THRESHOLD:
@@ -252,6 +271,7 @@ class BatchOrchestrator:
                         note_action_context.set_processed_text(processed_text)
                         note_action_context.set_sound(sound_file)
                         note_action_context.set_status(constants.BatchNoteStatus.Done)
+                        self._record_note_updated(batch_status)
                 except Exception as e:
                     logger.error(f"Error updating note {note_id}: {e}")
                     note_action_context.set_error(e)
@@ -295,6 +315,7 @@ class BatchOrchestrator:
                         note_action_context.set_processed_text(processed_text)
                         note_action_context.set_sound(sound_file)
                         note_action_context.set_status(constants.BatchNoteStatus.Done)
+                        self._record_note_updated(batch_status)
                 except Exception as e:
                     logger.error(f"Error updating note {note_id}: {e}")
                     note_action_context.set_error(e)
@@ -316,9 +337,9 @@ class BatchOrchestrator:
         start_time = time.time()
         tasks = []
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
+        self._bind_usage_session(batch_status, audio_request_context)
 
         logger.info(f'[BATCH] Using multi-engine batch executor')
-
         batch_name = batch.name or f"batch_{int(time.time())}"
         original_note_id_list = note_id_list[:]
         checkpoint_data = self.executor.checkpoint.load(batch_name)
@@ -511,6 +532,7 @@ class BatchOrchestrator:
                                     note_action_context.set_processed_text(processed_text)
                                     note_action_context.set_sound(sound_file)
                                     note_action_context.set_status(constants.BatchNoteStatus.Done)
+                                    self._record_note_updated(batch_status)
                         except Exception as e:
                             logger.error(f"Error updating note {note_id}: {e}")
                             note_action_context.set_error(e)

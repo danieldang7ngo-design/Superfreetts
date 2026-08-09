@@ -47,6 +47,10 @@ class RealtimeManager:
 
     def play_realtime_audio(self, realtime_model: config_models.RealtimeConfigSide, text: str) -> None:
         full_filename, audio_filename = self.get_realtime_audio(realtime_model, text)
+        try:
+            self.hypertts.usage_tracker.record_realtime_play()
+        except Exception as e:
+            logger.debug(f'[USAGE] record_realtime_play failed: {e}')
         self.anki_utils.play_sound(full_filename)
 
     def get_audio_filename_tts_tag(self, tts_tag: Any) -> str:

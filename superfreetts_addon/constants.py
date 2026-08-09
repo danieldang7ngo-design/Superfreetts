@@ -155,6 +155,13 @@ CONFIG_KEYBOARD_SHORTCUTS = 'keyboard_shortcuts'
 CONFIG_LAST_USED_BATCH = 'last_used_batch'
 CONFIG_USE_SELECTION = 'use_selection' # whether to use the selected portion of the field
 
+# Usage tracking (local-only dashboard in Settings -> Usage tab)
+USAGE_LOG_FILENAME = 'usage_log.json'
+USAGE_SCHEMA_VERSION = 1
+# Comparison basis for "money saved": paid plan price vs allowed characters.
+USAGE_MONTHLY_COST_USD = 5.0
+USAGE_MONTHLY_CHARS_ALLOWED = 250000
+
 ADDON_NAME = 'Super Free TTS'
 MENU_PREFIX = ADDON_NAME + ':'
 TITLE_PREFIX = ADDON_NAME + ': '

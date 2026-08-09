@@ -47,6 +47,7 @@ from . import realtime_manager as realtime_manager_module
 from . import batch_orchestrator as batch_orchestrator_module
 from . import audio_generator as audio_generator_module
 from . import editor_manager as editor_manager_module
+from . import usage_tracker
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -100,6 +101,12 @@ class SuperFreeTTS():
         self.audio_store = audio_file_store.AudioFileStore(self.anki_utils, self.get_preferences)
         self.audio_generator = audio_generator_module.AudioGenerator(self)
         self.editor_manager = editor_manager_module.EditorManager(self)
+
+        try:
+            self.usage_tracker = usage_tracker.UsageTracker(self.anki_utils.get_user_files_dir())
+        except Exception as e:
+            logger.warning(f"[USAGE] Failed to initialize usage tracker: {e}")
+            self.usage_tracker = None
 
         # Apply logging preferences based on stored debug mode
         self.orchestrator.apply_logging_preferences()
@@ -246,7 +253,11 @@ class SuperFreeTTS():
             try:
                 # Locate actual voice object
                 voice = self.service_manager.locate_voice(voice_id)
+                batch_call_start = time.time()
                 audio_datas = self.service_manager.get_tts_audio_batch(missing_texts, voice, voice_options)
+                batch_call_elapsed = time.time() - batch_call_start
+                # Spread the measured wall-clock time across generated files
+                per_file_elapsed = batch_call_elapsed / max(len(missing_texts), 1)
                 
                 for i, idx in enumerate(missing_indices):
                     audio_data = audio_datas[i] if i < len(audio_datas) else None
@@ -260,6 +271,13 @@ class SuperFreeTTS():
                         # Cache in memory
                         self.executor.cache_result(proc_text, str(request_key), task_data['source_text'], file_result.audio_filename, file_result.full_filename)
                         results[idx] = ((task_data['source_text'], proc_text, file_result.audio_filename, file_result.full_filename), None)
+                        try:
+                            service_name = getattr(voice_id, 'service', 'unknown')
+                            self.usage_tracker.record_file_generated(
+                                task_data.get('audio_request_context'), service_name, len(proc_text), per_file_elapsed
+                            )
+                        except Exception as usage_error:
+                            logger.debug(f"[USAGE] batch record failed: {usage_error}")
                     else:
                         if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
                             results[idx] = self._generate_audio_with_priority_fallback(task_data)
@@ -548,6 +566,27 @@ class SuperFreeTTS():
             self.anki_utils.run_on_main(self.anki_utils.broadcast_audio_added)
 
     def superfreetts_pro_enabled(self): return False  # Pro always disabled
+
+    # usage tracking
+    def get_usage_summary(self):
+        if self.usage_tracker is None:
+            return {}
+        return self.usage_tracker.get_summary()
+
+    def get_usage_recent_sessions(self, limit=20):
+        if self.usage_tracker is None:
+            return []
+        return self.usage_tracker.get_recent_sessions(limit)
+
+    def get_usage_monthly_series(self):
+        if self.usage_tracker is None:
+            return []
+        return self.usage_tracker.get_monthly_series()
+
+    def flush_usage(self):
+        if self.usage_tracker is None:
+            return
+        self.usage_tracker.flush()
 
     # editor selection flag
     def set_editor_use_selection(self, use_selection): return self.config_store.set_editor_use_selection(use_selection)

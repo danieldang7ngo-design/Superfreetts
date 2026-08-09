@@ -1,5 +1,19 @@
 # Changelog
 
+## 26.7.6 - 2026-08-09
+
+### English
+
+- Usage Dashboard: Added a local-only Usage tab in Settings that shows what you have created with Super Free TTS — audio files generated, notes updated, characters synthesized, realtime plays, generation time, per-engine breakdown, monthly activity and recent sessions.
+- Money Saved estimate: The dashboard estimates how much you saved versus a paid TTS plan ($5/month for 250,000 characters), computed locally.
+- 100% private: All usage statistics are stored on your computer only (user_files/usage_log.json) and are never sent anywhere. No telemetry.
+
+### Tiếng Việt
+
+- Bảng thống kê sử dụng (Usage): Thêm tab Usage trong Cài đặt, chỉ hiển thị trên máy bạn, liệt kê những gì bạn đã tạo bằng Super Free TTS — số tệp âm thanh, ghi chú đã cập nhật, ký tự đã tổng hợp, lượt phát realtime, thời gian tạo, phân theo engine, hoạt động theo tháng và phiên gần đây.
+- Ước tính tiền đã tiết kiệm: Bảng điều khiển ước tính số tiền bạn tiết kiệm so với gói TTS trả phí ($5/tháng cho 250.000 ký tự), tính toán cục bộ.
+- 100% riêng tư: Mọi thống kê chỉ lưu trên máy bạn (user_files/usage_log.json) và không gửi đi bất cứ đâu. Không telemetry.
+
 ## 26.7.5 - 2026-07-23
 
 ### English

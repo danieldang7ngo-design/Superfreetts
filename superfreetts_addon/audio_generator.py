@@ -17,6 +17,7 @@ NOT responsible for:
 
 import copy
 import random
+import time
 from typing import Any, List, Optional, Tuple
 
 from . import constants
@@ -140,6 +141,7 @@ class AudioGenerator:
             if cached_file is None:
                 voice = self.service_manager.locate_voice(voice_id)
                 logger.info(f'located voice: {voice}')
+                gen_start = time.time()
                 audio_data = self.service_manager.get_tts_audio(
                     source_text, voice, voice_options, audio_request_context
                 )
@@ -147,8 +149,23 @@ class AudioGenerator:
                 logger.debug(f'writing {file_result.full_filename}')
                 file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
                 logger.debug('wrote audio data')
+                gen_elapsed = time.time() - gen_start
+                if audio_request_context is not None and audio_request_context.audio_request_reason != constants.AudioRequestReason.preview:
+                    try:
+                        self.hypertts.usage_tracker.record_file_generated(
+                            audio_request_context, service_name, len(source_text), gen_elapsed
+                        )
+                    except Exception as e:
+                        logger.debug(f'[USAGE] record_file_generated failed: {e}')
             else:
                 logger.info('file exists in cache')
+                if audio_request_context is not None and audio_request_context.audio_request_reason != constants.AudioRequestReason.preview:
+                    try:
+                        self.hypertts.usage_tracker.record_cache_hit(
+                            audio_request_context, service_name, len(source_text)
+                        )
+                    except Exception as e:
+                        logger.debug(f'[USAGE] record_cache_hit failed: {e}')
         finally:
             tracker.end_generation()
 

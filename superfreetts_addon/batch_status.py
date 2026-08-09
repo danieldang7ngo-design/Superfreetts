@@ -126,6 +126,7 @@ class BatchStatus():
         self.unique_tasks_completed: int = 0
         self.total_unique_tasks: int = 0
         self.futures_to_cancel: List[Any] = []
+        self.usage_session_id: Optional[str] = None
         self._change_notify_min_interval = 0.1
         self._last_change_notify_time = None
         i = 0
