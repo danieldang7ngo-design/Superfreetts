@@ -1,0 +1,114 @@
+<p><strong>SUPER FREE TTS</strong> — A fork of HyperTTS, rebuilt so everything stays free. <em>From AnkiVN with 💖</em></p>
+
+<hr>
+
+<h2>🔥 Key Features</h2>
+<p><strong>🚀 EdgeTTS Voices (Microsoft):</strong><br>
+Free. Natural. Expressive.<br>
+Includes <strong>over 7,000 voices</strong> across languages worldwide — fast, smooth, and 100% free.</p>
+
+<hr>
+
+<h2>⚙️ Settings &amp; Configuration</h2>
+<p>Go to <strong>AnkiVN Menu → Super Free TTS Settings</strong>. There are 2 tabs:</p>
+<ul>
+<li><strong>Configuration:</strong> Toggle TTS services on/off with a single click — <strong>green is enabled, red is disabled</strong>. Supports <strong>Offline</strong> models (Piper, Kokoro...) for advanced users (performance depends on your CPU).</li>
+<li><strong>Preferences:</strong> Choose your <strong>interface language</strong> (Vietnamese / English), manage <strong>Cache</strong>, and configure system preferences.</li>
+</ul>
+
+<p>
+<img src="https://b.l3n.co/ctlzUT.png" alt="Super Free TTS - Main Interface"><br>
+<img src="https://d.l3n.co/ctlnm7.png" alt="Super Free TTS - Generate Audio">
+</p>
+
+<hr>
+
+<h2>📖 Quick Start Guide</h2>
+
+<h3>Method 1 — Save audio files to cards <em>(for offline studying on mobile)</em></h3>
+<ol>
+<li>Go to <strong>Browse</strong> and select the cards you want to add audio to.</li>
+<li>Select <strong>Super Free TTS → Generate Audio Files</strong>.</li>
+<li>Choose a voice under <strong>Voice Selection</strong> (some voices support adjusting <strong>Rate</strong> and <strong>Pitch</strong>).</li>
+<li>Use <strong>Mapping Rules</strong> to automatically assign voices by Deck or Note Type — no need to re-select every time.</li>
+<li>Click <strong>Start</strong>.</li>
+</ol>
+
+<p>
+<img src="https://a.l3n.co/ctleIb.png" alt="Super Free TTS - Settings"><br>
+<img src="https://c.l3n.co/ctlvur.png" alt="Super Free TTS - Compatibility">
+</p>
+
+<h3>Method 2 — Stream audio directly while reviewing <em>(Realtime)</em></h3>
+<ol>
+<li>Go to <strong>Browse → Select cards → Super Free TTS → Realtime Configuration</strong>.</li>
+<li>Paste this line into your <strong>Card Template</strong>:<br>
+<code>{{tts vi_VN voices=EdgeTTS: Field_Name}}</code></li>
+<li>Flip the card — the audio plays immediately. <strong>Zero storage space used.</strong></li>
+</ol>
+
+<blockquote>
+⚠️ <strong>Important Note:</strong> This method requires Super Free TTS installed on your desktop Anki. If you review cards on mobile or share decks with others, audio <strong>will not play</strong>. In that case, please use <strong>Method 1</strong> to save audio directly into the cards.
+</blockquote>
+
+<hr>
+
+<h2>💻 Specs &amp; Compatibility</h2>
+<ul>
+<li><strong>Add-on Version:</strong> 1.0.0</li>
+<li><strong>Anki Version:</strong> Latest version (<strong>Anki 24.10 and older are not supported</strong>).</li>
+<li><strong>Operating System:</strong> Windows, macOS, Linux</li>
+<li><strong>Mobile:</strong> AnkiDroid (Android), AnkiMobile (iOS)</li>
+<li><strong>License:</strong> Open Source — forked from <a href="https://github.com/Vocab-Apps/anki-hyper-tts">HyperTTS</a></li>
+<li><strong>Source Code:</strong> <a href="https://github.com/danieldang7ngo-design/Superfreetts">Super Free TTS on GitHub</a></li>
+</ul>
+
+<hr>
+
+<h2>🤝 Authors &amp; Support</h2>
+<ul>
+<li><strong>Project Leader:</strong> Paul (AnkiVN)</li>
+<li><strong>Contributor:</strong> Le Hoang Phuc — Admin of <a href="https://www.facebook.com/groups/ankivn">Vietnamese Anki Community</a> (<a href="https://ankivn.com/">ankivn.com</a>)</li>
+<li><strong>Community:</strong> <a href="https://www.facebook.com/groups/ankivocabulary">AnkiVN Group</a> — support, discussions, and study tips.</li>
+</ul>
+
+<hr>
+
+<h2>💙 Special Thanks</h2>
+<p>This project would not exist without <strong><a href="https://github.com/Vocab-Apps/anki-hyper-tts">HyperTTS</a></strong>.<br>
+A huge thank you to the HyperTTS team for building such a wonderful open-source foundation and sharing it with the community.</p>
+<p><strong>Big thank you. Truly.</strong> 🙏</p>
+
+<hr>
+
+<h2>🚨🚨 BEFORE YOU DOWNVOTE — PLEASE READ THIS FIRST! 🚨🚨</h2>
+<blockquote>
+🐛 Running into bugs is completely normal — the add-on is brand new, and we are improving it every single day.<br>
+A downvote won't get a bug fixed, but a message will. 💬
+</blockquote>
+
+<p>You can contact us via:</p>
+<ul>
+<li>📘 <strong>Facebook:</strong> <a href="https://www.facebook.com/dangngooooo">Paul</a> | <a href="https://www.facebook.com/tui.la.phuc747">Le Hoang Phuc</a></li>
+<li>🎮 <strong>Discord:</strong> <em>jag_heter_paul</em> or <em>madbear1236</em></li>
+<li>📧 <strong>Email:</strong> danieldang7.ngo@gmail.com</li>
+</ul>
+<p>We promise to look into it and fix it as quickly as possible. 🫡<br>
+If you're hesitant to message us directly... an upvote with a bug description in the review works too 😅 We read every feedback!</p>
+<p><em>The project is still small and bugs are inevitable. But we are here — always listening, always improving.</em></p>
+
+<hr>
+
+<p>Nếu Add-on này giúp ích và bạn muốn nói lời cảm ơn — tụi mình chỉ cần một trong hai:</p>
+<p>👍 <strong>Một lượt Upvote</strong> — để nhiều người biết đến dự án hơn.<br>
+☕ <strong>Hoặc một ly cà phê nhỏ</strong> — đủ làm Paul và anh Phúc code thêm vài tiếng đêm.</p>
+
+<p><img src="https://d.l3n.co/ctlM8F.png" alt="QR chuyển khoản - Super Free TTS"></p>
+
+<blockquote>
+🏦 <strong>Agribank</strong><br>
+Tên tài khoản: <strong>NGO MINH DANG</strong><br>
+Số tài khoản: <strong>6460 2059 95890</strong>
+</blockquote>
+
+<p><em>Không bắt buộc. Không áp lực. Chỉ là tụi mình rất trân trọng nếu bạn muốn.</em> 🙏</p>

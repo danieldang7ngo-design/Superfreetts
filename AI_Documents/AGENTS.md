@@ -34,6 +34,8 @@ Otherwise AGENTS.md covers 90% of tasks.
 | `graphics/` | Banners + UI icons. Icons are Lucide (ISC), stroke-based SVGs: editor buttons `icon_speaker`, `icon_play`, `icon_settings`; toggles `icon_chevron_down`/`icon_chevron_right`; menu `icon_headphones`. `NOTICE` holds attribution. Add any new icon as a static Lucide SVG here (no runtime dep). |
 | `tests/` | Automated tests. `mock_anki.py` fakes Anki, no real install needed. |
 | `build_share.py` | Packages everything into `.ankiaddon` for release. |
+| `ANKIWEB_DESCRIPTION_EN.html` | English store listing / description for AnkiWeb (item 351217314). |
+| `ANKIWEB_DESCRIPTION_EN.txt` | Plain text version of AnkiWeb store listing. |
 
 ## 2. Golden Rules
 
