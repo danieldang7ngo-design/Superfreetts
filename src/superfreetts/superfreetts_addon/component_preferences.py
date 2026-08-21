@@ -50,6 +50,10 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_apple", lang), "apple")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_nintendo", lang), "nintendo")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_binance", lang), "binance")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_clay", lang), "clay")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_claude", lang), "claude")
         self._sync_theme_combobox_value()
 
         self.cache_retention_checkbox.setChecked(self.model.cache_enabled)
@@ -133,6 +137,10 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_apple", lang), "apple")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_nintendo", lang), "nintendo")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_binance", lang), "binance")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_clay", lang), "clay")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_claude", lang), "claude")
         self.theme_combobox.setMinimumHeight(34)
         self.theme_combobox.setMinimumWidth(220)
         self._sync_theme_combobox_value()
@@ -227,7 +235,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
 
     def _sync_theme_combobox_value(self) -> None:
         current_theme = getattr(self.model, "ui_theme", "vibrant") or "vibrant"
-        theme_values = ["vibrant", "ollama", "apple"]
+        theme_values = ["vibrant", "ollama", "apple", "nintendo", "binance", "clay", "claude"]
         if current_theme not in theme_values:
             current_theme = "vibrant"
         target_index = theme_values.index(current_theme)
@@ -255,11 +263,15 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self._sync_language_combobox_value()
 
         self.theme_label.setText(i18n.get_text("preferences_label_theme", lang))
-        if hasattr(self, "theme_combobox") and self.theme_combobox.count() >= 3:
+        if hasattr(self, "theme_combobox") and self.theme_combobox.count() >= 7:
             self.theme_combobox.blockSignals(True)
             self.theme_combobox.setItemText(0, i18n.get_text("preferences_option_theme_vibrant", lang))
             self.theme_combobox.setItemText(1, i18n.get_text("preferences_option_theme_ollama", lang))
             self.theme_combobox.setItemText(2, i18n.get_text("preferences_option_theme_apple", lang))
+            self.theme_combobox.setItemText(3, i18n.get_text("preferences_option_theme_nintendo", lang))
+            self.theme_combobox.setItemText(4, i18n.get_text("preferences_option_theme_binance", lang))
+            self.theme_combobox.setItemText(5, i18n.get_text("preferences_option_theme_clay", lang))
+            self.theme_combobox.setItemText(6, i18n.get_text("preferences_option_theme_claude", lang))
             self.theme_combobox.blockSignals(False)
         if hasattr(self, "theme_helper_label"):
             self.theme_helper_label.setText(i18n.get_text("preferences_theme_helper", lang))

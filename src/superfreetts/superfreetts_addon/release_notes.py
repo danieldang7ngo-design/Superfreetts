@@ -12,6 +12,48 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.12",
+        title={
+            "en": "Four new UI themes: Nintendo, Binance, Clay, Claude",
+            "vi": "Bốn giao diện UI mới: Nintendo, Binance, Clay, Claude",
+            "ko": "새 UI 테마 4종: 닌텐도, 바이낸스, Clay, 클로드",
+            "zh-CN": "四个新界面主题：任天堂、币安、Clay、Claude",
+            "zh-TW": "四個新介面主題：任天堂、幣安、Clay、Claude",
+            "ja": "新しいUIテーマ4つ: ニンテンドー、バイナンス、Clay、Claude",
+            "sv": "Fyra nya UI-teman: Nintendo, Binance, Clay, Claude",
+        },
+        bullets={
+            "en": [
+                "Added four more UI themes: Nintendo 2001 (retro console chrome), Binance (dark trading with yellow CTAs), Clay (warm claymation), and Claude (warm cream-coral editorial).",
+                "The theme selector now offers seven choices: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay, and Claude.",
+            ],
+            "vi": [
+                "Thêm bốn giao diện UI nữa: Nintendo 2001 (console retro), Binance (giao diện trading tối với nút vàng), Clay (phong cách claymation ấm áp) và Claude (biên tập kem ấm với cam san hô).",
+                "Bộ chọn giao diện giờ có bảy lựa chọn: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay và Claude.",
+            ],
+            "ko": [
+                "UI 테마 4개 추가: 닌텐도 2001(레트로 콘솔 크롬), 바이낸스(노란색 CTA가 있는 다크 트레이딩), Clay(따뜻한 클레이메이션), 클로드(따뜻한 크림-코랄 편집 스타일).",
+                "테마 선택기에서 이제 7가지 선택 가능: Vibrant Blocks, Ollama, Apple, 닌텐도 2001, 바이낸스, Clay, 클로드.",
+            ],
+            "zh-CN": [
+                "新增四个界面主题：任天堂 2001（复古主机镀铬）、币安（黄色 CTA 的深色交易风）、Clay（温馨黏土动画）、Claude（温馨奶油珊瑚编辑风）。",
+                "主题选择器现提供七种选择：Vibrant Blocks、Ollama、Apple、任天堂 2001、币安、Clay 和 Claude。",
+            ],
+            "zh-TW": [
+                "新增四個介面主題：任天堂 2001（復古主機鍍鉻）、幣安（黃色 CTA 的深色交易風）、Clay（溫馨黏土動畫）、Claude（溫馨奶油珊瑚編輯風）。",
+                "主題選擇器現提供七種選擇：Vibrant Blocks、Ollama、Apple、任天堂 2001、幣安、Clay 和 Claude。",
+            ],
+            "ja": [
+                "UIテーマを4つ追加: ニンテンドー 2001(レトロコンソールクローム)、バイナンス(黄色CTAのダークトレーディング)、Clay(暖かいクレイメーション)、Claude(暖かいクリームコーラルのエディトリアル)。",
+                "テーマ選択は7つに: Vibrant Blocks、Ollama、Apple、ニンテンドー 2001、バイナンス、Clay、Claude。",
+            ],
+            "sv": [
+                "Lade till fyra fler UI-teman: Nintendo 2001 (retro konsolkrom), Binance (mörk trading med gula CTA:er), Clay (varm claymation) och Claude (varm kräm-korall editoriell).",
+                "Temaväljaren erbjuder nu sju val: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay och Claude.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.11",
         title={
             "en": "New Apple UI theme option",

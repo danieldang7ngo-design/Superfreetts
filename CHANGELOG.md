@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.8.12 - 2026-08-22
+
+### English
+
+- Added four more UI themes: Nintendo 2001 (retro console chrome), Binance (dark trading with yellow CTAs), Clay (warm claymation), and Claude (warm cream-coral editorial).
+- The theme selector now offers seven choices: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay, and Claude.
+
+### Tiếng Việt
+
+- Thêm bốn giao diện UI nữa: Nintendo 2001 (console retro), Binance (giao diện trading tối với nút vàng), Clay (phong cách claymation ấm áp) và Claude (biên tập kem ấm với cam san hô).
+- Bộ chọn giao diện giờ có bảy lựa chọn: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay và Claude.
+
 ## 26.8.11 - 2026-08-22
 
 ### English
