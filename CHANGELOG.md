@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.8.14 - 2026-08-22
+
+### English
+
+- The Services tab now follows the active theme: section headers, Setup buttons, separators, status badges, and the search box use theme colors and light/dark mode instead of hardcoded blue/purple/amber.
+- Status badges are color-coded per theme: Ready (green), Setup needed (accent), Disabled (muted), Free, and Recommended.
+
+### Tiếng Việt
+
+- Tab Dịch vụ giờ theo đúng theme đang chọn: tiêu đề nhóm, nút Setup, đường phân cách, huy hiệu trạng thái và ô tìm kiếm dùng màu theme và chế độ sáng/tối thay vì xanh/cam/tím cứng.
+- Huy hiệu trạng thái có màu riêng theo theme: Sẵn sàng (xanh lá), Cần cài đặt (nhấn mạnh), Tắt (xám), Miễn phí, Đề xuất.
+
 ## 26.8.13 - 2026-08-22
 
 ### English

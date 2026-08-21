@@ -53,3 +53,20 @@ class TestThemeBuilders:
         for theme in gui_utils.VALID_THEMES:
             gui_utils.set_active_theme(theme)
             assert gui_utils.get_active_theme() == theme
+
+    @pytest.mark.parametrize("theme", gui_utils.VALID_THEMES)
+    def test_services_extra_css_present(self, theme):
+        """The Services tab theme selectors must be present for every theme."""
+        gui_utils.set_active_theme(theme)
+        css = gui_utils.get_dynamic_stylesheet()
+        for selector in (
+            'sectionToggle',
+            'setupAction',
+            'serviceSeparator',
+            'statusBadgeReady',
+            'statusBadgeSetup',
+            'statusBadgeDisabled',
+            'statusBadgeFree',
+            'statusBadgeRecommended',
+        ):
+            assert f'cssClass="{selector}"' in css, f"missing {selector} in {theme}"

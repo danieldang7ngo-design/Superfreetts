@@ -88,12 +88,10 @@ class ServicesPage(component_common.ConfigComponentBase):
     def _get_service_status_info(self, service):
         lang = self.hypertts.get_ui_language()
         enabled = bool(self.model.get_service_enabled(service.name))
-        dark = gui_utils.is_night_mode()
         if not enabled:
             return (
                 i18n.get_text("service_status_disabled", lang),
-                '#334155' if dark else constants.COLOR_BORDER,
-                '#CBD5E1' if dark else constants.COLOR_SECONDARY,
+                "statusBadgeDisabled",
             )
 
         missing = 0
@@ -114,14 +112,12 @@ class ServicesPage(component_common.ConfigComponentBase):
         if missing > 0:
             return (
                 i18n.get_text("service_status_setup_needed", lang),
-                '#78350F' if dark else '#FEF3C7',
-                '#FDE68A' if dark else '#92400E',
+                "statusBadgeSetup",
             )
 
         return (
             i18n.get_text("service_status_ready", lang),
-            '#022C22' if dark else '#FFFFFF',
-            '#34D399' if dark else '#059669',
+            "statusBadgeReady",
         )
 
     def _refresh_service_status_badges(self):
@@ -129,18 +125,11 @@ class ServicesPage(component_common.ConfigComponentBase):
             badge = self.service_status_badge_map.get(service.name)
             if badge is None:
                 continue
-            text, bg, fg = self._get_service_status_info(service)
+            text, css_class = self._get_service_status_info(service)
             badge.setText(text)
-            badge.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {bg};
-                    color: {fg};
-                    border-radius: 10px;
-                    padding: 2px 10px;
-                    font-size: 10px;
-                    font-weight: 600;
-                }}
-            """)
+            badge.setProperty("cssClass", css_class)
+            badge.style().unpolish(badge)
+            badge.style().polish(badge)
 
         self._refresh_services_summary_label()
 
@@ -152,7 +141,7 @@ class ServicesPage(component_common.ConfigComponentBase):
             i18n.get_text("service_status_disabled", lang): 0,
         }
         for service in self.get_service_list():
-            status_text, _, _ = self._get_service_status_info(service)
+            status_text, _ = self._get_service_status_info(service)
             counts[status_text] = counts.get(status_text, 0) + 1
         return counts
 
@@ -167,9 +156,6 @@ class ServicesPage(component_common.ConfigComponentBase):
                 counts.get(i18n.get_text("service_status_setup_needed", lang), 0),
                 counts.get(i18n.get_text("service_status_disabled", lang), 0),
             )
-        )
-        self.services_summary_label.setStyleSheet(
-            f"color: {constants.COLOR_SECONDARY}; font-size: 11px;"
         )
 
     def _set_validation_label(self, label: aqt.qt.QLabel, ok: bool, message: str):
@@ -653,9 +639,9 @@ class ServicesPage(component_common.ConfigComponentBase):
         advanced_widget.setLayout(advanced_gridlayout)
 
         separator = aqt.qt.QFrame()
-        separator.setFrameShape(aqt.qt.QFrame.Shape.HLine)
-        separator.setFrameShadow(aqt.qt.QFrame.Shadow.Sunken)
-        separator.setStyleSheet(f"color: {constants.COLOR_BORDER};")
+        separator.setFrameShape(aqt.qt.QFrame.Shape.NoFrame)
+        separator.setFixedHeight(1)
+        separator.setProperty("cssClass", "serviceSeparator")
         layout.addWidget(separator)
 
         def toggle_advanced(checked: bool) -> None:
@@ -727,29 +713,24 @@ class ServicesPage(component_common.ConfigComponentBase):
         header_row.addWidget(get_service_header_label(service))
 
         if service.service_fee.name == 'free':
-            dark = gui_utils.is_night_mode()
             header_row.addSpacing(8)
             header_row.addWidget(gui_utils.get_status_badge(
                 i18n.get_text("service_badge_free", lang),
-                bg_color="#FFFFFF" if not dark else "#022C22",
-                text_color="#059669" if not dark else "#34D399"
+                css_class="statusBadgeFree"
             ))
 
         if service.name == "EdgeTTS":
-            dark = gui_utils.is_night_mode()
             header_row.addSpacing(8)
             header_row.addWidget(gui_utils.get_status_badge(
                 i18n.get_text("service_badge_recommended", lang),
-                bg_color="#78350F" if dark else "#FEF3C7",
-                text_color="#FDE68A" if dark else "#92400E"
+                css_class="statusBadgeRecommended"
             ))
 
         header_row.addSpacing(8)
-        status_text, status_bg, status_fg = self._get_service_status_info(service)
+        status_text, status_class = self._get_service_status_info(service)
         status_badge = gui_utils.get_status_badge(
             status_text,
-            bg_color=status_bg,
-            text_color=status_fg,
+            css_class=status_class,
         )
         self.service_status_badge_map[service.name] = status_badge
         header_row.addWidget(status_badge)
@@ -759,10 +740,7 @@ class ServicesPage(component_common.ConfigComponentBase):
         setup_action_button.setMinimumHeight(22)
         setup_action_button.setMinimumWidth(80)
         setup_action_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Fixed, aqt.qt.QSizePolicy.Policy.Fixed)
-        setup_action_button.setStyleSheet(
-            "QPushButton { background-color: #FEF3C7; color: #92400E; border: none; border-radius: 12px; padding: 2px 10px; font-weight: 700; }"
-            "QPushButton:hover { background-color: #FDE68A; }"
-        )
+        setup_action_button.setProperty("cssClass", "setupAction")
         header_row.addSpacing(6)
         header_row.addWidget(setup_action_button)
 
@@ -783,7 +761,7 @@ class ServicesPage(component_common.ConfigComponentBase):
 
         def refresh_setup_action_button():
             need_setup_text = i18n.get_text("service_status_setup_needed", lang)
-            current_status_text, _, _ = self._get_service_status_info(service)
+            current_status_text, _ = self._get_service_status_info(service)
             should_show = self._supports_setup_shortcut(service) and current_status_text == need_setup_text
             setup_action_button.setVisible(should_show)
 
@@ -855,7 +833,6 @@ class ServicesPage(component_common.ConfigComponentBase):
         summary_font.setBold(True)
         summary_font.setPointSize(max(summary_font.pointSize(), 11))
         self.services_summary_label.setFont(summary_font)
-        self.services_summary_label.setStyleSheet("color: #123A63; padding-top: 4px;")
         header_hlayout.addWidget(self.services_summary_label)
         header_hlayout.addStretch()
 
@@ -864,10 +841,6 @@ class ServicesPage(component_common.ConfigComponentBase):
         self.search_input.setMinimumHeight(32)
         self.search_input.setMinimumWidth(120)
         self.search_input.setMaximumWidth(240)
-        self.search_input.setStyleSheet(
-            "QLineEdit { border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 10px; "
-            "font-size: 12px; color: #334155; background-color: #FFFFFF; }"
-        )
         self.search_debounce_timer = aqt.qt.QTimer(self.dialog)
         self.search_debounce_timer.setSingleShot(True)
         header_hlayout.addWidget(self.search_input)
@@ -898,12 +871,7 @@ class ServicesPage(component_common.ConfigComponentBase):
                 aqt.qt.Qt.ArrowType.DownArrow if default_expanded else aqt.qt.Qt.ArrowType.RightArrow
             )
             section_button.setSizePolicy(aqt.qt.QSizePolicy.Policy.Expanding, aqt.qt.QSizePolicy.Policy.Fixed)
-            section_button.setStyleSheet(
-                "QToolButton { text-align: left; font-weight: bold; font-size: 14px; border: none; "
-                "border-radius: 10px; padding: 10px 14px; background: qlineargradient(x1:0, y1:0, x2:1, y2:0, "
-                "stop:0 #4776E6, stop:1 #8E54E9); color: white; }"
-                "QToolButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #5B86E5, stop:1 #A17FE0); }"
-            )
+            section_button.setProperty("cssClass", "sectionToggle")
             parent_layout.addWidget(section_button)
 
             group_box = aqt.qt.QGroupBox("")

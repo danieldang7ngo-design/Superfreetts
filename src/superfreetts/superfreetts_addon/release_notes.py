@@ -12,6 +12,48 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.14",
+        title={
+            "en": "Services tab now follows every theme",
+            "vi": "Tab Dịch vụ giờ theo đúng mọi giao diện",
+            "ko": "서비스 탭이 모든 테마를 따르도록 개선",
+            "zh-CN": "服务选项卡现已适配全部主题",
+            "zh-TW": "服務分頁現已套用所有主題",
+            "ja": "サービスタブが全テーマに追従",
+            "sv": "Tjänst-fliken följer nu alla teman",
+        },
+        bullets={
+            "en": [
+                "The Services tab (section headers, Setup buttons, separators, status badges, search box) now inherits the active theme's colors and light/dark mode instead of hardcoded blue, purple, and amber.",
+                "Status badges are color-coded per theme: Ready (green), Setup needed (accent), Disabled (muted), Free, and Recommended.",
+            ],
+            "vi": [
+                "Tab Dịch vụ (tiêu đề nhóm, nút Setup, đường phân cách, huy hiệu trạng thái, ô tìm kiếm) giờ lấy màu theo theme đang chọn và chế độ sáng/tối, thay vì xanh/cam/tím cứng.",
+                "Huy hiệu trạng thái có màu riêng theo theme: Sẵn sàng (xanh lá), Cần cài đặt (nhấn mạnh), Tắt (xám), Miễn phí, và Đề xuất.",
+            ],
+            "ko": [
+                "서비스 탭(섹션 헤더, 설정 버튼, 구분선, 상태 배지, 검색창)이 이제 하드코딩된 파랑/보라/앰버 대신 활성 테마의 색상과 라이트/다크 모드를 따릅니다.",
+                "상태 배지는 테마별 색상: 준비됨(녹색), 설정 필요(강조), 비활성(뮤트), 무료, 추천.",
+            ],
+            "zh-CN": [
+                "服务选项卡（分组标题、设置按钮、分隔线、状态徽章、搜索框）现在继承当前主题的颜色与明暗模式，不再写死蓝/紫/琥珀色。",
+                "状态徽章按主题配色：就绪（绿）、需设置（强调色）、已禁用（灰）、免费、推荐。",
+            ],
+            "zh-TW": [
+                "服務分頁（群組標題、設定按鈕、分隔線、狀態徽章、搜尋框）現在繼承目前主題的顏色與明暗模式，不再寫死藍/紫/琥珀色。",
+                "狀態徽章依主題配色：就緒（綠）、需設定（強調色）、已停用（灰）、免費、推薦。",
+            ],
+            "ja": [
+                "サービスタブ（セクション見出し、設定ボタン、区切り線、ステータスバッジ、検索ボックス）が、固定の青/紫/琥珀ではなくアクティブなテーマの色とライト/ダークモードを継承するようになりました。",
+                "ステータスバッジはテーマごとに配色: 準備完了(緑)、設定必要(アクセント)、無効(ミュート)、無料、おすすめ。",
+            ],
+            "sv": [
+                "Tjänst-fliken (sektionsrubriker, Installera-knappar, avgränsare, statusmärken, sökfält) ärver nu det aktiva temats färger och ljus/mörkt-läge istället för hårdkodat blått, lila och bärnsten.",
+                "Statusmärken färgkodas per tema: Klar (grön), Installation behövs (accent), Inaktiv (muted), Gratis och Rekommenderad.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.13",
         title={
             "en": "Live theme preview in Settings",

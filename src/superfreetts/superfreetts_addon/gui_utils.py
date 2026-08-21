@@ -160,22 +160,31 @@ def configure_pastel_button(button, style_name="emerald", min_height=34, min_wid
     button.style().polish(button)
 
 
-def get_status_badge(text, bg_color=None, text_color=None):
-    """Return a compact rounded QLabel suitable for 'Free', 'Recommended', etc."""
+def get_status_badge(text, bg_color=None, text_color=None, css_class=None):
+    """Return a compact rounded QLabel suitable for 'Free', 'Recommended', etc.
+
+    Prefer ``css_class`` (a themed selector defined in the active theme's
+    stylesheet) over raw ``bg_color``/``text_color`` so the badge follows the
+    selected UI theme. The raw colors remain as a fallback for callers that do
+    not pass a css_class.
+    """
     label = aqt.qt.QLabel(text)
-    # Use Emerald theme for success/positive badges by default
-    bg = bg_color or constants.COLOR_ACCENT_LIGHT
-    fg = text_color or constants.COLOR_ACCENT_DARK
-    label.setStyleSheet(f"""
-        QLabel {{
-            background-color: {bg};
-            color: {fg};
-            border-radius: 10px;
-            padding: 2px 10px;
-            font-size: 10px;
-            font-weight: 600;
-        }}
-    """)
+    if css_class is not None:
+        label.setProperty("cssClass", css_class)
+    else:
+        # Use Emerald theme for success/positive badges by default
+        bg = bg_color or constants.COLOR_ACCENT_LIGHT
+        fg = text_color or constants.COLOR_ACCENT_DARK
+        label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {bg};
+                color: {fg};
+                border-radius: 10px;
+                padding: 2px 10px;
+                font-size: 10px;
+                font-weight: 600;
+            }}
+        """)
     label.setFixedHeight(20)
     label.setContentsMargins(0, 0, 0, 0)
     label.setAlignment(aqt.qt.Qt.AlignmentFlag.AlignCenter)
@@ -232,18 +241,238 @@ def get_dynamic_stylesheet() -> str:
     """Returns the unified stylesheet for the active theme."""
     dark = is_night_mode()
     if _active_theme == "ollama":
-        return _build_ollama_stylesheet(dark)
-    if _active_theme == "apple":
-        return _build_apple_stylesheet(dark)
-    if _active_theme == "nintendo":
-        return _build_nintendo_stylesheet(dark)
-    if _active_theme == "binance":
-        return _build_binance_stylesheet(dark)
-    if _active_theme == "clay":
-        return _build_clay_stylesheet(dark)
-    if _active_theme == "claude":
-        return _build_claude_stylesheet(dark)
-    return _build_vibrant_stylesheet(dark)
+        base = _build_ollama_stylesheet(dark)
+    elif _active_theme == "apple":
+        base = _build_apple_stylesheet(dark)
+    elif _active_theme == "nintendo":
+        base = _build_nintendo_stylesheet(dark)
+    elif _active_theme == "binance":
+        base = _build_binance_stylesheet(dark)
+    elif _active_theme == "clay":
+        base = _build_clay_stylesheet(dark)
+    elif _active_theme == "claude":
+        base = _build_claude_stylesheet(dark)
+    else:
+        base = _build_vibrant_stylesheet(dark)
+    return base + _build_services_extra_css(_active_theme, dark)
+
+
+# ── Services tab theme palette ───────────────────────────────────────────────
+# Colors mirror the per-theme tokens defined in the builders below so the
+# Services tab (section headers, setup action, separators, status badges) stays
+# consistent with the active theme in both light and dark mode.
+_SERVICES_TOKENS = {
+    "vibrant": {
+        False: dict(radius=12, radius_sm=10,
+                    sec_bg="#6366F1", sec_text="#FFFFFF", sec_hover="rgba(255, 255, 255, 255)",
+                    setup_bg="#6366F1", setup_text="#FFFFFF", setup_border="#6366F1", setup_hover="#4338CA",
+                    hairline="#E2E8F0",
+                    ready_bg="#D1FAE5", ready_text="#064E3B",
+                    disabled_bg="#FFE4E6", disabled_text="#881337",
+                    free_bg="rgba(255, 255, 255, 180)", free_text="#0F172A",
+                    rec_bg="#6366F1", rec_text="#FFFFFF"),
+        True: dict(radius=12, radius_sm=10,
+                   sec_bg="#00E1D9", sec_text="#0F172A", sec_hover="rgba(51, 65, 85, 255)",
+                   setup_bg="#00E1D9", setup_text="#0F172A", setup_border="#00E1D9", setup_hover="#7C3AED",
+                   hairline="#334155",
+                   ready_bg="#064E3B", ready_text="#D1FAE5",
+                   disabled_bg="#4C0519", disabled_text="#FFE4E6",
+                   free_bg="rgba(30, 41, 59, 200)", free_text="#F8FAFC",
+                   rec_bg="#00E1D9", rec_text="#0F172A"),
+    },
+    "ollama": {
+        False: dict(radius=9999, radius_sm=9999,
+                    sec_bg="#000000", sec_text="#ffffff", sec_hover="#fafafa",
+                    setup_bg="#000000", setup_text="#ffffff", setup_border="#000000", setup_hover="#090909",
+                    hairline="#e5e5e5",
+                    ready_bg="#ffffff", ready_text="#000000",
+                    disabled_bg="#fafafa", disabled_text="#a3a3a3",
+                    free_bg="#ffffff", free_text="#000000",
+                    rec_bg="#000000", rec_text="#ffffff"),
+        True: dict(radius=9999, radius_sm=9999,
+                   sec_bg="#ffffff", sec_text="#000000", sec_hover="#1f1f1f",
+                   setup_bg="#ffffff", setup_text="#000000", setup_border="#ffffff", setup_hover="#e5e5e5",
+                   hairline="#2a2a2a",
+                   ready_bg="#171717", ready_text="#ffffff",
+                   disabled_bg="#0a0a0a", disabled_text="#737373",
+                   free_bg="#171717", free_text="#ffffff",
+                   rec_bg="#ffffff", rec_text="#000000"),
+    },
+    "nintendo": {
+        False: dict(radius=6, radius_sm=6,
+                    sec_bg="#e60012", sec_text="#ffffff", sec_hover="#3d4f97",
+                    setup_bg="#e60012", setup_text="#ffffff", setup_border="#e60012", setup_hover="#e48600",
+                    hairline="#5a5f8c",
+                    ready_bg="#e7edf7", ready_text="#21242e",
+                    disabled_bg="#dedede", disabled_text="#60619c",
+                    free_bg="#21242e", free_text="#ffffff",
+                    rec_bg="#e60012", rec_text="#ffffff"),
+        True: dict(radius=6, radius_sm=6,
+                   sec_bg="#e60012", sec_text="#ffffff", sec_hover="#3d4f97",
+                   setup_bg="#e60012", setup_text="#ffffff", setup_border="#e60012", setup_hover="#e48600",
+                   hairline="#4a5380",
+                   ready_bg="#333c54", ready_text="#ffffff",
+                   disabled_bg="#21242e", disabled_text="#9aa3c4",
+                   free_bg="#21242e", free_text="#ffffff",
+                   rec_bg="#e60012", rec_text="#ffffff"),
+    },
+    "apple": {
+        False: dict(radius=11, radius_sm=11,
+                    sec_bg="#0066cc", sec_text="#ffffff", sec_hover="#f5f5f7",
+                    setup_bg="#0066cc", setup_text="#ffffff", setup_border="#0066cc", setup_hover="#0071e3",
+                    hairline="#e0e0e0",
+                    ready_bg="#f5f5f7", ready_text="#1d1d1f",
+                    disabled_bg="#fafafc", disabled_text="#7a7a7a",
+                    free_bg="#ffffff", free_text="#1d1d1f",
+                    rec_bg="#0066cc", rec_text="#ffffff"),
+        True: dict(radius=11, radius_sm=11,
+                   sec_bg="#2997ff", sec_text="#000000", sec_hover="#333333",
+                   setup_bg="#2997ff", setup_text="#000000", setup_border="#2997ff", setup_hover="#2997ff",
+                   hairline="#333333",
+                   ready_bg="#2a2a2c", ready_text="#ffffff",
+                   disabled_bg="#1d1d1f", disabled_text="#7a7a7a",
+                   free_bg="#1d1d1f", free_text="#ffffff",
+                   rec_bg="#2997ff", rec_text="#000000"),
+    },
+    "binance": {
+        False: dict(radius=8, radius_sm=8,
+                    sec_bg="#fcd535", sec_text="#181a20", sec_hover="#f0f0f0",
+                    setup_bg="#fcd535", setup_text="#181a20", setup_border="#fcd535", setup_hover="#f0b90b",
+                    hairline="#eaecef",
+                    ready_bg="#fafafa", ready_text="#181a20",
+                    disabled_bg="#f5f5f5", disabled_text="#707a8a",
+                    free_bg="#fafafa", free_text="#181a20",
+                    rec_bg="#fcd535", rec_text="#181a20"),
+        True: dict(radius=8, radius_sm=8,
+                   sec_bg="#fcd535", sec_text="#181a20", sec_hover="#3b424b",
+                   setup_bg="#fcd535", setup_text="#181a20", setup_border="#fcd535", setup_hover="#f0b90b",
+                   hairline="#2b3139",
+                   ready_bg="#1e2329", ready_text="#eaecef",
+                   disabled_bg="#15171c", disabled_text="#707a8a",
+                   free_bg="#2b3139", free_text="#eaecef",
+                   rec_bg="#fcd535", rec_text="#181a20"),
+    },
+    "clay": {
+        False: dict(radius=12, radius_sm=10,
+                    sec_bg="#ff4d8b", sec_text="#ffffff", sec_hover="#faf5e8",
+                    setup_bg="#ff4d8b", setup_text="#ffffff", setup_border="#ff4d8b", setup_hover="#e84175",
+                    hairline="#e5e5e5",
+                    ready_bg="#faf5e8", ready_text="#0a0a0a",
+                    disabled_bg="#f5f0e0", disabled_text="#9a9a9a",
+                    free_bg="#ffffff", free_text="#0a0a0a",
+                    rec_bg="#ff4d8b", rec_text="#ffffff"),
+        True: dict(radius=12, radius_sm=10,
+                   sec_bg="#ff4d8b", sec_text="#ffffff", sec_hover="#223333",
+                   setup_bg="#ff4d8b", setup_text="#ffffff", setup_border="#ff4d8b", setup_hover="#e84175",
+                   hairline="#2a3a3a",
+                   ready_bg="#223333", ready_text="#f5f0e0",
+                   disabled_bg="#142222", disabled_text="#7a7a7a",
+                   free_bg="#1a2a2a", free_text="#f5f0e0",
+                   rec_bg="#ff4d8b", rec_text="#ffffff"),
+    },
+    "claude": {
+        False: dict(radius=14, radius_sm=12,
+                    sec_bg="#cc785c", sec_text="#ffffff", sec_hover="#f5f0e8",
+                    setup_bg="#cc785c", setup_text="#ffffff", setup_border="#cc785c", setup_hover="#a9583e",
+                    hairline="#e6dfd8",
+                    ready_bg="#f5f0e8", ready_text="#141413",
+                    disabled_bg="#efe9eb", disabled_text="#8e8b82",
+                    free_bg="#ffffff", free_text="#141413",
+                    rec_bg="#cc785c", rec_text="#ffffff"),
+        True: dict(radius=14, radius_sm=12,
+                   sec_bg="#cc785c", sec_text="#ffffff", sec_hover="#252320",
+                   setup_bg="#cc785c", setup_text="#ffffff", setup_border="#cc785c", setup_hover="#d98a6f",
+                   hairline="#33302c",
+                   ready_bg="#2b2926", ready_text="#faf9f5",
+                   disabled_bg="#1f1e1b", disabled_text="#7a776f",
+                   free_bg="#252320", free_text="#faf9f5",
+                   rec_bg="#cc785c", rec_text="#ffffff"),
+    },
+}
+
+
+def _build_services_extra_css(theme: str, dark: bool) -> str:
+    """Theme-aware QSS for the Services tab widgets.
+
+    These widgets (section headers, setup/manage action, separators and status
+    badges) are styled in component_services.py via cssClass selectors so they
+    follow the active theme in both light and dark mode.
+    """
+    palette = _SERVICES_TOKENS.get(theme, _SERVICES_TOKENS["vibrant"])[bool(dark)]
+    return f'''
+        /* Services tab — category section header */
+        QToolButton[cssClass="sectionToggle"] {{
+            text-align: left;
+            font-weight: bold;
+            font-size: 14px;
+            border: none;
+            border-radius: {palette['radius']}px;
+            padding: 10px 14px;
+            background: {palette['sec_bg']};
+            color: {palette['sec_text']};
+        }}
+        QToolButton[cssClass="sectionToggle"]:hover {{
+            background: {palette['sec_hover']};
+        }}
+        /* Services tab — setup / manage action */
+        QPushButton[cssClass="setupAction"] {{
+            background: {palette['setup_bg']};
+            color: {palette['setup_text']};
+            border: 1px solid {palette['setup_border']};
+            border-radius: {palette['radius_sm']}px;
+            padding: 2px 10px;
+            font-weight: 700;
+        }}
+        QPushButton[cssClass="setupAction"]:hover {{
+            background: {palette['setup_hover']};
+        }}
+        /* Services tab — separators */
+        QFrame[cssClass="serviceSeparator"] {{
+            border: none;
+            border-bottom: 1px solid {palette['hairline']};
+        }}
+        /* Services tab — status badges */
+        QLabel[cssClass="statusBadgeReady"] {{
+            background: {palette['ready_bg']};
+            color: {palette['ready_text']};
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }}
+        QLabel[cssClass="statusBadgeSetup"] {{
+            background: {palette['setup_bg']};
+            color: {palette['setup_text']};
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }}
+        QLabel[cssClass="statusBadgeDisabled"] {{
+            background: {palette['disabled_bg']};
+            color: {palette['disabled_text']};
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }}
+        QLabel[cssClass="statusBadgeFree"] {{
+            background: {palette['free_bg']};
+            color: {palette['free_text']};
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }}
+        QLabel[cssClass="statusBadgeRecommended"] {{
+            background: {palette['rec_bg']};
+            color: {palette['rec_text']};
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }}
+    '''
 
 
 def _build_vibrant_stylesheet(dark: bool) -> str:
