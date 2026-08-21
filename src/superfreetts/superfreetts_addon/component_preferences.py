@@ -49,6 +49,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.theme_combobox.clear()
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_apple", lang), "apple")
         self._sync_theme_combobox_value()
 
         self.cache_retention_checkbox.setChecked(self.model.cache_enabled)
@@ -131,6 +132,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.theme_combobox.clear()
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
         self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_apple", lang), "apple")
         self.theme_combobox.setMinimumHeight(34)
         self.theme_combobox.setMinimumWidth(220)
         self._sync_theme_combobox_value()
@@ -225,9 +227,10 @@ class PreferencesPage(component_common.ConfigComponentBase):
 
     def _sync_theme_combobox_value(self) -> None:
         current_theme = getattr(self.model, "ui_theme", "vibrant") or "vibrant"
-        if current_theme not in ("vibrant", "ollama"):
+        theme_values = ["vibrant", "ollama", "apple"]
+        if current_theme not in theme_values:
             current_theme = "vibrant"
-        target_index = 1 if current_theme == "ollama" else 0
+        target_index = theme_values.index(current_theme)
         if self.theme_combobox.count() <= target_index:
             return
         self.theme_combobox.blockSignals(True)
@@ -252,10 +255,11 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self._sync_language_combobox_value()
 
         self.theme_label.setText(i18n.get_text("preferences_label_theme", lang))
-        if hasattr(self, "theme_combobox") and self.theme_combobox.count() >= 2:
+        if hasattr(self, "theme_combobox") and self.theme_combobox.count() >= 3:
             self.theme_combobox.blockSignals(True)
             self.theme_combobox.setItemText(0, i18n.get_text("preferences_option_theme_vibrant", lang))
             self.theme_combobox.setItemText(1, i18n.get_text("preferences_option_theme_ollama", lang))
+            self.theme_combobox.setItemText(2, i18n.get_text("preferences_option_theme_apple", lang))
             self.theme_combobox.blockSignals(False)
         if hasattr(self, "theme_helper_label"):
             self.theme_helper_label.setText(i18n.get_text("preferences_theme_helper", lang))

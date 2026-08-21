@@ -27,7 +27,8 @@
   "preferences_label_theme": "インターフェーステーマを選択:",
   "preferences_option_theme_vibrant": "Vibrant Blocks",
   "preferences_option_theme_ollama": "Ollama（ミニマル）",
-  "preferences_theme_helper": "Ollama はフラットな白背景とピル型ボタンを採用しています。Vibrant Blocks はデフォルトのカラフルなテーマです。",  "preferences_option_language_en": "英語",
+
+  "preferences_option_theme_apple": "Apple",  "preferences_theme_helper": "Ollama はフラットな白背景とピル型ボタンを採用しています。Vibrant Blocks はデフォルトのカラフルなテーマです。",  "preferences_option_language_en": "英語",
   "preferences_option_language_vi": "ベトナム語",
   "preferences_option_language_ko": "韓国語",
   "preferences_option_language_zh_CN": "簡体字中国語（中国）",

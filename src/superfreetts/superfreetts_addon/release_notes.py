@@ -12,6 +12,48 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.11",
+        title={
+            "en": "New Apple UI theme option",
+            "vi": "Thêm tùy chọn giao diện Apple",
+            "ko": "새 Apple UI 테마 옵션",
+            "zh-CN": "新增 Apple 界面主题选项",
+            "zh-TW": "新增 Apple 介面主題選項",
+            "ja": "新しい Apple UI テーマオプション",
+            "sv": "Nytt Apple-tema UI-alternativ",
+        },
+        bullets={
+            "en": [
+                "Added a third UI theme: Apple (inspired by apple.com) — clean SF Pro feel with an Action Blue (#0066cc) accent and soft rounded cards.",
+                "Choose between Vibrant Blocks, Ollama, and Apple in Preferences. All themes follow Anki's light/dark mode.",
+            ],
+            "vi": [
+                "Thêm giao diện thứ ba: Apple (lấy cảm hứng từ apple.com) — phong cách SF Pro gọn gàng, điểm nhấn Action Blue (#0066cc) và card bo tròn mềm mại.",
+                "Chọn giữa Vibrant Blocks, Ollama và Apple trong Tùy chọn. Mọi giao diện đều tự động theo chế độ sáng/tối của Anki.",
+            ],
+            "ko": [
+                "세 번째 UI 테마 추가: Apple(apple.com에서 영감) — 깔끔한 SF Pro 느낌과 Action Blue(#0066cc) 포인트, 부드러운 둥근 카드.",
+                "환경 설정에서 Vibrant Blocks, Ollama, Apple 중 선택할 수 있습니다. 모든 테마는 Anki의 라이트/다크 모드를 따릅니다.",
+            ],
+            "zh-CN": [
+                "新增第三个界面主题：Apple（灵感来自 apple.com）—— 简洁的 SF Pro 风格，配以 Action Blue（#0066cc）强调色和柔和圆角卡片。",
+                "可在偏好设置中选择 Vibrant Blocks、Ollama 和 Apple。所有主题都会跟随 Anki 的浅色/深色模式。",
+            ],
+            "zh-TW": [
+                "新增第三個介面主題：Apple（靈感來自 apple.com）—— 簡潔的 SF Pro 風格，搭配 Action Blue（#0066cc）強調色與柔和圓角卡片。",
+                "可在偏好設定中選擇 Vibrant Blocks、Ollama 和 Apple。所有主題都會跟隨 Anki 的淺色/深色模式。",
+            ],
+            "ja": [
+                "3つ目のUIテーマを追加: Apple（apple.com から着想）— すっきりしたSF Pro風、Action Blue（#0066cc）のアクセントと柔らかな角丸カード。",
+                "環境設定で Vibrant Blocks、Ollama、Apple から選択できます。すべてのテーマは Anki のライト/ダークモードに追従します。",
+            ],
+            "sv": [
+                "Lade till ett tredje UI-tema: Apple (inspirerat av apple.com) — ren SF Pro-känsla med en Action Blue (#0066cc) accent och mjuka rundade kort.",
+                "Välj mellan Vibrant Blocks, Ollama och Apple i Inställningar. Alla teman följer Ankis ljust/mörkt läge.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.10",
         title={
             "en": "New Ollama (minimal) UI theme option",

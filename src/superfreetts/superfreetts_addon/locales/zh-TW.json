@@ -27,7 +27,8 @@
   "preferences_label_theme": "選擇介面主題:",
   "preferences_option_theme_vibrant": "Vibrant Blocks",
   "preferences_option_theme_ollama": "Ollama（極簡）",
-  "preferences_theme_helper": "Ollama 採用扁平白底與藥丸形按鈕。Vibrant Blocks 是預設的多彩主題。",  "preferences_option_language_en": "英文",
+
+  "preferences_option_theme_apple": "Apple",  "preferences_theme_helper": "Ollama 採用扁平白底與藥丸形按鈕。Vibrant Blocks 是預設的多彩主題。",  "preferences_option_language_en": "英文",
   "preferences_option_language_vi": "越南文",
   "preferences_option_language_ko": "韓文",
   "preferences_option_language_zh_CN": "簡體中文（中國）",

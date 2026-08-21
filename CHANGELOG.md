@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.8.11 - 2026-08-22
+
+### English
+
+- New UI theme: Apple (inspired by apple.com) — clean SF Pro feel, Action Blue (#0066cc) accent, soft rounded cards.
+- Theme selector now offers three choices: Vibrant Blocks, Ollama, and Apple.
+
+### Tiếng Việt
+
+- Giao diện mới: Apple (lấy cảm hứng từ apple.com) — phong cách SF Pro gọn gàng, điểm nhấn Action Blue (#0066cc), card bo tròn mềm mại.
+- Bộ chọn giao diện giờ có ba lựa chọn: Vibrant Blocks, Ollama và Apple.
+
 ## 26.8.10 - 2026-08-22
 
 ### English

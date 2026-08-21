@@ -193,7 +193,8 @@
   "preferences_label_theme": "Chọn giao diện:",
   "preferences_option_theme_vibrant": "Vibrant Blocks (mặc định)",
   "preferences_option_theme_ollama": "Ollama (tối giản)",
-  "preferences_theme_helper": "Ollama dùng nền trắng phẳng với nút hình viên thuốc. Vibrant Blocks là giao diện màu sắc mặc định.",  "preferences_group_cache_title": "Quản lý Cache",
+
+  "preferences_option_theme_apple": "Apple",  "preferences_theme_helper": "Ollama dùng nền trắng phẳng với nút hình viên thuốc. Vibrant Blocks là giao diện màu sắc mặc định.",  "preferences_group_cache_title": "Quản lý Cache",
   "preferences_cache_label": "Các tệp trong thư mục user_files sẽ bị xóa sau (ngày):",
   "preferences_cache_enable": "Bật tự động dọn dẹp",
   "preferences_cache_tooltip": "Nếu bật, các file cũ trong user_files sẽ tự động bị xóa khi khởi động Anki.",
