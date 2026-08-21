@@ -102,7 +102,11 @@
   "preferences_group_general_desc": "Valj de installningar som de flesta anvandare brukar andra forst.",
   "preferences_label_interface_language": "Valj granssnittssprak:",
   "preferences_language_tooltip": "Valj spraket som anvands for knappar och dialoger i Super Free TTS.",
-  "preferences_option_language_en": "Engelska",
+
+  "preferences_label_theme": "Välj gränssnittstema:",
+  "preferences_option_theme_vibrant": "Vibrant Blocks",
+  "preferences_option_theme_ollama": "Ollama (minimal)",
+  "preferences_theme_helper": "Ollama använder en platt vit design med pillerformade knappar. Vibrant Blocks är standardtemat med färger.",  "preferences_option_language_en": "Engelska",
   "preferences_option_language_vi": "Vietnamesiska",
   "preferences_option_language_ko": "Koreanska",
   "preferences_option_language_zh_CN": "Forenklad kinesiska (Kina)",

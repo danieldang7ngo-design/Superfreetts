@@ -27,6 +27,7 @@ from . import errors
 from . import voice as voice_module
 from . import logging_utils
 from . import i18n
+from . import gui_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -304,6 +305,13 @@ class ConfigStore:
         if lang not in i18n.SUPPORTED_LANGUAGES:
             lang = 'en'
         return lang
+
+    def get_ui_theme(self) -> str:
+        prefs = self.get_preferences()
+        theme = getattr(prefs, 'ui_theme', 'vibrant')
+        if theme not in gui_utils.VALID_THEMES:
+            theme = 'vibrant'
+        return theme
 
     # ------------------------------------------------------------------
     # Deserialization helpers

@@ -12,6 +12,48 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.10",
+        title={
+            "en": "New Ollama (minimal) UI theme option",
+            "vi": "Thêm tùy chọn giao diện Ollama (tối giản)",
+            "ko": "새 Ollama(미니멀) UI 테마 옵션",
+            "zh-CN": "新增 Ollama（极简）界面主题选项",
+            "zh-TW": "新增 Ollama（極簡）介面主題選項",
+            "ja": "新しい Ollama（ミニマル）UI テーマオプション",
+            "sv": "Ny Ollama-tema (minimal) UI-alternativ",
+        },
+        bullets={
+            "en": [
+                "Added an interface theme selector in Preferences: choose between the default Vibrant Blocks theme and a new Ollama theme (flat paper-white design with pill-shaped buttons, inspired by ollama.com).",
+                "The Ollama theme follows Anki's light/dark mode automatically.",
+            ],
+            "vi": [
+                "Thêm bộ chọn giao diện trong Tùy chọn: chọn giữa giao diện mặc định Vibrant Blocks và giao diện Ollama mới (nền trắng phẳng, nút hình viên thuốc, lấy cảm hứng từ ollama.com).",
+                "Giao diện Ollama tự động theo chế độ sáng/tối của Anki.",
+            ],
+            "ko": [
+                "환경 설정에 인터페이스 테마 선택기 추가: 기본 Vibrant Blocks 테마와 새로운 Ollama 테마(평면 흰색 디자인, 알약 모양 버튼, ollama.com에서 영감) 중에서 선택할 수 있습니다.",
+                "Ollama 테마는 Anki의 라이트/다크 모드를 자동으로 따릅니다.",
+            ],
+            "zh-CN": [
+                "在偏好设置中新增界面主题选择器：可在默认的 Vibrant Blocks 主题与全新的 Ollama 主题（扁平白底、药丸形按钮，灵感来自 ollama.com）之间选择。",
+                "Ollama 主题会自动跟随 Anki 的浅色/深色模式。",
+            ],
+            "zh-TW": [
+                "在偏好設定中新增介面主題選擇器：可在預設的 Vibrant Blocks 主題與全新的 Ollama 主題（扁平白底、藥丸形按鈕，靈感來自 ollama.com）之間選擇。",
+                "Ollama 主題會自動跟隨 Anki 的淺色/深色模式。",
+            ],
+            "ja": [
+                "環境設定にインターフェーステーマ選択を追加: デフォルトの Vibrant Blocks テーマと新しい Ollama テーマ（フラットな白背景、ピル型ボタン、ollama.com から着想）を選択できます。",
+                "Ollama テーマは Anki のライト/ダークモードに自動追従します。",
+            ],
+            "sv": [
+                "Lade till en temaväljare i Inställningar: välj mellan standardtemat Vibrant Blocks och ett nytt Ollama-tema (platt vit design med pillerformade knappar, inspirerat av ollama.com).",
+                "Ollama-temat följer automatiskt Ankis ljust/mörkt läge.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.9",
         title={
             "en": "Local-only Usage dashboard and startup crash fix",

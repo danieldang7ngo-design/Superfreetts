@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.8.10 - 2026-08-22
+
+### English
+
+- UI Theme Selector: Added an interface theme choice in Preferences — the default "Vibrant Blocks" theme or a new "Ollama" theme (flat paper-white design with pill-shaped buttons, inspired by ollama.com).
+- The Ollama theme automatically follows Anki's light/dark mode.
+
+### Tiếng Việt
+
+- Bộ chọn giao diện: Thêm tùy chọn giao diện trong Tùy chọn — giao diện mặc định "Vibrant Blocks" hoặc giao diện "Ollama" mới (nền trắng phẳng, nút hình viên thuốc, lấy cảm hứng từ ollama.com).
+- Giao diện Ollama tự động theo chế độ sáng/tối của Anki.
+
 ## 26.8.9 - 2026-08-09
 
 ### English

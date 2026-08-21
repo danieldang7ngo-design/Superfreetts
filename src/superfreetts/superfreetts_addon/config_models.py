@@ -631,6 +631,8 @@ class Preferences:
     cache_enabled: bool = True
     # Audio output format
     audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
+    # UI theme ("vibrant" or "ollama")
+    ui_theme: str = "vibrant"
 
 def serialize_preferences(preferences):
     # Use the same dataclass -> dict conversion used elsewhere to ensure
@@ -675,6 +677,7 @@ def deserialize_preferences(preferences_config):
         cache_retention_days=preferences_config.get('cache_retention_days', 30),
         cache_enabled=preferences_config.get('cache_enabled', True),
         audio_format=preferences_config.get('audio_format', 'mp3'),
+        ui_theme=preferences_config.get('ui_theme', 'vibrant'),
     )
     return prefs
 

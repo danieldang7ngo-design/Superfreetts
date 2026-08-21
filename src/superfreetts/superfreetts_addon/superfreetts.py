@@ -33,6 +33,7 @@ from . import context
 from . import batch_executor
 from . import logging_utils
 from . import gui
+from . import gui_utils
 from . import preset_rules_status
 from . import i18n
 from . import batch_constants
@@ -91,6 +92,9 @@ class SuperFreeTTS():
 
         self.config_store = config_store_module.ConfigStore(anki_utils, service_manager)
         self.config = self.config_store.config
+
+        # Apply the saved UI theme before any dialog is built.
+        gui_utils.set_active_theme(self.config_store.get_ui_theme())
 
         self.orchestrator = TTSOrchestrator(self)
         self.ui = UIController(self)
@@ -595,12 +599,14 @@ class SuperFreeTTS():
     # preferences
     def get_preferences(self): return self.config_store.get_preferences()
     def get_ui_language(self): return self.config_store.get_ui_language()
+    def get_ui_theme(self): return self.config_store.get_ui_theme()
 
     def apply_logging_preferences(self):
         self.orchestrator.apply_logging_preferences()
 
     def save_preferences(self, preferences_model):
         self.config_store.save_preferences(preferences_model)
+        gui_utils.set_active_theme(getattr(preferences_model, 'ui_theme', 'vibrant'))
         gui.update_menu_language(self)
         self.apply_logging_preferences()
         self.reconfigure_service_manager()

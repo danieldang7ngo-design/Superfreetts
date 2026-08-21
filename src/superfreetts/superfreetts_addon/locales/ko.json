@@ -123,7 +123,11 @@
   "preferences_option_language_vi": "베트남어",
   "preferences_option_language_ko": "한국어",
   "preferences_language_tooltip": "Super Free TTS 버튼과 대화상자에 사용할 언어를 선택합니다.",
-  "preferences_group_cache_title": "캐시 관리",
+
+  "preferences_label_theme": "인터페이스 테마 선택:",
+  "preferences_option_theme_vibrant": "Vibrant Blocks",
+  "preferences_option_theme_ollama": "Ollama (미니멀)",
+  "preferences_theme_helper": "Ollama는 알약 모양 버튼이 있는 평면 흰색 디자인을 사용합니다. Vibrant Blocks는 기본 다채로운 테마입니다.",  "preferences_group_cache_title": "캐시 관리",
   "preferences_cache_label": "user_files 폴더의 파일을 다음 기간 후 삭제(일):",
   "preferences_cache_enable": "자동 정리 사용",
   "preferences_cache_tooltip": "활성화하면 user_files의 오래된 파일을 시작 시 자동 삭제합니다.",

@@ -26,6 +26,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.cancel_button = aqt.qt.QPushButton()
 
         self.language_combobox = aqt.qt.QComboBox()
+        self.theme_combobox = aqt.qt.QComboBox()
         self.cache_retention_checkbox = aqt.qt.QCheckBox()
         self.cache_retention_spinbox = aqt.qt.QSpinBox()
         self.cache_retention_spinbox.setMinimum(1)
@@ -43,6 +44,12 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.troubleshooting.load_model(self.model.error_handling)
 
         self._sync_language_combobox_value()
+
+        lang = self.hypertts.get_ui_language()
+        self.theme_combobox.clear()
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
+        self._sync_theme_combobox_value()
 
         self.cache_retention_checkbox.setChecked(self.model.cache_enabled)
         self.cache_retention_spinbox.setValue(self.model.cache_retention_days)
@@ -117,6 +124,24 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self._sync_language_combobox_value()
         general_layout.addWidget(self.language_combobox)
 
+        self.theme_label = aqt.qt.QLabel(i18n.get_text("preferences_label_theme", lang))
+        general_layout.addWidget(self.theme_label)
+        theme_row = aqt.qt.QHBoxLayout()
+        theme_row.setSpacing(10)
+        self.theme_combobox.clear()
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_vibrant", lang), "vibrant")
+        self.theme_combobox.addItem(i18n.get_text("preferences_option_theme_ollama", lang), "ollama")
+        self.theme_combobox.setMinimumHeight(34)
+        self.theme_combobox.setMinimumWidth(220)
+        self._sync_theme_combobox_value()
+        theme_row.addWidget(self.theme_combobox)
+        theme_row.addStretch()
+        general_layout.addLayout(theme_row)
+        self.theme_helper_label = aqt.qt.QLabel(i18n.get_text("preferences_theme_helper", lang))
+        self.theme_helper_label.setProperty("cssClass", "helperText")
+        self.theme_helper_label.setWordWrap(True)
+        general_layout.addWidget(self.theme_helper_label)
+
         self.format_label = aqt.qt.QLabel(i18n.get_text("pref_audio_format_desc", lang))
         general_layout.addWidget(self.format_label)
         format_row = aqt.qt.QHBoxLayout()
@@ -170,6 +195,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         gui_utils.configure_secondary_button(self.cancel_button, min_height=40, min_width=100, font_size=11)
 
         self.language_combobox.currentIndexChanged.connect(self.language_changed)
+        self.theme_combobox.currentIndexChanged.connect(self.theme_changed)
         self.cache_retention_checkbox.stateChanged.connect(self.cache_enabled_changed)
         self.cache_retention_spinbox.valueChanged.connect(self.cache_retention_changed)
         self.audio_format_combobox.currentIndexChanged.connect(self.audio_format_changed)
@@ -192,6 +218,22 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.update_ui_labels(data_lang)
         self.model_part_updated_common()
 
+    def theme_changed(self, index: int) -> None:
+        data_theme = self.theme_combobox.itemData(index) or "vibrant"
+        self.model.ui_theme = data_theme
+        self.model_part_updated_common()
+
+    def _sync_theme_combobox_value(self) -> None:
+        current_theme = getattr(self.model, "ui_theme", "vibrant") or "vibrant"
+        if current_theme not in ("vibrant", "ollama"):
+            current_theme = "vibrant"
+        target_index = 1 if current_theme == "ollama" else 0
+        if self.theme_combobox.count() <= target_index:
+            return
+        self.theme_combobox.blockSignals(True)
+        self.theme_combobox.setCurrentIndex(target_index)
+        self.theme_combobox.blockSignals(False)
+
     def _get_language_option_text(self, language: str, display_lang: str) -> str:
         return i18n.get_text(f"preferences_option_language_{language.replace('-', '_')}", display_lang)
 
@@ -208,6 +250,15 @@ class PreferencesPage(component_common.ConfigComponentBase):
                 self.language_combobox.setItemText(index, self._get_language_option_text(language, lang))
         self.language_combobox.blockSignals(False)
         self._sync_language_combobox_value()
+
+        self.theme_label.setText(i18n.get_text("preferences_label_theme", lang))
+        if hasattr(self, "theme_combobox") and self.theme_combobox.count() >= 2:
+            self.theme_combobox.blockSignals(True)
+            self.theme_combobox.setItemText(0, i18n.get_text("preferences_option_theme_vibrant", lang))
+            self.theme_combobox.setItemText(1, i18n.get_text("preferences_option_theme_ollama", lang))
+            self.theme_combobox.blockSignals(False)
+        if hasattr(self, "theme_helper_label"):
+            self.theme_helper_label.setText(i18n.get_text("preferences_theme_helper", lang))
 
         self.format_label.setText(i18n.get_text("pref_audio_format_desc", lang))
         self.audio_helper_label.setText(i18n.get_text("preferences_audio_format_helper", lang))

@@ -190,7 +190,11 @@
   "preferences_option_language_vi": "Vietnamese",
   "preferences_option_language_ko": "Korean",
   "preferences_language_tooltip": "Choose the language for Super Free TTS buttons and dialogs.",
-  "preferences_group_cache_title": "Cache Management",
+
+  "preferences_label_theme": "Choose interface theme:",
+  "preferences_option_theme_vibrant": "Vibrant Blocks",
+  "preferences_option_theme_ollama": "Ollama (Minimal)",
+  "preferences_theme_helper": "Ollama uses a flat paper-white design with pill-shaped buttons. Vibrant Blocks is the default colorful theme.",  "preferences_group_cache_title": "Cache Management",
   "preferences_cache_label": "Files in user_files folder will be deleted after (days):",
   "preferences_cache_enable": "Enable Auto-Cleanup",
   "preferences_cache_tooltip": "If enabled, old files in user_files will be automatically deleted on startup.",
