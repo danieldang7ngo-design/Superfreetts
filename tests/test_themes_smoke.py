@@ -48,3 +48,8 @@ class TestThemeBuilders:
     def test_get_active_theme_default(self):
         gui_utils.set_active_theme("vibrant")
         assert gui_utils.get_active_theme() == "vibrant"
+
+    def test_set_active_theme_valid_themes(self):
+        for theme in gui_utils.VALID_THEMES:
+            gui_utils.set_active_theme(theme)
+            assert gui_utils.get_active_theme() == theme

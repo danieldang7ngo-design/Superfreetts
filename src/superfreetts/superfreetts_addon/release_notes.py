@@ -12,6 +12,41 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.13",
+        title={
+            "en": "Live theme preview in Settings",
+            "vi": "Xem trước giao diện trực tiếp trong Cài đặt",
+            "ko": "설정에서 실시간 테마 미리보기",
+            "zh-CN": "设置中实时预览界面主题",
+            "zh-TW": "設定中即時預覽介面主題",
+            "ja": "設定でのテーマのライブプレビュー",
+            "sv": "Live-temaförhandsvisning i Inställningar",
+        },
+        bullets={
+            "en": [
+                "The settings window now updates instantly when you pick a theme in Preferences — no need to close and reopen to see the change. Press Apply to save it permanently.",
+            ],
+            "vi": [
+                "Cửa sổ Cài đặt giờ đổi giao diện ngay lập tức khi bạn chọn theme trong Tùy chọn — không cần đóng và mở lại để thấy thay đổi. Bấm Apply để lưu vĩnh viễn.",
+            ],
+            "ko": [
+                "환경 설정에서 테마를 선택하면 설정 창이 즉시 업데이트됩니다. 변경 사항을 보기 위해 닫았다 다시 열 필요가 없습니다. Apply를 눌러 영구 저장하세요.",
+            ],
+            "zh-CN": [
+                "在偏好设置中选择主题时，设置窗口会立即更新 —— 无需关闭并重新打开即可看到更改。点击 Apply 永久保存。",
+            ],
+            "zh-TW": [
+                "在偏好設定中選擇主題時，設定視窗會立即更新 —— 無需關閉並重新開啟即可看到變更。點擊 Apply 永久儲存。",
+            ],
+            "ja": [
+                "環境設定でテーマを選ぶと設定ウィンドウが即座に更新されます。変更を確認するために閉じて開き直す必要はありません。Apply で永続保存できます。",
+            ],
+            "sv": [
+                "Inställningsfönstret uppdateras omedelbart när du väljer ett tema i Inställningar — du behöver inte stänga och öppna igen för att se ändringen. Tryck på Apply för att spara permanent.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.12",
         title={
             "en": "Four new UI themes: Nintendo, Binance, Clay, Claude",

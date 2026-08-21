@@ -231,6 +231,14 @@ class PreferencesPage(component_common.ConfigComponentBase):
     def theme_changed(self, index: int) -> None:
         data_theme = self.theme_combobox.itemData(index) or "vibrant"
         self.model.ui_theme = data_theme
+        # Preview the theme immediately on the open settings dialog.
+        try:
+            gui_utils.set_active_theme(data_theme)
+            dialog = getattr(self, "dialog", None)
+            if dialog is not None and hasattr(dialog, "refresh_stylesheet"):
+                dialog.refresh_stylesheet()
+        except Exception as e:
+            logger.warning(f"[THEME] Error during live preview: {e}")
         self.model_part_updated_common()
 
     def _sync_theme_combobox_value(self) -> None:

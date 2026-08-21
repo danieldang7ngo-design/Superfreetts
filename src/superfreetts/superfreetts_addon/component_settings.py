@@ -56,6 +56,18 @@ class SettingsDialog(aqt.qt.QDialog):
         from . import gui_utils
         return gui_utils.get_dynamic_stylesheet()
 
+    def refresh_stylesheet(self):
+        """Re-apply the stylesheet so theme changes appear immediately."""
+        self.setUpdatesEnabled(False)
+        self.setStyleSheet(self._get_stylesheet())
+        # Force style re-evaluation on the whole dialog so cached widget
+        # styles from the previous theme are replaced.
+        style = self.style()
+        for widget in self.findChildren(aqt.qt.QWidget):
+            style.unpolish(widget)
+            style.polish(widget)
+        self.setUpdatesEnabled(True)
+
     def _deferred_snapshot(self):
         self._initial_snapshot = self._capture_snapshot()
 

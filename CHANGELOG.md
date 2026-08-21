@@ -1,5 +1,15 @@
 # Changelog
 
+## 26.8.13 - 2026-08-22
+
+### English
+
+- Live theme preview: the settings window now updates instantly when you pick a theme in Preferences — no need to close and reopen. Press Apply to save permanently.
+
+### Tiếng Việt
+
+- Xem trước giao diện trực tiếp: cửa sổ Cài đặt giờ đổi theme ngay khi bạn chọn trong Tùy chọn — không cần đóng và mở lại. Bấm Apply để lưu vĩnh viễn.
+
 ## 26.8.12 - 2026-08-22
 
 ### English
