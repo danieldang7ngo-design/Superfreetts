@@ -93,19 +93,76 @@ python -m pytest tests/test_batch_flow.py   # single file
 See `REFERENCE.md §5` for skip-list and details.
 
 **Build the `.ankiaddon` — canonical way is via the AADT toolkit**
-(`aadt`) which produces `dist/SuperFreeTTS-<version>.ankiaddon`:
-```
-uv run aadt build -d local      # default builds the latest git tag
-uv run aadt build dev -d local  # builds the working tree incl. uncommitted changes
+(`aadt`) which produces `dist/SuperFreeTTS-<version>.ankiaddon`. On this machine
+the binary lives at `$env:USERPROFILE\.local\bin\aadt.exe` and is invoked with a
+specific version tag + `-d local`:
+```powershell
+$aadt = "$env:USERPROFILE\.local\bin\aadt.exe"
+& $aadt build 26.8.15 -d local      # builds the specific git tag 26.8.15
+# "dev" source variant (working tree incl. uncommitted changes) is NOT used here;
+# we always build from the exact released git tag so the .ankiaddon equals the tag.
 ```
 AADT reads `addon.json` (`module_name: superfreetts`, `ankiweb_id: 351217314`),
-packages `src/superfreetts/` and writes the `.ankiaddon` into `dist/`. Build
-`local` (debug) vs `ankiweb` (release) — see the AADT README.
+packages `src/superfreetts/` from the tag and writes `dist/SuperFreeTTS-<version>.ankiaddon`.
+Build `local` (debug) vs `ankiweb` (release) — see the AADT README.
+The `.ankiaddon` is a ZIP; `manifest.json` inside must carry `"version": "<tag>"`
+and `"package": "superfreetts"`. Confirm it matches after a build.
 
 A legacy `python build_share.py` script also exists; it packages the same
 `src/superfreetts/` source into `SuperFreeTTS.ankiaddon` at the repo root and
 resets `config.json` to clean defaults (worker=3, no user data). Prefer `aadt`.
-Both skip user data (`meta.json`, `user_files/`, `cache/`).
+Both skip user data (`meta.json`, `user_files/`, `cache/`; and `dist/`).
+
+### Releasing a new version — full pipeline (used by this project)
+
+Sequence that has been used for each release (26.8.12 → 26.8.15):
+
+1. **Bump version in 2 places** so `version.py` == `pyproject.toml`:
+   - `superfreetts_addon/version.py` → `ANKI_SUPER_FREE_TTS_VERSION='26.8.15'`
+   - `pyproject.toml` → `version = "26.8.15"`
+2. **Changelog** (multi-language): add a top `## <version> - YYYY-MM-DD` block in
+   `CHANGELOG.md` (English + at least Vietnamese), and a new
+   `ReleaseNoteEntry(version="26.8.15", ...)` at the TOP of `RELEASE_NOTES` in
+   `release_notes.py` with title + bullets per locale (en, vi, ko, zh-CN, zh-TW, ja, sv).
+3. **Compile + test all changed files before committing**:
+   ```
+   python -m py_compile <changed files...>
+   python -m pytest tests/ -q --tb=short     # expect ~270 passed, 1 skipped
+   ```
+   Keep `tests/` green on every release.
+4. **Commit** only the intended files (never `git add .` blindly — see Golden Rules):
+   ```
+   git add CHANGELOG.md pyproject.toml tests/ src/superfreetts/...
+   git commit -m "feat: ..."
+   ```
+5. **Tag + build**:
+   ```
+   git tag 26.8.15
+   & "$env:USERPROFILE\.local\bin\aadt.exe" build 26.8.15 -d local
+   # -> dist/SuperFreeTTS-26.8.15.ankiaddon
+   ```
+6. **Install into Anki** — because the addon loads `.pyd`/`.pyc`, always rename
+   the live folder aside (avoid locked-file errors) then extract the ZIP:
+   ```powershell
+   Get-Process -Name anki -ErrorAction SilentlyContinue | Stop-Process -Force
+   $target = "$env:APPDATA\Anki2\addons21\superfreetts"
+   $old    = "$env:APPDATA\Anki2\addons21\_superfreetts_old$N"   # bump N each time
+   if (Test-Path $target) { Rename-Item $target $old }           # keep old aside
+   Add-Type -AssemblyName System.IO.Compression.FileSystem
+   [System.IO.Compression.ZipFile]::ExtractToDirectory((Resolve-Path dist\SuperFreeTTS-<ver>.ankiaddon), $target)
+   # disable the backup so Anki won't load it later:
+   Remove-Item "$old\__init__.py","$old\manifest.json" -ErrorAction SilentlyContinue
+   ```
+7. **Push** branch + the new tag to GitHub:
+   ```
+   git push origin aadt-restructure     # branch we develop on
+   git push origin 26.8.15              # new version tag
+   ```
+   Note: PowerShell renders git's stderr as "RemoteException" — that is normal;
+   verify success via `git log`/`git ls-remote --tags` instead of exit code alone.
+
+`dist/build` and `dist/staging` are transient AADT work dirs. They are safe to
+delete any time (AADT regenerates them); keep only the `.ankiaddon` files in `dist/`.
 
 **Debug logging:**
 ```powershell
@@ -181,6 +238,53 @@ voice configs), `mapping_rules` (deck/note-type → preset), `realtime_config`
 (front/back card playback presets). Schema version tracked as
 `CONFIG_SCHEMA_VERSION = 7`; `config_models.migrate_configuration()` upgrades
 old formats on startup.
+
+## 9. UI Themes (current state, v26.8.15)
+
+- **7 themes**, selectable in Settings → Preferences → "Choose interface theme":
+  `vibrant` (default), `ollama`, `apple`, `nintendo`, `binance`, `clay`, `claude`.
+  Source of truth `gui_utils.VALID_THEMES`; each has a `_build_<theme>_stylesheet(dark)`
+  + a light/dark token block. `get_dynamic_stylesheet()` dispatches on the active theme
+  and appends `_build_services_extra_css()` (theme-aware Services tab widgets).
+- **Live preview:** picking a theme in Preferences re-applies the stylesheet on the open
+  Settings dialog instantly (`SettingsDialog.refresh_stylesheet()` + `unpolish/polish`);
+  pressing **Apply** persists it. `gui_utils.set_active_theme(theme)`.
+- **Services tab theming:** section headers (`sectionToggle`), Setup buttons
+  (`setupAction`), separators (`serviceSeparator`), status badges (`statusBadgeReady /
+  statusBadgeSetup / statusBadgeDisabled / statusBadgeFree / statusBadgeRecommended`)
+  are styled via `cssClass` selectors from the `_SERVICES_TOKENS` palette — never hard-code
+  theme hexes in `component_services.py`.
+- **Tests:** `tests/test_themes_smoke.py` builds every theme light+dark and asserts the
+  Services selectors are present.
+
+## 10. First-run Language Detection (v26.8.15)
+
+- Addon no longer defaults blindly to a hardcoded language. On **first install**,
+  `config_store.ensure_ui_language(True)` is called from `__init__.py` (when
+  `first_install`), which reads Anki's own interface language via
+  `anki.lang.current_lang` (`detect_anki_language()`) and stores it as `ui_language`
+  if it's one of the 7 supported locales; otherwise it falls back to `en`.
+- The shipped `config.json` now defaults `preferences.ui_language` to `"en"` (neutral);
+  the detected Anki language overrides it on a fresh install.
+- `component_welcome.WelcomeDialog` has a language `QComboBox` at the top: switching it
+  re-renders the whole dialog live and saving it writes the chosen `ui_language`
+  (`hypertts.save_preferences`). Note `i18n.get_text()` falls back to English for any
+  key a locale lacks (e.g. `welcome_button_start` missing in ja/sv/zh-*).
+- Tests: `tests/test_ui_language.py` (detection + first-run only).
+
+## 11. Planned: Local HTTP server (not yet implemented)
+
+Design agreed, **NOT built yet.** A self-contained AnkiConnect-style local HTTP server:
+- stdlib `http.server.ThreadingHTTPServer`, bind `127.0.0.1:58765`, background daemon
+  thread → no new dependencies, localhost-only by default.
+- Endpoints: `GET /ping`, `GET /status`, `GET /voices`, `GET|POST /text-to-speech`
+  (text → audio bytes via `generate_audio_write_file`), and `POST /notes/audio`
+  (generate + attach `[sound:...]` + save to Anki media, dispatched to the main thread
+  through `aqt.mw.taskman.run_on_main` + a `queue.Queue` result bridge reusing
+  `note_audio_updater`).
+- Config in Preferences: `remote_server_enabled`, `remote_port`, `remote_token`;
+  lifecycle: start on profile open when enabled, stop on close, restart on config change.
+- When implemented: bump to 26.8.16, add `http_server.py`, i18n keys, tests.
 
 <!-- headroom:rtk-instructions -->
 ## RTK (Rust Token Killer) — prefix shell commands
