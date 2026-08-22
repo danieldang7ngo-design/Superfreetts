@@ -272,19 +272,45 @@ old formats on startup.
   key a locale lacks (e.g. `welcome_button_start` missing in ja/sv/zh-*).
 - Tests: `tests/test_ui_language.py` (detection + first-run only).
 
-## 11. Planned: Local HTTP server (not yet implemented)
+## 11. Gotchas & Pitfalls (learned in practice)
 
-Design agreed, **NOT built yet.** A self-contained AnkiConnect-style local HTTP server:
-- stdlib `http.server.ThreadingHTTPServer`, bind `127.0.0.1:58765`, background daemon
-  thread → no new dependencies, localhost-only by default.
-- Endpoints: `GET /ping`, `GET /status`, `GET /voices`, `GET|POST /text-to-speech`
-  (text → audio bytes via `generate_audio_write_file`), and `POST /notes/audio`
-  (generate + attach `[sound:...]` + save to Anki media, dispatched to the main thread
-  through `aqt.mw.taskman.run_on_main` + a `queue.Queue` result bridge reusing
-  `note_audio_updater`).
-- Config in Preferences: `remote_server_enabled`, `remote_port`, `remote_token`;
-  lifecycle: start on profile open when enabled, stop on close, restart on config change.
-- When implemented: bump to 26.8.16, add `http_server.py`, i18n keys, tests.
+### i18n / locales
+1. When inserting multiple keys into a locale JSON with a script, keys can land on a
+   single line (still valid JSON, ugly). Normalize with
+   `json.dump(data, f, ensure_ascii=False, indent=2, newline="\n")`.
+2. A new key must be added to **all 7 locale files** (en, vi, ko, ja, zh-CN, zh-TW, sv).
+   `i18n.get_text()` silently falls back to English for any locale missing the key
+   (e.g. `welcome_button_start` is missing in ja/sv/zh-*), so a "working" key can hide a
+   missing translation.
+
+### theme / gui
+3. All **7 theme builders must keep the same shared token variable names**
+   (`tab_bg_selected`, `tab_text_selected`, `btn_hover_sec`, `hairline`, `svc_enabled_bg`,
+   `svc_disabled_bg`, ...). The Services block (`_SERVICES_TOKENS`) and
+   `tests/test_themes_smoke.py` depend on them. Rename one → breaks many.
+4. Never hard-code colors/`setStyleSheet` in `component_services.py` — use the themed
+   `cssClass` selectors (`sectionToggle`, `setupAction`, `serviceSeparator`,
+   `statusBadge*`). Past this rule caused broken dark themes (white search box, blue
+   summary, purple gradient header).
+5. `is_night_mode()` returns a `MagicMock` under tests — coerce with `bool(dark)` before
+   using it as a dict key (e.g. `_SERVICES_TOKENS[theme][bool(dark)]`), else `KeyError`.
+6. `get_status_badge()` accepts `css_class` (preferred) with `bg_color`/`text_color`
+   kept as a fallback — old callers still work, but migrate to `css_class` over time.
+
+### config
+7. **Two places read `ui_language`**: legacy `anki_utils.get_ui_language()` and modern
+   `config_store.get_ui_language()`. Keep both in sync.
+8. The shipped `config.json` has its own `preferences.ui_language` default which
+   overrides `config_models`' `"en"` default. Changing the default means editing **both**.
+9. First-run detection: `first_install` is only known when `user_uuid` is null, and
+   `user_uuid` is written before `ConfigStore` reads config. Pass the `first_install`
+   flag explicitly into `config_store.ensure_ui_language()` — do not re-derive it inside.
+
+### build / release
+10. Verify `manifest.json` inside the `.ankiaddon` carries `"version" == tag` and
+    `"package" == "superfreetts"` after every build.
+11. `dist/build` and `dist/staging` are transient AADT work dirs — safe to delete;
+    only the `.ankiaddon` files in `dist/` matter.
 
 <!-- headroom:rtk-instructions -->
 ## RTK (Rust Token Killer) — prefix shell commands
