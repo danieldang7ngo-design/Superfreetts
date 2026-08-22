@@ -156,6 +156,14 @@ else:
     hyper_tts = superfreetts.SuperFreeTTS(ankiutils, service_manager)
     aqt.mw.hyper_tts = hyper_tts
 
+    # First install: match the addon UI language to Anki's interface language
+    # (instead of the shipped default), so the addon is immediately readable.
+    if first_install:
+        try:
+            hyper_tts.config_store.ensure_ui_language(True)
+        except Exception as e:
+            logger.warning(f"[LANG] could not set default UI language: {e}")
+
     # Configure services based on current configuration.
     # At this point no concrete services may be instantiated yet;
     # ServiceManager stores the configuration and will apply it

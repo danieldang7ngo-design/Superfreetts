@@ -46,6 +46,23 @@ def _sanitize_for_json(obj):
     return obj
 
 
+def detect_anki_language() -> str:
+    """Best-effort detection of Anki's current interface language code.
+
+    Returns one of ``i18n.SUPPORTED_LANGUAGES``, falling back to English when
+    Anki's language is unsupported or the language module is unavailable.
+    """
+    lang = "en"
+    try:
+        from anki.lang import current_lang
+        lang = (current_lang or "").strip() or "en"
+    except Exception:
+        lang = "en"
+    if lang not in i18n.SUPPORTED_LANGUAGES:
+        lang = "en"
+    return lang
+
+
 class ConfigStore:
     """
     Single source of truth for reading and writing the addon configuration.
@@ -282,6 +299,19 @@ class ConfigStore:
     def save_preferences(self, preferences_model) -> None:
         self.config[constants.CONFIG_PREFERENCES] = config_models.serialize_preferences(preferences_model)
         self._write()
+
+    def ensure_ui_language(self, on_first_install: bool = False) -> None:
+        """On first install, default the UI language to Anki's interface language
+        instead of the shipped default (e.g. "vi"). This runs only once so the
+        user's own later choice is never overridden."""
+        if not on_first_install:
+            return
+        detected = detect_anki_language()
+        prefs = self.get_preferences()
+        if getattr(prefs, "ui_language", "en") != detected:
+            prefs.ui_language = detected
+            self.save_preferences(prefs)
+            logger.info(f"[LANG] First install: defaulted UI language to '{detected}'")
 
     def apply_logging_preferences(self) -> None:
         """Apply debug/silent logging based on stored preferences."""

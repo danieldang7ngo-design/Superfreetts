@@ -1,6 +1,6 @@
 [project]
 name = "SuperFreeTTS"
-version = "26.8.14"
+version = "26.8.15"
 description = "Super Free TTS"
 readme = "README.md"
 requires-python = ">=3.9"

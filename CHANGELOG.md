@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.8.15 - 2026-08-22
+
+### English
+
+- On the very first launch, Super Free TTS now matches Anki's interface language automatically (instead of defaulting to Vietnamese/English).
+- The Welcome dialog now has a language picker at the top: choose your language and it saves instantly. If Anki's language isn't supported, it falls back to English and you can switch in the Welcome dialog.
+
+### Tiếng Việt
+
+- Ngay lần khởi chạy đầu tiên, Super Free TTS giờ tự khớp ngôn ngữ giao diện của Anki (thay vì mặc định tiếng Việt/Tiếng Anh).
+- Màn hình chào đón giờ có hộp chọn ngôn ngữ trên đầu: chọn ngôn ngữ là lưu ngay. Nếu ngôn ngữ Anki không được hỗ trợ, addon dùng tiếng Anh và bạn có thể đổi ngay trong màn hình chào.
+
 ## 26.8.14 - 2026-08-22
 
 ### English

@@ -10,6 +10,7 @@ from aqt.qt import (
     QLabel,
     QPushButton,
     QCheckBox,
+    QComboBox,
     QTimer,
     QPainter,
     QColor,
@@ -71,10 +72,10 @@ class WelcomeDialog(QDialog):
     def __init__(self, hypertts, parent=None):
         super().__init__(parent)
         self.hypertts = hypertts
-        lang = self.hypertts.get_ui_language()
+        self.lang = self.hypertts.get_ui_language()
         accent = constants.COLOR_ACCENT
 
-        self.setWindowTitle(i18n.get_text("welcome_dialog_title", lang))
+        self.setWindowTitle("")
         self.setMinimumSize(360, 420)
         self.resize(560, 620)
         self.setWindowFlags(
@@ -121,70 +122,53 @@ class WelcomeDialog(QDialog):
         self.content_layout.setContentsMargins(30, 40, 30, 30)
         self.main_layout.addWidget(self.content_widget)
 
+        # Language selector row (stays fixed; only text below re-renders)
+        lang_row = QHBoxLayout()
+        self.lang_caption = QLabel("")
+        self.lang_caption.setStyleSheet(
+            f"color: {self.color_footer}; font-size: 13px; font-weight: bold;"
+        )
+        lang_row.addWidget(self.lang_caption)
+        self.language_combobox = QComboBox()
+        self.language_combobox.setMinimumHeight(30)
+        lang_row.addWidget(self.language_combobox)
+        lang_row.addStretch()
+        self.content_layout.addLayout(lang_row)
+
         # Header
-        header_label = QLabel(i18n.get_text("welcome_header", lang))
-        header_label.setStyleSheet(
+        self.header_label = QLabel()
+        self.header_label.setStyleSheet(
             f"font-size: 24px; font-weight: bold; color: {self.color_header}; margin-bottom: 20px;"
         )
-        header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.content_layout.addWidget(header_label)
+        self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.content_layout.addWidget(self.header_label)
 
         # Description
-        author_url = "https://facebook.com/dangngooooo"
-        contributor_url = "https://www.facebook.com/tui.la.phuc747"
-        site_url = "https://ankivn.com"
-
-        welcome_text = f"""
-        <div style="color: {self.color_desc}; font-size: 14px; line-height: 1.6;">
-            <p>{i18n.get_text("welcome_thanks", lang)}</p>
-            <p>{html.escape(i18n.get_text("about_description", lang))}</p>
-            <ul style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
-                <li>{html.escape(i18n.get_text("welcome_list_engines", lang))}</li>
-                <li>{html.escape(i18n.get_text("welcome_list_offline", lang))}</li>
-                <li>{html.escape(i18n.get_text("welcome_list_batch", lang))}</li>
-            </ul>
-            <p>{i18n.get_text("welcome_instruction", lang)}</p>
-        </div>
-        """
-        
-        desc_label = QLabel(welcome_text)
-        desc_label.setWordWrap(True)
-        self.content_layout.addWidget(desc_label)
+        self.desc_label = QLabel()
+        self.desc_label.setWordWrap(True)
+        self.content_layout.addWidget(self.desc_label)
 
         # Promo section (Semi-transparent card)
-        promo_text = i18n.get_text("welcome_addons_promo", lang)
-        promo_card = QLabel(
-            f'<div style="padding: 10px; color: {self.color_promo}; line-height: 1.5; font-size: 13px;">'
-            f'{html.escape(promo_text)}'
-            f'</div>'
-        )
-        promo_card.setWordWrap(True)
-        self.content_layout.addWidget(promo_card)
+        self.promo_card = QLabel()
+        self.promo_card.setWordWrap(True)
+        self.content_layout.addWidget(self.promo_card)
 
         self.content_layout.addStretch()
 
         # Footer info
-        footer_html = f"""
-        <div style="color: {self.color_footer}; font-size: 12px; line-height: 1.6;">
-            <b>{html.escape(i18n.get_text("about_version", lang))}</b> {html.escape(version.ANKI_SUPER_FREE_TTS_VERSION)}<br/>
-            <b>{html.escape(i18n.get_text("about_author", lang))}</b> <a href="{author_url}" style="color: {accent}; text-decoration: none;">Paul from AnkiVN</a> | 
-            <b>Contributor:</b> <a href="{contributor_url}" style="color: {accent}; text-decoration: none;">Hoàng Phúc</a><br/>
-            <b>{html.escape(i18n.get_text("about_website", lang))}</b> <a href="{site_url}" style="color: {accent}; text-decoration: none;">AnkiVN.com</a>
-        </div>
-        """
-        footer_label = QLabel(footer_html)
-        footer_label.setOpenExternalLinks(True)
-        self.content_layout.addWidget(footer_label)
+        self.footer_label = QLabel()
+        self.footer_label.setOpenExternalLinks(True)
+        self.content_layout.addWidget(self.footer_label)
 
         # Checkbox & Button section
         bottom_layout = QHBoxLayout()
-        self.cb_dont_show = QCheckBox(i18n.get_text("welcome_dont_show_again", lang))
+        self.cb_dont_show = QCheckBox("")
         self.cb_dont_show.setStyleSheet(f"color: {self.color_checkbox}; font-size: 11px;")
         bottom_layout.addWidget(self.cb_dont_show)
 
         bottom_layout.addStretch()
 
-        self.btn_start = QPushButton("Bắt đầu / Get Started")
+        self.btn_start = QPushButton("")
         self.btn_start.setMinimumWidth(160)
         self.btn_start.setFixedHeight(40)
         self.btn_start.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -208,6 +192,88 @@ class WelcomeDialog(QDialog):
         bottom_layout.addWidget(self.btn_start)
         
         self.content_layout.addLayout(bottom_layout)
+
+        # Populate + update language-dependent texts
+        self._populate_languages()
+        self.language_combobox.currentIndexChanged.connect(self._on_language_changed)
+        self._apply_language()
+
+    # ------------------------------------------------------------------
+    # Language handling
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _lang_display(language: str, display_lang: str) -> str:
+        return i18n.get_text(f"preferences_option_language_{language.replace('-', '_')}", display_lang)
+
+    def _populate_languages(self) -> None:
+        self.language_combobox.blockSignals(True)
+        self.language_combobox.clear()
+        for language in i18n.SUPPORTED_LANGUAGES:
+            self.language_combobox.addItem(self._lang_display(language, self.lang), language)
+        index = i18n.SUPPORTED_LANGUAGES.index(self.lang) if self.lang in i18n.SUPPORTED_LANGUAGES else 0
+        if self.language_combobox.count() > index:
+            self.language_combobox.setCurrentIndex(index)
+        self.language_combobox.blockSignals(False)
+
+    def _on_language_changed(self, index: int) -> None:
+        data = self.language_combobox.itemData(index) or "en"
+        if data == self.lang:
+            return
+        self.lang = data
+        # Re-display language names in the newly selected language.
+        self.language_combobox.blockSignals(True)
+        for i, language in enumerate(i18n.SUPPORTED_LANGUAGES):
+            if i < self.language_combobox.count():
+                self.language_combobox.setItemText(i, self._lang_display(language, self.lang))
+        self.language_combobox.blockSignals(False)
+        self._apply_language()
+
+    def _build_welcome_html(self, lang: str) -> str:
+        return f"""
+        <div style="color: {self.color_desc}; font-size: 14px; line-height: 1.6;">
+            <p>{i18n.get_text("welcome_thanks", lang)}</p>
+            <p>{html.escape(i18n.get_text("about_description", lang))}</p>
+            <ul style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
+                <li>{html.escape(i18n.get_text("welcome_list_engines", lang))}</li>
+                <li>{html.escape(i18n.get_text("welcome_list_offline", lang))}</li>
+                <li>{html.escape(i18n.get_text("welcome_list_batch", lang))}</li>
+            </ul>
+            <p>{i18n.get_text("welcome_instruction", lang)}</p>
+        </div>
+        """
+
+    def _build_promo_html(self, lang: str) -> str:
+        return (
+            f'<div style="padding: 10px; color: {self.color_promo}; line-height: 1.5; font-size: 13px;">'
+            f'{html.escape(i18n.get_text("welcome_addons_promo", lang))}'
+            f'</div>'
+        )
+
+    def _build_footer_html(self, lang: str) -> str:
+        accent = constants.COLOR_ACCENT
+        author_url = "https://facebook.com/dangngooooo"
+        contributor_url = "https://www.facebook.com/tui.la.phuc747"
+        site_url = "https://ankivn.com"
+        return f"""
+        <div style="color: {self.color_footer}; font-size: 12px; line-height: 1.6;">
+            <b>{html.escape(i18n.get_text("about_version", lang))}</b> {html.escape(version.ANKI_SUPER_FREE_TTS_VERSION)}<br/>
+            <b>{html.escape(i18n.get_text("about_author", lang))}</b> <a href="{author_url}" style="color: {accent}; text-decoration: none;">Paul from AnkiVN</a> |
+            <b>Contributor:</b> <a href="{contributor_url}" style="color: {accent}; text-decoration: none;">Hoàng Phúc</a><br/>
+            <b>{html.escape(i18n.get_text("about_website", lang))}</b> <a href="{site_url}" style="color: {accent}; text-decoration: none;">AnkiVN.com</a>
+        </div>
+        """
+
+    def _apply_language(self) -> None:
+        lang = self.lang
+        self.setWindowTitle(i18n.get_text("welcome_dialog_title", lang))
+        self.lang_caption.setText(i18n.get_text("preferences_label_interface_language", lang))
+        self.header_label.setText(i18n.get_text("welcome_header", lang))
+        self.desc_label.setText(self._build_welcome_html(lang))
+        self.promo_card.setText(self._build_promo_html(lang))
+        self.footer_label.setText(self._build_footer_html(lang))
+        self.cb_dont_show.setText(i18n.get_text("welcome_dont_show_again", lang))
+        self.btn_start.setText(i18n.get_text("welcome_button_start", lang))
 
     def update_animation(self):
         for p in self.particles:
@@ -250,4 +316,16 @@ class WelcomeDialog(QDialog):
                 logger.info("Welcome popup disabled by user.")
             except Exception as e:
                 logger.error(f"Failed to save welcome popup state: {e}")
+
+        # Persist the language chosen in the first-run language picker.
+        if getattr(self, "lang", None):
+            try:
+                prefs = self.hypertts.get_preferences()
+                if getattr(prefs, "ui_language", "en") != self.lang:
+                    prefs.ui_language = self.lang
+                    self.hypertts.save_preferences(prefs)
+                    logger.info(f"[LANG] Welcome dialog chose UI language '{self.lang}'")
+            except Exception as e:
+                logger.error(f"Failed to save welcome language: {e}")
+
         super().accept()

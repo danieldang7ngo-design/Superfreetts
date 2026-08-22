@@ -12,6 +12,48 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.15",
+        title={
+            "en": "Smart first-run language + language picker in Welcome",
+            "vi": "Chọn ngôn ngữ thông minh lần đầu + hộp chọn trong màn chào",
+            "ko": "첫 실행 언어 자동 감지 + Welcome 언어 선택기",
+            "zh-CN": "首次运行智能语言 + 欢迎页语言选择",
+            "zh-TW": "首次執行智慧語言 + 歡迎頁語言選擇",
+            "ja": "初回起動の言語自動検出 + Welcome言語セレクタ",
+            "sv": "Smart språk vid första start + språkväljare i välkomst",
+        },
+        bullets={
+            "en": [
+                "On the very first launch, Super Free TTS now matches Anki's interface language automatically (instead of defaulting to Vietnamese/English).",
+                "The Welcome dialog now has a language picker at the top: choose your language and it saves instantly. If Anki's language isn't supported, it falls back to English and you can switch in the Welcome dialog.",
+            ],
+            "vi": [
+                "Ngay lần khởi chạy đầu tiên, Super Free TTS giờ tự khớp ngôn ngữ giao diện của Anki (thay vì mặc định tiếng Việt/Tiếng Anh).",
+                "Màn hình chào đón giờ có hộp chọn ngôn ngữ trên đầu: chọn ngôn ngữ là lưu ngay. Nếu ngôn ngữ của Anki không được hỗ trợ, addon dùng tiếng Anh và bạn có thể đổi ngay trong màn hình chào.",
+            ],
+            "ko": [
+                "첫 실행 시 Super Free TTS가 Anki의 인터페이스 언어를 자동으로 따릅니다(기본값 베트남어/영어 대신).",
+                "환영 대화상자 상단에 언어 선택기가 추가되었습니다. 지원되지 않는 Anki 언어면 영어로 폴백되고 환영 화면에서 바로 바꿀 수 있습니다.",
+            ],
+            "zh-CN": [
+                "首次启动时，Super Free TTS 会自动匹配 Anki 的界面语言（不再默认越南语/英语）。",
+                "欢迎对话框顶部新增语言选择器：选择语言即即时保存。若 Anki 语言不受支持则回退英语，可在欢迎页直接切换。",
+            ],
+            "zh-TW": [
+                "首次啟動時，Super Free TTS 會自動比對 Anki 的介面語言（不再預設越南語/英語）。",
+                "歡迎對話框頂部新增語言選擇器：選擇語言即時儲存。若 Anki 語言不受支援則回退英文，可在歡迎頁直接切換。",
+            ],
+            "ja": [
+                "初回起動時、Super Free TTS は Anki のインターフェース言語を自動で反映します(既定のベトナム語/英語ではなく)。",
+                "Welcomeダイアログ上部に言語セレクタを追加。未対応のAnki言語は英語にフォールバックし、Welcome画面ですぐ切り替え可能です。",
+            ],
+            "sv": [
+                "Vid första start anpassar sig Super Free TTS automatiskt till Ankis gränssnittsspråk (istället för att som standard använda vietnamesiska/engelska).",
+                "Välkomstdialogen har nu en språkväljare högst upp: välj språk så sparas det direkt. Om Ankis språk inte stöds faller det tillbaka till engelska och du kan byta i välkomstfönstret.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.14",
         title={
             "en": "Services tab now follows every theme",
