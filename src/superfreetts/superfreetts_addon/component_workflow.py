@@ -354,6 +354,12 @@ class WorkflowDialog(aqt.qt.QDialog):
         self.run_button.setEnabled((not running) and has_workflow_items)
         self.apply_selected_button.setEnabled((not running) and has_selected_pending_audio)
         self.apply_all_button.setEnabled((not running) and has_pending_generated_audio)
+        # Like Anki's Sync button, highlight Run when the workflow config has been
+        # modified (unsaved) so the user knows audio would be out of date and that
+        # going through Generate All again is expected. Colors follow the active theme.
+        dirty = (not running) and self.model_changed and has_workflow_items
+        gui_utils.set_button_dirty(self.run_button, dirty, normal_style="emerald")
+        self.run_button.setToolTip(self._text("workflow_tooltip_generate_dirty") if dirty else self._text("workflow_tooltip_generate_all"))
         self.stop_button.setEnabled(running)
         self.close_button.setEnabled(not running)
         self.new_button.setEnabled(not running)

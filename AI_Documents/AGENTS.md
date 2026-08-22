@@ -15,25 +15,30 @@ Otherwise AGENTS.md covers 90% of tasks.
 
 ## 1. Folder Map
 
+Addon root is `src/superfreetts/` (AADT layout — see git `e1d2d24`). All runnable
+addon code, `manifest.json`, `__init__.py`, `graphics/` and vendored `external/`
+live there. Repo root additionally holds `tests/`, `build_share.py` and docs.
+
 | Path | What's inside |
 |---|---|
-| `__init__.py` | Entry point. Anki loads this first. |
-| `superfreetts_addon/__init__.py` | Starts the `SuperFreeTTS` class. |
-| `superfreetts_addon/superfreetts.py` | Central facade. Wires config, audio, batch, realtime, editor modules. |
-| `superfreetts_addon/batch_orchestrator.py` | Batch pipeline: prepare → dedup → generate → save. |
-| `superfreetts_addon/batch_executor.py` | `MultiEngineExecutor` — per-engine thread pools. |
-| `superfreetts_addon/servicemanager.py` | Lazy-loads TTS engines (keeps Anki startup fast). |
-| `superfreetts_addon/audio_generator.py` | Single-note audio generation, voice fallback logic. |
-| `superfreetts_addon/audio_file_store.py` | Disk cache, content-addressed by SHA-224 hash. |
-| `superfreetts_addon/realtime_manager.py` | `{{tts ...}}` tag handling for live review playback. |
-| `superfreetts_addon/editor_manager.py` | TTS actions inside the note editor. |
-| `superfreetts_addon/config_store.py` + `config_models.py` | Config read/write, migrations, data shape. |
-| `superfreetts_addon/services/service_*.py` | One file per TTS engine, extends `ServiceBase`. |
-| `superfreetts_addon/gui.py` + `component_*.py` | UI windows (Settings, Batch, Easy Mode, note list). |
-| `superfreetts_addon/i18n.py` | UI text, multiple locales (see §6). |
-| `graphics/` | Banners + UI icons. Icons are Lucide (ISC), stroke-based SVGs: editor buttons `icon_speaker`, `icon_play`, `icon_settings`; toggles `icon_chevron_down`/`icon_chevron_right`; menu `icon_headphones`. `NOTICE` holds attribution. Add any new icon as a static Lucide SVG here (no runtime dep). |
+| `src/superfreetts/__init__.py` | Entry point. Anki loads this first. |
+| `src/superfreetts/manifest.json` | Addon metadata (AnkiWeb listing info). |
+| `src/superfreetts/superfreetts_addon/__init__.py` | Starts the `SuperFreeTTS` class. |
+| `src/superfreetts/superfreetts_addon/superfreetts.py` | Central facade. Wires config, audio, batch, realtime, editor modules. |
+| `src/superfreetts/superfreetts_addon/batch_orchestrator.py` | Batch pipeline: prepare → dedup → generate → save. |
+| `src/superfreetts/superfreetts_addon/batch_executor.py` | `MultiEngineExecutor` — per-engine thread pools. |
+| `src/superfreetts/superfreetts_addon/servicemanager.py` | Lazy-loads TTS engines (keeps Anki startup fast). |
+| `src/superfreetts/superfreetts_addon/audio_generator.py` | Single-note audio generation, voice fallback logic. |
+| `src/superfreetts/superfreetts_addon/audio_file_store.py` | Disk cache, content-addressed by SHA-224 hash. |
+| `src/superfreetts/superfreetts_addon/realtime_manager.py` | `{{tts ...}}` tag handling for live review playback. |
+| `src/superfreetts/superfreetts_addon/editor_manager.py` | TTS actions inside the note editor. |
+| `src/superfreetts/superfreetts_addon/config_store.py` + `config_models.py` | Config read/write, migrations, data shape. |
+| `src/superfreetts/superfreetts_addon/services/service_*.py` | One file per TTS engine, extends `ServiceBase`. |
+| `src/superfreetts/superfreetts_addon/gui.py` + `component_*.py` | UI windows (Settings, Batch, Easy Mode, note list). |
+| `src/superfreetts/superfreetts_addon/i18n.py` | UI text, multiple locales (see §6). |
+| `src/superfreetts/graphics/` | Banners + UI icons. Icons are Lucide (ISC), stroke-based SVGs: editor buttons `icon_speaker`, `icon_play`, `icon_settings`; toggles `icon_chevron_down`/`icon_chevron_right`; menu `icon_headphones`. `NOTICE` holds attribution. Add any new icon as a static Lucide SVG here (no runtime dep). |
 | `tests/` | Automated tests. `mock_anki.py` fakes Anki, no real install needed. |
-| `build_share.py` | Packages everything into `.ankiaddon` for release. |
+| `build_share.py` | Packages `src/superfreetts/` into `.ankiaddon` for release (see §3). |
 | `ANKIWEB_DESCRIPTION_EN.html` | English store listing / description for AnkiWeb (item 351217314). |
 | `ANKIWEB_DESCRIPTION_EN.txt` | Plain text version of AnkiWeb store listing. |
 
@@ -87,12 +92,20 @@ python -m pytest tests/test_batch_flow.py   # single file
 `rtk pytest` swallows stdout on Windows — use `python -m pytest` directly.
 See `REFERENCE.md §5` for skip-list and details.
 
-**Build the `.ankiaddon`:**
+**Build the `.ankiaddon` — canonical way is via the AADT toolkit**
+(`aadt`) which produces `dist/SuperFreeTTS-<version>.ankiaddon`:
 ```
-python build_share.py
+uv run aadt build -d local      # default builds the latest git tag
+uv run aadt build dev -d local  # builds the working tree incl. uncommitted changes
 ```
-Resets `config.json` to clean defaults (worker=3, no user data). Includes
-`tools/` package so DB helper modules ship too. Doesn't patch code.
+AADT reads `addon.json` (`module_name: superfreetts`, `ankiweb_id: 351217314`),
+packages `src/superfreetts/` and writes the `.ankiaddon` into `dist/`. Build
+`local` (debug) vs `ankiweb` (release) — see the AADT README.
+
+A legacy `python build_share.py` script also exists; it packages the same
+`src/superfreetts/` source into `SuperFreeTTS.ankiaddon` at the repo root and
+resets `config.json` to clean defaults (worker=3, no user data). Prefer `aadt`.
+Both skip user data (`meta.json`, `user_files/`, `cache/`).
 
 **Debug logging:**
 ```powershell
@@ -125,6 +138,31 @@ Batch mode specifically runs 4 phases: Preparing → Deduplicating → Generatin
 - **Collection Mode** — batch, many notes, checkpoint/resume if Anki crashes mid-run.
 - **Realtime Mode** — no file saved; inserts `{{tts ...}}` tag, plays live during
   review via `ttsplayer.py` → `RealtimeManager`.
+
+### Dirty-button indicator (Anki Sync-style)
+
+When the current Batch preset / Workflow config changes (source field, target,
+voice selection, text-processing, rename, duplicate, new preset) and is left
+unsaved, the **Generate Audio** button (Batch) and **Run** button (Workflow) flip
+to the active theme's warning (`amber`) color to signal the audio would be out of
+date and regeneration is expected. Once saved (or the config is clean) the button
+returns to its normal color. Implementation:
+
+- `gui_utils.set_button_dirty(button, dirty, normal_style, dirty_style)` swaps the
+  button's `cssClass` between `btnPastel{dirty}` and `btnPastel{normal}`. Colors come
+  from the active theme's stylesheet (`btnPastelAmber` is defined in every theme), so
+  the warning tone adapts per-theme — never hard-code a hex here.
+- Batch (`component_batch.ComponentBatch`): `update_save_profile_button_state()` also
+  calls `update_apply_button_dirty_style()`, which recolors `apply_button` when
+  `model_changed` and `notes_loaded` are both true (re-enabling it so the user can
+  regenerate). Editor mode is skipped.
+- Workflow (`component_workflow.WorkflowDialog`): `refresh_button_states()` recolors
+  `run_button` when `model_changed` and the workflow has items.
+- Tooltips (`batch_tooltip_generate_dirty`, `workflow_tooltip_generate_all`,
+  `workflow_tooltip_generate_dirty`) exist in all 7 locales.
+
+If you add new buttons that should reflect a "changed, needs re-running" state, reuse
+`set_button_dirty` rather than inline `setStyleSheet` so theming stays consistent.
 
 ## 6. i18n
 

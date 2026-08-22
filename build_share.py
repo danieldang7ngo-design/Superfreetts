@@ -2,7 +2,7 @@
 Build a shareable .ankiaddon for Super Free TTS.
 
 What this does:
-- Copies the addon source into a clean staging folder.
+- Copies the addon source (from `src/superfreetts/`) into a clean staging folder.
 - Strips local-only stuff (caches, mp3s, dev mirrors, __pycache__, meta.json, etc.).
 - Keeps the EdgeTTS worker cap at 3 (default from batch_constants.py).
 - Zips staging into SuperFreeTTS.ankiaddon at the workspace root.
@@ -21,18 +21,25 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+# The real addon root after the AADT layout refactor (git f2aa284 / "restructure
+# into AADT layout under src/superfreetts"). Everything the addon ships lives here.
+ADDON_ROOT = ROOT / "src" / "superfreetts"
 DIST = ROOT / "dist"
 STAGING = DIST / "staging"
 OUTPUT = ROOT / "SuperFreeTTS.ankiaddon"
 
-# Files/dirs to copy from the addon root.
-TOP_LEVEL_INCLUDES = [
+# Files/dirs copied from ADDON_ROOT (the packaged addon itself).
+ADDON_INCLUDES = [
     "__init__.py",
     "manifest.json",
-    "LICENSE",
     "superfreetts_addon",
     "external",
     "graphics",
+]
+
+# Files/dirs copied from the repo root (they live here, not inside ADDON_ROOT).
+ROOT_INCLUDES = [
+    "LICENSE",
     "tools",
 ]
 
@@ -172,13 +179,14 @@ def stage_sources() -> None:
         shutil.rmtree(STAGING)
     STAGING.mkdir(parents=True)
 
-    # Copy whitelisted top-level entries.
-    for name in TOP_LEVEL_INCLUDES:
-        src = ROOT / name
-        if not src.exists():
-            log(f"skip missing: {name}")
-            continue
-        copy_tree(src, STAGING / name)
+    copy_from = [(ADDON_ROOT, ADDON_INCLUDES), (ROOT, ROOT_INCLUDES)]
+    for src_root, includes in copy_from:
+        for name in includes:
+            src = src_root / name
+            if not src.exists():
+                log(f"skip missing: {name}")
+                continue
+            copy_tree(src, STAGING / name)
 
     # Always ship a clean config.json (overwrites any copied one).
     patch_config_json(STAGING)

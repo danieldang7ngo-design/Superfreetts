@@ -160,6 +160,22 @@ def configure_pastel_button(button, style_name="emerald", min_height=34, min_wid
     button.style().polish(button)
 
 
+def set_button_dirty(button, dirty, normal_style="emerald", dirty_style="amber"):
+    """Toggle a button between its normal pastel style and a 'dirty' (warning) style.
+
+    The colors come from the active theme's stylesheet (``btnPastel*`` classes), so the
+    warning tone automatically adapts to whichever UI theme is selected. When ``dirty``
+    is False the button is returned to its ``normal_style`` color. Used to signal, like
+    Anki's Sync button, that the underlying configuration has changed and needs to be
+    regenerated/reapplied.
+    """
+    style = dirty_style if dirty else normal_style
+    css_class = f"btnPastel{style.capitalize()}"
+    button.setProperty("cssClass", css_class)
+    button.style().unpolish(button)
+    button.style().polish(button)
+
+
 def get_status_badge(text, bg_color=None, text_color=None, css_class=None):
     """Return a compact rounded QLabel suitable for 'Free', 'Recommended', etc.
 

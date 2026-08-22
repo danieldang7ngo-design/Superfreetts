@@ -34,6 +34,7 @@ class ComponentBatch(component_common.ConfigComponentBase):
         self.dialog = dialog
         self.batch_model = config_models.BatchConfig(self.hypertts.anki_utils)
         self.model_changed = False
+        self.notes_loaded = False
         self.note = None
         self.last_saved_preset_id = None
         self.editor_new_preset_id = None
@@ -230,7 +231,9 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.apply_button.setText(i18n.get_text("batch_button_generate_audio", lang))
 
     def _on_all_notes_loaded(self):
+        self.notes_loaded = True
         self.apply_button.setEnabled(True)
+        self.update_apply_button_dirty_style()
 
     def get_model(self):
         return self.batch_model
@@ -284,6 +287,27 @@ class ComponentBatch(component_common.ConfigComponentBase):
             self.enable_save_profile_button()
         else:
             self.disable_save_profile_button()
+        self.update_apply_button_dirty_style()
+
+    def update_apply_button_dirty_style(self):
+        """Repaint the Generate Audio button to warn that the config changed.
+
+        Mirrors Anki's Sync button: once the preset/field/voice/text-processing config
+        has been modified, the generate button shifts to the active theme's warning
+        (amber) color so the user knows generated audio would be out of date and
+        regeneration is needed. Only applies in collection (non-editor) mode where the
+        button is rendered as a pastel button.
+        """
+        if self.editor_mode:
+            return
+        lang = self.hypertts.get_ui_language()
+        if self.model_changed and self.notes_loaded:
+            self.apply_button.setEnabled(True)
+            gui_utils.set_button_dirty(self.apply_button, True, normal_style="emerald")
+            self.apply_button.setToolTip(i18n.get_text("batch_tooltip_generate_dirty", lang))
+        else:
+            gui_utils.set_button_dirty(self.apply_button, False, normal_style="emerald")
+            self.apply_button.setToolTip("")
 
     def enable_save_profile_button(self):
         logger.info('enable_save_profile_button')
