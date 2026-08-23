@@ -12,6 +12,41 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.8.16",
+        title={
+            "en": "Friendlier 'Add Audio' when no mapping rules",
+            "vi": "'Thêm audio' thân thiện hơn khi chưa có mapping",
+            "ko": "매핑 규칙이 없을 때 '오디오 추가' 안내 개선",
+            "zh-CN": "无映射规则时“添加音频”引导更友好",
+            "zh-TW": "無映射規則時「新增音訊」引導更友善",
+            "ja": "マッピングルール未設定時の「音声を追加」を改善",
+            "sv": "Vänligare 'Lägg till ljud' när inga mappningsregler finns",
+        },
+        bullets={
+            "en": [
+                "Clicking Add Audio with no mapping rules now opens a helpful dialog with a direct button to configure mapping rules (or preview audio first) instead of a bare error.",
+            ],
+            "vi": [
+                "Bấm 'Thêm audio' khi chưa có mapping rule giờ hiện hộp thoại hướng dẫn với nút đi thẳng vào cấu hình mapping rule (hoặc nghe thử trước), thay vì chỉ báo lỗi.",
+            ],
+            "ko": [
+                "매핑 규칙 없이 '오디오 추가'를 클릭하면 이제 매핑 규칙 구성으로 바로 가는 버튼(또는 먼저 미리 듣기)이 있는 도움말 대화상자가 뜹니다.",
+            ],
+            "zh-CN": [
+                "无映射规则时点击“添加音频”，现在会弹出带“配置映射规则”（或先预览音频）按钮的引导对话框，而非仅报错。",
+            ],
+            "zh-TW": [
+                "無映射規則時點擊「新增音訊」，現在會彈出帶「設定映射規則」（或先預覽音訊）按鈕的引導對話框，而非僅報錯。",
+            ],
+            "ja": [
+                "マッピングルール未設定で「音声を追加」をクリックすると、設定へ直接進めるボタン(または先にプレビュー)付きの案内ダイアログが開きます。",
+            ],
+            "sv": [
+                "När du klickar på 'Lägg till ljud' utan mappningsregler öppnas nu en hjälpsam dialog med en knapp för att konfigurera mappningsregler (eller förhandsgranska ljud först) istället för ett rent felmeddelande.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.15",
         title={
             "en": "Smart first-run language + language picker in Welcome",

@@ -315,9 +315,42 @@ def init(hypertts):
             else:
                 hypertts.preview_with_quick_preset_picker(editor_context)
 
+    def _prompt_configure_mapping(editor_context):
+        """Show a navigation dialog when the user clicks Add Audio but no
+        mapping rules exist yet — point them to configure, or preview first."""
+        lang = hypertts.get_ui_language()
+        mb = aqt.qt.QMessageBox()
+        mb.setWindowTitle(i18n.get_text("editor_no_mapping_title", lang))
+        mb.setText(i18n.get_text("editor_no_mapping_message", lang))
+        mb.setInformativeText(i18n.get_text("editor_no_mapping_informative", lang))
+        mb.setIcon(aqt.qt.QMessageBox.Icon.Information)
+        configure_btn = mb.addButton(
+            i18n.get_text("editor_no_mapping_configure", lang),
+            aqt.qt.QMessageBox.ButtonRole.AcceptRole,
+        )
+        preview_btn = mb.addButton(
+            i18n.get_text("editor_no_mapping_preview", lang),
+            aqt.qt.QMessageBox.ButtonRole.ActionRole,
+        )
+        mb.addButton(aqt.qt.QMessageBox.StandardButton.Cancel)
+        mb.exec()
+
+        clicked = mb.clickedButton()
+        if clicked == configure_btn:
+            # Directly open the Preset Mapping Rules dialog so the user can add one.
+            deck_note_type = hypertts.get_editor_deck_note_type(editor_context.editor)
+            component_presetmappingrules.create_dialog(hypertts, deck_note_type, editor_context)
+        elif clicked == preview_btn:
+            # Let them try audio right away without configuring anything.
+            hypertts.preview_with_quick_preset_picker(editor_context)
+
     def run_superfreetts_apply(editor):
         with hypertts.error_manager.get_single_action_context('Generating Audio'):
             editor_context = hypertts.get_editor_context(editor)
+            mapping_rules = hypertts.load_mapping_rules()
+            if len(mapping_rules.rules) == 0:
+                _prompt_configure_mapping(editor_context)
+                return
             hypertts.apply_all_mapping_rules(editor_context)
 
     def setup_editor_buttons(buttons, editor):

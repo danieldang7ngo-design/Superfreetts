@@ -1,5 +1,15 @@
 # Changelog
 
+## 26.8.16 - 2026-08-24
+
+### English
+
+- Clicking Add Audio with no mapping rules now opens a helpful dialog with a direct button to configure mapping rules (or preview audio first) instead of a bare error.
+
+### Tiếng Việt
+
+- Bấm "Thêm audio" khi chưa có mapping rule giờ hiện hộp thoại hướng dẫn với nút đi thẳng vào cấu hình mapping rule (hoặc nghe thử trước), thay vì chỉ báo lỗi.
+
 ## 26.8.15 - 2026-08-22
 
 ### English
