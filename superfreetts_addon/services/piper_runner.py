@@ -40,20 +40,27 @@ def pcm_to_wav(pcm_data, sample_rate=22050, channels=1, sampwidth=2):
         wav.writeframes(pcm_data)
     return buf.getvalue()
 
+def _get_piper_binary_name():
+    """Return the platform-appropriate piper binary name."""
+    if os.name == 'nt':
+        return 'piper.exe'
+    return 'piper'
+
 def main():
     log("PIPER-STOCK RUNNER STARTED")
     
-    # Resolve piper.exe path
+    # Resolve piper binary path
     data_dir = os.environ.get('superfreetts_DATA_DIR')
+    piper_binary = _get_piper_binary_name()
     
     if data_dir:
-        piper_exe = os.path.join(data_dir, 'piper_engine', 'piper', 'piper.exe')
+        piper_exe = os.path.join(data_dir, 'piper_engine', 'piper', piper_binary)
     else:
         addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        piper_exe = os.path.join(addon_dir, 'data', 'piper_engine', 'piper', 'piper.exe')
+        piper_exe = os.path.join(addon_dir, 'data', 'piper_engine', 'piper', piper_binary)
     
     if not os.path.exists(piper_exe):
-        log(f"ERROR: piper.exe not found at {piper_exe}")
+        log(f"ERROR: {piper_binary} not found at {piper_exe}")
 
     while True:
         try:
@@ -105,7 +112,7 @@ def generate_single(piper_exe, data, global_threads=1):
             return {"status": "error", "message": "Missing text or model_path"}
 
         if not os.path.exists(piper_exe):
-            return {"status": "error", "message": f"piper.exe not found at {piper_exe} (superfreetts_DATA_DIR={data_dir})"}
+            return {"status": "error", "message": f"{os.path.basename(piper_exe)} not found at {piper_exe} (superfreetts_DATA_DIR={data_dir})"}
 
         # Piper speed is controlled by length-scale (inverse of speed)
         # 1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower

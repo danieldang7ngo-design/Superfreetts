@@ -135,7 +135,7 @@ class SupertonicTTS(service.ServiceBase):
 
     def configuration_options(self):
         return {
-            self.CONFIG_ENGINE_PATH: ("file", "Supertonic Python path", "Executable (python.exe);;All Files (*)"),
+            self.CONFIG_ENGINE_PATH: ("file", "Supertonic Python path", "Executable (python3);;Executable (python.exe);;All Files (*)"),
             self.CONFIG_CACHE_PATH: ("directory", "Supertonic Model Cache Folder (Optional)"),
             self.CONFIG_CUSTOM_VOICES_PATH: ("directory", "Supertonic Custom Voices Folder (Optional)"),
         }
@@ -153,12 +153,37 @@ class SupertonicTTS(service.ServiceBase):
         }
 
     def _get_python_exe(self):
+        import platform as _platform
+
+        def _find_venv_python():
+            if _platform.system() == "Windows":
+                return None
+            candidates = set()
+            candidates.add(os.path.join(constants.SUPERTONIC_ENGINE_DIR, 'venv', 'bin', 'python'))
+            try:
+                import aqt
+                if aqt.mw and aqt.mw.pm:
+                    profile_path = aqt.mw.pm.profileFolder()
+                    if profile_path:
+                        candidates.add(os.path.join(profile_path, 'superfreetts_data', 'supertonic_engine', 'venv', 'bin', 'python'))
+            except Exception:
+                pass
+            for venv_python in candidates:
+                if os.path.exists(venv_python):
+                    return venv_python
+            return None
+
+        venv_python = _find_venv_python()
+        if venv_python:
+            return venv_python
+
         configured = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, "")
         if configured and os.path.exists(configured):
             if os.path.isdir(configured):
-                candidate = os.path.join(configured, "python.exe")
-                if os.path.exists(candidate):
-                    return candidate
+                for exe_name in ("python.exe", "python3", "python"):
+                    candidate = os.path.join(configured, exe_name)
+                    if os.path.exists(candidate):
+                        return candidate
             return configured
         try:
             from ..engine_manager import EngineManager
@@ -168,6 +193,12 @@ class SupertonicTTS(service.ServiceBase):
                 return python_exe
         except Exception:
             pass
+        if _platform.system() != "Windows":
+            import shutil
+            for name in ("python3", "python"):
+                path = shutil.which(name)
+                if path:
+                    return path
         return None
 
     def _get_cache_path(self):

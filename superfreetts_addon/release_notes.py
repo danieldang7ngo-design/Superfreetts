@@ -12,6 +12,279 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.9.0",
+        title={
+            "en": "Native Linux support for Supertonic & Piper, plus RAM stability",
+            "vi": "Hỗ trợ Linux gốc cho Supertonic & Piper, ổn định RAM hơn",
+            "ko": "Supertonic·Piper 리눅스 네이티브 지원 및 RAM 안정성",
+            "zh-CN": "Supertonic 和 Piper 的原生 Linux 支持及内存稳定性",
+            "zh-TW": "Supertonic 和 Piper 的原生 Linux 支援及記憶體穩定性",
+            "ja": "Supertonic と Piper のネイティブLinux対応とRAM安定性",
+            "sv": "Inbyggt Linux-stöd för Supertonic & Piper, plus RAM-stabilitet",
+        },
+        bullets={
+            "en": [
+                "Native Linux support: Supertonic and Piper now run directly on Linux (x86_64) using a dedicated virtual environment and native binaries — no WINE needed for these engines.",
+                "Supertonic install fixed on Arch/CachyOS: the setup now creates an isolated venv (bypassing the PEP 668 'externally managed' system Python) and installs pip + supertonic inside it.",
+                "'Python not found' Piper error fixed: Setup now points the engine to the correct Python interpreter instead of the engine folder.",
+                "Linux native Piper binary: Piper Setup downloads and uses the Linux piper binary (with espeak-ng + onnxruntime) on x86_64 instead of the Windows .exe.",
+                "RAM stability: the neural engine process pool now closes stdout/stderr pipes and waits on shutdown, closes the debug log handle even if spawn fails, and the MMS/sherpa model cache is bounded to prevent unbounded memory growth.",
+                "Cross-platform hardening: opening log/model folders now uses xdg-open on Linux/macOS instead of the Windows-only os.startfile.",
+            ],
+            "vi": [
+                "Hỗ trợ Linux gốc: Supertonic và Piper giờ chạy trực tiếp trên Linux (x86_64) bằng môi trường ảo chuyên dụng và binary gốc — không cần WINE cho các engine này.",
+                "Sửa lỗi cài Supertonic trên Arch/CachyOS: quá trình cài đặt giờ tạo venv riêng (bỏ qua PEP 668 'externally managed' trên Python hệ thống) và cài pip + supertonic bên trong venv đó.",
+                "Sửa lỗi 'Không tìm thấy Python' của Piper: Setup giờ trỏ engine tới đúng trình thông dịch Python thay vì thư mục engine.",
+                "Piper binary gốc cho Linux: Piper Setup tải và dùng binary piper Linux (kèm espeak-ng + onnxruntime) trên x86_64 thay vì file .exe của Windows.",
+                "Ổn định RAM: process pool của engine nơ-ron giờ đóng luồng stdout/stderr và chờ khi tắt, đóng handle log ngay cả khi spawn lỗi, và bộ nhớ đệm model MMS/sherpa được giới hạn để tránh tăng bộ nhớ không kiểm soát.",
+                "Củng cố đa nền tảng: mở thư mục log/model giờ dùng xdg-open trên Linux/macOS thay vì os.startfile (chỉ có trên Windows).",
+            ],
+            "ko": [
+                "네이티브 Linux 지원: Supertonic와 Piper가 전용 가상 환경과 네이티브 바이너리로 Linux(x86_64)에서 직접 실행됩니다. 이 엔진에는 WINE이 필요 없습니다.",
+                "Arch/CachyOS에서 Supertonic 설치 수정: 설정이 이제 PEP 668 'externally managed' 시스템 Python을 우회하는 격리된 venv를 만들고 그 안에 pip + supertonic을 설치합니다.",
+                "Piper 'Python을 찾을 수 없음' 오류 수정: 설정이 이제 엔진 폴더 대신 올바른 Python 인터프리터를 가리킵니다.",
+                "Linux 네이티브 Piper 바이너리: Piper 설정이 x86_64에서 Windows .exe 대신 Linux piper 바이너리(espeak-ng + onnxruntime 포함)를 다운로드해 사용합니다.",
+                "RAM 안정성: 신경망 엔진 프로세스 풀이 종료 시 stdout/stderr 파이프를 닫고 대기하며, 생성 실패 시에도 디버그 로그 핸들을 닫고, MMS/sherpa 모델 캐시를 제한해 무한 메모리 증가를 방지합니다.",
+                "크로스 플랫폼 강화: 로그/모델 폴더 열기가 Windows 전용 os.startfile 대신 Linux/macOS에서 xdg-open을 사용합니다.",
+            ],
+            "zh-CN": [
+                "原生 Linux 支持：Supertonic 和 Piper 现在可通过专用虚拟环境和原生二进制直接在 Linux（x86_64）上运行——这些引擎不再需要 WINE。",
+                "修复 Arch/CachyOS 上的 Supertonic 安装：安装过程现在会创建隔离的 venv（绕过 PEP 668“外部管理”的系统 Python）并在其中安装 pip 和 supertonic。",
+                "修复 Piper“找不到 Python”错误：安装程序现在指向正确的 Python 解释器，而不是引擎文件夹。",
+                "Linux 原生 Piper 二进制：Piper 安装程序在 x86_64 上下载并使用 Linux piper 二进制（含 espeak-ng + onnxruntime），而非 Windows .exe。",
+                "内存稳定性：神经引擎进程池现在在关闭时关闭 stdout/stderr 管道并等待，即使生成失败也会关闭调试日志句柄，并限制 MMS/sherpa 模型缓存以防止无界内存增长。",
+                "跨平台加固：打开日志/模型文件夹时在 Linux/macOS 上使用 xdg-open，而非仅限 Windows 的 os.startfile。",
+            ],
+            "zh-TW": [
+                "原生 Linux 支援：Supertonic 和 Piper 現在可透過專用虛擬環境與原生二進位直接在 Linux（x86_64）上執行——這些引擎不再需要 WINE。",
+                "修復 Arch/CachyOS 上的 Supertonic 安裝：安裝流程現在會建立隔離的 venv（繞過 PEP 668「外部管理」的系統 Python）並在其中安裝 pip 與 supertonic。",
+                "修復 Piper「找不到 Python」錯誤：安裝程式現在指向正確的 Python 直譯器，而非引擎資料夾。",
+                "Linux 原生 Piper 二進位：Piper 安裝程式在 x86_64 上下載並使用 Linux piper 二進位（含 espeak-ng + onnxruntime），而非 Windows .exe。",
+                "記憶體穩定性：神經引擎程序池現在在關閉時關閉 stdout/stderr 管道並等待，即使生成失敗也會關閉除錯記錄句柄，並限制 MMS/sherpa 模型快取以防止無界記憶體成長。",
+                "跨平台強化：開啟日誌/模型資料夾時在 Linux/macOS 上使用 xdg-open，而非僅限 Windows 的 os.startfile。",
+            ],
+            "ja": [
+                "ネイティブLinux対応: SupertonicとPiperが専用の仮想環境とネイティブバイナリでLinux(x86_64)上で直接動作します。これらのエンジンにはWINEは不要です。",
+                "Arch/CachyOSでのSupertonicインストールを修正: セットアップがPEP 668「外部管理」のシステムPythonを回避する隔離されたvenvを作成し、その中にpipとsupertonicをインストールします。",
+                "Piperの「Pythonが見つかりません」エラーを修正: セットアップがエンジンフォルダではなく正しいPythonインタプリタを指すようになりました。",
+                "LinuxネイティブPiperバイナリ: Piperセットアップがx86_64でWindowsの.exeではなくLinux用piperバイナリ(espeak-ng + onnxruntimeを含む)をダウンロードして使用します。",
+                "RAM安定性: ニューラルエンジンのプロセスプールが終了時にstdout/stderrパイプを閉じて待機し、生成失敗時もデバッグログハンドルを閉じ、MMS/sherpaモデルキャッシュを制限して無制限のメモリ増加を防ぎます。",
+                "クロスプラットフォーム強化: ログ/モデルフォルダのオープンがWindows専用のos.startfileの代わりにLinux/macOSでxdg-openを使用します。",
+            ],
+            "sv": [
+                "Inbyggt Linux-stöd: Supertonic och Piper kör nu direkt på Linux (x86_64) med en dedikerad virtuell miljö och inbyggda binärfiler — ingen WINE behövs för dessa motorer.",
+                "Supertonic-installationen fixad på Arch/CachyOS: installationen skapar nu ett isolerat venv (kringgår PEP 668 'externally managed' system-Python) och installerar pip + supertonic inuti det.",
+                "'Python hittades inte'-fel för Piper åtgärdat: Setup pekar nu på rätt Python-tolk istället för motormappen.",
+                "Inbyggd Piper-binär för Linux: Piper Setup laddar ner och använder Linux-piper-binären (med espeak-ng + onnxruntime) på x86_64 istället för Windows-.exe.",
+                "RAM-stabilitet: processpoolen för neurala motorer stänger nu stdout/stderr-rör och väntar vid avstängning, stänger debug-logghanteringen även om spawn misslyckas, och MMS/sherpa-modellcachen begränsas för att hindra oändlig minnesväxt.",
+                "Plattformsoberoende förstärkning: att öppna logg-/modellmappar använder nu xdg-open på Linux/macOS istället för Windows-only os.startfile.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
+        version="26.8.14",
+        title={
+            "en": "Services tab now follows every theme",
+            "vi": "Tab Dịch vụ giờ theo đúng mọi giao diện",
+            "ko": "서비스 탭이 모든 테마를 따르도록 개선",
+            "zh-CN": "服务选项卡现已适配全部主题",
+            "zh-TW": "服務分頁現已套用所有主題",
+            "ja": "サービスタブが全テーマに追従",
+            "sv": "Tjänst-fliken följer nu alla teman",
+        },
+        bullets={
+            "en": [
+                "The Services tab (section headers, Setup buttons, separators, status badges, search box) now inherits the active theme's colors and light/dark mode instead of hardcoded blue, purple, and amber.",
+                "Status badges are color-coded per theme: Ready (green), Setup needed (accent), Disabled (muted), Free, and Recommended.",
+            ],
+            "vi": [
+                "Tab Dịch vụ (tiêu đề nhóm, nút Setup, đường phân cách, huy hiệu trạng thái, ô tìm kiếm) giờ lấy màu theo theme đang chọn và chế độ sáng/tối, thay vì xanh/cam/tím cứng.",
+                "Huy hiệu trạng thái có màu riêng theo theme: Sẵn sàng (xanh lá), Cần cài đặt (nhấn mạnh), Tắt (xám), Miễn phí, và Đề xuất.",
+            ],
+            "ko": [
+                "서비스 탭(섹션 헤더, 설정 버튼, 구분선, 상태 배지, 검색창)이 이제 하드코딩된 파랑/보라/앰버 대신 활성 테마의 색상과 라이트/다크 모드를 따릅니다.",
+                "상태 배지는 테마별 색상: 준비됨(녹색), 설정 필요(강조), 비활성(뮤트), 무료, 추천.",
+            ],
+            "zh-CN": [
+                "服务选项卡（分组标题、设置按钮、分隔线、状态徽章、搜索框）现在继承当前主题的颜色与明暗模式，不再写死蓝/紫/琥珀色。",
+                "状态徽章按主题配色：就绪（绿）、需设置（强调色）、已禁用（灰）、免费、推荐。",
+            ],
+            "zh-TW": [
+                "服務分頁（群組標題、設定按鈕、分隔線、狀態徽章、搜尋框）現在繼承目前主題的顏色與明暗模式，不再寫死藍/紫/琥珀色。",
+                "狀態徽章依主題配色：就緒（綠）、需設定（強調色）、已停用（灰）、免費、推薦。",
+            ],
+            "ja": [
+                "サービスタブ（セクション見出し、設定ボタン、区切り線、ステータスバッジ、検索ボックス）が、固定の青/紫/琥珀ではなくアクティブなテーマの色とライト/ダークモードを継承するようになりました。",
+                "ステータスバッジはテーマごとに配色: 準備完了(緑)、設定必要(アクセント)、無効(ミュート)、無料、おすすめ。",
+            ],
+            "sv": [
+                "Tjänst-fliken (sektionsrubriker, Installera-knappar, avgränsare, statusmärken, sökfält) ärver nu det aktiva temats färger och ljus/mörkt-läge istället för hårdkodat blått, lila och bärnsten.",
+                "Statusmärken färgkodas per tema: Klar (grön), Installation behövs (accent), Inaktiv (muted), Gratis och Rekommenderad.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
+        version="26.8.13",
+        title={
+            "en": "Live theme preview in Settings",
+            "vi": "Xem trước giao diện trực tiếp trong Cài đặt",
+            "ko": "설정에서 실시간 테마 미리보기",
+            "zh-CN": "设置中实时预览界面主题",
+            "zh-TW": "設定中即時預覽介面主題",
+            "ja": "設定でのテーマのライブプレビュー",
+            "sv": "Live-temaförhandsvisning i Inställningar",
+        },
+        bullets={
+            "en": [
+                "The settings window now updates instantly when you pick a theme in Preferences — no need to close and reopen to see the change. Press Apply to save it permanently.",
+            ],
+            "vi": [
+                "Cửa sổ Cài đặt giờ đổi giao diện ngay lập tức khi bạn chọn theme trong Tùy chọn — không cần đóng và mở lại để thấy thay đổi. Bấm Apply để lưu vĩnh viễn.",
+            ],
+            "ko": [
+                "환경 설정에서 테마를 선택하면 설정 창이 즉시 업데이트됩니다. 변경 사항을 보기 위해 닫았다 다시 열 필요가 없습니다. Apply를 눌러 영구 저장하세요.",
+            ],
+            "zh-CN": [
+                "在偏好设置中选择主题时，设置窗口会立即更新 —— 无需关闭并重新打开即可看到更改。点击 Apply 永久保存。",
+            ],
+            "zh-TW": [
+                "在偏好設定中選擇主題時，設定視窗會立即更新 —— 無需關閉並重新開啟即可看到變更。點擊 Apply 永久儲存。",
+            ],
+            "ja": [
+                "環境設定でテーマを選ぶと設定ウィンドウが即座に更新されます。変更を確認するために閉じて開き直す必要はありません。Apply で永続保存できます。",
+            ],
+            "sv": [
+                "Inställningsfönstret uppdateras omedelbart när du väljer ett tema i Inställningar — du behöver inte stänga och öppna igen för att se ändringen. Tryck på Apply för att spara permanent.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
+        version="26.8.12",
+        title={
+            "en": "Four new UI themes: Nintendo, Binance, Clay, Claude",
+            "vi": "Bốn giao diện UI mới: Nintendo, Binance, Clay, Claude",
+            "ko": "새 UI 테마 4종: 닌텐도, 바이낸스, Clay, 클로드",
+            "zh-CN": "四个新界面主题：任天堂、币安、Clay、Claude",
+            "zh-TW": "四個新介面主題：任天堂、幣安、Clay、Claude",
+            "ja": "新しいUIテーマ4つ: ニンテンドー、バイナンス、Clay、Claude",
+            "sv": "Fyra nya UI-teman: Nintendo, Binance, Clay, Claude",
+        },
+        bullets={
+            "en": [
+                "Added four more UI themes: Nintendo 2001 (retro console chrome), Binance (dark trading with yellow CTAs), Clay (warm claymation), and Claude (warm cream-coral editorial).",
+                "The theme selector now offers seven choices: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay, and Claude.",
+            ],
+            "vi": [
+                "Thêm bốn giao diện UI nữa: Nintendo 2001 (console retro), Binance (giao diện trading tối với nút vàng), Clay (phong cách claymation ấm áp) và Claude (biên tập kem ấm với cam san hô).",
+                "Bộ chọn giao diện giờ có bảy lựa chọn: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay và Claude.",
+            ],
+            "ko": [
+                "UI 테마 4개 추가: 닌텐도 2001(레트로 콘솔 크롬), 바이낸스(노란색 CTA가 있는 다크 트레이딩), Clay(따뜻한 클레이메이션), 클로드(따뜻한 크림-코랄 편집 스타일).",
+                "테마 선택기에서 이제 7가지 선택 가능: Vibrant Blocks, Ollama, Apple, 닌텐도 2001, 바이낸스, Clay, 클로드.",
+            ],
+            "zh-CN": [
+                "新增四个界面主题：任天堂 2001（复古主机镀铬）、币安（黄色 CTA 的深色交易风）、Clay（温馨黏土动画）、Claude（温馨奶油珊瑚编辑风）。",
+                "主题选择器现提供七种选择：Vibrant Blocks、Ollama、Apple、任天堂 2001、币安、Clay 和 Claude。",
+            ],
+            "zh-TW": [
+                "新增四個介面主題：任天堂 2001（復古主機鍍鉻）、幣安（黃色 CTA 的深色交易風）、Clay（溫馨黏土動畫）、Claude（溫馨奶油珊瑚編輯風）。",
+                "主題選擇器現提供七種選擇：Vibrant Blocks、Ollama、Apple、任天堂 2001、幣安、Clay 和 Claude。",
+            ],
+            "ja": [
+                "UIテーマを4つ追加: ニンテンドー 2001(レトロコンソールクローム)、バイナンス(黄色CTAのダークトレーディング)、Clay(暖かいクレイメーション)、Claude(暖かいクリームコーラルのエディトリアル)。",
+                "テーマ選択は7つに: Vibrant Blocks、Ollama、Apple、ニンテンドー 2001、バイナンス、Clay、Claude。",
+            ],
+            "sv": [
+                "Lade till fyra fler UI-teman: Nintendo 2001 (retro konsolkrom), Binance (mörk trading med gula CTA:er), Clay (varm claymation) och Claude (varm kräm-korall editoriell).",
+                "Temaväljaren erbjuder nu sju val: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay och Claude.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
+        version="26.8.11",
+        title={
+            "en": "New Apple UI theme option",
+            "vi": "Thêm tùy chọn giao diện Apple",
+            "ko": "새 Apple UI 테마 옵션",
+            "zh-CN": "新增 Apple 界面主题选项",
+            "zh-TW": "新增 Apple 介面主題選項",
+            "ja": "新しい Apple UI テーマオプション",
+            "sv": "Nytt Apple-tema UI-alternativ",
+        },
+        bullets={
+            "en": [
+                "Added a third UI theme: Apple (inspired by apple.com) — clean SF Pro feel with an Action Blue (#0066cc) accent and soft rounded cards.",
+                "Choose between Vibrant Blocks, Ollama, and Apple in Preferences. All themes follow Anki's light/dark mode.",
+            ],
+            "vi": [
+                "Thêm giao diện thứ ba: Apple (lấy cảm hứng từ apple.com) — phong cách SF Pro gọn gàng, điểm nhấn Action Blue (#0066cc) và card bo tròn mềm mại.",
+                "Chọn giữa Vibrant Blocks, Ollama và Apple trong Tùy chọn. Mọi giao diện đều tự động theo chế độ sáng/tối của Anki.",
+            ],
+            "ko": [
+                "세 번째 UI 테마 추가: Apple(apple.com에서 영감) — 깔끔한 SF Pro 느낌과 Action Blue(#0066cc) 포인트, 부드러운 둥근 카드.",
+                "환경 설정에서 Vibrant Blocks, Ollama, Apple 중 선택할 수 있습니다. 모든 테마는 Anki의 라이트/다크 모드를 따릅니다.",
+            ],
+            "zh-CN": [
+                "新增第三个界面主题：Apple（灵感来自 apple.com）—— 简洁的 SF Pro 风格，配以 Action Blue（#0066cc）强调色和柔和圆角卡片。",
+                "可在偏好设置中选择 Vibrant Blocks、Ollama 和 Apple。所有主题都会跟随 Anki 的浅色/深色模式。",
+            ],
+            "zh-TW": [
+                "新增第三個介面主題：Apple（靈感來自 apple.com）—— 簡潔的 SF Pro 風格，搭配 Action Blue（#0066cc）強調色與柔和圓角卡片。",
+                "可在偏好設定中選擇 Vibrant Blocks、Ollama 和 Apple。所有主題都會跟隨 Anki 的淺色/深色模式。",
+            ],
+            "ja": [
+                "3つ目のUIテーマを追加: Apple（apple.com から着想）— すっきりしたSF Pro風、Action Blue（#0066cc）のアクセントと柔らかな角丸カード。",
+                "環境設定で Vibrant Blocks、Ollama、Apple から選択できます。すべてのテーマは Anki のライト/ダークモードに追従します。",
+            ],
+            "sv": [
+                "Lade till ett tredje UI-tema: Apple (inspirerat av apple.com) — ren SF Pro-känsla med en Action Blue (#0066cc) accent och mjuka rundade kort.",
+                "Välj mellan Vibrant Blocks, Ollama och Apple i Inställningar. Alla teman följer Ankis ljust/mörkt läge.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
+        version="26.8.10",
+        title={
+            "en": "New Ollama (minimal) UI theme option",
+            "vi": "Thêm tùy chọn giao diện Ollama (tối giản)",
+            "ko": "새 Ollama(미니멀) UI 테마 옵션",
+            "zh-CN": "新增 Ollama（极简）界面主题选项",
+            "zh-TW": "新增 Ollama（極簡）介面主題選項",
+            "ja": "新しい Ollama（ミニマル）UI テーマオプション",
+            "sv": "Ny Ollama-tema (minimal) UI-alternativ",
+        },
+        bullets={
+            "en": [
+                "Added an interface theme selector in Preferences: choose between the default Vibrant Blocks theme and a new Ollama theme (flat paper-white design with pill-shaped buttons, inspired by ollama.com).",
+                "The Ollama theme follows Anki's light/dark mode automatically.",
+            ],
+            "vi": [
+                "Thêm bộ chọn giao diện trong Tùy chọn: chọn giữa giao diện mặc định Vibrant Blocks và giao diện Ollama mới (nền trắng phẳng, nút hình viên thuốc, lấy cảm hứng từ ollama.com).",
+                "Giao diện Ollama tự động theo chế độ sáng/tối của Anki.",
+            ],
+            "ko": [
+                "환경 설정에 인터페이스 테마 선택기 추가: 기본 Vibrant Blocks 테마와 새로운 Ollama 테마(평면 흰색 디자인, 알약 모양 버튼, ollama.com에서 영감) 중에서 선택할 수 있습니다.",
+                "Ollama 테마는 Anki의 라이트/다크 모드를 자동으로 따릅니다.",
+            ],
+            "zh-CN": [
+                "在偏好设置中新增界面主题选择器：可在默认的 Vibrant Blocks 主题与全新的 Ollama 主题（扁平白底、药丸形按钮，灵感来自 ollama.com）之间选择。",
+                "Ollama 主题会自动跟随 Anki 的浅色/深色模式。",
+            ],
+            "zh-TW": [
+                "在偏好設定中新增介面主題選擇器：可在預設的 Vibrant Blocks 主題與全新的 Ollama 主題（扁平白底、藥丸形按鈕，靈感來自 ollama.com）之間選擇。",
+                "Ollama 主題會自動跟隨 Anki 的淺色/深色模式。",
+            ],
+            "ja": [
+                "環境設定にインターフェーステーマ選択を追加: デフォルトの Vibrant Blocks テーマと新しい Ollama テーマ（フラットな白背景、ピル型ボタン、ollama.com から着想）を選択できます。",
+                "Ollama テーマは Anki のライト/ダークモードに自動追従します。",
+            ],
+            "sv": [
+                "Lade till en temaväljare i Inställningar: välj mellan standardtemat Vibrant Blocks och ett nytt Ollama-tema (platt vit design med pillerformade knappar, inspirerat av ollama.com).",
+                "Ollama-temat följer automatiskt Ankis ljust/mörkt läge.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.8.9",
         title={
             "en": "Local-only Usage dashboard and startup crash fix",

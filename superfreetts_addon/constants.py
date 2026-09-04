@@ -115,7 +115,8 @@ SUPERTONIC_ENGINE_DIR = os.path.join(DATA_DIR, 'supertonic_engine')
 SUPERTONIC_CACHE_DIR = os.path.join(DATA_DIR, 'supertonic_cache')
 SUPERTONIC_CUSTOM_VOICES_DIR = os.path.join(DATA_DIR, 'supertonic_custom_voices')
 # The piper zip contains a internal folder named 'piper'
-PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
+_PIPER_BINARY = 'piper.exe' if os.name == 'nt' else 'piper'
+PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', _PIPER_BINARY)
 PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
 
 def update_paths(new_data_dir):
@@ -129,7 +130,8 @@ def update_paths(new_data_dir):
     KOKORO_ENGINE_DIR = os.path.join(DATA_DIR, 'kokoro_engine')
     MMS_ENGINE_DIR = os.path.join(DATA_DIR, 'mms_engine')
     PIPER_ENGINE_DIR = os.path.join(DATA_DIR, 'piper_engine')
-    PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', 'piper.exe')
+    _PIPER_BINARY = 'piper.exe' if os.name == 'nt' else 'piper'
+    PIPER_EXE_PATH = os.path.join(PIPER_ENGINE_DIR, 'piper', _PIPER_BINARY)
     PIPER_MODELS_DIR = os.path.join(DATA_DIR, 'piper_models')
     SUPERTONIC_ENGINE_DIR = os.path.join(DATA_DIR, 'supertonic_engine')
     SUPERTONIC_CACHE_DIR = os.path.join(DATA_DIR, 'supertonic_cache')

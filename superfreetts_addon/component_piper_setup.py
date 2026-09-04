@@ -1,9 +1,11 @@
 
 import os
 import shutil
+import tarfile
 import zipfile
 import urllib.request
 import threading
+import platform
 from aqt import mw
 from aqt.qt import *
 from . import i18n
@@ -15,8 +17,19 @@ from . import service_logger
 
 logger = logging_utils.get_child_logger(__name__)
 
-# Piper Engine release (Standard CPU optimized)
-PIPER_ENGINE_URL = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip"
+# Piper Engine releases (Standard CPU optimized)
+PIPER_ENGINE_URL_WINDOWS = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip"
+PIPER_ENGINE_URL_LINUX_X86_64 = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz"
+
+def _get_piper_url():
+    """Return the platform-appropriate Piper download URL."""
+    system = platform.system()
+    machine = platform.machine().lower()
+    if system == "Windows":
+        return PIPER_ENGINE_URL_WINDOWS
+    if system == "Linux" and machine in ("x86_64", "amd64"):
+        return PIPER_ENGINE_URL_LINUX_X86_64
+    raise RuntimeError(f"Unsupported platform: {system} {machine}. Piper only has prebuilt binaries for Windows x64 and Linux x86_64.")
 
 
 
@@ -49,7 +62,8 @@ class PiperSetupDialog(QDialog):
         
         self.manage_models_btn = QPushButton(i18n.get_text("piper_setup_button_manage", self.lang))
         self.manage_models_btn.clicked.connect(self.open_model_manager)
-        self.manage_models_btn.setEnabled(os.path.exists(constants.PIPER_EXE_PATH))
+        piper_binary = 'piper.exe' if os.name == 'nt' else 'piper'
+        self.manage_models_btn.setEnabled(os.path.exists(os.path.join(constants.PIPER_ENGINE_DIR, 'piper', piper_binary)))
 
         self.uninstall_btn = QPushButton(i18n.get_text("piper_setup_button_uninstall", self.lang))
         self.uninstall_btn.clicked.connect(self.start_uninstall)
@@ -85,28 +99,40 @@ class PiperSetupDialog(QDialog):
 
             service_logger.write_log('piper', 'install', 'INFO', 'Starting Piper setup')
 
-            zip_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip")
+            piper_binary = 'piper.exe' if os.name == 'nt' else 'piper'
+            piper_exe_path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', piper_binary)
             
-            if not os.path.exists(constants.PIPER_EXE_PATH):
+            if not os.path.exists(piper_exe_path):
+                piper_url = _get_piper_url()
                 mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_downloading_engine", self.lang)))
-                mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_downloading_github", self.lang)))
+                mw.taskman.run_on_main(lambda: self.log(f"Downloading Piper from {piper_url}"))
                 
-                urllib.request.urlretrieve(PIPER_ENGINE_URL, zip_path)
+                is_zip = piper_url.endswith('.zip')
+                archive_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip" if is_zip else "piper.tar.gz")
+                urllib.request.urlretrieve(piper_url, archive_path)
                 
                 mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_extracting_engine", self.lang)))
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extracting_zip", self.lang)))
                 
-                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(constants.PIPER_ENGINE_DIR)
+                if is_zip:
+                    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                        zip_ref.extractall(constants.PIPER_ENGINE_DIR)
+                else:
+                    with tarfile.open(archive_path, 'r:gz') as tar_ref:
+                        tar_ref.extractall(constants.PIPER_ENGINE_DIR)
+                    # Make piper binary executable on Linux
+                    piper_binary_path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'piper')
+                    if os.path.exists(piper_binary_path):
+                        os.chmod(piper_binary_path, 0o755)
                 
-                os.remove(zip_path)
+                os.remove(archive_path)
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extraction_complete", self.lang)))
             else:
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_already_exists", self.lang)))
                 service_logger.write_log('piper', 'install', 'INFO', 'Piper engine already exists, skipping download')
 
 
-            # Unified Engine Setup (Portable Python)
+            # Unified Engine Setup (Portable Python on Windows, system Python on Linux)
             from .engine_manager import EngineManager
             
             if not EngineManager.is_installed():

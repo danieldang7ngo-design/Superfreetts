@@ -1,5 +1,85 @@
 # Changelog
 
+## 26.9.0 - 2026-09-04
+
+### English
+
+- Native Linux support: Supertonic and Piper now run directly on Linux (x86_64) using a dedicated virtual environment and native binaries — no WINE is needed for these engines.
+- Supertonic install fixed on Arch/CachyOS: Setup now creates an isolated venv (bypassing the PEP 668 "externally managed" system Python) and installs pip + supertonic inside it, fixing the "No module named pip" failure.
+- "Python not found" Piper error fixed: Setup now points the engine to the correct Python interpreter instead of the engine folder.
+- Linux native Piper binary: Piper Setup downloads and uses the Linux piper binary (with espeak-ng + onnxruntime) on x86_64 instead of the Windows .exe.
+- RAM stability: the neural engine process pool now closes stdout/stderr pipes and waits on shutdown, closes the debug log handle even if spawning fails, and the MMS/sherpa model cache is bounded to prevent unbounded memory growth.
+- Cross-platform hardening: opening log/model folders now uses xdg-open on Linux/macOS instead of the Windows-only os.startfile.
+- Supertonic setup now saves the resolved Python path to the addon config so the runner always uses the correct interpreter after restart; uninstall also clears it.
+
+### Tiếng Việt
+
+- Hỗ trợ Linux gốc: Supertonic và Piper giờ chạy trực tiếp trên Linux (x86_64) bằng môi trường ảo chuyên dụng và binary gốc — không cần WINE cho các engine này.
+- Sửa lỗi cài Supertonic trên Arch/CachyOS: Setup giờ tạo venv riêng (bỏ qua PEP 668 "externally managed" trên Python hệ thống) và cài pip + supertonic bên trong, khắc phục lỗi "No module named pip".
+- Sửa lỗi "Không tìm thấy Python" của Piper: Setup giờ trỏ engine tới đúng trình thông dịch Python thay vì thư mục engine.
+- Piper binary gốc cho Linux: Piper Setup tải và dùng binary piper Linux (kèm espeak-ng + onnxruntime) trên x86_64 thay vì file .exe của Windows.
+- Ổn định RAM: process pool của engine nơ-ron giờ đóng luồng stdout/stderr và chờ khi tắt, đóng handle log ngay cả khi spawn lỗi, và bộ nhớ đệm model MMS/sherpa được giới hạn để tránh tăng bộ nhớ không kiểm soát.
+- Củng cố đa nền tảng: mở thư mục log/model giờ dùng xdg-open trên Linux/macOS thay vì os.startfile (chỉ có trên Windows).
+- Setup Supertonic giờ lưu đường dẫn Python đã xác định vào cấu hình addon để runner luôn dùng đúng trình thông dịch sau khi khởi động lại; khi gỡ cài đặt cũng tự xóa.
+
+## 26.8.14 - 2026-08-22
+
+### English
+
+- The Services tab now follows the active theme: section headers, Setup buttons, separators, status badges, and the search box use theme colors and light/dark mode instead of hardcoded blue/purple/amber.
+- Status badges are color-coded per theme: Ready (green), Setup needed (accent), Disabled (muted), Free, and Recommended.
+
+### Tiếng Việt
+
+- Tab Dịch vụ giờ theo đúng theme đang chọn: tiêu đề nhóm, nút Setup, đường phân cách, huy hiệu trạng thái và ô tìm kiếm dùng màu theme và chế độ sáng/tối thay vì xanh/cam/tím cứng.
+- Huy hiệu trạng thái có màu riêng theo theme: Sẵn sàng (xanh lá), Cần cài đặt (nhấn mạnh), Tắt (xám), Miễn phí, Đề xuất.
+
+## 26.8.13 - 2026-08-22
+
+### English
+
+- Live theme preview: the settings window now updates instantly when you pick a theme in Preferences — no need to close and reopen. Press Apply to save permanently.
+
+### Tiếng Việt
+
+- Xem trước giao diện trực tiếp: cửa sổ Cài đặt giờ đổi theme ngay khi bạn chọn trong Tùy chọn — không cần đóng và mở lại. Bấm Apply để lưu vĩnh viễn.
+
+## 26.8.12 - 2026-08-22
+
+### English
+
+- Added four more UI themes: Nintendo 2001 (retro console chrome), Binance (dark trading with yellow CTAs), Clay (warm claymation), and Claude (warm cream-coral editorial).
+- The theme selector now offers seven choices: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay, and Claude.
+
+### Tiếng Việt
+
+- Thêm bốn giao diện UI nữa: Nintendo 2001 (console retro), Binance (giao diện trading tối với nút vàng), Clay (phong cách claymation ấm áp) và Claude (biên tập kem ấm với cam san hô).
+- Bộ chọn giao diện giờ có bảy lựa chọn: Vibrant Blocks, Ollama, Apple, Nintendo 2001, Binance, Clay và Claude.
+
+## 26.8.11 - 2026-08-22
+
+### English
+
+- New UI theme: Apple (inspired by apple.com) — clean SF Pro feel, Action Blue (#0066cc) accent, soft rounded cards.
+- Theme selector now offers three choices: Vibrant Blocks, Ollama, and Apple.
+
+### Tiếng Việt
+
+- Giao diện mới: Apple (lấy cảm hứng từ apple.com) — phong cách SF Pro gọn gàng, điểm nhấn Action Blue (#0066cc), card bo tròn mềm mại.
+- Bộ chọn giao diện giờ có ba lựa chọn: Vibrant Blocks, Ollama và Apple.
+
+## 26.8.10 - 2026-08-22
+
+### English
+
+- UI Theme Selector: Added an interface theme choice in Preferences — the default "Vibrant Blocks" theme or a new "Ollama" theme (flat paper-white design with pill-shaped buttons, inspired by ollama.com).
+- The Ollama theme automatically follows Anki's light/dark mode.
+
+### Tiếng Việt
+
+- Bộ chọn giao diện: Thêm tùy chọn giao diện trong Tùy chọn — giao diện mặc định "Vibrant Blocks" hoặc giao diện "Ollama" mới (nền trắng phẳng, nút hình viên thuốc, lấy cảm hứng từ ollama.com).
+- Giao diện Ollama tự động theo chế độ sáng/tối của Anki.
+
 ## 26.8.9 - 2026-08-09
 
 ### English

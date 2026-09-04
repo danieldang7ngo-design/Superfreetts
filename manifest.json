@@ -1,5 +1,14 @@
 {
-    "package": "superfreetts",
     "name": "Super Free TTS",
-    "ankiweb_id": "351217314"
+    "package": "superfreetts",
+    "version": "26.9.0",
+    "author": "Phuc",
+    "ankiweb_id": "351217314",
+    "homepage": "https://github.com/danieldang7ngo-design/Superfreetts",
+    "description": "High-quality free Text-to-Speech for Anki using free services and local engines.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/danieldang7ngo-design/Superfreetts"
+    },
+    "dependencies": {}
 }

@@ -156,10 +156,27 @@ class SherpaProcessPool:
             for proc, exe, script, last_time in self._pool:
                 try:
                     proc.stdin.close()
+                except Exception: pass
+                try:
                     proc.terminate()
                 except Exception: pass
+                try:
+                    proc.wait(timeout=2.0)
+                except Exception: pass
+                # Close stdout/stderr so their fds are released even after terminate
+                for pipe in (proc.stdout, proc.stderr):
+                    if pipe:
+                        try: pipe.close()
+                        except Exception: pass
+                if getattr(proc, 'is_healthy', False):
+                    proc.is_healthy = False
             self._pool = []
             self._total_spawned = 0
+        # Cancel the idle-cleanup timer so it does not keep the pool alive after stop
+        if self._cleanup_timer:
+            try:
+                self._cleanup_timer.cancel()
+            except Exception: pass
 
     def update_max_processes(self, new_max):
         with self._lock:
@@ -222,17 +239,27 @@ class SherpaProcessPool:
         # IPC BREAKING BUG FIX: 
         # Previously actual_stderr was set to subprocess.STDOUT, which merges logs into 
         # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
-        proc = subprocess.Popen(
-            [executable_path, "-u", script_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=(stderr_sink if debug_enabled else subprocess.PIPE), # capture or redirect to file
-            cwd=cwd,
-            startupinfo=startupinfo,
-            env=env,
-            text=False,
-            bufsize=0
-        )
+        try:
+            proc = subprocess.Popen(
+                [executable_path, "-u", script_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=(stderr_sink if debug_enabled else subprocess.PIPE), # capture or redirect to file
+                cwd=cwd,
+                startupinfo=startupinfo,
+                env=env,
+                text=False,
+                bufsize=0
+            )
+        except Exception:
+            # If Popen fails (e.g. executable missing), ensure the sink handle is
+            # closed to avoid leaking a file descriptor on every failed spawn.
+            if debug_enabled and hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
+                try:
+                    stderr_sink.close()
+                except Exception:
+                    pass
+            raise
         proc.is_healthy = True
 
         # If we captured stderr as a PIPE (debug not enabled), drain & log it at INFO level
@@ -316,7 +343,7 @@ class MmsTTS(service.ServiceBase):
 
     def configuration_options(self):
         return {
-            'engine_path': ('file', 'MMS path', 'Executable (python.exe);;All Files (*)'),
+            'engine_path': ('file', 'MMS path', 'Executable (python3);;Executable (python.exe);;All Files (*)'),
         }
     
     def advanced_configuration_options(self):

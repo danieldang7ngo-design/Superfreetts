@@ -29,7 +29,17 @@ KOKORO_V10_MODEL_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/dow
 KOKORO_V10_VOICES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
 
 def _get_python_exe():
-    return os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+    import platform
+    import shutil
+    win_exe = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+    if os.path.exists(win_exe):
+        return win_exe
+    if platform.system() != "Windows":
+        for name in ('python3', 'python'):
+            path = shutil.which(name)
+            if path:
+                return path
+    return win_exe
 
 def _get_models_dir():
     return os.path.join(constants.KOKORO_ENGINE_DIR, 'models')
@@ -88,7 +98,15 @@ class KokoroInstallManager(QDialog):
 
     def open_log_folder(self):
         log_dir = service_logger.get_log_dir()
-        os.startfile(log_dir)
+        import platform
+        if platform.system() == "Windows":
+            os.startfile(log_dir)
+        else:
+            try:
+                import subprocess
+                subprocess.Popen(['xdg-open', log_dir])
+            except Exception:
+                pass
 
     def log(self, message):
         self.log_area.append(message)

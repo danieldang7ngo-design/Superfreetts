@@ -198,7 +198,15 @@ class PiperManagerDialog(QDialog):
         log_dir = os.path.join(addon_dir, 'user_files')
         if not os.path.exists(log_dir):
             os.makedirs(log_dir, exist_ok=True)
-        os.startfile(log_dir)
+        import platform
+        if platform.system() == "Windows":
+            os.startfile(log_dir)
+        else:
+            try:
+                import subprocess
+                subprocess.Popen(['xdg-open', log_dir])
+            except Exception:
+                pass
 
     def load_voices(self):
         self.worker = PiperDownloadWorker(lang=self.lang)

@@ -123,12 +123,16 @@ class PiperTTS(service.ServiceBase):
         # Try user manual override first
         user_python_folder = self.get_configuration_value_optional(self.CONFIG_EXECUTABLE_PATH, '')
         if user_python_folder and os.path.isdir(user_python_folder):
-            python_exe = os.path.join(user_python_folder, 'python.exe')
-            if os.path.exists(python_exe):
-                logger.info(f"[PiperTTS] ✓ Using manual Python path: {python_exe}")
-                return python_exe
-            else:
-                logger.warning(f"[PiperTTS] ⚠ Manual Python path does not contain python.exe: {user_python_folder}")
+            for exe_name in ('python.exe', 'python3', 'python'):
+                python_exe = os.path.join(user_python_folder, exe_name)
+                if os.path.exists(python_exe):
+                    logger.info(f"[PiperTTS] ✓ Using manual Python path: {python_exe}")
+                    return python_exe
+            logger.warning(f"[PiperTTS] ⚠ Manual Python path does not contain a python executable: {user_python_folder}")
+        elif user_python_folder and os.path.isfile(user_python_folder):
+            if os.path.exists(user_python_folder):
+                logger.info(f"[PiperTTS] ✓ Using manual Python path: {user_python_folder}")
+                return user_python_folder
         
         # Auto-detect from profile
         python_exe = _get_python_exe()
@@ -299,7 +303,7 @@ class PiperTTS(service.ServiceBase):
 
         piper_exe = self._get_piper_exe()
         if not piper_exe:
-            raise errors.RequestError(source_text, voice, "Piper engine (piper.exe) not found. Please click 'Setup Piper' in configuration.")
+            raise errors.RequestError(source_text, voice, "Piper engine not found. Please click 'Setup Piper' in configuration.")
 
         model_file = os.path.join(models_path, voice.voice_key + ".onnx")
         if not os.path.exists(model_file):

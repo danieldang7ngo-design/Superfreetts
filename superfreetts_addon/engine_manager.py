@@ -26,13 +26,32 @@ class EngineManager:
     _installing = False
 
     @staticmethod
+    def _find_linux_python() -> Optional[str]:
+        """Find a usable system Python3 on Linux/macOS."""
+        import shutil
+        for name in ('python3', 'python'):
+            path = shutil.which(name)
+            if path:
+                return path
+        return None
+
+    @staticmethod
     def get_python_exe() -> str:
         """Return the path to the shared python executable."""
-        return os.path.join(constants.SHARED_ENGINE_DIR, 'python.exe')
+        win_exe = os.path.join(constants.SHARED_ENGINE_DIR, 'python.exe')
+        if os.path.exists(win_exe):
+            return win_exe
+        if platform.system() != "Windows":
+            linux_py = EngineManager._find_linux_python()
+            if linux_py:
+                return linux_py
+        return win_exe
 
     @classmethod
     def is_installed(cls) -> bool:
         """Check if the shared python engine is installed."""
+        if platform.system() != "Windows":
+            return cls._find_linux_python() is not None
         return os.path.exists(cls.get_python_exe())
 
     @classmethod
@@ -137,13 +156,14 @@ class EngineManager:
     @staticmethod
     def _run_command(cmd):
         """Run a command in the shared engine directory."""
+        cwd = constants.SHARED_ENGINE_DIR if os.path.isdir(constants.SHARED_ENGINE_DIR) else None
         process = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             errors='replace',
-            cwd=constants.SHARED_ENGINE_DIR,
+            cwd=cwd,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         if process.returncode != 0:

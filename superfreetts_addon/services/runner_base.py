@@ -14,11 +14,14 @@ import time
 
 
 def setup_stdio():
-    """Force UTF-8 on stdin/stdout/stderr — Windows pipes are not safe."""
-    if os.name == 'nt' and hasattr(sys.stdin, 'reconfigure'):
-        sys.stdin.reconfigure(encoding='utf-8')
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
+    """Force UTF-8 on stdin/stdout/stderr — pipes may not be safe by default."""
+    if hasattr(sys.stdin, 'reconfigure'):
+        try:
+            sys.stdin.reconfigure(encoding='utf-8')
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
 
 
 def log(msg):

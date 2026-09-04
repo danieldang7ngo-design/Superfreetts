@@ -72,6 +72,12 @@ class SupertonicSetupDialog(QDialog):
         self.progress_bar.setValue(0)
         threading.Thread(target=self._run_setup, daemon=True).start()
 
+    def _get_venv_python(self):
+        """Return the path to the Supertonic virtualenv python (Linux/macOS)."""
+        if os.name == 'nt':
+            return os.path.join(constants.SUPERTONIC_ENGINE_DIR, 'venv', 'Scripts', 'python.exe')
+        return os.path.join(constants.SUPERTONIC_ENGINE_DIR, 'venv', 'bin', 'python')
+
     def _run_setup(self):
         try:
             service_logger.write_log("supertonic", "install", "INFO", "Starting Supertonic setup")
@@ -79,16 +85,20 @@ class SupertonicSetupDialog(QDialog):
             os.makedirs(constants.SUPERTONIC_CACHE_DIR, exist_ok=True)
             os.makedirs(constants.SUPERTONIC_CUSTOM_VOICES_DIR, exist_ok=True)
 
-            mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("supertonic_setup_installing_python", self.lang)))
+            import platform
+            is_linux = platform.system() != "Windows"
 
-            def on_engine_progress(data):
-                percent = int(data.get("percent", 0))
-                mw.taskman.run_on_main(lambda p=percent: self.progress_bar.setValue(min(p, 40)))
+            if is_linux:
+                python_exe = self._setup_linux_venv()
+            else:
+                mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("supertonic_setup_installing_python", self.lang)))
+                def on_engine_progress(data):
+                    percent = int(data.get("percent", 0))
+                    mw.taskman.run_on_main(lambda p=percent: self.progress_bar.setValue(min(p, 40)))
+                if not EngineManager.ensure_installed(progress_callback=on_engine_progress):
+                    raise RuntimeError("Failed to install shared Python runtime")
+                python_exe = EngineManager.get_python_exe()
 
-            if not EngineManager.ensure_installed(progress_callback=on_engine_progress):
-                raise RuntimeError("Failed to install shared Python runtime")
-
-            python_exe = EngineManager.get_python_exe()
             mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("supertonic_setup_installing_sdk", self.lang)))
             mw.taskman.run_on_main(lambda: self.log(i18n.get_text("supertonic_setup_log_pip", self.lang)))
             self._run_command([python_exe, "-m", "pip", "install", "--upgrade", "supertonic"])
@@ -105,19 +115,41 @@ class SupertonicSetupDialog(QDialog):
             service_logger.write_log("supertonic", "install", "ERROR", f"Supertonic setup failed: {exc}")
             mw.taskman.run_on_main(lambda err=exc: self.setup_failed(str(err)))
 
-    def _run_command(self, cmd):
+    def _setup_linux_venv(self):
+        """Create/refresh a dedicated virtual environment for Supertonic on Linux.
+
+        Arch/CachyOS mark the system Python as externally managed (PEP 668),
+        so pip cannot install into the system site-packages. We create an
+        isolated venv inside the engine dir instead.
+        """
+        venv_python = self._get_venv_python()
+        if os.path.exists(venv_python):
+            return venv_python
+
+        mw.taskman.run_on_main(lambda: self.log("Creating virtual environment for Supertonic..."))
+        base_python = EngineManager.get_python_exe()
+        if not base_python:
+            base_python = "python3"
+        self._run_command([base_python, "-m", "venv", os.path.join(constants.SUPERTONIC_ENGINE_DIR, 'venv')])
+        return venv_python
+
+    def _run_command(self, cmd, check=True):
+        import platform
+        cwd = constants.SHARED_ENGINE_DIR if platform.system() == "Windows" else None
+        if cwd and not os.path.isdir(cwd):
+            cwd = None
         process = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             errors='replace',
-            cwd=constants.SHARED_ENGINE_DIR,
+            cwd=cwd,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
         if process.stdout:
             mw.taskman.run_on_main(lambda out=process.stdout[-1000:]: self.log(out.strip()))
-        if process.returncode != 0:
+        if check and process.returncode != 0:
             raise RuntimeError(process.stderr.strip() or f"Command failed: {' '.join(cmd)}")
 
     def _download_model(self, python_exe):
@@ -155,9 +187,10 @@ class SupertonicSetupDialog(QDialog):
     def _run_uninstall(self):
         try:
             mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("supertonic_setup_uninstalling", self.lang)))
-            for path in (constants.SUPERTONIC_CACHE_DIR, constants.SUPERTONIC_CUSTOM_VOICES_DIR):
+            for path in (constants.SUPERTONIC_ENGINE_DIR, constants.SUPERTONIC_CACHE_DIR, constants.SUPERTONIC_CUSTOM_VOICES_DIR):
                 if os.path.exists(path):
                     shutil.rmtree(path, ignore_errors=True)
+            mw.taskman.run_on_main(self._clear_engine_path_config)
             mw.taskman.run_on_main(self.uninstall_complete)
         except Exception as exc:
             mw.taskman.run_on_main(lambda err=exc: self.setup_failed(str(err)))
@@ -168,8 +201,38 @@ class SupertonicSetupDialog(QDialog):
         self.install_btn.setEnabled(True)
         self.uninstall_btn.setEnabled(True)
         self.manage_btn.setEnabled(True)
+        self._persist_engine_path()
         QMessageBox.information(self, i18n.get_text("generic_success", self.lang), i18n.get_text("supertonic_setup_success_msg", self.lang))
         self.accept()
+
+    def _persist_engine_path(self):
+        """Save the resolved python path into the addon config so
+        _get_python_exe() finds it immediately after Anki restart."""
+        import platform as _platform
+        if _platform.system() == "Windows":
+            return
+        venv_python = self._get_venv_python()
+        if not venv_python or not os.path.exists(venv_python):
+            return
+        try:
+            addon_cfg = mw.addonManager.getConfig(constants.CONFIG_ADDON_NAME) or {}
+            svc_cfg = addon_cfg.setdefault("configuration", {}).setdefault("service_config", {})
+            st_cfg = svc_cfg.setdefault("SupertonicTTS", {})
+            st_cfg["engine_path"] = venv_python
+            mw.addonManager.writeConfig(constants.CONFIG_ADDON_NAME, addon_cfg)
+        except Exception as exc:
+            logging_utils.get_child_logger(__name__).warning(f"Failed to persist engine_path: {exc}")
+
+    def _clear_engine_path_config(self):
+        """Remove saved engine_path so _get_python_exe() falls back to runtime resolution."""
+        try:
+            addon_cfg = mw.addonManager.getConfig(constants.CONFIG_ADDON_NAME) or {}
+            svc_cfg = addon_cfg.get("configuration", {}).get("service_config", {})
+            st_cfg = svc_cfg.get("SupertonicTTS", {})
+            st_cfg.pop("engine_path", None)
+            mw.addonManager.writeConfig(constants.CONFIG_ADDON_NAME, addon_cfg)
+        except Exception:
+            pass
 
     def uninstall_complete(self):
         self.progress_bar.setValue(100)

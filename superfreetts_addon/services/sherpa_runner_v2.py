@@ -52,6 +52,18 @@ def get_model_instance(models, current_config_hash, model_dir, num_threads, prov
 
     # Load model if not in cache or config changed
     if model_dir not in models or current_config_hash.get(model_dir) != config_key:
+        # Bounded cache: cap the number of resident OfflineTts models to avoid
+        # unbounded RAM growth when many languages/models are used in one session.
+        MAX_RESIDENT_MODELS = 3
+        if len(models) >= MAX_RESIDENT_MODELS and model_dir not in models:
+            try:
+                oldest_key = next(iter(models))
+                del models[oldest_key]
+                del current_config_hash[oldest_key]
+                log(f"Evicted cached model {oldest_key} to bound RAM (resident={len(models)})")
+            except (StopIteration, KeyError):
+                pass
+
         log(f"Loading Model from {model_dir} (Threads={num_threads}, Provider={provider})")
         
         # Support both directory-based loading (MMS) and specific file paths

@@ -42,7 +42,16 @@ class MmsEngineManager:
     @staticmethod
     def get_python_exe() -> str:
         """Return the path to the MMS-dedicated python executable."""
-        return os.path.join(constants.MMS_ENGINE_DIR, 'python.exe')
+        win_exe = os.path.join(constants.MMS_ENGINE_DIR, 'python.exe')
+        if os.path.exists(win_exe):
+            return win_exe
+        if platform.system() != "Windows":
+            import shutil
+            for name in ('python3', 'python'):
+                path = shutil.which(name)
+                if path:
+                    return path
+        return win_exe
 
     @staticmethod
     def get_site_packages() -> str:

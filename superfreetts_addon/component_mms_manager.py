@@ -325,12 +325,28 @@ class MmsInstallManager(QDialog):
                 QMessageBox.critical(self, i18n.get_text("generic_error", self.lang), f"{i18n.get_text('mms_manager_error_create_lexicon', self.lang)}: {e}")
                 return
         
-        os.startfile(lexicon_path)
+        import platform
+        if platform.system() == "Windows":
+            os.startfile(lexicon_path)
+        else:
+            try:
+                import subprocess
+                subprocess.Popen(['xdg-open', lexicon_path])
+            except Exception:
+                pass
 
     def open_log_folder(self):
         from . import service_logger
         log_dir = service_logger.get_log_dir()
-        os.startfile(log_dir)
+        import platform
+        if platform.system() == "Windows":
+            os.startfile(log_dir)
+        else:
+            try:
+                import subprocess
+                subprocess.Popen(['xdg-open', log_dir])
+            except Exception:
+                pass
 
     def load_languages(self):
         json_path = os.path.join(os.path.dirname(__file__), 'mms_languages.json')

@@ -102,17 +102,36 @@ class KokoroTTS(service.ServiceBase):
         # Extreme Optimization: Eager warmup of a Kokoro process
         threading.Thread(target=self._low_priority_warmup, daemon=True).start()
 
+    def _get_python_exe(self):
+        """Return a usable Python executable for running the kokoro runner."""
+        import platform
+        import shutil
+        engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
+        if engine_path and os.path.exists(engine_path):
+            if os.path.isdir(engine_path):
+                for exe_name in ('python.exe', 'python3', 'python'):
+                    candidate = os.path.join(engine_path, exe_name)
+                    if os.path.exists(candidate):
+                        return candidate
+            return engine_path
+        # Try packaged engine (Windows)
+        possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
+        if os.path.exists(possible):
+            return possible
+        # On non-Windows, try system python
+        if platform.system() != "Windows":
+            for name in ('python3', 'python'):
+                path = shutil.which(name)
+                if path:
+                    return path
+        return None
+
     def _low_priority_warmup(self):
         # Wait a bit for Anki to settle
         time.sleep(2)
         try:
             from aqt import mw
-            engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
-            # If user didn't configure an engine path, fall back to the packaged engine if present
-            if not engine_path:
-                possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
-                if os.path.exists(possible):
-                    engine_path = possible
+            engine_path = self._get_python_exe()
 
             if engine_path and os.path.exists(engine_path):
                 script_path = os.path.join(os.path.dirname(__file__), 'kokoro_runner.py')
@@ -153,7 +172,7 @@ class KokoroTTS(service.ServiceBase):
 
     def configuration_options(self):
         return {
-            self.CONFIG_ENGINE_PATH: ('file', 'Kokoro path', 'Executable (python.exe);;All Files (*)'),
+            self.CONFIG_ENGINE_PATH: ('file', 'Kokoro path', 'Executable (python3);;Executable (python.exe);;All Files (*)'),
         }
     
     def advanced_configuration_options(self):
@@ -202,12 +221,7 @@ class KokoroTTS(service.ServiceBase):
         return installed_voices
 
     def get_tts_audio(self, source_text, voice: voice.TtsVoice_v3, options):
-        engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
-        # If not explicitly configured, try packaged engine
-        if not engine_path:
-            possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
-            if os.path.exists(possible):
-                engine_path = possible
+        engine_path = self._get_python_exe()
 
         if not engine_path or not os.path.exists(engine_path):
              raise errors.RequestError(source_text, voice, "Kokoro engine not configured.")
@@ -281,11 +295,7 @@ class KokoroTTS(service.ServiceBase):
                     raise errors.RequestError(source_text, voice, str(e))
 
     def get_tts_audio_batch(self, source_texts: List[str], voice: voice.TtsVoice_v3, options: dict) -> List[Optional[bytes]]:
-        engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
-        if not engine_path:
-            possible = os.path.join(constants.KOKORO_ENGINE_DIR, 'python.exe')
-            if os.path.exists(possible):
-                engine_path = possible
+        engine_path = self._get_python_exe()
 
         if not engine_path or not os.path.exists(engine_path):
              return [None] * len(source_texts)
