@@ -166,6 +166,7 @@
   "tp_check_brackets": "Remove text in brackets (), [], {}, <>",
   "tp_check_cloze": "Remove Cloze brackets {{c1::text}}",
   "tp_check_ssml": "Convert SSML characters (like <, &, etc)",
+  "tp_check_sanitize_chars": "Remove symbols engines shouldn't read aloud (like / | \\ - _ etc; keeps comma and dot)",
   "tp_check_run_last": "Run text replacement rules last (uncheck to run first)",
   "tp_check_ignore_case": "Ignore case (Regex rules only)",
   "tp_group_replacement": "Text Replacement Rules",

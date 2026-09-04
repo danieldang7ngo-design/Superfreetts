@@ -1,5 +1,21 @@
 # Changelog
 
+## 26.9.1 - 2026-09-04
+
+### English
+
+- All engines now skip punctuation characters with no reading value (such as `/ | \ - _ ; : ' " [ ] { } ( ) * & ^ % $ # @ ! ~ \`` and more), so they are never pronounced out loud.
+- Comma (`,`) and dot (`.`) are kept, because they are natural pausing characters that engines should respect.
+- Added natively to every engine through the shared text-processing pipeline via a new "Remove symbols engines shouldn't read aloud" option in Text Processing — no per-engine changes needed.
+- New option is enabled by default; existing configs keep working because it defaults to on for previously-saved settings.
+
+### Tiếng Việt
+
+- Tất cả engine giờ bỏ qua các ký tự không có giá trị đọc (như `/ | \ - _ ; : ' " [ ] { } ( ) * & ^ % $ # @ ! ~ \``, v.v.) để chúng không bao giờ bị đọc thành tiếng.
+- Dấu phẩy (`,`) và dấu chấm (`.`) được giữ lại, vì chúng là ký tự ngắt nghỉ tự nhiên mà engine nên tôn trọng.
+- Được thêm natively cho mọi engine qua pipeline xử lý văn bản dùng chung bằng tuỳ chọn mới "Xoá ký tự engine không nên đọc" trong Xử lý Văn bản — không cần sửa từng engine.
+- Tuỳ chọn mới bật mặc định; cấu hình cũ vẫn hoạt động vì nó mặc định bật cho cài đặt đã lưu trước đó.
+
 ## 26.9.0 - 2026-09-04
 
 ### English

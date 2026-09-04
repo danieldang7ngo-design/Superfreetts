@@ -416,6 +416,7 @@ class ConfigStore:
         tp.strip_brackets = text_processing_config.get('strip_brackets', constants.TEXT_PROCESSING_DEFAULT_STRIP_BRACKETS)
         tp.strip_cloze = text_processing_config.get('strip_cloze', constants.TEXT_PROCESSING_DEFAULT_STRIP_CLOZE)
         tp.ssml_convert_characters = text_processing_config.get('ssml_convert_characters', constants.TEXT_PROCESSING_DEFAULT_SSML_CHARACTERS)
+        tp.sanitize_special_characters = text_processing_config.get('sanitize_special_characters', constants.TEXT_PROCESSING_DEFAULT_SANITIZE_SPECIAL_CHARACTERS)
         tp.run_replace_rules_after = text_processing_config.get('run_replace_rules_after', constants.TEXT_PROCESSING_DEFAULT_REPLACE_AFTER)
         tp.ignore_case = text_processing_config.get('ignore_case', constants.TEXT_PROCESSING_DEFAULT_IGNORE_CASE)
         for rule in text_processing_config.get('text_replacement_rules', []):

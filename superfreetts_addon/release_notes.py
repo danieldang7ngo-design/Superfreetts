@@ -12,6 +12,55 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.9.1",
+        title={
+            "en": "Engines no longer read punctuation like slash, dash or underscore",
+            "vi": "Engine không còn đọc các ký tự như gạch chéo, dấu gạch ngang hay gạch dưới",
+            "ko": "슬래시, 대시, 밑줄 같은 구두점을 더 이상 읽지 않습니다",
+            "zh-CN": "引擎不再朗读斜杠、破折号或下划线等标点",
+            "zh-TW": "引擎不再朗讀斜線、破折號或底線等標點",
+            "ja": "スラッシュ、ダッシュ、アンダースコアなどの記号を読み上げなくなります",
+            "sv": "Motorerna läser inte längre upp skiljetecken som snedstreck, bindestreck eller understreck",
+        },
+        bullets={
+            "en": [
+                "All engines now skip punctuation characters with no reading value (such as / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ `, and more) so they are never pronounced out loud.",
+                "Comma (,) and dot (.) are kept, because they are natural pausing characters that engines should respect.",
+                "Added natively to every engine through the shared text-processing pipeline (new \"Remove symbols...\" option in Text Processing), so no per-engine changes are needed.",
+            ],
+            "vi": [
+                "Tất cả engine giờ bỏ qua các ký tự không có giá trị đọc (như / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ `, v.v.) để chúng không bao giờ bị đọc thành tiếng.",
+                "Dấu phẩy (,) và dấu chấm (.) được giữ lại, vì chúng là ký tự ngắt nghỉ tự nhiên mà engine nên tôn trọng.",
+                "Được thêm natively cho mọi engine qua pipeline xử lý văn bản dùng chung (tuỳ chọn mới \"Xoá ký tự...\" trong Xử lý Văn bản), không cần sửa từng engine.",
+            ],
+            "ko": [
+                "모든 엔진이 읽을 가치가 없는 구두점(예: / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ ` 등)을 건너뛰어 절대 소리 내어 읽지 않습니다.",
+                "쉼표(,)와 마침표(.)는 엔진이 존중해야 하는 자연스러운 일시정지 문자이므로 유지됩니다.",
+                "공유 텍스트 처리 파이프라인(텍스트 처리의 새 \"기호 제거...\" 옵션)을 통해 모든 엔진에 기본 제공되므로 엔진별 변경이 필요 없습니다.",
+            ],
+            "zh-CN": [
+                "所有引擎现在都会跳过没有朗读价值的标点符号（如 / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ ` 等），绝不会将其读出。",
+                "逗号（,）和句点（.）会被保留，因为它们是引擎应尊重的自然停顿字符。",
+                "通过共享的文本处理流水线（文本处理中的新“移除符号...”选项）为每个引擎原生添加，无需逐引擎修改。",
+            ],
+            "zh-TW": [
+                "所有引擎現在都會跳過沒有朗讀價值的標點符號（如 / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ ` 等），絕不會將其讀出。",
+                "逗號（,）和句點（.）會被保留，因為它們是引擎應尊重的自然停頓字元。",
+                "透過共用的文字處理管線（文字處理中的新「移除符號...」選項）為每個引擎原生加入，無需逐引擎修改。",
+            ],
+            "ja": [
+                "すべてのエンジンが読み上げる価値のない記号（例: / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ ` など）をスキップし、絶対に読み上げません。",
+                "カンマ（,）とドット（.）はエンジンが尊重すべき自然な間の文字なので保持されます。",
+                "共有のテキスト処理パイプライン（テキスト処理の新しい「記号を削除...」オプション）を通じてすべてのエンジンにネイティブに追加されるため、エンジンごとの変更は不要です。",
+            ],
+            "sv": [
+                "Alla motorer hoppar nu över skiljetecken utan läsvärde (t.ex. / | \\ - _ ; : ' \" [ ] { } ( ) * & ^ % $ # @ ! ~ ` m.fl.) så de aldrig läses upp.",
+                "Komma (,) och punkt (.) behålls, eftersom de är naturliga paus-tecken som motorerna bör respektera.",
+                "Lagt till nativt för alla motorer via den delade textbehandlings-pipelinen (nytt \"Ta bort symboler...\"-alternativ i Textbehandling) — inga per-motor-ändringar behövs.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.9.0",
         title={
             "en": "Native Linux support for Supertonic & Piper, plus RAM stability",

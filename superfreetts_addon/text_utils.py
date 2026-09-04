@@ -24,6 +24,14 @@ SSML_CONVERSION_MAP ={
     '，': ',', # chinese comma 
 }
 
+# characters which provide no reading value and which engines might otherwise
+# try to pronounce out loud (e.g. "slash", "dash", "underscore").
+# comma and dot are intentionally kept, because they are natural pausing
+# characters which engines should keep.
+SPECIAL_CHARACTER_STRIP_REGEXP = re.compile(
+    r"[\/\\|;:''\"<>\[\]{}()*&^%$#@!~`\-_+=]"
+)
+
 def extract_template_regexp(input, regexp):
     match_result = re.match(regexp, input, re.DOTALL)
     if match_result == None:
@@ -79,6 +87,16 @@ def strip_cloze_markers(text):
     pattern = r'\{\{c\d+::([^:}]+)(?:::[^}]+)?\}\}'
     return re.sub(pattern, r'\1', text)
 
+def sanitize_special_characters(text):
+    """Remove punctuation characters which have no reading value, so that
+    engines never try to pronounce them (e.g. "slash", "dash", "underscore").
+
+    Comma and dot are preserved because they are natural pausing characters.
+    This is applied natively to every engine through process_text().
+    """
+    return SPECIAL_CHARACTER_STRIP_REGEXP.sub('', text)
+
+
 def process_text_rules(text, text_processing_model):
     text_processing_model = _coerce_text_processing_model(text_processing_model)
     # Always strip sound tags first - they should never be pronounced
@@ -92,6 +110,8 @@ def process_text_rules(text, text_processing_model):
     if text_processing_model.ssml_convert_characters:
         for pattern, replace in SSML_CONVERSION_MAP.items():
             text = text.replace(pattern, replace)
+    if text_processing_model.sanitize_special_characters:
+        text = sanitize_special_characters(text)
     return text
 
 def process_text(source_text, text_processing_model):

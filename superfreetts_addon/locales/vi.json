@@ -168,6 +168,7 @@
   "tp_check_brackets": "Xoá chữ trong các loại ngoặc (), [], {}, <>",
   "tp_check_cloze": "Xoá mã ngoặc của Cloze {{c1::text}}",
   "tp_check_ssml": "Chuyển đổi các ký tự phá mã SSML (như <, &, v.v.)",
+  "tp_check_sanitize_chars": "Xoá các ký tự engine không nên đọc (như / | \\ - _ v.v.; giữ lại dấu phẩy và chấm)",
   "tp_check_run_last": "Chạy Regex thay thế chữ <b>sau cùng</b> (bỏ chọn để chạy đầu tiên)",
   "tp_check_ignore_case": "Không phân biệt chữ Hoa/thường (Chỉ áp dụng Regex)",
   "tp_group_replacement": "Quy tắc thay thế tùy chỉnh",

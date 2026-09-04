@@ -221,6 +221,8 @@ class TextProcessing(component_common.ConfigComponentBase):
         vlayout.addWidget(self.strip_cloze_checkbox)
         self.ssml_convert_characters_checkbox = aqt.qt.QCheckBox(i18n.get_text('tp_check_ssml', lang))
         vlayout.addWidget(self.ssml_convert_characters_checkbox)
+        self.sanitize_special_characters_checkbox = aqt.qt.QCheckBox(i18n.get_text('tp_check_sanitize_chars', lang))
+        vlayout.addWidget(self.sanitize_special_characters_checkbox)
         self.run_replace_rules_after_checkbox = aqt.qt.QCheckBox(i18n.get_text('tp_check_run_last', lang))
         vlayout.addWidget(self.run_replace_rules_after_checkbox)
         self.ignore_case_checkbox = aqt.qt.QCheckBox(i18n.get_text('tp_check_ignore_case', lang))
@@ -261,6 +263,7 @@ class TextProcessing(component_common.ConfigComponentBase):
             self.strip_brackets_checkbox,
             self.strip_cloze_checkbox,
             self.ssml_convert_characters_checkbox,
+            self.sanitize_special_characters_checkbox,
             self.run_replace_rules_after_checkbox,
             self.ignore_case_checkbox,
             self.table_view,
@@ -276,6 +279,7 @@ class TextProcessing(component_common.ConfigComponentBase):
         self.strip_brackets_checkbox.stateChanged.connect(self.strip_brackets_change)
         self.strip_cloze_checkbox.stateChanged.connect(self.strip_cloze_change)
         self.ssml_convert_characters_checkbox.stateChanged.connect(self.ssml_convert_characters_checkbox_change)
+        self.sanitize_special_characters_checkbox.stateChanged.connect(self.sanitize_special_characters_checkbox_change)
         self.run_replace_rules_after_checkbox.stateChanged.connect(self.run_replace_rules_after_checkbox_change)
         self.ignore_case_checkbox.stateChanged.connect(self.ignore_case_checkbox_change)
 
@@ -303,6 +307,7 @@ class TextProcessing(component_common.ConfigComponentBase):
         self.strip_brackets_checkbox.setChecked(self.model.strip_brackets)
         self.strip_cloze_checkbox.setChecked(self.model.strip_cloze)
         self.ssml_convert_characters_checkbox.setChecked(self.model.ssml_convert_characters)
+        self.sanitize_special_characters_checkbox.setChecked(self.model.sanitize_special_characters)
         self.run_replace_rules_after_checkbox.setChecked(self.model.run_replace_rules_after)
         self.ignore_case_checkbox.setChecked(self.model.ignore_case)
         self.update_controls_enabled()
@@ -339,6 +344,11 @@ class TextProcessing(component_common.ConfigComponentBase):
     def ssml_convert_characters_checkbox_change(self, value):
         enabled = value == 2
         self.model.ssml_convert_characters = enabled
+        self.model_change()
+
+    def sanitize_special_characters_checkbox_change(self, value):
+        enabled = value == 2
+        self.model.sanitize_special_characters = enabled
         self.model_change()
 
     def run_replace_rules_after_checkbox_change(self, value):
