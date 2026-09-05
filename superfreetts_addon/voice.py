@@ -4,34 +4,8 @@ import dataclasses
 import logging
 
 logger = logging.getLogger(__name__)
-try:
-    import databind
-except Exception:
-    logger.debug("databind not available, using fallback shim")
-    import json as _json
-
-    class _DataBindShim:
-        class json:
-            @staticmethod
-            def dump(obj, schema=None):
-                try:
-                    if dataclasses.is_dataclass(obj):
-                        return _json.dumps(dataclasses.asdict(obj))
-                except Exception:
-                    pass
-                return _json.dumps(obj)
-
-            @staticmethod
-            def load(s, schema=None):
-                try:
-                    if isinstance(s, (str, bytes)):
-                        return _json.loads(s)
-                except Exception:
-                    pass
-                return s
-
-    databind = _DataBindShim()
 import functools
+import json
 from typing import Dict, Any, List, Union
 
 from . import constants
@@ -189,15 +163,31 @@ class TtsVoice_v3:
                     f"service={self.service!r}, gender={self.gender!r}, audio_languages={self.audio_languages!r}, "
                     f"service_fee={self.service_fee!r}, voice_id={self.voice_id!r})")
 
-def serialize_voice_id_v3(voice_id: TtsVoiceId_v3) -> str:
-    return databind.json.dump(voice_id, TtsVoiceId_v3)
+def serialize_voice_id_v3(voice_id: TtsVoiceId_v3) -> Dict[str, Any]:
+    """Serialize a TtsVoiceId_v3 to a JSON-safe dict.
+
+    Note: this deliberately avoids the legacy ``databind.json`` dependency.
+    The bundled databind/typeapi used for this call cannot read class
+    annotations on Python 3.14 (PEP 649 lazy annotations), so it returned an
+    empty dict and every saved preset lost its voice configuration. A plain
+    ``{'voice_key': ..., 'service': ...}`` dict round-trips identically to what
+    the pre-3.14 databind produced.
+    """
+    voice_key = voice_id.voice_key
+    if isinstance(voice_key, (dict, str)):
+        serialized_voice_key = voice_key
+    else:
+        serialized_voice_key = str(voice_key)
+    return {
+        'voice_key': serialized_voice_key,
+        'service': voice_id.service,
+    }
 
 def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_v3:
     if isinstance(voice_id, TtsVoiceId_v3):
         return voice_id
     if isinstance(voice_id, str):
         try:
-            import json
             parsed = json.loads(voice_id)
             if isinstance(parsed, dict) or isinstance(parsed, str):
                 voice_id = parsed
@@ -219,7 +209,13 @@ def deserialize_voice_id_v3(voice_id: Union[str, Dict[str, Any]]) -> TtsVoiceId_
             voice_key=vkey,
             service=svc_str
         )
-    return databind.json.load(voice_id, TtsVoiceId_v3)
+    # Unknown serialized form: fall back to an empty voice id and log, rather
+    # than depending on the (Python 3.14-broken) databind library.
+    logger.warning(f'could not deserialize voice_id: {voice_id!r}, returning empty voice id')
+    return TtsVoiceId_v3(
+        voice_key="",
+        service="",
+    )
 
 def build_voice_v3(name, gender, language, service, voice_key, options) -> TtsVoice_v3:
     return TtsVoice_v3(

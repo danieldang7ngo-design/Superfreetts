@@ -12,6 +12,8 @@ sys.path.insert(0, addon_dir)
 from superfreetts_addon import config_models
 from superfreetts_addon import constants
 from superfreetts_addon import errors
+from superfreetts_addon import config_store
+from superfreetts_addon import voice as voice_module
 from tests.conftest import MockAnkiUtils
 
 
@@ -320,4 +322,122 @@ class TestConfigSerializationAndMigration:
         target = config_models.BatchTarget(target_field="Sound")
         assert target.remove_sound_tag is True
         assert target.insert_location == config_models.InsertLocation.AFTER
+
+    def test_preset_roundtrip_sequence_mode_preserves_voices(self):
+        """Regression test: a preset configured in sequence mode with multiple
+        voices must survive a full save -> load round trip. This used to fail on
+        Python 3.14 because the bundled databind/typeapi could not read dataclass
+        annotations, so voice_ids were persisted as empty dicts and every voice
+        was dropped when the preset was reloaded."""
+        from superfreetts_addon import errors as errors_module
+
+        class FakeServiceManager:
+            voices = [
+                voice_module.TtsVoiceId_v3(voice_key={"id": "en-US-JennyNeural"}, service="EdgeTTS"),
+                voice_module.TtsVoiceId_v3(voice_key={"id": "en-US-GuyNeural"}, service="EdgeTTS"),
+                voice_module.TtsVoiceId_v3(voice_key={"id": "en-GB-SoniaNeural"}, service="EdgeTTS"),
+                voice_module.TtsVoiceId_v3(voice_key={"model": "en_US-lessac-medium"}, service="Piper"),
+            ]
+
+            def locate_voice(self, voice_id):
+                for v in self.voices:
+                    if v == voice_id:
+                        return v
+                raise errors_module.VoiceIdNotFound(voice_id)
+
+        anki_utils = MockAnkiUtils()
+        anki_utils.config = {
+            constants.CONFIG_PRESETS: {},
+            constants.CONFIG_CONFIGURATION: {},
+            constants.CONFIG_PREFERENCES: {},
+        }
+        service_manager = FakeServiceManager()
+        store = config_store.ConfigStore(anki_utils, service_manager)
+
+        preset = config_models.BatchConfig(anki_utils)
+        preset.name = "Preset A"
+        preset.set_source(config_models.BatchSource(
+            mode=constants.BatchMode.simple,
+            source_field="Expression Field",
+            use_selection=False,
+        ))
+        preset.set_target(config_models.BatchTarget(target_field="Sound Field"))
+
+        selection = config_models.VoiceSelectionSequence()
+        voice_ids = [service_manager.voices[i] for i in [0, 1, 2]]
+        for voice_id in voice_ids:
+            selection.add_voice(config_models.VoiceWithOptionsSequence(voice_id, {}))
+        preset.set_voice_selection(selection)
+        preset.set_text_processing(config_models.TextProcessing())
+
+        store.save_preset(preset)
+
+        # The serialized configuration must contain real voice ids, not empty dicts.
+        serialized = preset.serialize()
+        saved_voices = serialized['voice_selection']['voice_list']
+        assert len(saved_voices) == 3
+        for saved in saved_voices:
+            assert saved['voice_id'] not in ({}, None)
+            assert saved['voice_id']['service'] == 'EdgeTTS'
+
+        loaded = store.load_preset(preset.uuid)
+        assert loaded.name == "Preset A"
+        assert loaded.source.source_field == "Expression Field"
+        assert loaded.target.target_field == "Sound Field"
+
+        loaded_selection = loaded.voice_selection
+        assert loaded_selection.selection_mode == constants.VoiceSelectionMode.sequence
+        assert len(loaded_selection.voice_list) == 3
+        for expected, got in zip(voice_ids, loaded_selection.voice_list):
+            assert got.voice_id == expected
+
+    def test_preset_roundtrip_random_and_priority_modes_preserve_voices(self):
+        """Random/priority voice modes must also survive a save -> load round trip."""
+        from superfreetts_addon import errors as errors_module
+
+        class FakeServiceManager:
+            voices = [
+                voice_module.TtsVoiceId_v3(voice_key={"id": "en-US-JennyNeural"}, service="EdgeTTS"),
+                voice_module.TtsVoiceId_v3(voice_key={"id": "en-US-GuyNeural"}, service="EdgeTTS"),
+                voice_module.TtsVoiceId_v3(voice_key={"model": "en_US-lessac-medium"}, service="Piper"),
+            ]
+
+            def locate_voice(self, voice_id):
+                for v in self.voices:
+                    if v == voice_id:
+                        return v
+                raise errors_module.VoiceIdNotFound(voice_id)
+
+        anki_utils = MockAnkiUtils()
+        anki_utils.config = {
+            constants.CONFIG_PRESETS: {},
+            constants.CONFIG_CONFIGURATION: {},
+            constants.CONFIG_PREFERENCES: {},
+        }
+        service_manager = FakeServiceManager()
+        store = config_store.ConfigStore(anki_utils, service_manager)
+        voice_ids = [service_manager.voices[0], service_manager.voices[2]]
+
+        for mode, selection_class, entry_class in [
+            (constants.VoiceSelectionMode.random, config_models.VoiceSelectionRandom,
+             config_models.VoiceWithOptionsRandom),
+            (constants.VoiceSelectionMode.priority, config_models.VoiceSelectionPriority,
+             config_models.VoiceWithOptionsPriority),
+        ]:
+            preset = config_models.BatchConfig(anki_utils)
+            preset.name = f"Preset {mode.name}"
+            preset.set_source(config_models.BatchSource(mode=constants.BatchMode.simple, source_field="Front"))
+            preset.set_target(config_models.BatchTarget(target_field="Back"))
+            selection = selection_class()
+            for voice_id in voice_ids:
+                selection.add_voice(entry_class(voice_id, {}))
+            preset.set_voice_selection(selection)
+            preset.set_text_processing(config_models.TextProcessing())
+
+            store.save_preset(preset)
+            loaded = store.load_preset(preset.uuid)
+            assert loaded.voice_selection.selection_mode == mode
+            assert len(loaded.voice_selection.voice_list) == 2
+            for expected, got in zip(voice_ids, loaded.voice_selection.voice_list):
+                assert got.voice_id == expected
 
