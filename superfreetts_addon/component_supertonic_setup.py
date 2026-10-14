@@ -133,30 +133,56 @@ class SupertonicSetupDialog(QDialog):
         self._run_command([base_python, "-m", "venv", os.path.join(constants.SUPERTONIC_ENGINE_DIR, 'venv')])
         return venv_python
 
-    def _run_command(self, cmd, check=True):
+    def _run_command(self, cmd, check=True, timeout=1800):
+        """Run a command while streaming its output to the setup log in real time.
+
+        Uses Popen + line-by-line reads so the user sees progress during long
+        steps (venv creation, pip install, model download) instead of a frozen
+        first step, and enforces a timeout so a stalled download can never hang
+        the setup thread forever.
+        """
         import platform
         cwd = constants.SHARED_ENGINE_DIR if platform.system() == "Windows" else None
         if cwd and not os.path.isdir(cwd):
             cwd = None
-        process = subprocess.run(
+        process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             errors='replace',
             cwd=cwd,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
-        if process.stdout:
-            mw.taskman.run_on_main(lambda out=process.stdout[-1000:]: self.log(out.strip()))
+
+        lines = []
+        try:
+            for line in process.stdout:
+                lines.append(line)
+                trimmed = line.strip()
+                if trimmed:
+                    mw.taskman.run_on_main(lambda t=trimmed: self.log(t))
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                process.kill()
+            except Exception:
+                pass
+            try:
+                process.wait(timeout=5)
+            except Exception:
+                pass
+            raise RuntimeError(f"Command timed out after {timeout}s: {' '.join(cmd)}")
+
         if check and process.returncode != 0:
-            raise RuntimeError(process.stderr.strip() or f"Command failed: {' '.join(cmd)}")
+            raise RuntimeError("".join(lines).strip() or f"Command failed: {' '.join(cmd)}")
 
     def _download_model(self, python_exe):
         code = (
             "import os\n"
             f"os.environ['HF_HOME'] = r'{constants.SUPERTONIC_CACHE_DIR}'\n"
             f"os.environ['HUGGINGFACE_HUB_CACHE'] = r'{os.path.join(constants.SUPERTONIC_CACHE_DIR, 'hub')}'\n"
+            f"os.environ['SUPERTONIC_CACHE_DIR'] = r'{constants.SUPERTONIC_CACHE_DIR}'\n"
             "from supertonic import TTS\n"
             "try:\n"
             f"    TTS(auto_download=True, cache_dir=r'{constants.SUPERTONIC_CACHE_DIR}')\n"

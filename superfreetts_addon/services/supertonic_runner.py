@@ -26,6 +26,10 @@ def _set_cache_env(cache_path):
     os.environ["HF_HOME"] = cache_path
     os.environ["HUGGINGFACE_HUB_CACHE"] = os.path.join(cache_path, "hub")
     os.environ["TORCH_HOME"] = os.path.join(cache_path, "torch")
+    # supertonic >= 1.3 resolves its model directory through $SUPERTONIC_CACHE_DIR
+    # (or $HOME/.cache/<model>). Pin it to the profile cache so installs are
+    # portable and removable with the rest of the addon data.
+    os.environ["SUPERTONIC_CACHE_DIR"] = cache_path
 
 
 def _get_engine(cache_path, auto_download=False):

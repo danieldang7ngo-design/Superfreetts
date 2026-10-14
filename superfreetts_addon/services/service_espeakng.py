@@ -15,6 +15,38 @@ from .. import languages
 from .. import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
+def _find_espeak_ng_engine():
+    """Locate an espeak-ng binary.
+
+    Prefer the espeak-ng binary bundled inside the Piper engine directory
+    (it ships on Linux/macOS/Windows), so ESpeakNG works without a system
+    install. Falls back to a PATH lookup of the system ``espeak-ng``.
+    Returns ``(executable, data_path)`` where data_path is None when using
+    the system binary (which resolves its own data directory).
+    """
+    try:
+        piper_dir = os.path.join(constants.PIPER_ENGINE_DIR, 'piper')
+        bundled = os.path.join(piper_dir, 'espeak-ng')
+        if os.path.exists(bundled) and os.access(bundled, os.X_OK):
+            return bundled, os.path.join(piper_dir, 'espeak-ng-data')
+    except Exception:
+        pass
+    return 'espeak-ng', None
+
+
+def _run_espeak_ng(cmd, **kwargs):
+    """Run espeak-ng, adding the library path for the bundled binary."""
+    exe, data_path = _find_espeak_ng_engine()
+    cmd[0] = exe
+    if data_path:
+        cmd.append(f'--path={data_path}')
+        env = os.environ.copy()
+        lib_dir = os.path.dirname(exe)
+        env['LD_LIBRARY_PATH'] = lib_dir + os.pathsep + env.get('LD_LIBRARY_PATH', '')
+        kwargs['env'] = env
+    return subprocess.run(cmd, **kwargs)
+
+
 AUDIO_LANGUAGE_OVERRIDE_MAP = {
     'as': languages.AudioLanguage.as_IN,
     'cmn': languages.AudioLanguage.zh_CN,
@@ -72,7 +104,7 @@ class ESpeakNg(service.ServiceBase):
         try:
             # First check if espeak-ng is available
             try:
-                subprocess.run(['espeak-ng', '--version'], check=True, capture_output=True, text=True, errors='replace')
+                _run_espeak_ng(['espeak-ng', '--version'], check=True, capture_output=True, text=True, errors='replace')
             except (subprocess.CalledProcessError, FileNotFoundError):
                 logger.warning('espeak-ng executable not found')
                 return []
@@ -135,7 +167,7 @@ class ESpeakNg(service.ServiceBase):
         ]
         
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True, errors='replace')
+            _run_espeak_ng(cmd, check=True, capture_output=True, text=True, errors='replace')
         except Exception as e:
             logger.warning(f"espeak-ng failed: {e}")
             raise errors.RequestError(f"espeak-ng failed: {e}")

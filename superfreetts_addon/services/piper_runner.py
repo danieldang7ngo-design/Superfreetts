@@ -125,11 +125,11 @@ def generate_single(piper_exe, data, global_threads=1):
         length_scale = speed
 
         # Command for stock piper:
-        # piper.exe -m model.onnx -c model.onnx.json --data_dir ... --length-scale ... --output_raw
+        # piper -m model.onnx -c model.onnx.json --espeak_data ... --length-scale ... --output_raw
         cmd = [
             piper_exe,
             "-m", model_path,
-            "--data_dir", data_dir,
+            "--espeak_data", data_dir,
             "--length-scale", str(length_scale),
             "--output_raw"
         ]

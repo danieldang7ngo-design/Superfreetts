@@ -3,7 +3,6 @@ import os
 import shutil
 import tarfile
 import zipfile
-import urllib.request
 import threading
 import platform
 from aqt import mw
@@ -109,7 +108,18 @@ class PiperSetupDialog(QDialog):
                 
                 is_zip = piper_url.endswith('.zip')
                 archive_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip" if is_zip else "piper.tar.gz")
-                urllib.request.urlretrieve(piper_url, archive_path)
+                from .downloader import TurboDownloader
+
+                def on_download_progress(data):
+                    percent = int(data.get("percent", 0))
+                    speed = data.get("speed_mb", 0)
+                    mw.taskman.run_on_main(lambda p=percent: self.progress_bar.setValue(min(p, 70)))
+                    mw.taskman.run_on_main(lambda p=percent, s=speed: self.status_label.setText(
+                        i18n.get_text("piper_setup_downloading_engine", self.lang) + f" ({p}%, {s:.1f} MB/s)"
+                    ))
+
+                downloader = TurboDownloader(piper_url, archive_path, progress_callback=on_download_progress)
+                downloader.start()
                 
                 mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_extracting_engine", self.lang)))
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extracting_zip", self.lang)))

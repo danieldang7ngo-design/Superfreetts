@@ -345,6 +345,27 @@ class MmsTTS(service.ServiceBase):
         return {
             'engine_path': ('file', 'MMS path', 'Executable (python3);;Executable (python.exe);;All Files (*)'),
         }
+
+    CONFIG_ENGINE_PATH = 'engine_path'
+
+    def _get_python_exe(self):
+        """Return a usable Python executable for the sherpa runner.
+
+        Honors the configured ``engine_path`` first (needed on Linux/macOS,
+        where the Windows-only bootstrap is skipped and the runner uses a
+        user-provided virtualenv instead of the system ``python3``).
+        Falls back to the dedicated Windows embeddable engine, then to the
+        system interpreter.
+        """
+        engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
+        if engine_path and os.path.exists(engine_path):
+            if os.path.isdir(engine_path):
+                for exe_name in ('python.exe', 'python3', 'python'):
+                    candidate = os.path.join(engine_path, exe_name)
+                    if os.path.exists(candidate):
+                        return candidate
+            return engine_path
+        return MmsEngineManager.get_python_exe()
     
     def advanced_configuration_options(self):
         """Advanced settings for power users (hidden in dropdown)"""
@@ -428,9 +449,8 @@ class MmsTTS(service.ServiceBase):
 
         if voice.voice_key == "mms_none": return None
         
-        # Always use MMS-dedicated engine (auto-detected)
-        from ..mms_engine_manager import MmsEngineManager
-        python_path = MmsEngineManager.get_python_exe()
+        # Always use MMS-dedicated engine (auto-detected or configured)
+        python_path = self._get_python_exe()
             
         if not os.path.exists(python_path):
             raise errors.RequestError(source_text, voice, "MMS Engine not found. Please install an MMS language from the MMS Manager first.")
@@ -521,9 +541,8 @@ class MmsTTS(service.ServiceBase):
 
         if voice.voice_key == "mms_none": return [None] * len(source_texts)
 
-        # Always use MMS-dedicated engine (auto-detected)
-        from ..mms_engine_manager import MmsEngineManager
-        python_path = MmsEngineManager.get_python_exe()
+        # Always use MMS-dedicated engine (auto-detected or configured)
+        python_path = self._get_python_exe()
             
         if not os.path.exists(python_path):
             return [None] * len(source_texts)
