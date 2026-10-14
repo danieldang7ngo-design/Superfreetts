@@ -12,6 +12,62 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.10.1",
+        title={
+            "en": "Linux engine fixes, EdgeTTS 7.3.1, and text-processing correction",
+            "vi": "Sửa engine trên Linux, EdgeTTS 7.3.1 và sửa xử lý văn bản",
+            "ko": "Linux 엔진 수정, EdgeTTS 7.3.1 및 텍스트 처리 교정",
+            "zh-CN": "Linux 引擎修复、EdgeTTS 7.3.1 和文本处理修正",
+            "zh-TW": "Linux 引擎修復、EdgeTTS 7.3.1 和文字處理修正",
+            "ja": "Linuxエンジン修正、EdgeTTS 7.3.1、テキスト処理の修正",
+            "sv": "Linux-motorfixar, EdgeTTS 7.3.1 och textbehandlingskorrigering",
+        },
+        bullets={
+            "en": [
+                "Linux engine setup fixes: Piper downloads show progress, correct --espeak_data flag, Supertonic streaming install with pinned cache, bundled espeak-ng preferred, MMS honors the configured engine path.",
+                "EdgeTTS upgraded from 7.2.7 to 7.3.1 (upstream rany2/edge-tts); all voices and settings keep working.",
+                "The 'remove symbols' step now only strips characters with no reading value (/ \\ | - _ * ` ~ ^); meaningful characters (& % $ # @ + =), punctuation and brackets are kept.",
+                "Default interface language for fresh installs is now English.",
+            ],
+            "vi": [
+                "Sửa cài đặt engine trên Linux: tải Piper hiện tiến trình, đúng cờ --espeak_data, cài Supertonic dạng stream với cache cố định, ưu tiên espeak-ng đi kèm, MMS dùng đúng đường dẫn engine đã cấu hình.",
+                "Nâng EdgeTTS từ 7.2.7 lên 7.3.1 (theo repo gốc rany2/edge-tts); mọi giọng và cài đặt vẫn hoạt động.",
+                "Bước 'xoá ký tự' giờ chỉ xoá ký tự không có giá trị đọc (/ \\ | - _ * ` ~ ^); giữ ký tự có nghĩa (& % $ # @ + =), dấu câu và ngoặc.",
+                "Ngôn ngữ giao diện mặc định cho cài mới giờ là tiếng Anh.",
+            ],
+            "ko": [
+                "Linux 엔진 설치 수정: Piper 다운로드 진행률 표시, 올바른 --espeak_data 플래그, 고정 캐시를 사용한 Supertonic 스트리밍 설치, 동봉된 espeak-ng 우선 사용, MMS가 설정된 엔진 경로를 준수.",
+                "EdgeTTS를 7.2.7에서 7.3.1로 업그레이드(원본 rany2/edge-tts); 모든 음성과 설정이 그대로 동작합니다.",
+                "'기호 제거' 단계는 이제 읽을 가치가 없는 문자(/ \\ | - _ * ` ~ ^)만 제거하고, 의미 있는 문자(& % $ # @ + =), 구두점, 괄호는 유지합니다.",
+                "새로 설치할 때 기본 인터페이스 언어가 이제 영어입니다.",
+            ],
+            "zh-CN": [
+                "Linux 引擎安装修复：Piper 下载显示进度、正确的 --espeak_data 标志、使用固定缓存的 Supertonic 流式安装、优先使用自带的 espeak-ng、MMS 遵循已配置的引擎路径。",
+                "EdgeTTS 从 7.2.7 升级到 7.3.1（上游 rany2/edge-tts）；所有声音和设置不受影响。",
+                "“移除符号”步骤现在只移除没有朗读价值的字符（/ \\ | - _ * ` ~ ^），保留有意义的字符（& % $ # @ + =）、标点和括号。",
+                "全新安装的默认界面语言现为英语。",
+            ],
+            "zh-TW": [
+                "Linux 引擎安裝修復：Piper 下載顯示進度、正確的 --espeak_data 旗標、使用固定快取的 Supertonic 串流安裝、優先使用隨附的 espeak-ng、MMS 遵循已設定的引擎路徑。",
+                "EdgeTTS 從 7.2.7 升級到 7.3.1（上游 rany2/edge-tts）；所有聲音與設定不受影響。",
+                "「移除符號」步驟現在只移除沒有朗讀價值的字元（/ \\ | - _ * ` ~ ^），保留有意義的字元（& % $ # @ + =）、標點與括號。",
+                "全新安裝的預設介面語言現為英文。",
+            ],
+            "ja": [
+                "Linuxエンジンのセットアップ修正：Piperダウンロードの進捗表示、正しい--espeak_dataフラグ、固定キャッシュでのSupertonicストリーミングインストール、同梱espeak-ngの優先使用、MMSが設定済みエンジンパスを尊重。",
+                "EdgeTTSを7.2.7から7.3.1にアップグレード（上流rany2/edge-tts）；すべての音声と設定はそのまま動作します。",
+                "「記号を削除」ステップは読み上げる価値のない文字（/ \\ | - _ * ` ~ ^）のみ削除し、意味のある文字（& % $ # @ + =）、句読点、括弧は保持します。",
+                "新規インストールの既定インターフェース言語が英語になりました。",
+            ],
+            "sv": [
+                "Linux-motorfixar: Piper-nedladdningar visar förlopp, korrekt --espeak_data-flagga, Supertonic strömmande installation med fast cache, medföljande espeak-ng prioriteras, MMS respekterar den konfigurerade motorsökvägen.",
+                "EdgeTTS uppgraderad från 7.2.7 till 7.3.1 (uppströms rany2/edge-tts); alla röster och inställningar fungerar som tidigare.",
+                "Steget 'ta bort symboler' tar nu bara bort tecken utan läsvärde (/ \\ | - _ * ` ~ ^); meningsfulla tecken (& % $ # @ + =), skiljetecken och parenteser behålls.",
+                "Standardspråk för nya installationer är nu engelska.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.9.1",
         title={
             "en": "Engines no longer read punctuation like slash, dash or underscore",

@@ -152,7 +152,7 @@ def patch_config_json(stage: Path) -> None:
         "        \"display_introduction_message\": true\n"
         "    },\n"
         "    \"preferences\": {\n"
-        "        \"ui_language\": \"vi\",\n"
+        "        \"ui_language\": \"en\",\n"
         "        \"cache_enabled\": true\n"
         "    },\n"
         "    \"presets\": {},\n"

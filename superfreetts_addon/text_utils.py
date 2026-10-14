@@ -27,9 +27,13 @@ SSML_CONVERSION_MAP ={
 # characters which provide no reading value and which engines might otherwise
 # try to pronounce out loud (e.g. "slash", "dash", "underscore").
 # comma and dot are intentionally kept, because they are natural pausing
-# characters which engines should keep.
+# characters which engines should keep. Characters with reading value
+# (& % $ # @ + =), sentence punctuation (: ; ' " !) and brackets
+# (() [] {} <>) are also kept: brackets are governed by the strip_brackets
+# option, &<>:; by the SSML/html stages, and the rest by the engines' own
+# text normalization.
 SPECIAL_CHARACTER_STRIP_REGEXP = re.compile(
-    r"[\/\\|;:''\"<>\[\]{}()*&^%$#@!~`\-_+=]"
+    r"[\/\\|_*`~^\-]"
 )
 
 def extract_template_regexp(input, regexp):
@@ -62,8 +66,9 @@ def process_text_replacement(text, text_processing_model):
 
 def strip_html(text):
     """Remove html tags from a string and decode HTML entities"""
-    # Remove HTML tags
-    clean = re.compile('<.*?>')
+    # Only strip real HTML tags (letter right after <, e.g. <b>, </div>).
+    # Innocent angle-bracket text like "A < C > D" or "<3" is preserved.
+    clean = re.compile(r'</?[A-Za-z][^<>]*>')
     text = re.sub(clean, '', text)
 
     # Decode HTML entities

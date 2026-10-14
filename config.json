@@ -22,7 +22,7 @@
         "display_introduction_message": true
     },
     "preferences": {
-        "ui_language": "vi",
+        "ui_language": "en",
         "cache_enabled": true
     },
     "presets": {},

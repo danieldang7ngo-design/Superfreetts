@@ -1,5 +1,21 @@
 # Changelog
 
+## 26.10.1 - 2026-10-14
+
+### English
+
+- Linux engine setup fixes: Piper downloads now show progress instead of freezing the UI, Piper uses the correct `--espeak_data` flag (1.2.0), Supertonic installs stream with a long timeout and a pinned cache dir, the bundled espeak-ng inside the Piper folder is preferred with fallback, and MMS honors the configured engine path on all systems.
+- EdgeTTS upgraded from 7.2.7 to 7.3.1 (upstream rany2/edge-tts): updated auth token handling and subtitle timing; fully compatible with existing voices and settings.
+- Text-processing correction: the "remove symbols" step now only strips characters with no reading value (`/ \ | - _ * \` ~ ^`), so meaningful characters (`& % $ # @ + =`), sentence punctuation and brackets are kept; HTML tag stripping no longer eats innocent text like `A < C > D`.
+- Default interface language is now English for fresh installs and share builds.
+
+### Tiếng Việt
+
+- Sửa cài đặt engine trên Linux: tải Piper giờ hiện tiến trình thay vì treo giao diện, Piper dùng đúng cờ `--espeak_data` (1.2.0), cài Supertonic chạy stream với timeout dài và thư mục cache cố định, ưu tiên espeak-ng đi kèm trong thư mục Piper, và MMS tôn trọng đường dẫn engine đã cấu hình trên mọi hệ điều hành.
+- Nâng EdgeTTS từ 7.2.7 lên 7.3.1 (theo repo gốc rany2/edge-tts): cập nhật cách xác thực và canh thời gian phụ đề; tương thích hoàn toàn với giọng và cài đặt hiện có.
+- Sửa xử lý văn bản: bước "xoá ký tự" giờ chỉ xoá ký tự không có giá trị đọc (`/ \ | - _ * \` ~ ^`), giữ lại ký tự có nghĩa (`& % $ # @ + =`), dấu câu và ngoặc; bóc thẻ HTML không còn ăn mất chữ thường như `A < C > D`.
+- Ngôn ngữ giao diện mặc định cho cài mới và bản share giờ là tiếng Anh.
+
 ## 26.9.1 - 2026-09-04
 
 ### English

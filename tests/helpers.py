@@ -79,7 +79,7 @@ def make_config_dict(version=7, **overrides):
             "display_introduction_message": True
         },
         "preferences": {
-            "ui_language": "vi",
+            "ui_language": "en",
             "cache_enabled": True
         },
         constants.CONFIG_PRESETS: {},
