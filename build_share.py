@@ -14,6 +14,7 @@ Run from the addon root:
 from __future__ import annotations
 
 import os
+import json
 import re
 import shutil
 import sys
@@ -48,9 +49,19 @@ EXCLUDE_DIR_NAMES = {
     "git-objects-tmp",
     "superfreetts-mirror.git",
     "test",           # comtypes/test, gtts/tests — irrelevant at runtime
+    "tests",
 }
 
-EXCLUDE_FILE_SUFFIXES = (".pyc", ".pyo", ".ankiaddon", ".so", ".pyd")
+EXCLUDE_FILE_SUFFIXES = (
+    ".pyc",
+    ".pyo",
+    ".ankiaddon",
+    ".so",
+    ".pyd",
+    ".dll",
+    ".dylib",
+    ".exe",
+)
 EXCLUDE_FILE_NAMES = {
     "meta.json",                       # Anki regenerates this on install
     "superfreetts-work.index",
@@ -128,43 +139,42 @@ def patch_file(path: Path, replacements: list[tuple[str, str]], *, regex: bool =
 # The user can toggle to 20 locally via set_edge_workers_20.py which is gitignored.
 
 
+def _read_edge_workers_cap() -> int:
+    """Read the committed source cap without importing the add-on package."""
+    source = (ROOT / "superfreetts_addon" / "batch_constants.py").read_text(encoding="utf-8")
+    match = re.search(r"EDGETTS_MAX_WORKERS\s*:\s*Final\[int\]\s*=\s*(\d+)", source)
+    if not match:
+        raise RuntimeError("Could not find EDGETTS_MAX_WORKERS in batch_constants.py")
+    return int(match.group(1))
+
+
 def patch_config_json(stage: Path) -> None:
-    """Reset config.json to a clean default for redistribution."""
+    """Create a clean default config for redistribution.
+
+    Start from the repository's tracked config so defaults do not drift, then
+    strip local state and force the EdgeTTS worker count to the source cap.
+    """
     target = stage / "config.json"
-    clean = (
-        "{\n"
-        "    \"configuration\": {\n"
-        "        \"service_enabled\": {\n"
-        "            \"EdgeTTS\": true,\n"
-        "            \"PiperTTS\": false,\n"
-        "            \"KokoroTTS\": false,\n"
-        "            \"MmsTTS\": false,\n"
-        "            \"GoogleTranslate\": false,\n"
-        "            \"NaverTTS\": false,\n"
-        "            \"Sapi5TTS\": false,\n"
-        "            \"EspeakNgTTS\": false\n"
-        "        },\n"
-        "        \"service_config\": {\n"
-        "            \"EdgeTTS\": {\n"
-        "                \"concurrency_workers\": 3\n"
-        "            }\n"
-        "        },\n"
-        "        \"display_introduction_message\": true\n"
-        "    },\n"
-        "    \"preferences\": {\n"
-        "        \"ui_language\": \"en\",\n"
-        "        \"cache_enabled\": true\n"
-        "    },\n"
-        "    \"presets\": {},\n"
-        "    \"mapping_rules\": {\n"
-        "        \"rules\": []\n"
-        "    },\n"
-        "    \"batch_config\": {},\n"
-        "    \"realtime_config\": {},\n"
-        "    \"default_presets\": {}\n"
-        "}\n"
-    )
-    target.write_text(clean, encoding="utf-8")
+    try:
+        config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise RuntimeError(f"Could not read repository config.json: {exc}") from exc
+
+    configuration = config.setdefault("configuration", {})
+    service_config = configuration.setdefault("service_config", {})
+    edge_config = service_config.setdefault("EdgeTTS", {})
+    edge_config["concurrency_workers"] = _read_edge_workers_cap()
+
+    # Never ship local presets/mapping rules or user-specific batch state.
+    config["presets"] = {}
+    config["mapping_rules"] = {"rules": []}
+    config["batch_config"] = {}
+    config["realtime_config"] = {}
+    config["default_presets"] = {}
+    config.setdefault("preferences", {})
+    config["preferences"]["ui_language"] = "en"
+
+    target.write_text(json.dumps(config, indent=4) + "\n", encoding="utf-8")
 
 
 def stage_sources() -> None:

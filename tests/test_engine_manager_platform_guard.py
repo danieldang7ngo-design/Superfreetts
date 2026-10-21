@@ -67,7 +67,7 @@ class TestEngineManagerPlatformGuard:
              patch.object(engine_manager.EngineManager, 'is_installed', return_value=False), \
              patch.object(engine_manager.EngineManager, '_run_command') as mock_run_command, \
              patch.object(engine_manager, 'TurboDownloader') as mock_downloader_cls, \
-             patch.object(engine_manager.zipfile, 'ZipFile'), \
+             patch.object(engine_manager.archive_utils, 'safe_extract_zip'), \
              patch.object(engine_manager.os.path, 'exists', side_effect=_fake_exists):
             engine_manager.EngineManager._installing = False
             engine_manager.EngineManager.ensure_installed()

@@ -11,6 +11,7 @@ from .. import service, voice, errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from ..mms_engine_manager import MmsEngineManager
 # from .. import system_utils # lazy loaded
 
 logger = logging.getLogger(__name__)
@@ -300,7 +301,6 @@ class MmsTTS(service.ServiceBase):
     def _ensure_python_environment(self):
         """Proactively ensure the MMS-dedicated python environment is ready."""
         try:
-            from ..mms_engine_manager import MmsEngineManager
             mms_engine_dir = constants.MMS_ENGINE_DIR
             if os.path.exists(mms_engine_dir):
                 # Fix ._pth if needed

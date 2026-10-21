@@ -47,7 +47,7 @@ class PiperDownloadWorker(QObject):
     def fetch_voices(self):
         try:
             import requests
-            response = requests.get(VOICES_JSON_URL)
+            response = requests.get(VOICES_JSON_URL, timeout=30)
             if response.status_code == 200:
                 voices_data = response.json()
                 models = []

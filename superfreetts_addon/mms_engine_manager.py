@@ -2,12 +2,12 @@ import os
 import sys
 import shutil
 import time
-import zipfile
 import subprocess
 import threading
 import platform
 from typing import Optional, Callable, Tuple
 
+from . import archive_utils
 from . import logging_utils
 from . import service_logger
 from .downloader import TurboDownloader
@@ -17,6 +17,8 @@ logger = logging_utils.get_child_logger(__name__)
 
 # Constants for Python Installation
 PYTHON_EMBED_URL = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip"
+PYTHON_EMBED_SHA256 = "608619f8619075629c9c69f361352a0da6ed7e62f83a0e19c63e0ea32eb7629d"
+PYTHON_EMBED_SIZE = 8629277
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 
 # Sherpa-ONNX version to install via pip
@@ -74,7 +76,6 @@ class MmsEngineManager:
         Thread-safe installation of MMS engine.
         Returns True on success, False on failure.
         """
-        from . import service_logger
         
         if cls.is_installed():
             logger.info("MmsEngineManager: Already installed.")
@@ -118,13 +119,18 @@ class MmsEngineManager:
                 service_logger.write_log('mms', 'install', 'INFO', 'Downloading Python 3.10 embeddable', {'URL': PYTHON_EMBED_URL})
                 zip_path = os.path.join(constants.MMS_ENGINE_DIR, 'python.zip')
                 
-                downloader = TurboDownloader(PYTHON_EMBED_URL, zip_path, progress_callback=progress_callback)
+                downloader = TurboDownloader(
+                    PYTHON_EMBED_URL,
+                    zip_path,
+                    progress_callback=progress_callback,
+                    expected_sha256=PYTHON_EMBED_SHA256,
+                    expected_size=PYTHON_EMBED_SIZE,
+                )
                 downloader.start()
 
                 _report("Extracting Python...", 20)
                 service_logger.write_log('mms', 'install', 'INFO', 'Extracting Python to engine directory', {'Path': constants.MMS_ENGINE_DIR})
-                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(constants.MMS_ENGINE_DIR)
+                archive_utils.safe_extract_zip(zip_path, constants.MMS_ENGINE_DIR)
 
                 if os.path.exists(zip_path):
                     os.remove(zip_path)
@@ -197,7 +203,6 @@ class MmsEngineManager:
         Actually run the MMS python interpreter and try to import sherpa_onnx.
         Returns (True, 'ok') on success, (False, error_message) on failure.
         """
-        from . import service_logger
         
         if not os.path.exists(cls.get_python_exe()):
             return False, "Python executable not found"
@@ -263,7 +268,6 @@ class MmsEngineManager:
     @staticmethod
     def _run_command(cmd):
         """Run a command in the MMS engine directory, logging output to file."""
-        from . import service_logger
         
         cmd_str = ' '.join(cmd)
         logger.info(f"MmsEngineManager: Running: {cmd_str}")

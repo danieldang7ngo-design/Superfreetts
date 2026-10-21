@@ -12,6 +12,76 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.10.2",
+        title={
+            "en": "Stability, security, and packaging hardening",
+            "vi": "Ổn định, bảo mật và đóng gói chắc chắn hơn",
+            "ko": "안정성, 보안 및 패키징 강화",
+            "zh-CN": "稳定性、安全性与打包强化",
+            "zh-TW": "穩定性、安全性與封裝強化",
+            "ja": "安定性・セキュリティ・パッケージングの強化",
+            "sv": "Stabilitet, säkerhet och paketering",
+        },
+        bullets={
+            "en": [
+                "Fixed a startup ImportError caused by an obsolete ONNX service; fresh installs now load cleanly.",
+                "RAM-aware local engine concurrency now works without psutil by reading OS memory information directly, and logs one [RAM] decision per launch.",
+                "EdgeTTS defaults to 3 workers (down from 100), preventing rate limits and excessive memory use; higher values are capped at 3.",
+                "Downloads now use timeouts, size checks, SHA-256 verification for Python/Piper, and a safe single-connection fallback when range requests are unsupported.",
+                "Installer archives are extracted with path-traversal, symlink, and zip-bomb protection; the voice cache uses JSON/SHA-256 instead of pickle.",
+                "Batch processing waits up to 10 minutes for slow tasks instead of failing after 60 seconds; all seven UI languages remain available with English fallback.",
+            ],
+            "vi": [
+                "Sửa lỗi ImportError khi khởi động do dịch vụ ONNX cũ; cài mới giờ tải sạch.",
+                "Giới hạn song song engine cục bộ theo RAM giờ hoạt động không cần psutil bằng cách đọc thông tin bộ nhớ hệ điều hành trực tiếp, và ghi một quyết định [RAM] mỗi lần khởi động.",
+                "EdgeTTS mặc định 3 worker (giảm từ 100), tránh giới hạn tốc độ và tốn RAM; giá trị cấu hình cao hơn sẽ được giới hạn ở 3.",
+                "Tải xuống giờ có timeout, kiểm tra kích thước, xác minh SHA-256 cho Python/Piper và tự chuyển sang tải một kết nối khi máy chủ không hỗ trợ range.",
+                "Khoảng nén cài đặt được giải nén an toàn (chống path traversal, symlink, zip bomb); bộ nhớ đệm giọng dùng JSON/SHA-256 thay vì pickle.",
+                "Xử lý hàng loạt chờ tối đa 10 phút cho tác vụ chậm thay vì lỗi sau 60 giây; cả 7 ngôn ngữ giao diện vẫn hiển thị với fallback tiếng Anh.",
+            ],
+            "ko": [
+                "더 이상 사용하지 않는 ONNX 서비스로 인한 시작 ImportError를 수정했습니다. 새 설치가 정상적으로 로드됩니다.",
+                "로컬 엔진 동시 실행을 RAM에 맞게 제한하는 기능이 psutil 없이 OS 메모리 정보를 직접 읽어 동작하며, 실행할 때마다 [RAM] 결정을 한 번 기록합니다.",
+                "EdgeTTS 기본 워커를 100개에서 3개로 줄여 속도 제한과 과도한 메모리 사용을 방지합니다. 3보다 큰 값은 3으로 제한됩니다.",
+                "다운로드에 타임아웃, 크기 확인, Python/Piper용 SHA-256 검증, 범위 요청 미지원 시 안전한 단일 연결 폴백을 추가했습니다.",
+                "설치 압축 파일을 경로 탐색, 심볼릭 링크, zip 폭탄으로부터 안전하게 풉니다. 음성 캐시는 pickle 대신 JSON/SHA-256을 사용합니다.",
+                "배치 처리는 느린 작업을 60초 후 실패시키지 않고 최대 10분까지 기다립니다. 7개 UI 언어는 모두 영어 폴백과 함께 유지됩니다.",
+            ],
+            "zh-CN": [
+                "修复了因废弃 ONNX 服务导致的启动 ImportError；全新安装现在可正常加载。",
+                "本地引擎并发现在无需 psutil，直接读取操作系统内存信息来按 RAM 限制，并在每次启动时记录一条 [RAM] 决策。",
+                "EdgeTTS 默认工作线程从 100 降至 3，避免限流和内存占用过高；高于 3 的值将被限制为 3。",
+                "下载现在带超时、大小校验、Python/Piper 的 SHA-256 验证，并在服务器不支持范围请求时安全回退到单连接。",
+                "安装包解压具备路径穿越、符号链接和 zip 炸弹防护；语音缓存改用 JSON/SHA-256，不再使用 pickle。",
+                "批处理对慢任务最多等待 10 分钟，而不是 60 秒后失败；全部 7 种界面语言继续提供，并回退到英语。",
+            ],
+            "zh-TW": [
+                "修正因廢棄 ONNX 服務導致的啟動 ImportError；全新安裝現在可正常載入。",
+                "本機引擎並行現在無需 psutil，直接讀取作業系統記憶體資訊來依 RAM 限制，並在每次啟動時記錄一筆 [RAM] 決策。",
+                "EdgeTTS 預設工作執行緒從 100 降至 3，避免限流和記憶體占用過高；高於 3 的值將被限制為 3。",
+                "下載現在具備逾時、大小檢查、Python/Piper 的 SHA-256 驗證，並在伺服器不支援範圍請求時安全回退至單一連線。",
+                "安裝封裝解壓具備路徑穿越、符號連結和 zip 炸彈防護；語音快取改用 JSON/SHA-256，不再使用 pickle。",
+                "批次處理對慢速工作最多等待 10 分鐘，而不是 60 秒後失敗；全部 7 種介面語言繼續提供，並回退至英語。",
+            ],
+            "ja": [
+                "廃止されたONNXサービスによる起動時のImportErrorを修正しました。新規インストールでも正常に読み込まれます。",
+                "ローカルエンジンの同時実行をRAMに応じて制限する機能が、psutilなしでOSのメモリ情報を直接読み取って動作し、起動ごとに[RAM]の判断を1回記録します。",
+                "EdgeTTSの既定ワーカーを100から3に減らし、レート制限や過剰なメモリ使用を防ぎます。3を超える値は3に制限されます。",
+                "ダウンロードにタイムアウト、サイズ確認、Python/PiperのSHA-256検証、範囲リクエスト非対応時の安全な単一接続フォールバックを追加しました。",
+                "インストーラーアーカイブはパストラバーサル、シンボリックリンク、zip爆弾から保護して展開します。音声キャッシュはpickleではなくJSON/SHA-256を使用します。",
+                "バッチ処理は遅いタスクを60秒で失敗させず最大10分待機します。7つのUI言語はすべて英語フォールバック付きで利用できます。",
+            ],
+            "sv": [
+                "Ett ImportError vid start orsakat av en föråldrad ONNX-tjänst har åtgärdats; nya installationer laddas nu korrekt.",
+                "RAM-anpassad samtidighet för lokala motorer fungerar nu utan psutil genom att läsa operativsystemets minnesinformation direkt, och loggar ett [RAM]-beslut per start.",
+                "EdgeTTS använder nu 3 arbetare som standard (ned från 100), vilket förhindrar hastighetsbegränsningar och hög minnesanvändning; värden över 3 begränsas till 3.",
+                "Nedladdningar har nu timeouts, storlekskontroll, SHA-256-verifiering för Python/Piper och en säker återgång till en anslutning när servern inte stöder range-förfrågningar.",
+                "Installerarens arkiv packas upp med skydd mot path traversal, symlänkar och zip-bomber; röstcachen använder JSON/SHA-256 i stället för pickle.",
+                "Batchbearbetning väntar upp till 10 minuter på långsamma uppgifter i stället för att misslyckas efter 60 sekunder; alla sju gränssnittsspråk finns kvar med engelsk fallback.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.10.1",
         title={
             "en": "Linux engine fixes, EdgeTTS 7.3.1, and text-processing correction",

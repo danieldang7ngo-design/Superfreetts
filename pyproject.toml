@@ -1,0 +1,19 @@
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+# Start with the rules that catch real runtime bugs. The larger cleanup can
+# expand this list without hiding undefined names or redefinitions.
+select = ["E9", "F821", "F811"]
+
+[tool.coverage.run]
+source = ["superfreetts_addon"]
+omit = ["external/*", "tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

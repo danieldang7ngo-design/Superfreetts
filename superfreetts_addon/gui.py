@@ -1,11 +1,7 @@
 import sys
 import json
 
-# pyqt
-import aqt.qt
-
-
-# anki imports
+# pyqt / anki imports
 import aqt.qt
 import aqt.editor
 import aqt.gui_hooks
@@ -34,7 +30,6 @@ from . import text_utils
 from . import ttsplayer
 from . import logging_utils
 from . import gui_utils
-from . import stats
 from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 

@@ -86,10 +86,6 @@ class SuperFreeTTS():
         from .ui_controller import UIController
         from .job_pipeline import JobPipeline
 
-        from .tts_orchestrator import TTSOrchestrator
-        from .ui_controller import UIController
-        from .job_pipeline import JobPipeline
-
         self.config_store = config_store_module.ConfigStore(anki_utils, service_manager)
         self.config = self.config_store.config
 

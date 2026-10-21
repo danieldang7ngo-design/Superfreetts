@@ -26,6 +26,7 @@ from . import logging_utils
 from . import i18n
 from . import source_text_resolver
 from . import batch_executor
+from . import batch_constants
 from . import text_utils
 from . import usage_tracker
 
@@ -697,7 +698,7 @@ class BatchOrchestrator:
             thread = threading.Thread(target=_submit_service_chunks, args=(service_name, chunk_items_list), daemon=True)
             thread.start()
             submit_threads.append(thread)
-        stall_timeout_seconds = 60.0
+        stall_timeout_seconds = float(batch_constants.BATCH_STALL_TIMEOUT_SECONDS)
         last_progress_time = time.time()
 
         while any(thread.is_alive() for thread in submit_threads) or future_to_chunk:

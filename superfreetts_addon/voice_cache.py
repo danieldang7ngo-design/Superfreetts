@@ -13,13 +13,73 @@ import hashlib
 import os
 import time
 import gzip
-import pickle
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 
+from . import constants
+from . import languages
 from . import logging_utils
+from . import voice as voice_module
 
 logger = logging_utils.get_child_logger(__name__)
+
+CACHE_FORMAT_VERSION = 2
+CACHE_SUFFIX = "_voices.json.gz"
+LEGACY_CACHE_GLOB = "*_voices.pkl.gz"
+
+
+def _serialize_voice(voice: Any) -> Dict[str, Any]:
+    """Convert a TtsVoice_v3 into JSON-safe data.
+
+    Voice lists are deliberately stored as plain JSON.  The old implementation
+    used pickle, which turns a cache file into arbitrary code execution if it is
+    ever tampered with.
+    """
+    gender = getattr(voice, "gender", None)
+    service_fee = getattr(voice, "service_fee", None)
+    audio_languages = getattr(voice, "audio_languages", None) or []
+    return {
+        "name": getattr(voice, "name", ""),
+        "voice_key": getattr(voice, "voice_key", ""),
+        "options": getattr(voice, "options", {}),
+        "service": getattr(voice, "service", ""),
+        "gender": getattr(gender, "name", str(gender)),
+        "audio_languages": [
+            getattr(language, "name", str(language))
+            for language in audio_languages
+        ],
+        "service_fee": getattr(service_fee, "name", str(service_fee)),
+    }
+
+
+def _deserialize_voice(data: Dict[str, Any]):
+    audio_languages = []
+    for name in data.get("audio_languages", []):
+        try:
+            audio_languages.append(languages.AudioLanguage[name])
+        except KeyError:
+            logger.warning(f"Unknown audio language in voice cache: {name}")
+    if not audio_languages:
+        audio_languages = [languages.AudioLanguage.en_US]
+
+    try:
+        gender = constants.Gender[data.get("gender", "Any")]
+    except KeyError:
+        gender = constants.Gender.Any
+    try:
+        service_fee = constants.ServiceFee[data.get("service_fee", "free")]
+    except KeyError:
+        service_fee = constants.ServiceFee.free
+
+    return voice_module.TtsVoice_v3(
+        name=data.get("name", ""),
+        voice_key=data.get("voice_key", ""),
+        options=data.get("options", {}),
+        service=data.get("service", ""),
+        gender=gender,
+        audio_languages=audio_languages,
+        service_fee=service_fee,
+    )
 
 
 class VoiceListCache:
@@ -53,12 +113,12 @@ class VoiceListCache:
     
     def get_disk_path(self, service_name: str) -> Path:
         """Get disk cache path for a service"""
-        return self.cache_dir / f"{service_name}_voices.pkl.gz"
+        return self.cache_dir / f"{service_name}{CACHE_SUFFIX}"
     
     def _compute_checksum(self, data: Any) -> str:
         """Compute checksum of data"""
         json_str = json.dumps(data, sort_keys=True, default=str)
-        return hashlib.md5(json_str.encode()).hexdigest()
+        return hashlib.sha256(json_str.encode()).hexdigest()
     
     def is_expired(self, service_name: str) -> bool:
         """Check if cache is expired"""
@@ -88,18 +148,32 @@ class VoiceListCache:
             logger.debug(f"Voice cache hit (memory): {service_name}")
             return self.memory_cache[key]
         
-        # Try disk cache
+        # Try disk cache. A fresh process has no in-memory timestamp, so use
+        # the file's mtime rather than treating every disk entry as expired.
         disk_path = self.get_disk_path(service_name)
-        if disk_path.exists() and not self.is_expired(service_name):
+        if disk_path.exists():
             try:
-                with gzip.open(disk_path, 'rb') as f:
-                    data = pickle.load(f)
+                age = time.time() - disk_path.stat().st_mtime
+                if age <= self.ttl_seconds:
+                    with gzip.open(disk_path, "rt", encoding="utf-8") as f:
+                        payload = json.load(f)
+                    if payload.get("version") != CACHE_FORMAT_VERSION:
+                        raise ValueError("unsupported voice-cache version")
+                    data = [
+                        _deserialize_voice(item)
+                        for item in payload.get("voices", [])
+                    ]
                     self.memory_cache[key] = data
                     self.cache_times[key] = time.time()
+                    self.cache_checksums[key] = self._compute_checksum(payload.get("voices", []))
                     logger.debug(f"Voice cache hit (disk): {service_name}")
                     return data
             except Exception as e:
                 logger.warning(f"Failed to load disk cache for {service_name}: {e}")
+                try:
+                    disk_path.unlink()
+                except OSError:
+                    pass
                 return None
         
         logger.debug(f"Voice cache miss: {service_name}")
@@ -114,7 +188,8 @@ class VoiceListCache:
             voices: List of voice objects
         """
         key = self.get_cache_key(service_name)
-        checksum = self._compute_checksum(voices)
+        serialized_voices = [_serialize_voice(item) for item in voices]
+        checksum = self._compute_checksum(serialized_voices)
         
         # Skip if data hasn't changed
         if key in self.cache_checksums and self.cache_checksums[key] == checksum:
@@ -126,14 +201,25 @@ class VoiceListCache:
         self.cache_times[key] = time.time()
         self.cache_checksums[key] = checksum
         
-        # Store on disk (compressed)
+        # Store on disk (compressed JSON, written atomically)
         disk_path = self.get_disk_path(service_name)
+        temp_path = disk_path.with_name(disk_path.name + ".tmp")
         try:
-            with gzip.open(disk_path, 'wb') as f:
-                pickle.dump(voices, f, protocol=pickle.HIGHEST_PROTOCOL)
+            payload = {
+                "version": CACHE_FORMAT_VERSION,
+                "saved_at": time.time(),
+                "voices": serialized_voices,
+            }
+            with gzip.open(temp_path, "wt", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+            os.replace(temp_path, disk_path)
             logger.debug(f"Voice cache saved (disk): {service_name}")
         except Exception as e:
             logger.warning(f"Failed to save disk cache for {service_name}: {e}")
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
     
     def clear(self, service_name: Optional[str] = None) -> None:
         """
@@ -151,6 +237,12 @@ class VoiceListCache:
             disk_path = self.get_disk_path(service_name)
             if disk_path.exists():
                 disk_path.unlink()
+            # Purge any legacy pickle cache for this service as well.
+            for legacy_file in self.cache_dir.glob(f"{service_name}_voices.pkl.gz"):
+                try:
+                    legacy_file.unlink()
+                except OSError:
+                    pass
             logger.info(f"Cache cleared: {service_name}")
         else:
             # Clear all
@@ -158,8 +250,13 @@ class VoiceListCache:
             self.cache_times.clear()
             self.cache_checksums.clear()
             
-            for pkl_file in self.cache_dir.glob("*_voices.pkl.gz"):
-                pkl_file.unlink()
+            for cache_file in self.cache_dir.glob(f"*{CACHE_SUFFIX}"):
+                cache_file.unlink()
+            for legacy_file in self.cache_dir.glob(LEGACY_CACHE_GLOB):
+                try:
+                    legacy_file.unlink()
+                except OSError:
+                    pass
             logger.info("All voice caches cleared")
     
     def cleanup_expired(self) -> int:
@@ -172,14 +269,22 @@ class VoiceListCache:
         removed = 0
         current_time = time.time()
         
-        for pkl_file in self.cache_dir.glob("*_voices.pkl.gz"):
+        for cache_file in self.cache_dir.glob(f"*{CACHE_SUFFIX}"):
             try:
-                age = current_time - pkl_file.stat().st_mtime
+                age = current_time - cache_file.stat().st_mtime
                 if age > self.ttl_seconds:
-                    pkl_file.unlink()
+                    cache_file.unlink()
                     removed += 1
             except Exception as e:
-                logger.warning(f"Failed to cleanup {pkl_file}: {e}")
+                logger.warning(f"Failed to cleanup {cache_file}: {e}")
+
+        # Remove old pickle caches produced by versions <= 26.10.1.
+        for legacy_file in self.cache_dir.glob(LEGACY_CACHE_GLOB):
+            try:
+                legacy_file.unlink()
+                removed += 1
+            except OSError:
+                pass
         
         if removed > 0:
             logger.info(f"Removed {removed} expired cache files")
@@ -190,12 +295,12 @@ class VoiceListCache:
         """Get cache statistics"""
         total_disk_size = sum(
             f.stat().st_size 
-            for f in self.cache_dir.glob("*_voices.pkl.gz")
+            for f in self.cache_dir.glob(f"*{CACHE_SUFFIX}")
         ) / (1024 * 1024)  # Convert to MB
         
         return {
             'memory_entries': len(self.memory_cache),
-            'disk_entries': len(list(self.cache_dir.glob("*_voices.pkl.gz"))),
+            'disk_entries': len(list(self.cache_dir.glob(f"*{CACHE_SUFFIX}"))),
             'disk_size_mb': round(total_disk_size, 2),
             'ttl_seconds': self.ttl_seconds,
         }

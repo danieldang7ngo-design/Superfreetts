@@ -1,4 +1,3 @@
-from asyncio.proactor_events import constants
 import sys
 import aqt.qt
 

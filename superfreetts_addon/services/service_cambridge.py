@@ -51,7 +51,7 @@ class Cambridge(service.ServiceBase):
 
         complete_url = self.SEARCH_URL + source_text
         logger.info(f'loading url: {complete_url}')
-        response = requests.get(complete_url, headers=headers)
+        response = requests.get(complete_url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
 
         soup = bs4.BeautifulSoup(response.content, 'html.parser')
 
@@ -69,7 +69,7 @@ class Cambridge(service.ServiceBase):
             source_tag = span_pronunciation_section.find('source', {'type': 'audio/mpeg'})
             if source_tag != None:
                 sound_url = self.WEBSITE + source_tag['src']
-                response = requests.get(sound_url, headers=headers)
+                response = requests.get(sound_url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
                 return response.content                
 
         # if we couldn't locate the source tag, raise notfound

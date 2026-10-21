@@ -1,22 +1,22 @@
 import os
 import sys
 import shutil
-import zipfile
 import subprocess
 import threading
 import platform
 from typing import Optional, Callable
 
+from . import archive_utils
 from . import logging_utils
 from .downloader import TurboDownloader
 from . import constants
 
 logger = logging_utils.get_child_logger(__name__)
 
-logger = logging_utils.get_child_logger(__name__)
-
 # Constants for Python Installation
 PYTHON_EMBED_URL = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip"
+PYTHON_EMBED_SHA256 = "608619f8619075629c9c69f361352a0da6ed7e62f83a0e19c63e0ea32eb7629d"
+PYTHON_EMBED_SIZE = 8629277
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 
 ADDON_DIR = os.path.dirname(__file__)
@@ -28,7 +28,6 @@ class EngineManager:
     @staticmethod
     def _find_linux_python() -> Optional[str]:
         """Find a usable system Python3 on Linux/macOS."""
-        import shutil
         for name in ('python3', 'python'):
             path = shutil.which(name)
             if path:
@@ -90,12 +89,17 @@ class EngineManager:
             zip_path = os.path.join(constants.SHARED_ENGINE_DIR, 'python.zip')
             if not os.path.exists(cls.get_python_exe()):
                 logger.info(f"Downloading Python from {PYTHON_EMBED_URL}")
-                downloader = TurboDownloader(PYTHON_EMBED_URL, zip_path, progress_callback=progress_callback)
+                downloader = TurboDownloader(
+                    PYTHON_EMBED_URL,
+                    zip_path,
+                    progress_callback=progress_callback,
+                    expected_sha256=PYTHON_EMBED_SHA256,
+                    expected_size=PYTHON_EMBED_SIZE,
+                )
                 downloader.start()
                 
                 logger.info("Extracting Python...")
-                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                    zip_ref.extractall(constants.SHARED_ENGINE_DIR)
+                archive_utils.safe_extract_zip(zip_path, constants.SHARED_ENGINE_DIR)
                 
                 if os.path.exists(zip_path):
                     os.remove(zip_path)

@@ -65,6 +65,31 @@ class _FreeTestServiceB(ServiceBase):
         return {}
 
 
+class _DeferredPiperService(ServiceBase):
+    """Named like an expensive engine so startup defers instantiation."""
+
+    @property
+    def name(self):
+        return "PiperTTS"
+
+    @property
+    def service_type(self):
+        return constants.ServiceType.tts
+
+    @property
+    def service_fee(self):
+        return constants.ServiceFee.free
+
+    def voice_list(self):
+        return []
+
+    def get_tts_audio(self, source_text, voice, options):
+        return b""
+
+    def configuration_options(self):
+        return {"concurrency_workers": int}
+
+
 class _PaidTestService(ServiceBase):
     """Paid service — should be excluded from ServiceManager."""
 
@@ -406,3 +431,29 @@ class TestServiceConfiguration:
         updated_map = config.get_service_enabled_map()
         assert "StaleService" not in updated_map
         assert "_FreeTestServiceA" in updated_map
+
+    def test_remove_non_existent_services_keeps_deferred_expensive_service(self, tmp_path):
+        """Deferred engines are real services; never drop their saved config."""
+        sm = _make_sm(tmp_path, classes=[_DeferredPiperService])
+        assert "PiperTTS" not in sm.services
+
+        enabled_map = {"PiperTTS": True}
+        service_config = {"PiperTTS": {"concurrency_workers": 1}}
+        config = _make_config_model(enabled_map, service_config)
+
+        sm.remove_non_existent_services(config)
+
+        assert config.get_service_enabled_map()["PiperTTS"] is True
+        assert config.get_service_config()["PiperTTS"] == {"concurrency_workers": 1}
+
+    def test_configure_does_not_instantiate_deferred_service(self, tmp_path):
+        """Applying config at startup must not force-load a deferred engine."""
+        sm = _make_sm(tmp_path, classes=[_DeferredPiperService])
+        config = _make_config_model(
+            {"PiperTTS": True},
+            {"PiperTTS": {"concurrency_workers": 1}},
+        )
+
+        sm.configure(config)
+
+        assert "PiperTTS" not in sm.services

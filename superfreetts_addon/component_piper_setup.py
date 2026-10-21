@@ -1,12 +1,11 @@
 
 import os
 import shutil
-import tarfile
-import zipfile
 import threading
 import platform
 from aqt import mw
 from aqt.qt import *
+from . import archive_utils
 from . import i18n
 from . import gui_utils
 from . import logging_utils
@@ -19,6 +18,10 @@ logger = logging_utils.get_child_logger(__name__)
 # Piper Engine releases (Standard CPU optimized)
 PIPER_ENGINE_URL_WINDOWS = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip"
 PIPER_ENGINE_URL_LINUX_X86_64 = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz"
+PIPER_ENGINE_SHA256_WINDOWS = "f3c58906402b24f3a96d92145f58acba6d86c9b5db896d207f78dc80811efcea"
+PIPER_ENGINE_SHA256_LINUX = "a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992"
+PIPER_ENGINE_SIZE_WINDOWS = 22477236
+PIPER_ENGINE_SIZE_LINUX = 26460462
 
 def _get_piper_url():
     """Return the platform-appropriate Piper download URL."""
@@ -108,6 +111,8 @@ class PiperSetupDialog(QDialog):
                 
                 is_zip = piper_url.endswith('.zip')
                 archive_path = os.path.join(constants.PIPER_ENGINE_DIR, "piper.zip" if is_zip else "piper.tar.gz")
+                expected_sha256 = PIPER_ENGINE_SHA256_WINDOWS if is_zip else PIPER_ENGINE_SHA256_LINUX
+                expected_size = PIPER_ENGINE_SIZE_WINDOWS if is_zip else PIPER_ENGINE_SIZE_LINUX
                 from .downloader import TurboDownloader
 
                 def on_download_progress(data):
@@ -118,18 +123,22 @@ class PiperSetupDialog(QDialog):
                         i18n.get_text("piper_setup_downloading_engine", self.lang) + f" ({p}%, {s:.1f} MB/s)"
                     ))
 
-                downloader = TurboDownloader(piper_url, archive_path, progress_callback=on_download_progress)
+                downloader = TurboDownloader(
+                    piper_url,
+                    archive_path,
+                    progress_callback=on_download_progress,
+                    expected_sha256=expected_sha256,
+                    expected_size=expected_size,
+                )
                 downloader.start()
                 
                 mw.taskman.run_on_main(lambda: self.status_label.setText(i18n.get_text("piper_setup_extracting_engine", self.lang)))
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extracting_zip", self.lang)))
                 
                 if is_zip:
-                    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-                        zip_ref.extractall(constants.PIPER_ENGINE_DIR)
+                    archive_utils.safe_extract(archive_path, constants.PIPER_ENGINE_DIR, archive_type="zip")
                 else:
-                    with tarfile.open(archive_path, 'r:gz') as tar_ref:
-                        tar_ref.extractall(constants.PIPER_ENGINE_DIR)
+                    archive_utils.safe_extract(archive_path, constants.PIPER_ENGINE_DIR, archive_type="tar")
                     # Make piper binary executable on Linux
                     piper_binary_path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'piper')
                     if os.path.exists(piper_binary_path):

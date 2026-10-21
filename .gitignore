@@ -2,7 +2,6 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
-!external/psutil/_psutil_windows.pyd
 *$py.class
 external/comtypes/gen/
 
@@ -22,6 +21,10 @@ superfreetts_addon/data/piper_models/
 # --- Build artifacts ---
 dist/
 *.ankiaddon
+.coverage
+.coverage.*
+.ruff_cache/
+.healthcheck/
 
 # --- Local-only mirrors / scratch ---
 superfreetts-mirror.git/

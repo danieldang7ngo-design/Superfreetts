@@ -9,6 +9,10 @@ ENABLE_SENTRY_CRASH_REPORTING = False
 LOGGER_NAME = 'superfreetts'
 LOGGER_NAME_TEST = 'test_superfreetts'
 
+# Default timeout for third-party HTTP requests. Without this, a stalled DNS
+# lookup or server can block a worker thread (and batch generation) forever.
+HTTP_TIMEOUT_SECONDS = 30
+
 CLIENT_NAME='anki-super-free-tts'
 
 # requests related constants

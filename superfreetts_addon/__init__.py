@@ -47,8 +47,15 @@ else:
         logging_utils.FORCE_DEBUG_MODE = True
         logging_utils.configure_silent()  # Start in silent mode
     elif os.environ.get('HYPER_TTS_DEBUG_LOGGING', '') == 'file':
-        # log everything to file
-        logging_utils.configure_file_logging(os.environ['HYPER_TTS_DEBUG_LOGFILE'])
+        # Log everything to file. HYPER_TTS_DEBUG_LOGFILE is optional: if it
+        # is missing, fall back to the normal per-add-on user_files folder
+        # instead of crashing Anki during add-on import.
+        logfile = os.environ.get('HYPER_TTS_DEBUG_LOGFILE')
+        if not logfile:
+            user_files_dir = os.path.join(addon_root_dir, 'user_files')
+            os.makedirs(user_files_dir, exist_ok=True)
+            logfile = os.path.join(user_files_dir, 'superfreetts.log')
+        logging_utils.configure_file_logging(logfile)
     else:
         # log at info level, but with null handler, so that sentry picks up breadcrumbs and errors
         logging_utils.configure_silent()

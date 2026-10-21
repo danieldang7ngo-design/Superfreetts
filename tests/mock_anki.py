@@ -36,7 +36,8 @@ def mock_all():
         'aqt.deckconf', 'aqt.stats', 'aqt.import_export', 'aqt.addons', 'aqt.main',
         'aqt.tts', 'aqt.theme', 'aqt.webview', 'aqt.models',
         'anki.notes', 'anki.cards', 'anki.hooks', 'anki.utils', 'anki.errors', 'anki.sound',
-        'anki.decks', 'anki.models', 'anki.sched', 'anki.collection', 'anki.storage'
+        'anki.decks', 'anki.models', 'anki.sched', 'anki.collection', 'anki.storage',
+        'anki.template',
     ]
     
     for name in sub_names:

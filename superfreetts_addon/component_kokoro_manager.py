@@ -2,7 +2,6 @@
 import os
 import sys
 import shutil
-import zipfile
 import urllib.request
 import subprocess
 import threading
@@ -13,6 +12,7 @@ import time
 from aqt import mw
 from aqt.qt import *
 from aqt.utils import showInfo, tooltip, showWarning
+from . import archive_utils
 from . import i18n
 from . import logging_utils
 from . import constants
@@ -27,6 +27,8 @@ GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 # Kokoro Model URLs
 KOKORO_V10_MODEL_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
 KOKORO_V10_VOICES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
+KOKORO_V10_MODEL_SIZE = 325532387
+KOKORO_V10_VOICES_SIZE = 28214398
 
 def _get_python_exe():
     import platform
@@ -194,7 +196,7 @@ class KokoroInstallManager(QDialog):
             mw.taskman.run_on_main(lambda: showInfo("Kokoro Engine uninstalled successfully."))
         except Exception as e:
             self.log(f"Error during uninstall: {e}")
-            mw.taskman.run_on_main(lambda: showWarning(f"Uninstall failed (File in use?): {e}\n\nPlease close Anki and delete the folder manually if this persists."))
+            mw.taskman.run_on_main(lambda err=e: showWarning(f"Uninstall failed (File in use?): {err}\n\nPlease close Anki and delete the folder manually if this persists."))
         finally:
             mw.taskman.run_on_main(self._on_worker_finished)
 
@@ -252,13 +254,13 @@ class KokoroInstallManager(QDialog):
             self.log("Installing Standard v1.0 Brain (Core Engine)...")
             if not os.path.exists(_get_kokoro_v10_model_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_v10", self.lang)))
-                self._download_file(KOKORO_V10_MODEL_URL, _get_kokoro_v10_model_path())
+                self._download_file(KOKORO_V10_MODEL_URL, _get_kokoro_v10_model_path(), expected_size=KOKORO_V10_MODEL_SIZE)
 
             # Step 5: Download Global Voice Bundle (Essential)
             self.log("Installing Global Voice Bundle (35MB)...")
             if not os.path.exists(_get_voices_v10_bin_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_voices_v10", self.lang)))
-                self._download_file(KOKORO_V10_VOICES_URL, _get_voices_v10_bin_path())
+                self._download_file(KOKORO_V10_VOICES_URL, _get_voices_v10_bin_path(), expected_size=KOKORO_V10_VOICES_SIZE)
 
             # Step 6: Finalize and Automate Optimization
             self.log("Finalizing Installation. Running automatic optimization (Ep-can)...")
@@ -304,7 +306,7 @@ class KokoroInstallManager(QDialog):
         #             count += 1
         self.log(f"Auto-Optimization: Reduced size by {size_saved // (1024*1024)} MB.")
 
-    def _download_file(self, url, dest):
+    def _download_file(self, url, dest, expected_size=None, expected_sha256=None):
         debug_mode = False
         try:
             if hasattr(mw, 'hyper_tts'):
@@ -317,7 +319,14 @@ class KokoroInstallManager(QDialog):
             speed_mb = data['speed_mb']
             mw.taskman.run_on_main(lambda: self.update_status(f"Downloading... {percent}% ({speed_mb:.1f} MB/s)"))
         
-        downloader = TurboDownloader(url, dest, progress_callback=on_progress, debug_mode=debug_mode)
+        downloader = TurboDownloader(
+            url,
+            dest,
+            progress_callback=on_progress,
+            debug_mode=debug_mode,
+            expected_sha256=expected_sha256,
+            expected_size=expected_size,
+        )
         downloader.start()
         mw.taskman.run_on_main(lambda: self.log(f"Downloaded to {os.path.basename(dest)}"))
 
@@ -326,8 +335,7 @@ class KokoroInstallManager(QDialog):
         mw.taskman.run_on_main(lambda: self.update_progress(progress_val))
         mw.taskman.run_on_main(lambda: self.log(f"Extracting {os.path.basename(zip_path)}..."))
         
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
+        archive_utils.safe_extract_zip(zip_path, extract_to)
         
         # Cleanup zip
         try: os.remove(zip_path)

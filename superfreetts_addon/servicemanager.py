@@ -59,7 +59,16 @@ class ServiceManager():
         return_value = False
         for service_name, enabled in configuration_model.get_service_enabled_map().items():
             if not self.service_exists(service_name):
-                logger.debug(f'service {service_name} not yet instantiated, will configure when needed')
+                logger.debug(f'service {service_name} does not exist, skipping')
+                continue
+            if service_name not in self.services:
+                # Expensive engines (Piper/Kokoro/MMS/Supertonic) are
+                # intentionally deferred. Do not instantiate them just to
+                # apply configuration; they receive it when loaded on demand.
+                logger.debug(
+                    f'service {service_name} is deferred; configuration will be '
+                    f'applied when it is instantiated'
+                )
                 continue
             service = self.get_service(service_name)
             logger.info(f'configuring service {service_name}')
@@ -357,14 +366,13 @@ class ServiceManager():
     # =====================================
 
     def service_exists(self, service_name):
-        # Ensure services are discovered and instantiated if needed
+        # Check discovered service classes, not instantiated services. Expensive
+        # engines are deferred, but they still exist and their saved
+        # configuration must not be deleted during config migration/cleanup.
         if not self._services_discovered or not self._service_classes:
             logger.debug('service_exists: services not yet discovered, running init_services() lazily')
             self.init_services()
-        if not self._services_initialized:
-            logger.debug('service_exists: services not yet instantiated, running instantiate_all_services() lazily')
-            self.instantiate_all_services()
-        return service_name in self.services
+        return service_name in self._service_classes or service_name in self.services
     
     def get_service(self, service_name):
         # **OPTIMIZATION**: Support on-demand lazy loading of expensive services

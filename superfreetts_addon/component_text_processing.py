@@ -12,11 +12,6 @@ from . import i18n
 logger = logging_utils.get_child_logger(__name__)
 
 
-class TextProcessing(component_common.ConfigComponentBase):
-    def __init__(self, hypertts, model_change_callback):
-        self.hypertts = hypertts
-        self.model_change_callback = model_change_callback
-
 COL_INDEX_TYPE = 0
 COL_INDEX_PATTERN = 1
 COL_INDEX_REPLACEMENT = 2

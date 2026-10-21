@@ -1,5 +1,31 @@
 # Changelog
 
+## 26.10.2 - 2026-10-21
+
+### English
+
+- Stable startup on fresh installs: removed the obsolete ONNX general service that imported a deleted symbol and crashed add-on loading.
+- RAM-aware concurrency without `psutil`: reads Linux `/proc/meminfo`, macOS `sysconf`, or Windows `GlobalMemoryStatusEx` directly, measures memory once per launch, and logs one `[RAM]` decision. Manual worker overrides are warned about but never silently clamped.
+- EdgeTTS defaults to 3 workers (down from 100), avoiding service rate limits and excessive memory use. Higher configured values are capped at 3.
+- Download hardening: HTTP timeouts on every request, streamed fallback, size checks, SHA-256 verification for the Python embed and Piper archives, partial-file cleanup, and automatic single-connection retry when a server ignores range requests.
+- Safe installer extraction: ZIP/TAR members are checked for path traversal, absolute paths, symlinks, device files, and archive bombs before anything is written.
+- Voice-list cache now uses compressed JSON with SHA-256 integrity checks and atomic writes instead of pickle; legacy `.pkl.gz` files are removed automatically. Disk caches are now usable after an Anki restart.
+- Batch processing waits up to 10 minutes for a slow task before declaring the batch stalled, instead of failing after 60 seconds.
+- CI now runs Ruff, Python 3.9/3.11/3.13/3.14 tests, Windows/macOS tests, a coverage guard, and a package verifier that imports the built archive in a clean interpreter.
+- All seven UI languages remain available (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); English remains the default and missing translations fall back to English.
+
+### Tiếng Việt
+
+- Khởi động ổn định trên cài đặt mới: đã xoá dịch vụ ONNX chung cũ vốn import một ký hiệu đã bị xoá và làm hỏng quá trình tải add-on.
+- Giới hạn song song theo RAM không cần `psutil`: đọc trực tiếp `/proc/meminfo` trên Linux, `sysconf` trên macOS hoặc `GlobalMemoryStatusEx` trên Windows, đo bộ nhớ một lần mỗi lần khởi động và ghi một quyết định `[RAM]`. Giá trị worker do người dùng đặt sẽ được cảnh báo nhưng không bị tự động cắt.
+- EdgeTTS mặc định 3 worker (giảm từ 100), tránh giới hạn tốc độ và tốn RAM. Giá trị cấu hình cao hơn sẽ được giới hạn ở 3.
+- Củng cố tải xuống: timeout HTTP cho mọi yêu cầu, tải dự phòng dạng stream, kiểm tra kích thước, xác minh SHA-256 cho Python embed và Piper, dọn file dở dang, và tự chuyển sang một kết nối khi máy chủ bỏ qua range request.
+- Giải nén cài đặt an toàn: kiểm tra thành viên ZIP/TAR trước khi ghi, chống path traversal, đường dẫn tuyệt đối, symlink, thiết bị và zip bomb.
+- Bộ nhớ đệm danh sách giọng dùng JSON nén với kiểm tra toàn vẹn SHA-256 và ghi nguyên tử thay vì pickle; file `.pkl.gz` cũ được tự động xoá. Cache trên đĩa giờ dùng được sau khi khởi động lại Anki.
+- Xử lý hàng loạt chờ tối đa 10 phút cho tác vụ chậm trước khi coi là bị treo, thay vì lỗi sau 60 giây.
+- CI chạy Ruff, test Python 3.9/3.11/3.13/3.14, test Windows/macOS, kiểm tra độ phủ và bộ xác minh gói cài đặt có import thử trong môi trường sạch.
+- Cả 7 ngôn ngữ giao diện vẫn hiển thị (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); tiếng Anh vẫn là mặc định và bản dịch thiếu sẽ dùng tiếng Anh.
+
 ## 26.10.1 - 2026-10-14
 
 ### English

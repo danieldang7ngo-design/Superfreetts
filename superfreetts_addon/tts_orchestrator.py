@@ -38,15 +38,21 @@ class TTSOrchestrator:
 
     def build_engine_config(self, service_config_map: dict) -> dict:
         cpu_default = max(2, system_utils.get_max_workers())
+        available_ram_mb = system_utils.get_available_ram_mb()
+        ram_source = system_utils.get_ram_detection_source()
         # Root cause 2.6 fix: local engine defaults used to be cpu_default
         # unconditionally, meaning pool size scaled with CPU core count with
         # no regard for how much RAM each process actually needs. Cap each
         # engine's default by available RAM too; compute_ram_aware_concurrency
-        # falls back to plain cpu_default if RAM can't be measured (no
-        # psutil) or no estimate exists for a given engine, so this is a
-        # strict subset of the old behavior, never more permissive.
+        # falls back to plain cpu_default only when RAM genuinely cannot be
+        # measured by any supported method, so this is a strict subset of the
+        # old behavior, never more permissive.
         ram_capped_default = {
-            engine: system_utils.compute_ram_aware_concurrency(cpu_default, ram_estimate)
+            engine: system_utils.compute_ram_aware_concurrency(
+                cpu_default,
+                ram_estimate,
+                available_ram_mb=available_ram_mb,
+            )
             for engine, ram_estimate in RAM_PER_PROCESS_MB_ESTIMATE.items()
         }
         defaults = {
@@ -56,6 +62,17 @@ class TTSOrchestrator:
             'MmsTTS': ram_capped_default.get('MmsTTS', cpu_default),
             'SupertonicTTS': ram_capped_default.get('SupertonicTTS', cpu_default),
         }
+        if available_ram_mb is None:
+            logger.warning(
+                f'[RAM] source={ram_source} available_mb=unknown '
+                f'cpu_default={cpu_default}; local engine pools are NOT RAM-capped. '
+                f'Use Advanced settings to set concurrency_workers manually if needed.'
+            )
+        else:
+            logger.info(
+                f'[RAM] source={ram_source} available_mb={available_ram_mb} '
+                f'cpu_default={cpu_default} defaults={defaults}'
+            )
         for engine_name, ram_value in ram_capped_default.items():
             if ram_value < cpu_default:
                 logger.info(
@@ -73,8 +90,22 @@ class TTSOrchestrator:
         engine_config = {}
         for service_name, pool_name in service_pool_map.items():
             service_config = service_config_map.get(service_name, {})
-            concurrency = service_config.get('concurrency_workers') or defaults.get(service_name, 1)
-            
+            requested_concurrency = service_config.get('concurrency_workers')
+            concurrency = requested_concurrency or defaults.get(service_name, 1)
+
+            safe_default = ram_capped_default.get(service_name)
+            if (
+                requested_concurrency
+                and available_ram_mb is not None
+                and safe_default is not None
+                and requested_concurrency > safe_default
+            ):
+                logger.warning(
+                    f'[RAM-WARN] {service_name} concurrency_workers={requested_concurrency} '
+                    f'exceeds the RAM-safe estimate of {safe_default} '
+                    f'(available_mb={available_ram_mb}). Keeping the user override.'
+                )
+
             max_cap = batch_constants.EDGETTS_MAX_WORKERS if service_name == 'EdgeTTS' else system_utils.get_max_workers()
             if concurrency > max_cap:
                 logger.warning(f'Service {service_name} concurrency_workers ({concurrency}) exceeds max ({max_cap}), capping')
