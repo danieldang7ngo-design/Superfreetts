@@ -1,0 +1,36 @@
+# Runtime dependencies vendored into external/.
+#
+# These are intentionally vendored (rather than installed at Anki startup) so
+# EdgeTTS works offline from the add-on package.  Keep the versions here in
+# sync with external/*.dist-info; scripts/vendor_deps.py --check enforces the
+# five packages whose code is pinned by this file.
+requests==2.32.4
+certifi==2025.7.9
+idna==3.10
+charset-normalizer==3.4.2
+urllib3==2.5.0
+
+# EdgeTTS and its runtime dependencies.
+edge-tts==7.3.1
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.3
+aiosignal==1.4.0
+attrs==25.4.0
+frozenlist==1.8.0
+multidict==6.7.1
+propcache==0.4.1
+tabulate==0.9.0
+typing-extensions==4.15.0
+yarl==1.22.0
+
+# Platform/helper modules carried as plain packages without dist-info.
+# click==8.1.8
+# comtypes==1.4.11
+# databind==4.5.2
+# python-dateutil==2.9.0.post0
+# Deprecated==1.2.18
+# gTTS==2.5.4
+# nr==2.1.0
+# six==1.17.0
+# typeapi==2.2.4
+# wrapt==1.17.2

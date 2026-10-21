@@ -8,8 +8,6 @@ Strategy:
 - No Anki runtime needed: mock_anki.mock_all() is called by conftest.py at import time.
 """
 
-import os
-import sys
 import pytest
 from unittest.mock import MagicMock, patch
 

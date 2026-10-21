@@ -1,7 +1,6 @@
-import os
-import requests
 import logging
 from aqt import mw
+from . import http_utils
 from .downloader import TurboDownloader
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,7 @@ def get_hf_model_files(repo_id, folder_path=""):
     """
     api_url = f"https://huggingface.co/api/models/{repo_id}"
     try:
-        response = requests.get(api_url, timeout=15)
+        response = http_utils.get(api_url, timeout=15)
         response.raise_for_status()
         data = response.json()
         

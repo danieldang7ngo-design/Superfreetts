@@ -1,6 +1,3 @@
-import sys
-import re
-import requests
 import bs4
 
 from .. import voice
@@ -9,6 +6,7 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from .. import http_utils
 logger = logging_utils.get_child_logger(__name__)
 
 class Oxford(service.ServiceBase):
@@ -48,7 +46,13 @@ class Oxford(service.ServiceBase):
         }
         url = self.URL_BASE + source_text
         logger.debug(f'loading url: {url}')
-        response = requests.get(url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
+        response = http_utils.get_audio(
+            url,
+            source_text,
+            voice,
+            headers=headers,
+            timeout=constants.HTTP_TIMEOUT_SECONDS,
+        )
         logger.debug(f'response.status_code: {response.status_code}')
         
         soup = bs4.BeautifulSoup(response.content, 'html.parser')
@@ -66,7 +70,13 @@ class Oxford(service.ServiceBase):
         if div_pronunciation != None:
             sound_url = div_pronunciation['data-src-mp3']
             if sound_url != None:
-                response = requests.get(sound_url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
+                response = http_utils.get_audio(
+                    sound_url,
+                    source_text,
+                    voice,
+                    headers=headers,
+                    timeout=constants.HTTP_TIMEOUT_SECONDS,
+                )
                 return response.content                
 
         # if we couldn't locate the source tag, raise notfound

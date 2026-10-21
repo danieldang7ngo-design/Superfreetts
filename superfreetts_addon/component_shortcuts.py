@@ -1,10 +1,7 @@
-import sys
 import aqt.qt
 
 from . import component_common
 from . import config_models
-from . import constants
-from . import gui_utils
 from . import logging_utils
 from . import i18n
 logger = logging_utils.get_child_logger(__name__)
@@ -134,7 +131,7 @@ class ShortcutsSection(component_common.ConfigComponentBase):
         self.notify_model_update()
 
     def editor_preview_audio_changed(self, key_sequence):
-        logger.info(f'editor_preview_audio_changed')
+        logger.info('editor_preview_audio_changed')
         logger.info(f'key_sequence.toString(): {key_sequence.toString()}')        
         self.model.shortcut_editor_preview_audio = self.convert_shortcut(key_sequence)
         self.notify_model_update()

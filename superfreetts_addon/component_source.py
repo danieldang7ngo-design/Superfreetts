@@ -1,6 +1,4 @@
-import sys
 import aqt.qt
-import pprint
 
 from . import component_common
 from . import constants

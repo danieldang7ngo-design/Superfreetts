@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 
 from . import component_common

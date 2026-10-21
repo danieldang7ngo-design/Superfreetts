@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 import copy
 
@@ -10,7 +9,6 @@ from . import gui_utils
 from . import errors
 from . import voice as voice_module
 # from . import constants_events removed
-from .stats import Event, EventMode
 from . import stats
 from . import logging_utils
 from . import i18n

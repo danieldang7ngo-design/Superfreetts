@@ -5,3 +5,4 @@ coverage>=7.0
 ruff>=0.6
 bandit>=1.7
 beautifulsoup4>=4.12
+packaging>=23.0

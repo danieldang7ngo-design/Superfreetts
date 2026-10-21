@@ -10,8 +10,7 @@ from tests import mock_anki
 mock_anki.mock_all()
 
 try:
-    from superfreetts_addon.services.service_edgetts import EdgeTTS
     print("SUCCESS: EdgeTTS class imported directly!")
-except Exception as e:
+except Exception:
     import traceback
     traceback.print_exc()

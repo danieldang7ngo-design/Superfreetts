@@ -58,7 +58,6 @@ class TestBatchConfig:
         anki_utils = MockAnkiUtils()
         config = config_models.BatchConfig(anki_utils)
         
-        original_uuid = config.uuid
         config.reset_uuid(anki_utils)
         
         # UUID should change (with high probability)

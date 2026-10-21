@@ -1,6 +1,3 @@
-import sys
-import re
-import requests
 import bs4
 
 from .. import voice
@@ -9,6 +6,7 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from .. import http_utils
 logger = logging_utils.get_child_logger(__name__)
 
 class DigitalesWorterbuchDeutschenSprache(service.ServiceBase):
@@ -57,7 +55,13 @@ class DigitalesWorterbuchDeutschenSprache(service.ServiceBase):
         }
 
         full_url = self.SEARCH_URL + source_text
-        response = requests.get(full_url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
+        response = http_utils.get_audio(
+            full_url,
+            source_text,
+            voice,
+            headers=headers,
+            timeout=constants.HTTP_TIMEOUT_SECONDS,
+        )
 
         soup = bs4.BeautifulSoup(response.content, 'html.parser')
 
@@ -66,7 +70,13 @@ class DigitalesWorterbuchDeutschenSprache(service.ServiceBase):
         if source_tag != None:
             sound_url = source_tag['src']
             logger.info(f'downloading url {sound_url}')
-            response = requests.get(sound_url, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
+            response = http_utils.get_audio(
+                sound_url,
+                source_text,
+                voice,
+                headers=headers,
+                timeout=constants.HTTP_TIMEOUT_SECONDS,
+            )
             return response.content
         else:
             logger.warning(f'could not find audio for {source_text} (source tag not found)')

@@ -9,8 +9,7 @@ Strategy:
 """
 
 import os
-import concurrent.futures
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -32,7 +31,7 @@ from superfreetts_addon.languages import AudioLanguage
 
 def _make_voice(service_name: str) -> TtsVoice_v3:
     """Create a minimal TtsVoice_v3 tagged with the given service."""
-    voice_id = TtsVoiceId_v3({"id": "test_voice"}, service_name)
+    TtsVoiceId_v3({"id": "test_voice"}, service_name)
     return TtsVoice_v3(
         name="TestVoice",
         voice_key={"id": "test_voice"},

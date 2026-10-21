@@ -5,11 +5,9 @@ https://ankiweb.net/shared/info/391644525
 https://github.com/ankitects/anki-addons/blob/master/code/gtts_player/__init__.py
 """
 
-import sys
 import concurrent.futures
 from concurrent.futures import Future
-from dataclasses import dataclass
-from typing import List, cast
+from typing import List
 
 # import aqt
 import aqt.tts
@@ -120,6 +118,6 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
                     logger.debug(f'[USAGE] record_realtime_play failed: {e}')
                 aqt.sound.av_player.insert_file(audio_filename)
             else:
-                logger.warning(f'no audio filename, not playing any audio')
+                logger.warning('no audio filename, not playing any audio')
         cb()
 

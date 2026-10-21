@@ -12,16 +12,16 @@ from . import logging_utils
 from . import component_piper_manager
 from . import constants
 from . import service_logger
+from .download_sources import (
+    PIPER_ENGINE_SHA256_LINUX,
+    PIPER_ENGINE_SHA256_WINDOWS,
+    PIPER_ENGINE_SIZE_LINUX,
+    PIPER_ENGINE_SIZE_WINDOWS,
+    PIPER_ENGINE_URL_LINUX_X86_64,
+    PIPER_ENGINE_URL_WINDOWS,
+)
 
 logger = logging_utils.get_child_logger(__name__)
-
-# Piper Engine releases (Standard CPU optimized)
-PIPER_ENGINE_URL_WINDOWS = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip"
-PIPER_ENGINE_URL_LINUX_X86_64 = "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz"
-PIPER_ENGINE_SHA256_WINDOWS = "f3c58906402b24f3a96d92145f58acba6d86c9b5db896d207f78dc80811efcea"
-PIPER_ENGINE_SHA256_LINUX = "a50cb45f355b7af1f6d758c1b360717877ba0a398cc8cbe6d2a7a3a26e225992"
-PIPER_ENGINE_SIZE_WINDOWS = 22477236
-PIPER_ENGINE_SIZE_LINUX = 26460462
 
 def _get_piper_url():
     """Return the platform-appropriate Piper download URL."""
@@ -142,7 +142,9 @@ class PiperSetupDialog(QDialog):
                     # Make piper binary executable on Linux
                     piper_binary_path = os.path.join(constants.PIPER_ENGINE_DIR, 'piper', 'piper')
                     if os.path.exists(piper_binary_path):
-                        os.chmod(piper_binary_path, 0o755)
+                        # Executable bit on a downloaded binary; no write
+                        # permission is granted to group/other users.
+                        os.chmod(piper_binary_path, 0o755)  # nosec B103
                 
                 os.remove(archive_path)
                 mw.taskman.run_on_main(lambda: self.log(i18n.get_text("piper_setup_extraction_complete", self.lang)))

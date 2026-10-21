@@ -1,6 +1,3 @@
-import sys
-import aqt
-import anki.utils
 import re
 import html
 

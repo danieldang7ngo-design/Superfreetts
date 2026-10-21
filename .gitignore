@@ -23,8 +23,11 @@ dist/
 *.ankiaddon
 .coverage
 .coverage.*
+coverage.json
+htmlcov/
 .ruff_cache/
 .healthcheck/
+notes.db
 
 # --- Local-only mirrors / scratch ---
 superfreetts-mirror.git/

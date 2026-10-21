@@ -11,7 +11,6 @@ if runner_dir not in sys.path:
     sys.path.insert(0, runner_dir)
 
 from runner_base import setup_stdio, log
-setup_stdio()
 
 
 _ENGINE = None
@@ -235,6 +234,7 @@ def handle_request(request):
 
 
 def main():
+    setup_stdio()
     log("Supertonic runner ready")
     for line in sys.stdin.buffer:
         try:

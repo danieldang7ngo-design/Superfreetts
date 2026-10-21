@@ -95,6 +95,33 @@ def test_downloader_falls_back_when_server_ignores_ranges(monkeypatch, tmp_path)
 
 
 @pytest.mark.unit
+def test_downloader_verifies_expected_md5(http_server, tmp_path):
+    destination = tmp_path / "piper-model.onnx"
+    downloader = TurboDownloader(
+        http_server,
+        str(destination),
+        concurrency=3,
+        expected_md5=hashlib.md5(PAYLOAD).hexdigest(),
+    )
+    downloader.start()
+    assert destination.read_bytes() == PAYLOAD
+
+
+@pytest.mark.unit
+def test_downloader_rejects_bad_md5(http_server, tmp_path):
+    destination = tmp_path / "bad-piper-model.onnx"
+    downloader = TurboDownloader(
+        http_server,
+        str(destination),
+        concurrency=1,
+        expected_md5="0" * 32,
+    )
+    with pytest.raises(IOError, match="MD5 mismatch"):
+        downloader.start()
+    assert not destination.exists()
+
+
+@pytest.mark.unit
 def test_downloader_deletes_file_on_checksum_mismatch(http_server, tmp_path):
     destination = tmp_path / "bad.bin"
     downloader = TurboDownloader(

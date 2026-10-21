@@ -1,6 +1,5 @@
 import html
 import random
-import time
 
 import aqt.qt
 from aqt.qt import (
@@ -13,7 +12,6 @@ from aqt.qt import (
     QTimer,
     QPainter,
     QColor,
-    QPen,
     Qt,
     QBrush,
     QRadialGradient,

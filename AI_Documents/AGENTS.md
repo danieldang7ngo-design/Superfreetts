@@ -8,7 +8,7 @@ Everything here is live user data — careful with git.
 Read `AGENTS.md` first. Reach for `REFERENCE.md` only when:
 - Need architecture diagram / data flow
 - Need vendored deps list
-- Running tests (skip-list, full command)
+- Running tests (current CI gates, coverage and package commands)
 - Need file location of a class (API Index or Module Index)
 - Need list of UI components
 Otherwise AGENTS.md covers 90% of tasks.
@@ -28,19 +28,23 @@ Otherwise AGENTS.md covers 90% of tasks.
 | `superfreetts_addon/realtime_manager.py` | `{{tts ...}}` tag handling for live review playback. |
 | `superfreetts_addon/editor_manager.py` | TTS actions inside the note editor. |
 | `superfreetts_addon/config_store.py` + `config_models.py` | Config read/write, migrations, data shape. |
+| `superfreetts_addon/download_sources.py` | Pinned engine/model URLs, sizes and SHA-256/MD5 fingerprints. |
+| `superfreetts_addon/http_utils.py` | Shared HTTP timeout and `AudioNotFoundError` mapping. |
 | `superfreetts_addon/services/service_*.py` | One file per TTS engine, extends `ServiceBase`. |
 | `superfreetts_addon/gui.py` + `component_*.py` | UI windows (Settings, Batch, Easy Mode, note list). |
-| `superfreetts_addon/i18n.py` | UI text, multiple locales (see §6). |
+| `superfreetts_addon/i18n.py` + `locales/*.json` | UI text, seven locales with English fallback (see §6). |
+| `external/` | Vendored pure-Python runtime dependencies; versions in `requirements-vendor.txt`. |
+| `scripts/` | Coverage, vendor and package verification helpers. |
 | `graphics/` | Banners + UI icons. Icons are Lucide (ISC), stroke-based SVGs: editor buttons `icon_speaker`, `icon_play`, `icon_settings`; toggles `icon_chevron_down`/`icon_chevron_right`; menu `icon_headphones`. `NOTICE` holds attribution. Add any new icon as a static Lucide SVG here (no runtime dep). |
 | `tests/` | Automated tests. `mock_anki.py` fakes Anki, no real install needed. |
 | `build_share.py` | Packages everything into `.ankiaddon` for release. |
 
 ## 2. Golden Rules
 
-1. **Never commit:** `meta.json`, `user_files/`, `cache/`, `__pycache__/`, `dist/`,
+1. **Never commit:** `meta.json`, `user_files/`, `cache/`, `notes.db`, `__pycache__/`, `dist/`,
    `*.ankiaddon`, `_local_override.py`, `set_edge_workers_*.py`, `*.log`,
-   `superfreetts-work.index`, `*superfreetts-mirror.git*`. Real user data or
-   generated junk. `meta.json` holds user UUID + all voice presets — gitignored
+   `coverage.json`, `htmlcov/`, `superfreetts-work.index`, `*superfreetts-mirror.git*`.
+   Real user data or generated junk. `meta.json` holds user UUID + all voice presets — gitignored
    now, but was once pushed to `origin/main`; use `git filter-repo` + force-push
    if it needs removing from history.
 2. **Never `git add .` / `git add -A`** without checking `git status` first.
@@ -79,11 +83,13 @@ Creates gitignored `_local_override.py`. Don't edit `batch_constants.py` directl
 
 **Tests:**
 ```
-python -m pytest tests/ -v --tb=short       # all (~200, 2s)
+python -m pytest tests/ -q --tb=short       # all (~300, 6s)
 python -m pytest tests/test_batch_flow.py   # single file
+python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json
+python scripts/check_critical_coverage.py coverage.json
 ```
 `rtk pytest` swallows stdout on Windows — use `python -m pytest` directly.
-See `REFERENCE.md §5` for skip-list and details.
+See `REFERENCE.md §5` for the current test/CI layout.
 
 **Build the `.ankiaddon`:**
 ```
@@ -99,9 +105,10 @@ $env:HYPER_TTS_DEBUG_LOGGING = "file"     # file
 $env:HYPER_TTS_DEBUG_LOGFILE = "path.log"
 ```
 
-**Release a new version:** bump `superfreetts_addon/version.py` → add entry to
-`release_notes.py` (per-locale) → update `CHANGELOG.md` → run
-`python -m py_compile` on changed files. Full steps: `UPDATE_WORKFLOW.md`.
+**Release a new version:** bump `manifest.json` and
+`superfreetts_addon/version.py` → add entry to `release_notes.py` (per-locale)
+→ update `CHANGELOG.md` → run the full CI gate set, build and verify the
+package. Full steps: `UPDATE_WORKFLOW.md`.
 
 ## 4. Audio Generation — How It Works
 
@@ -126,7 +133,11 @@ Batch mode specifically runs 4 phases: Preparing → Deduplicating → Generatin
 
 ## 6. i18n
 
-UI text lives in `i18n.py`. 7 locales: en, vi, ko, ja, zh-CN, zh-TW, sv.
+UI text lives in `superfreetts_addon/locales/*.json`; `i18n.py` loads all seven
+locales: en, vi, ko, ja, zh-CN, zh-TW, sv. English is the default and the
+fallback for unknown languages or missing keys. Missing keys are allowed (the
+UI remains usable), but do not machine-generate unreviewed translations just
+to raise the percentage; add reviewed text or leave the English fallback.
 
 ## 7. Known UI Bug Pattern
 

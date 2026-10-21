@@ -28,7 +28,6 @@ handler.setFormatter(logging.Formatter('%(levelname)s:%(name)s:%(message)s'))
 root_logger.addHandler(handler)
 
 from superfreetts_addon import superfreetts
-from superfreetts_addon import component_configuration
 from superfreetts_addon import constants
 
 # Initialize SuperFreeTTS

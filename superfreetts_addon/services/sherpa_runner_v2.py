@@ -10,7 +10,10 @@ if runner_dir not in sys.path:
     sys.path.insert(0, runner_dir)
 
 from runner_base import setup_stdio, log, write_response
-setup_stdio()
+
+# Imported by main() so importing this module never requires the heavy runtime.
+sherpa_onnx = None
+sf = None
 
 # Robust path detection for embedded Python
 base_dir = os.path.dirname(sys.executable)
@@ -26,25 +29,6 @@ if os.path.exists(addon_libs) and addon_libs not in sys.path:
 site_packages_root = os.path.join(base_dir, 'site-packages')
 if os.path.exists(site_packages_root) and site_packages_root not in sys.path:
     sys.path.append(site_packages_root)
-
-log("SHERPA RUNNER V2 STARTED")
-log("Runner script started. Importing dependencies...")
-log(f"Python: {sys.executable}")
-log(f"sys.path: {sys.path}")
-
-try:
-    import sherpa_onnx
-    log("sherpa_onnx imported.")
-    import numpy as np
-    log("numpy imported.")
-    import soundfile as sf
-    log("soundfile imported.")
-except ImportError as e:
-    log(f"Import Error: {e}")
-    sys.exit(1)
-except Exception as e:
-    log(f"Startup Exception: {e}")
-    sys.exit(1)
 
 def get_model_instance(models, current_config_hash, model_dir, num_threads, provider, data):
     # Create a simple hash of config to detect changes
@@ -112,6 +96,28 @@ def get_model_instance(models, current_config_hash, model_dir, num_threads, prov
     return models[model_dir]
 
 def main():
+    global sherpa_onnx, sf
+
+    setup_stdio()
+    log("SHERPA RUNNER V2 STARTED")
+    log("Runner script started. Importing dependencies...")
+    log(f"Python: {sys.executable}")
+    log(f"sys.path: {sys.path}")
+
+    try:
+        import sherpa_onnx as sherpa_onnx_module
+        log("sherpa_onnx imported.")
+        import soundfile as sf_module
+        log("soundfile imported.")
+    except ImportError as exc:
+        log(f"Import Error: {exc}")
+        return 1
+    except Exception as exc:
+        log(f"Startup Exception: {exc}")
+        return 1
+
+    sherpa_onnx = sherpa_onnx_module
+    sf = sf_module
     log("Initializing Sherpa-ONNX Runner for MMS...")
     
     # Cache for models to avoid reloading

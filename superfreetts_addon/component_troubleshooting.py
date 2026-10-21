@@ -1,10 +1,8 @@
-import sys
 import aqt.qt
 
 from . import component_common
 from . import config_models
 from . import constants
-from . import gui_utils
 from . import logging_utils
 from . import i18n
 logger = logging_utils.get_child_logger(__name__)

@@ -35,7 +35,13 @@ def get_addon_user_files_dir() -> str:
 
 
 def _get_conn():
-    return sqlite3.connect(get_collection_path())
+    path = get_collection_path()
+    if not os.path.isfile(path):
+        raise FileNotFoundError(
+            "No Anki collection database found. Set NOTES_DB_PATH to an "
+            f"existing collection.anki2 file (looked at: {path})."
+        )
+    return sqlite3.connect(path)
 
 def apply_index():
     sql = 'CREATE INDEX IF NOT EXISTS idx_notes_lookup ON notes(deck_id, mod);'

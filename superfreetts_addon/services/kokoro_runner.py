@@ -3,9 +3,6 @@ import sys
 import traceback
 import json
 import os
-import time
-import soundfile as sf
-import numpy as np
 
 # Ensure the directory containing this script is in sys.path for runner_base import
 runner_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,17 +10,17 @@ if runner_dir not in sys.path:
     sys.path.insert(0, runner_dir)
 
 from runner_base import setup_stdio, log, write_response
-setup_stdio()
 
 
 def main():
+    setup_stdio()
     log("KOKORO HIGH-FIDELITY RUNNER STARTED (v1.0-stable)")
     
     # Eagerly load heavy libraries to avoid lag on first request
     try:
         log("Eagerly loading onnxruntime and kokoro_onnx...")
         import onnxruntime as ort
-        from kokoro_onnx import Kokoro
+        from kokoro_onnx import Kokoro  # noqa: F401 - eager availability check
         log(f"Libraries loaded. ONNX Runtime v{ort.__version__}")
     except Exception as e:
         log(f"Warning: Failed to eagerly load libraries: {e}")
@@ -110,6 +107,8 @@ def main():
 
     def generate_single(kokoro, text, voice_name, speed, lang_code, output_file):
         try:
+            import soundfile as sf
+
             log(f"Generating: Voice={voice_name}, Lang={lang_code}, Text='{text[:30]}...'")
             samples, sample_rate = kokoro.create(text, voice=voice_name, speed=speed, lang=lang_code)
             

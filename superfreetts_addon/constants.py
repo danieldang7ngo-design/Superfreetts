@@ -237,7 +237,7 @@ GREEN_STYLESHEET = f'background-color: {COLOR_ACCENT}; color: white; border-radi
 RED_STYLESHEET = f'background-color: transparent; color: {COLOR_SECONDARY}; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 12px;'
 
 GREEN_STYLESHEET_NIGHTMODE = f'background-color: {COLOR_ACCENT}; color: white; border-radius: 6px; padding: 8px 16px; font-weight: bold; border: none;'
-RED_STYLESHEET_NIGHTMODE = f'background-color: transparent; color: #CBD5E1; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;'
+RED_STYLESHEET_NIGHTMODE = 'background-color: transparent; color: #CBD5E1; border: 1px solid #475569; border-radius: 6px; padding: 6px 12px;'
 
 
 

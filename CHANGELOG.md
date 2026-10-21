@@ -10,8 +10,11 @@
 - Download hardening: HTTP timeouts on every request, streamed fallback, size checks, SHA-256 verification for the Python embed and Piper archives, partial-file cleanup, and automatic single-connection retry when a server ignores range requests.
 - Safe installer extraction: ZIP/TAR members are checked for path traversal, absolute paths, symlinks, device files, and archive bombs before anything is written.
 - Voice-list cache now uses compressed JSON with SHA-256 integrity checks and atomic writes instead of pickle; legacy `.pkl.gz` files are removed automatically. Disk caches are now usable after an Anki restart.
-- Batch processing waits up to 10 minutes for a slow task before declaring the batch stalled, instead of failing after 60 seconds.
-- CI now runs Ruff, Python 3.9/3.11/3.13/3.14 tests, Windows/macOS tests, a coverage guard, and a package verifier that imports the built archive in a clean interpreter.
+- Batch processing uses a 3-minute stall timeout and no longer applies a 25-second limit to a future that is already complete, so the first Kokoro/MMS model load is not cancelled.
+- All dictionary/model HTTP calls share a default (5s connect, 20s read) timeout; transport failures become the normal "audio not found" path instead of an internal error.
+- Download sources are pinned in one module: Python/Piper use SHA-256, Piper voice files use the upstream MD5 + size, Kokoro model/voices use SHA-256, and the MMS repository is pinned to a commit.
+- CI now runs Ruff import hygiene, Bandit medium/high checks, Python 3.9/3.11/3.13/3.14 tests, Windows/macOS tests, a coverage floor, a 70% critical-module gate, and a package verifier that imports the built archive in a clean interpreter.
+- Vendored `requests`/`urllib3`/`certifi`/`idna`/`charset-normalizer` metadata now matches the actual code versions; `requirements-vendor.txt` and `scripts/vendor_deps.py --check` keep it honest.
 - All seven UI languages remain available (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); English remains the default and missing translations fall back to English.
 
 ### Tiếng Việt
@@ -22,8 +25,11 @@
 - Củng cố tải xuống: timeout HTTP cho mọi yêu cầu, tải dự phòng dạng stream, kiểm tra kích thước, xác minh SHA-256 cho Python embed và Piper, dọn file dở dang, và tự chuyển sang một kết nối khi máy chủ bỏ qua range request.
 - Giải nén cài đặt an toàn: kiểm tra thành viên ZIP/TAR trước khi ghi, chống path traversal, đường dẫn tuyệt đối, symlink, thiết bị và zip bomb.
 - Bộ nhớ đệm danh sách giọng dùng JSON nén với kiểm tra toàn vẹn SHA-256 và ghi nguyên tử thay vì pickle; file `.pkl.gz` cũ được tự động xoá. Cache trên đĩa giờ dùng được sau khi khởi động lại Anki.
-- Xử lý hàng loạt chờ tối đa 10 phút cho tác vụ chậm trước khi coi là bị treo, thay vì lỗi sau 60 giây.
-- CI chạy Ruff, test Python 3.9/3.11/3.13/3.14, test Windows/macOS, kiểm tra độ phủ và bộ xác minh gói cài đặt có import thử trong môi trường sạch.
+- Xử lý hàng loạt dùng timeout treo 3 phút và không còn giới hạn 25 giây cho future đã hoàn tất, nên lần load model Kokoro/MMS đầu tiên không bị huỷ oan.
+- Mọi request HTTP tới từ điển/model dùng chung timeout mặc định (5 giây kết nối, 20 giây đọc); lỗi mạng được chuyển thành đường "không tìm thấy audio" thay vì lỗi nội bộ.
+- Nguồn tải được gom về một module: Python/Piper dùng SHA-256, file giọng Piper dùng MD5 + kích thước từ upstream, model/voices Kokoro dùng SHA-256, và repo MMS được ghim theo commit.
+- CI chạy Ruff import hygiene, Bandit mức medium/high, test Python 3.9/3.11/3.13/3.14, test Windows/macOS, sàn coverage, gate 70% cho module trọng yếu, và bộ xác minh gói cài đặt có import thử trong môi trường sạch.
+- Metadata của `requests`/`urllib3`/`certifi`/`idna`/`charset-normalizer` đã khớp với code thực tế; `requirements-vendor.txt` và `scripts/vendor_deps.py --check` giữ cho việc này không lệch lại.
 - Cả 7 ngôn ngữ giao diện vẫn hiển thị (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); tiếng Anh vẫn là mặc định và bản dịch thiếu sẽ dùng tiếng Anh.
 
 ## 26.10.1 - 2026-10-14

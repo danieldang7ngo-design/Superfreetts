@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 
 from typing import List, Optional

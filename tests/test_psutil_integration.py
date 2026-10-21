@@ -1,6 +1,5 @@
 import sys
 import os
-import pytest
 from unittest.mock import MagicMock
 
 # Setup mock environment similar to conftest.py

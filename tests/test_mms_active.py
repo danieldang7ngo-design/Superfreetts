@@ -20,9 +20,6 @@ sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
 from superfreetts_addon.services import service_mms
-from superfreetts_addon import voice
-from superfreetts_addon import constants
-from superfreetts_addon import languages
 
 def test_mms_english_generation():
     """Verify that MMS can generate English audio"""

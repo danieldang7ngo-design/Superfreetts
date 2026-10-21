@@ -1,10 +1,6 @@
 import sys
 import os
-import traceback
-import logging
 import uuid
-import re
-import json
 
 addon_package_dir = os.path.dirname(os.path.realpath(__file__))
 addon_root_dir = os.path.dirname(addon_package_dir)
@@ -28,7 +24,7 @@ else:
     import anki.hooks
     import aqt
     import aqt.gui_hooks
-    import anki.sound
+    import anki.sound  # noqa: F401 - required for Anki sound hooks
 
     # need to declare upfront whether we're doing crash reporting
     # ============================================================

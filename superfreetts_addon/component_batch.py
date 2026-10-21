@@ -1,9 +1,7 @@
-import sys
 import aqt.qt
 import copy
 
 
-from typing import List, Optional
 
 from . import component_common
 from . import component_source

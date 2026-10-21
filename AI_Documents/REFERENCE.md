@@ -62,32 +62,35 @@ Registered in `constants.py` (`GRAPHICS_ICON_*`), wired to buttons in
 
 ## 4. Vendored Deps (`external/`)
 
-| Engine | Libs |
-|--------|------|
-| EdgeTTS | `edge_tts`, `edge_playback`, `aiohttp`+deps (`aiosignal`, `frozenlist`, `multidict`, `yarl`, `attrs`), `psutil` |
+| Purpose | Vendored libs |
+|---------|--------------|
+| EdgeTTS | `edge_tts`, `edge_playback`, `aiohttp` + deps (`aiohappyeyeballs`, `aiosignal`, `frozenlist`, `multidict`, `propcache`, `yarl`, `attrs`) |
 | Google TTS | `gtts`, `click` |
-| Windows SAPI | `comtypes` |
+| Windows SAPI | `comtypes`, `win32com` helpers |
 | eSpeak-ng | `espeakng` |
-| General | `requests`, `urllib3`, `certifi`, `tabulate`, `cachetools`, `typing_extensions` |
+| HTTP/general | `requests==2.32.4`, `urllib3==2.5.0`, `certifi==2025.7.9`, `idna==3.10`, `charset-normalizer==3.4.2`, `tabulate`, `typing_extensions` |
+| Helpers | `python-dateutil`, `databind`, `Deprecated`, `nr`, `six`, `typeapi`, `wrapt` |
 
-~15-20 MB total. Safe to strip: `*.dist-info/`, `__pycache__/`, test files.
+`psutil` and compiled/C-extension binaries are deliberately **not** vendored.
+`requirements-vendor.txt` is the version record for the repaired packages;
+`python scripts/vendor_deps.py --check` verifies metadata and module versions.
 
 ## 5. Test Suite
 
 ```powershell
-python -m pytest tests/ -v --tb=short                  # all (~200)
+python -m pytest tests/ -q --tb=short                  # all (~300, ~6s)
 python -m pytest tests/test_batch_cache_dedup.py -v     # single file
+python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json
+python scripts/check_critical_coverage.py coverage.json
 ```
 
-Skip files that run real TTS at import + `sys.exit()` (crash pytest):
-`test_edgetts_sequence_mode.py`, `test_edgetts_vietnamese_batch.py`,
-`test_edgetts_direct.py`, `test_edgetts_discovery.py`, `test_edgetts_voices.py`,
-`test_edge.py`, `test_async.py`, `test_edgetts_continuous_batching.py`,
-`test_performance_integration.py`, `test_psutil_integration.py`,
-`test_debug_mode.py` (included in quick suite, passes when `FORCE_DEBUG_MODE=False`).
-
-`conftest.py` calls `mock_anki.mock_all()` — no Anki install needed.
-`rtk pytest` swallows stdout on Windows; use `python -m pytest` directly.
+CI (`.github/workflows/python-test.yml`) runs Ruff, Bandit (`-ll`), Python
+3.9/3.11/3.13/3.14, Windows/macOS smoke tests, the coverage floor, the
+critical-module 70% gate, and package build/import verification. The test
+suite uses `conftest.py` → `mock_anki.mock_all()`; no Anki install is needed.
+Runner modules are import-smoke-tested without loading their heavy runtime
+dependencies. `rtk pytest` swallows stdout on Windows; use `python -m pytest`
+directly.
 
 ## 6. API Index (core classes, 1-line)
 
@@ -113,7 +116,7 @@ Skip files that run real TTS at import + `sys.exit()` (crash pytest):
 | `batch_constants.py` | Worker caps, timeouts, GC |
 | `batch_progress_ui.py` | Batch progress/status UI |
 | `batch_state_manager.py` | Checkpoint/resume |
-| `system_utils.py` | CPU/GPU detection |
+| `system_utils.py` | CPU detection + cross-platform available-RAM detection |
 | `performance_tracker.py` | Latency tracking |
 | `logging_utils.py` | NullLogger, SentryLogger |
 | `constants.py` | Enums, paths, stylesheets |
@@ -124,6 +127,8 @@ Skip files that run real TTS at import + `sys.exit()` (crash pytest):
 | `engine_manager.py` / `mms_engine_manager.py` | Engine lifecycle (general/MMS) |
 | `sherpa_manager.py` | Sherpa-ONNX manager |
 | `downloader.py / resource_manager.py` | Model downloads |
+| `download_sources.py` | Pinned URLs, sizes and integrity fingerprints |
+| `http_utils.py` | Shared HTTP timeout / `AudioNotFoundError` mapping |
 | `job_pipeline.py` | Async job pipeline |
 | `languages.py` | AudioLanguage enum |
 | `options.py` | AudioFormat enum |

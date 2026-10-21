@@ -4,6 +4,7 @@ import hashlib
 import threading
 import time
 import urllib.request
+from urllib.parse import urlparse
 import shutil
 from typing import Callable, Optional
 from . import logging_utils
@@ -30,13 +31,18 @@ class TurboDownloader:
         debug_mode: bool = False,
         expected_sha256: Optional[str] = None,
         expected_size: Optional[int] = None,
+        expected_md5: Optional[str] = None,
     ):
+        scheme = urlparse(url).scheme.lower()
+        if scheme not in ("http", "https"):
+            raise ValueError(f"Unsupported download URL scheme: {scheme!r}")
         self.url = url
         self.dest = dest
         self.progress_callback = progress_callback
         self.concurrency = max(1, int(concurrency))
         self.debug_mode = debug_mode
         self.expected_sha256 = expected_sha256.lower() if expected_sha256 else None
+        self.expected_md5 = expected_md5.lower() if expected_md5 else None
         self.expected_size = expected_size
         self.file_size = 0
         self.downloaded_bytes = 0
@@ -56,7 +62,8 @@ class TurboDownloader:
         try:
             req = urllib.request.Request(self.url, method='HEAD')
             req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            # URL comes from a pinned source; scheme is validated in __init__.
+            with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
                 headers = {k.lower(): v for k, v in resp.headers.items()}
                 self.file_size = int(headers.get('content-length', 0))
                 self.accept_ranges = headers.get('accept-ranges') == 'bytes' or 'content-range' in headers
@@ -74,7 +81,8 @@ class TurboDownloader:
                 req.add_header('Range', f'bytes={start}-{end}')
                 req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
                 
-                with urllib.request.urlopen(req, timeout=60) as resp:
+                # URL comes from a pinned source; scheme is validated in __init__.
+                with urllib.request.urlopen(req, timeout=60) as resp:  # nosec B310
                     status = getattr(resp, "status", None) or resp.getcode()
                     if self.concurrency > 1 and status != 206:
                         self._range_unsupported = True
@@ -208,7 +216,8 @@ class TurboDownloader:
         req = urllib.request.Request(self.url)
         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            # URL comes from a pinned source; scheme is validated in __init__.
+            with urllib.request.urlopen(req, timeout=60) as resp:  # nosec B310
                 headers = {k.lower(): v for k, v in resp.headers.items()}
                 total = int(headers.get('content-length', self.file_size or 0))
                 self.file_size = total
@@ -241,6 +250,10 @@ class TurboDownloader:
             raise IOError(f"Download did not produce {self.dest}")
 
         actual_size = os.path.getsize(self.dest)
+        if actual_size == 0:
+            self._remove_bad_download()
+            raise IOError(f"Download produced an empty file: {self.dest}")
+
         expected_size = self.expected_size or self.file_size
         if expected_size and actual_size != expected_size:
             self._remove_bad_download()
@@ -263,6 +276,25 @@ class TurboDownloader:
                 raise IOError(
                     f"SHA-256 mismatch for {self.dest}: "
                     f"got {actual_hash}, expected {self.expected_sha256}"
+                )
+
+        if self.expected_md5:
+            # Piper's upstream voices.json publishes MD5 digests.  This is an
+            # integrity check against a fixed catalogue, not a security hash;
+            # SHA-256 is used for engine binaries and model assets.
+            digest = hashlib.md5(usedforsecurity=False)
+            with open(self.dest, "rb") as handle:
+                while True:
+                    chunk = handle.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    digest.update(chunk)
+            actual_md5 = digest.hexdigest()
+            if actual_md5 != self.expected_md5:
+                self._remove_bad_download()
+                raise IOError(
+                    f"MD5 mismatch for {self.dest}: "
+                    f"got {actual_md5}, expected {self.expected_md5}"
                 )
 
     def _remove_bad_download(self):

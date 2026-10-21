@@ -1,8 +1,5 @@
-import sys
 import os
-import re
 import subprocess
-import hashlib
 import platform
 import tempfile
 import threading
@@ -11,7 +8,6 @@ from typing import List
 
 from .. import voice
 from .. import service
-from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils

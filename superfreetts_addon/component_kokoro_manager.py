@@ -1,34 +1,36 @@
 
 import os
-import sys
 import shutil
-import urllib.request
 import subprocess
 import threading
 import platform
-import json
 import time
 
 from aqt import mw
 from aqt.qt import *
-from aqt.utils import showInfo, tooltip, showWarning
+from aqt.utils import showInfo, showWarning
 from . import archive_utils
 from . import i18n
 from . import logging_utils
 from . import constants
 from . import service_logger
 from .downloader import TurboDownloader
+from .download_sources import (
+    GET_PIP_SHA256,
+    GET_PIP_SIZE,
+    GET_PIP_URL,
+    KOKORO_V10_MODEL_SHA256,
+    KOKORO_V10_MODEL_SIZE,
+    KOKORO_V10_MODEL_URL,
+    KOKORO_V10_VOICES_SHA256,
+    KOKORO_V10_VOICES_SIZE,
+    KOKORO_V10_VOICES_URL,
+    PYTHON_EMBED_SHA256,
+    PYTHON_EMBED_SIZE,
+    PYTHON_EMBED_URL,
+)
 
 logger = logging_utils.get_child_logger(__name__)
-
-# Constants for Kokoro Installation
-PYTHON_EMBED_URL = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip"
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
-# Kokoro Model URLs
-KOKORO_V10_MODEL_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
-KOKORO_V10_VOICES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
-KOKORO_V10_MODEL_SIZE = 325532387
-KOKORO_V10_VOICES_SIZE = 28214398
 
 def _get_python_exe():
     import platform
@@ -228,7 +230,12 @@ class KokoroInstallManager(QDialog):
             if not os.path.exists(_get_python_exe()):
                 mw.taskman.run_on_main(lambda: self.update_progress(10))
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_python", self.lang)))
-                self._download_file(PYTHON_EMBED_URL, os.path.join(constants.KOKORO_ENGINE_DIR, 'python.zip'))
+                self._download_file(
+                    PYTHON_EMBED_URL,
+                    os.path.join(constants.KOKORO_ENGINE_DIR, 'python.zip'),
+                    expected_size=PYTHON_EMBED_SIZE,
+                    expected_sha256=PYTHON_EMBED_SHA256,
+                )
                 self._extract_zip(os.path.join(constants.KOKORO_ENGINE_DIR, 'python.zip'), constants.KOKORO_ENGINE_DIR, i18n.get_text("kokoro_setup_extracting_python", self.lang), 20)
                 self._configure_python_pth()
             else:
@@ -239,7 +246,12 @@ class KokoroInstallManager(QDialog):
             scripts_dir = os.path.join(constants.KOKORO_ENGINE_DIR, 'Scripts')
             pip_exe = os.path.join(scripts_dir, 'pip.exe')
             if not os.path.exists(pip_exe):
-                self._download_file(GET_PIP_URL, os.path.join(constants.KOKORO_ENGINE_DIR, 'get-pip.py'))
+                self._download_file(
+                    GET_PIP_URL,
+                    os.path.join(constants.KOKORO_ENGINE_DIR, 'get-pip.py'),
+                    expected_size=GET_PIP_SIZE,
+                    expected_sha256=GET_PIP_SHA256,
+                )
                 self._run_command([_get_python_exe(), 'get-pip.py'], i18n.get_text("kokoro_setup_installing_pip", self.lang), 30)
             else:
                 self.log(i18n.get_text("kokoro_setup_log_pip_exists", self.lang))
@@ -254,13 +266,23 @@ class KokoroInstallManager(QDialog):
             self.log("Installing Standard v1.0 Brain (Core Engine)...")
             if not os.path.exists(_get_kokoro_v10_model_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_v10", self.lang)))
-                self._download_file(KOKORO_V10_MODEL_URL, _get_kokoro_v10_model_path(), expected_size=KOKORO_V10_MODEL_SIZE)
+                self._download_file(
+                    KOKORO_V10_MODEL_URL,
+                    _get_kokoro_v10_model_path(),
+                    expected_size=KOKORO_V10_MODEL_SIZE,
+                    expected_sha256=KOKORO_V10_MODEL_SHA256,
+                )
 
             # Step 5: Download Global Voice Bundle (Essential)
             self.log("Installing Global Voice Bundle (35MB)...")
             if not os.path.exists(_get_voices_v10_bin_path()):
                 mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("kokoro_setup_downloading_voices_v10", self.lang)))
-                self._download_file(KOKORO_V10_VOICES_URL, _get_voices_v10_bin_path(), expected_size=KOKORO_V10_VOICES_SIZE)
+                self._download_file(
+                    KOKORO_V10_VOICES_URL,
+                    _get_voices_v10_bin_path(),
+                    expected_size=KOKORO_V10_VOICES_SIZE,
+                    expected_sha256=KOKORO_V10_VOICES_SHA256,
+                )
 
             # Step 6: Finalize and Automate Optimization
             self.log("Finalizing Installation. Running automatic optimization (Ep-can)...")

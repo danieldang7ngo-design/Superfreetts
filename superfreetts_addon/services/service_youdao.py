@@ -1,4 +1,3 @@
-import sys
 import requests
 
 from .. import voice
@@ -7,6 +6,7 @@ from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
+from .. import http_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -61,7 +61,12 @@ class Youdao(service.ServiceBase):
         logger.info(f'Requesting Youdao audio for "{source_text}" with type={voice_type}')
         
         try:
-            response = requests.get(self.AUDIO_API_URL, params=params, headers=headers, timeout=constants.HTTP_TIMEOUT_SECONDS)
+            response = http_utils.get(
+                self.AUDIO_API_URL,
+                params=params,
+                headers=headers,
+                timeout=constants.HTTP_TIMEOUT_SECONDS,
+            )
             
             # Check if we got a valid response
             if response.status_code == 200 and response.headers.get('Content-Type', '').startswith('audio/'):

@@ -137,7 +137,8 @@ class AnkiUtils():
             chunk = ids[i:i + CHUNK]
             placeholders = ",".join("?" * len(chunk))
             rows = aqt.mw.col.db.all(
-                f"SELECT id, mid, flds FROM notes WHERE id IN ({placeholders})",
+                # Placeholders are generated '?' markers; values are bound.
+                f"SELECT id, mid, flds FROM notes WHERE id IN ({placeholders})",  # nosec B608
                 *chunk,
             )
             for note_id, mid, flds in rows:

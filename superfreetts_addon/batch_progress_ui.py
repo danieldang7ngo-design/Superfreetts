@@ -6,7 +6,6 @@ Provides visual feedback for batch operations with intuitive phase stages and ti
 import aqt.qt
 from typing import Optional, Callable
 from datetime import datetime, timedelta
-import math
 
 
 class BatchProgressPhase:
@@ -260,7 +259,6 @@ class BatchProgressWidget(aqt.qt.QWidget):
                 time_per_item = elapsed.total_seconds() / completed
                 remaining_items = total - completed
                 eta_seconds = time_per_item * remaining_items
-                eta_time = datetime.now() + timedelta(seconds=eta_seconds)
                 self.eta_label.setText(self._format_time_delta("ETA: ", timedelta(seconds=eta_seconds)))
                 
                 # Calculate speed (items per minute)

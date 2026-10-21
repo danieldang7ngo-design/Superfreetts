@@ -179,6 +179,7 @@ def verify_archive(archive: Path) -> list[str]:
             smoke = subprocess.run(
                 [
                     sys.executable,
+                    "-S",  # prove the package does not rely on host site-packages
                     "-c",
                     (
                         "import sys;"
@@ -188,6 +189,10 @@ def verify_archive(archive: Path) -> list[str]:
                         "import superfreetts_addon.system_utils as system_utils;"
                         "import superfreetts_addon.servicemanager as servicemanager;"
                         "from superfreetts_addon import batch_constants;"
+                        "assert requests.__version__ == '2.32.4';"
+                        "assert charset_normalizer.__version__ == '3.4.2';"
+                        "assert aiohttp.__version__ == '3.13.3';"
+                        "assert edge_tts.__version__ == '7.3.1';"
                         "print(json.dumps({"
                         "'ram_mb': system_utils.get_available_ram_mb(),"
                         "'ram_source': system_utils.get_ram_detection_source(),"

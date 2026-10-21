@@ -1,11 +1,9 @@
-import sys
 import aqt.qt
 import html
 
 from . import constants
 from . import component_common
 from . import config_models
-from . import gui_utils
 from . import text_utils
 from . import logging_utils
 from . import i18n
@@ -158,7 +156,7 @@ class TextProcessing(component_common.ConfigComponentBase):
         return self.model
 
     def load_model(self, model):
-        logger.info(f'load_model')
+        logger.info('load_model')
         self.model = model
         self.textReplacementTableModel.load_model(self.model)
         self.set_text_processing_rules_widget_state()
@@ -361,8 +359,8 @@ class TextProcessing(component_common.ConfigComponentBase):
         self.model_change_callback(self.model)
 
     def get_text_processing_settings(self):
-        replacement_list = self.textReplacementTableModel.replacements
-        replacement_dict_list = [x.to_dict() for x in replacement_list]
+        replacement_list = self.model.text_replacement_rules
+        replacement_dict_list = [x.serialize() for x in replacement_list]
         return {'replacements': replacement_dict_list}
 
     def update_transformed_text(self):

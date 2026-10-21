@@ -4,7 +4,6 @@ Zero Anki dependency: state_dir always points to tmp_path.
 """
 
 import os
-import json
 import time
 import threading
 

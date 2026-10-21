@@ -5,9 +5,8 @@ import gc
 import os
 import platform
 import threading
-from functools import lru_cache
 from collections import OrderedDict
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 # Try to import psutil for memory monitoring, fallback if not available
 try:
@@ -15,7 +14,6 @@ try:
     HAS_PSUTIL = True
 except Exception:
     HAS_PSUTIL = False
-    import multiprocessing  # Fallback for CPU count only
 
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)

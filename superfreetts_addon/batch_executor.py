@@ -19,9 +19,8 @@ import gc
 import json
 import threading
 import concurrent.futures
-import time
 from typing import Dict, Optional, Any, List, Callable, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import OrderedDict
 
 from . import batch_constants
@@ -345,9 +344,7 @@ class UnifiedBatchExecutor:
         """
         note_id = task['note_id']
         processed_text = task['processed_text']
-        batch = task['batch']
-        audio_request_context = task['audio_request_context']
-        
+
         # Check cache first
         chosen_voice = task.get('chosen_voice')
         voice_id_str = str(chosen_voice.voice_id) if chosen_voice else 'None'

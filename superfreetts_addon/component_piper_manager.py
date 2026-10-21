@@ -1,23 +1,28 @@
+import hashlib
 import os
-# import requests # lazy loaded
 import threading
-import json
 import aqt
 from aqt.qt import *
 from dataclasses import dataclass
-from typing import List, Optional, Dict
+from typing import List
 
 from . import i18n
 from . import logging_utils
 from . import gui_utils
+from . import http_utils
 from .downloader import TurboDownloader
+from .download_sources import (
+    PIPER_HF_BASE_URL,
+    PIPER_VOICES_JSON_SHA256,
+    PIPER_VOICES_JSON_URL,
+)
 from aqt import mw
 
 logger = logging_utils.get_child_logger(__name__)
 
-# Official voices.json URL
-VOICES_JSON_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json"
-HF_BASE_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
+# Backwards-compatible aliases used by the rest of this module.
+VOICES_JSON_URL = PIPER_VOICES_JSON_URL
+HF_BASE_URL = PIPER_HF_BASE_URL
 
 @dataclass
 class PiperModelInfo:
@@ -28,6 +33,10 @@ class PiperModelInfo:
     quality: str
     url_onnx: str
     url_json: str
+    md5_digest: str = ""
+    size_bytes: int = 0
+    json_md5_digest: str = ""
+    json_size_bytes: int = 0
 
 class DownloadWorkerSignals(QObject):
     progress = pyqtSignal(int, str)
@@ -46,9 +55,15 @@ class PiperDownloadWorker(QObject):
 
     def fetch_voices(self):
         try:
-            import requests
-            response = requests.get(VOICES_JSON_URL, timeout=30)
+            response = http_utils.get(VOICES_JSON_URL, timeout=30)
             if response.status_code == 200:
+                actual_hash = hashlib.sha256(response.content).hexdigest()
+                if actual_hash != PIPER_VOICES_JSON_SHA256:
+                    self.signals.error.emit(
+                        "Piper voices.json integrity check failed "
+                        f"(got {actual_hash})"
+                    )
+                    return
                 voices_data = response.json()
                 models = []
                 for voice_key, info in voices_data.items():
@@ -61,6 +76,10 @@ class PiperDownloadWorker(QObject):
                     
                     if not onnx_rel_path:
                         continue
+
+                    onnx_meta = files.get(onnx_rel_path, {})
+                    json_rel_path = onnx_rel_path + ".json"
+                    json_meta = files.get(json_rel_path, {})
                         
                     lang_info = info.get('language', {})
                     lang_name = lang_info.get('name_english', 'Unknown')
@@ -77,7 +96,11 @@ class PiperDownloadWorker(QObject):
                         language_name=full_lang_name,
                         quality=info.get('quality', 'medium'),
                         url_onnx=f"{HF_BASE_URL}/{onnx_rel_path}?download=true",
-                        url_json=f"{HF_BASE_URL}/{onnx_rel_path}.json?download=true"
+                        url_json=f"{HF_BASE_URL}/{onnx_rel_path}.json?download=true",
+                        md5_digest=onnx_meta.get('md5_digest', ''),
+                        size_bytes=int(onnx_meta.get('size_bytes') or 0),
+                        json_md5_digest=json_meta.get('md5_digest', ''),
+                        json_size_bytes=int(json_meta.get('size_bytes') or 0),
                     ))
                 
                 # Sort models: language name first, then voice name
@@ -101,17 +124,27 @@ class PiperDownloadWorker(QObject):
                 # Update progress for starting a new model
                 self.signals.progress.emit(int((idx / total_count) * 100), i18n.get_text("piper_manager_installing_model", self.lang).format(model.name, idx+1, total_count))
                 
-                self._download_file(model.url_onnx, model.key + ".onnx")
+                self._download_file(
+                    model.url_onnx,
+                    model.key + ".onnx",
+                    expected_md5=model.md5_digest,
+                    expected_size=model.size_bytes,
+                )
                 if self.is_cancelled: return
 
-                self._download_file(model.url_json, model.key + ".onnx.json")
+                self._download_file(
+                    model.url_json,
+                    model.key + ".onnx.json",
+                    expected_md5=model.json_md5_digest,
+                    expected_size=model.json_size_bytes,
+                )
                 if self.is_cancelled: return
             
             self.signals.finished.emit()
         except Exception as e:
             self.signals.error.emit(str(e))
 
-    def _download_file(self, url, filename):
+    def _download_file(self, url, filename, expected_md5=None, expected_size=None):
         filepath = os.path.join(self.dest_dir, filename)
         
         debug_mode = False
@@ -129,7 +162,14 @@ class PiperDownloadWorker(QObject):
             msg = i18n.get_text("piper_manager_installing_model", self.lang).format(filename, "?", "?")
             self.signals.progress.emit(percent, f"{msg} ({speed_mb:.1f} MB/s)")
 
-        downloader = TurboDownloader(url, filepath, progress_callback=on_progress, debug_mode=debug_mode)
+        downloader = TurboDownloader(
+            url,
+            filepath,
+            progress_callback=on_progress,
+            debug_mode=debug_mode,
+            expected_md5=expected_md5,
+            expected_size=expected_size,
+        )
         downloader.start()
 
 class PiperManagerDialog(QDialog):

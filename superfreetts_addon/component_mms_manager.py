@@ -1,7 +1,5 @@
 import os
 import json
-import urllib.request
-import threading
 from aqt import mw
 from aqt.qt import *
 from . import i18n
@@ -9,9 +7,7 @@ from . import gui_utils
 from .downloader import TurboDownloader
 from .mms_engine_manager import MmsEngineManager
 from . import constants
-
-# MMS Models from Hugging Face (Sherpa-ONNX format by willwade)
-MMS_BASE_URL = "https://huggingface.co/willwade/mms-tts-multilingual-models-onnx/resolve/main"
+from .download_sources import MMS_BASE_URL
 
 # Featured languages to show at the top
 FEATURED_LANGS = ["vie", "eng", "kor", "jpn", "cmn", "swe", "yue", "fra", "deu", "spa"]
@@ -270,8 +266,7 @@ class MmsInstallManager(QDialog):
                 return
                 
             lexicon_path = os.path.join(mms_dir, "lexicon.txt")
-            mode = "a" if os.path.exists(lexicon_path) else "w"
-            
+
             # Read existing to avoid full duplicates? 
             # Ideally we might want to update existing keys. 
             # But appending usually overrides in some parsers, or causes duplicates. 
@@ -490,7 +485,7 @@ class MmsInstallManager(QDialog):
             service_logger.write_install_separator('mms', f'Batch install {total_langs} models: {lang_codes_str}')
             
             for idx, (lang_code, lang_name) in enumerate(langs):
-                service_logger.write_log('mms', 'install', 'INFO', f'Downloading model', {'LangCode': lang_code, 'LangName': lang_name})
+                service_logger.write_log('mms', 'install', 'INFO', 'Downloading model', {'LangCode': lang_code, 'LangName': lang_name})
                 mw.taskman.run_on_main(lambda n=lang_name, i=idx, t=total_langs: self.update_status(i18n.get_text("mms_manager_status_installing_n", self.lang).format(n, i+1, t)))
                 
                 mms_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
@@ -516,7 +511,13 @@ class MmsInstallManager(QDialog):
                     url = f"{base_url}/{filename}"
                     
                     if not os.path.exists(dest):
-                        mw.taskman.run_on_main(lambda f=filename: self.log(i18n.get_text("mms_manager_log_downloading_file", self.lang).format(lang_code, f)))
+                        mw.taskman.run_on_main(
+                            lambda f=filename, code=lang_code: self.log(
+                                i18n.get_text(
+                                    "mms_manager_log_downloading_file", self.lang
+                                ).format(code, f)
+                            )
+                        )
                         try:
                             debug_mode = False
                             if hasattr(mw, 'hyper_tts'):
@@ -525,13 +526,17 @@ class MmsInstallManager(QDialog):
                             def on_progress(data):
                                 percent = data['percent']
                                 speed_mb = data['speed_mb']
-                                mw.taskman.run_on_main(lambda: self.update_status(f"Downloading {filename} ({percent}% - {speed_mb:.1f} MB/s)"))
+                                mw.taskman.run_on_main(
+                                    lambda f=filename, p=percent, s=speed_mb: self.update_status(
+                                        f"Downloading {f} ({p}% - {s:.1f} MB/s)"
+                                    )
+                                )
                             
                             downloader = TurboDownloader(url, dest, progress_callback=on_progress, debug_mode=debug_mode)
                             downloader.start()
                         except Exception as dl_err:
                             mw.taskman.run_on_main(lambda err=dl_err, u=url: self.log(f"Failed to download {u}: {err}"))
-                            service_logger.write_log('mms', 'install', 'ERROR', f'Download failed', {'URL': url, 'Error': str(dl_err)})
+                            service_logger.write_log('mms', 'install', 'ERROR', 'Download failed', {'URL': url, 'Error': str(dl_err)})
                             # If it's a critical file and not a 404 on a non-existent folder
                             # We might want to continue batch or fail. 
                             # For batch robustness, let's just log and continue the next language.
@@ -576,11 +581,11 @@ class MmsInstallManager(QDialog):
                         except Exception as lex_err:
                             mw.taskman.run_on_main(lambda err=lex_err: self.log(f"{i18n.get_text('mms_manager_error_write_lexicon', self.lang)}: {err}"))
 
-                service_logger.write_log('mms', 'install', 'OK', f'Installed model successfully', {'LangCode': lang_code})
+                service_logger.write_log('mms', 'install', 'OK', 'Installed model successfully', {'LangCode': lang_code})
 
             mw.taskman.run_on_main(lambda: self.update_status(i18n.get_text("mms_manager_status_batch_complete", self.lang)))
             mw.taskman.run_on_main(lambda: self.update_progress(100))
-            service_logger.write_log('mms', 'install', 'OK', f'Batch install completed successfully', {'Total': total_langs})
+            service_logger.write_log('mms', 'install', 'OK', 'Batch install completed successfully', {'Total': total_langs})
             return True
         except Exception as e:
             mw.taskman.run_on_main(lambda err=e: self.log(f"Error: {err}"))
@@ -609,10 +614,10 @@ class MmsInstallManager(QDialog):
                 try:
                     shutil.rmtree(mms_dir)
                     success_count += 1
-                    service_logger.write_log('mms', 'install', 'INFO', f'Uninstalled model', {'LangCode': iso})
+                    service_logger.write_log('mms', 'install', 'INFO', 'Uninstalled model', {'LangCode': iso})
                 except Exception as e:
                     self.log(f"Failed to uninstall {iso}: {e}")
-                    service_logger.write_log('mms', 'install', 'ERROR', f'Failed to uninstall model', {'LangCode': iso, 'Error': str(e)})
+                    service_logger.write_log('mms', 'install', 'ERROR', 'Failed to uninstall model', {'LangCode': iso, 'Error': str(e)})
 
         if success_count > 0:
             QMessageBox.information(self, i18n.get_text("mms_manager_uninstall_complete_title", self.lang), i18n.get_text("mms_manager_uninstall_complete_msg", self.lang).format(success_count))

@@ -2,7 +2,8 @@
 ========================
 
 👉 View detailed development roadmap: [_ROADMAP](./_ROADMAP.md)
-🤖 For a quick project overview (especially for AI), see: [_AI_SUMMARY](./_AI_SUMMARY.md)
+🤖 For architecture, testing and maintenance notes, see: [`AI_Documents/AGENTS.md`](./AI_Documents/AGENTS.md) and [`AI_Documents/REFERENCE.md`](./AI_Documents/REFERENCE.md)
+📦 Release steps: [`UPDATE_WORKFLOW.md`](./UPDATE_WORKFLOW.md) · Change history: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Introduction
 
@@ -35,10 +36,13 @@ Super Free TTS is a fork of HyperTTS with a focus on providing high-quality Text
 ## Main Structure
 
 - `superfreetts_addon/`: Core add-on source code (Python, UI, processing logic).
-- `_PROJECT_DOCUMENTATION.md`: Detailed design and internal function documentation.
-- `README.md`: Brief description for GitHub and users.
+- `external/`: Vendored pure-Python runtime dependencies (EdgeTTS, HTTP, platform helpers).
+- `tests/`: Pytest suite with a mock Anki layer; no real Anki install required.
+- `scripts/`: Verification, packaging and vendor-maintenance helpers.
+- `AI_Documents/`: Architecture, reference and archived investigation notes.
+- `_ROADMAP.md`, `UPDATE_WORKFLOW.md`, `CHANGELOG.md`: Product direction, release checklist and history.
 
-Standard temporary files (like `__pycache__`, `*.pyc`, `*.log`, `*.tmp`) are excluded from this repository.
+Standard temporary files (like `__pycache__`, `*.pyc`, `*.log`, `*.tmp`, coverage output) are excluded from this repository.
 
 ## Installation (Anki)
 
@@ -50,8 +54,22 @@ Standard temporary files (like `__pycache__`, `*.pyc`, `*.log`, `*.tmp`) are exc
 ## Development / Contributing
 
 - Modify source code in the `superfreetts_addon/` directory.
-- Before committing or packaging, ensure logs and temporary files are removed to keep the repository clean.
-- Unit tests are located in the `tests/` directory.
+- Run the checks before committing:
+
+```bash
+python -m pytest tests/ -q
+ruff check superfreetts_addon tests build_share.py scripts
+bandit -r superfreetts_addon -ll
+```
+
+- The full coverage gate and critical-module gate (70% for config, batch executor,
+  text processing, audio storage and voice cache) are documented in
+  `.github/workflows/python-test.yml`.
+- Vendored dependency versions are pinned in `requirements-vendor.txt`; verify
+  them with `python scripts/vendor_deps.py --check`.
+- Before packaging, ensure logs, caches and generated files are removed. Build
+  with `python build_share.py` and verify with
+  `python scripts/verify_package.py SuperFreeTTS.ankiaddon`.
 
 ---
 Maintained by Paul from AnkiVN.

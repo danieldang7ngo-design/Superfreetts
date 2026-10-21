@@ -4,13 +4,11 @@ import logging
 import subprocess
 import threading
 import typing
-import sys
 import time
 
 from .. import service, voice, errors
 from .. import constants
 from .. import languages
-from .. import logging_utils
 from ..mms_engine_manager import MmsEngineManager
 # from .. import system_utils # lazy loaded
 
@@ -456,7 +454,6 @@ class MmsTTS(service.ServiceBase):
             raise errors.RequestError(source_text, voice, "MMS Engine not found. Please install an MMS language from the MMS Manager first.")
 
         lang_code = voice.voice_key.replace("mms_", "")
-        from ..constants import DATA_DIR
         model_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
         
         if not os.path.exists(model_dir):
@@ -548,7 +545,6 @@ class MmsTTS(service.ServiceBase):
             return [None] * len(source_texts)
 
         lang_code = voice.voice_key.replace("mms_", "")
-        from ..constants import DATA_DIR
         model_dir = os.path.join(constants.DATA_DIR, 'mms_models', lang_code)
         
         if not os.path.exists(model_dir):

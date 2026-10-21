@@ -1,4 +1,3 @@
-import sys
 import os
 import aqt
 import aqt.qt
@@ -492,7 +491,6 @@ def _build_vibrant_stylesheet(dark: bool) -> str:
     tab_text_selected = "#FFFFFF"   # White
     
     toc_hover_bg = "#E2E8F0"        # Slate 200
-    tab_pane_bg = "#F1F5F9"         # Slate 100 for distinct background
     
     input_bg = "#F8FAFC"            # Slate 50
     input_focus = "#FFFFFF"         # Crisp white for focus bg
@@ -540,7 +538,6 @@ def _build_vibrant_stylesheet(dark: bool) -> str:
         tab_text_selected = "#0F172A"   # Slate 900
         
         toc_hover_bg = "#1E293B"        # Slate 800
-        tab_pane_bg = "#0B1120"         # Slate 950 for distinct background
         
         input_bg = "#0B1120"            # Slate 950
         input_focus = "#1E293B"         # Slate 800
@@ -841,19 +838,13 @@ def _build_ollama_stylesheet(dark: bool) -> str:
     canvas = "#ffffff"
     surface_soft = "#fafafa"
     surface_card = "#ffffff"
-    surface_dark = "#171717"
 
     ink = "#000000"            # primary / headings / links
-    ink_deep = "#090909"       # pressed
     charcoal = "#525252"       # list / secondary copy
     body = "#737373"           # default prose
-    mute = "#a3a3a3"           # captions / utility
     hairline = "#e5e5e5"       # 1px borders
-    hairline_strong = "#d4d4d4"
 
     on_primary = "#ffffff"
-    on_dark = "#ffffff"
-    on_dark_mute = "rgba(255,255,255,0.7)"
 
     # Tab / nav accents (monochrome — the only "selected" cue is ink fill)
     tab_bg_unselected = "rgba(0, 0, 0, 0)"
@@ -889,19 +880,13 @@ def _build_ollama_stylesheet(dark: bool) -> str:
         canvas = "#0a0a0a"
         surface_soft = "#171717"
         surface_card = "#171717"
-        surface_dark = "#171717"
 
         ink = "#ffffff"
-        ink_deep = "#e5e5e5"
         charcoal = "#d4d4d4"
         body = "#a3a3a3"
-        mute = "#737373"
         hairline = "#2a2a2a"
-        hairline_strong = "#404040"
 
         on_primary = "#000000"
-        on_dark = "#ffffff"
-        on_dark_mute = "rgba(255,255,255,0.7)"
 
         tab_bg_unselected = "rgba(255, 255, 255, 0)"
         tab_bg_selected = "#ffffff"
@@ -1155,22 +1140,16 @@ def _build_nintendo_stylesheet(dark: bool) -> str:
     """
     # ── Light Mode Tokens ──
     primary = "#e60012"        # Nintendo Red
-    signal = "#f68d1f"         # Signal Orange
-    amber = "#ecab37"          # Amber
-    nav_gold = "#e48600"
     on_primary = "#ffffff"
 
     canvas = "#7a8aba"          # Periwinkle metallic
     canvas_soft = "#9fbee7"     # Pale Sky
     card = "#ffffff"            # content surface
     card_alt = "#dedede"        # Platinum
-    chrome = "#3d4f97"          # Chrome Indigo
-    chrome_muted = "#60619c"    # Muted Indigo
     hairline = "#5a5f8c"
 
     ink = "#21242e"             # Carbon Navy
     ink_soft = "#3d4f97"
-    body = "#21242e"
     mute = "#60619c"
 
     tab_bg_unselected = "rgba(0, 0, 0, 0)"
@@ -1205,13 +1184,10 @@ def _build_nintendo_stylesheet(dark: bool) -> str:
         canvas_soft = "#2a3247"
         card = "#2a3247"
         card_alt = "#333c54"
-        chrome = "#3d4f97"
-        chrome_muted = "#60619c"
         hairline = "#4a5380"
 
         ink = "#f2f4fa"
         ink_soft = "#b8c4f0"
-        body = "#e6e9f2"
         mute = "#9aa3c4"
 
         tab_bg_unselected = "rgba(255, 255, 255, 0)"
@@ -1471,18 +1447,12 @@ def _build_apple_stylesheet(dark: bool) -> str:
     surface_card = "#ffffff"
 
     ink = "#1d1d1f"
-    body = "#1d1d1f"
-    body_muted = "#333333"
     ink_muted_48 = "#7a7a7a"
     charcoal = "#333333"
-    mute = "#7a7a7a"
     hairline = "#e0e0e0"
-    divider_soft = "#f0f0f0"
 
     primary = "#0066cc"        # Action Blue
-    primary_focus = "#0071e3"
     on_primary = "#ffffff"
-    link = "#0066cc"
 
     tab_bg_unselected = "rgba(0, 0, 0, 0)"
     tab_bg_selected = "#0066cc"
@@ -1518,18 +1488,12 @@ def _build_apple_stylesheet(dark: bool) -> str:
         surface_card = "#1d1d1f"
 
         ink = "#ffffff"
-        body = "#ffffff"
-        body_muted = "#cccccc"
         ink_muted_48 = "#7a7a7a"
         charcoal = "#e0e0e0"
-        mute = "#7a7a7a"
         hairline = "#333333"
-        divider_soft = "#2a2a2c"
 
         primary = "#2997ff"        # Action Blue (on dark)
-        primary_focus = "#0071e3"
         on_primary = "#000000"
-        link = "#2997ff"
 
         tab_bg_unselected = "rgba(255, 255, 255, 0)"
         tab_bg_selected = "#2997ff"
@@ -1781,13 +1745,10 @@ def _build_binance_stylesheet(dark: bool) -> str:
     """
     # â”€â”€ Tokens (dark-first by default) â”€â”€
     primary = "#fcd535"        # Binance Yellow
-    primary_active = "#f0b90b"
     on_primary = "#181a20"
 
     ink = "#eaecef"
-    body = "#eaecef"
     mute = "#707a8a"
-    mute_strong = "#929aa5"
     hairline = "#2b3139"
 
     canvas = "#0b0e11"
@@ -1826,9 +1787,7 @@ def _build_binance_stylesheet(dark: bool) -> str:
         card = "#ffffff"
         card_alt = "#fafafa"
         ink = "#181a20"
-        body = "#181a20"
         mute = "#707a8a"
-        mute_strong = "#929aa5"
         hairline = "#eaecef"
 
         tab_bg_unselected = "rgba(0, 0, 0, 0)"
@@ -2076,17 +2035,10 @@ def _build_clay_stylesheet(dark: bool) -> str:
     hairline = "#e5e5e5"
 
     ink = "#0a0a0a"
-    body = "#3a3a3a"
-    body_strong = "#1a1a1a"
     mute = "#6a6a6a"
-    mute_soft = "#9a9a9a"
 
-    primary = "#0a0a0a"
-    on_primary = "#ffffff"
 
     brand_pink = "#ff4d8b"
-    brand_teal = "#1a3a3a"
-    brand_lavender = "#b8a4ed"
 
     tab_bg_unselected = "rgba(0, 0, 0, 0)"
     tab_bg_selected = "#ff4d8b"
@@ -2123,13 +2075,8 @@ def _build_clay_stylesheet(dark: bool) -> str:
         hairline = "#2a3a3a"
 
         ink = "#f5f0e0"
-        body = "#cfc7b0"
-        body_strong = "#ffffff"
         mute = "#9a9a9a"
-        mute_soft = "#7a7a7a"
 
-        primary = "#ff4d8b"
-        on_primary = "#ffffff"
 
         tab_bg_unselected = "rgba(255, 255, 255, 0)"
         tab_bg_selected = "#ff4d8b"
@@ -2377,17 +2324,11 @@ def _build_claude_stylesheet(dark: bool) -> str:
     hairline = "#e6dfd8"
 
     ink = "#141413"
-    body = "#3d3d3a"
-    body_strong = "#252523"
     mute = "#6c6a64"
-    mute_soft = "#8e8b82"
 
     primary = "#cc785c"        # warm coral
-    primary_active = "#a9583e"
     on_primary = "#ffffff"
 
-    accent_teal = "#5db8a6"
-    accent_amber = "#e8a55a"
 
     tab_bg_unselected = "rgba(0, 0, 0, 0)"
     tab_bg_selected = "#cc785c"
@@ -2424,13 +2365,9 @@ def _build_claude_stylesheet(dark: bool) -> str:
         hairline = "#33302c"
 
         ink = "#faf9f5"
-        body = "#c8c4bb"
-        body_strong = "#ffffff"
         mute = "#9a978f"
-        mute_soft = "#7a776f"
 
         primary = "#d98a6f"
-        primary_active = "#cc785c"
         on_primary = "#141413"
 
         tab_bg_unselected = "rgba(255, 255, 255, 0)"

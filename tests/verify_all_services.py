@@ -4,7 +4,6 @@ import os
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(addon_dir)
 
-from tests.conftest import MockAnkiUtils
 import superfreetts_addon.servicemanager as servicemanager
 
 def main():

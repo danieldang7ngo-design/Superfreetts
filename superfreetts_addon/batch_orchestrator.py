@@ -12,7 +12,6 @@ Handles:
 import time
 import copy
 import threading
-import concurrent.futures
 from typing import List, Dict, Tuple, Any, Optional
 
 from . import constants
@@ -21,14 +20,12 @@ from . import errors
 from . import context
 from . import batch_progress_ui
 from . import system_utils
-from . import audio_file_store
 from . import logging_utils
 from . import i18n
 from . import source_text_resolver
 from . import batch_executor
 from . import batch_constants
 from . import text_utils
-from . import usage_tracker
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -135,7 +132,7 @@ class BatchOrchestrator:
                     self.text_processing_cache[cache_key] = processed_text
                 else:
                     processed_text = self.text_processing_cache[cache_key]
-                    logger.debug(f"[BATCH] Text cache hit")
+                    logger.debug("[BATCH] Text cache hit")
 
                 sequence_index = len(tasks)
                 priority_voice_list = None
@@ -171,7 +168,7 @@ class BatchOrchestrator:
             i18n.get_text("status_analyzing_duplicates", lang),
             batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
         )
-        logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
+        logger.info('[BATCH] Analyzing for duplicate (text + voice) combinations...')
         dedup_start = time.time()
         dedup_map = self._collect_batch_duplicates(tasks)
         dedup_time = time.time() - dedup_start
@@ -327,7 +324,7 @@ class BatchOrchestrator:
         if notes_to_update and batch_status.must_continue:
             logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
             anki_collection.update_notes(notes_to_update)
-            logger.info(f'[BATCH] Notes saved successfully')
+            logger.info('[BATCH] Notes saved successfully')
 
         batch_status.total_unique_tasks = 0
         batch_status.unique_tasks_completed = 0
@@ -340,7 +337,7 @@ class BatchOrchestrator:
         audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
         self._bind_usage_session(batch_status, audio_request_context)
 
-        logger.info(f'[BATCH] Using multi-engine batch executor')
+        logger.info('[BATCH] Using multi-engine batch executor')
         batch_name = batch.name or f"batch_{int(time.time())}"
         original_note_id_list = note_id_list[:]
         checkpoint_data = self.executor.checkpoint.load(batch_name)
@@ -409,7 +406,7 @@ class BatchOrchestrator:
                             self.text_processing_cache[cache_key] = processed_text
                         else:
                             processed_text = self.text_processing_cache[cache_key]
-                            logger.debug(f"[BATCH] Text cache hit")
+                            logger.debug("[BATCH] Text cache hit")
                         
                         sequence_index = len(tasks)
 
@@ -446,7 +443,7 @@ class BatchOrchestrator:
                     i18n.get_text("status_analyzing_duplicates", lang),
                     batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
                 )
-                logger.info(f'[BATCH] Analyzing for duplicate (text + voice) combinations...')
+                logger.info('[BATCH] Analyzing for duplicate (text + voice) combinations...')
                 dedup_start = time.time()
                 dedup_map = self._collect_batch_duplicates(tasks)
                 dedup_time = time.time() - dedup_start
@@ -459,7 +456,7 @@ class BatchOrchestrator:
                     logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
 
                 max_workers = system_utils.get_max_workers()
-                logger.info(f"[BATCH] Parallel generation started: engine pools will respect their own limits")
+                logger.info("[BATCH] Parallel generation started: engine pools will respect their own limits")
 
                 batch_status.total_unique_tasks = unique_count
                 batch_status.unique_tasks_completed = 0
@@ -507,7 +504,6 @@ class BatchOrchestrator:
                     batch_progress_ui.BatchProgressPhase.SAVING,
                 )
                 logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
-                update_start = time.time()
 
                 notes_to_update = []
                 for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(results):
@@ -543,7 +539,7 @@ class BatchOrchestrator:
                 if notes_to_update and batch_status.must_continue:
                     logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
                     anki_collection.update_notes(notes_to_update)
-                    logger.info(f'[BATCH] Notes saved successfully')
+                    logger.info('[BATCH] Notes saved successfully')
                     
                     if checkpoint and checkpoint_enabled:
                         try:
@@ -556,7 +552,6 @@ class BatchOrchestrator:
                             logger.warning(f'[BATCH] Failed to save checkpoint: {e}')
                             checkpoint_enabled = False
 
-                update_time = time.time() - update_start
                 total_time = time.time() - start_time
                 logger.info(f'[BATCH] Completed in {total_time:.2f}s')
 
@@ -566,17 +561,17 @@ class BatchOrchestrator:
                 if batch_status.must_continue:
                     if checkpoint and checkpoint_enabled:
                         self.executor.checkpoint.remove(batch_name)
-                    logger.info(f'[BATCH] Batch completed successfully')
+                    logger.info('[BATCH] Batch completed successfully')
                 else:
                     if checkpoint and checkpoint_enabled:
-                        logger.info(f'[BATCH] Batch cancelled, checkpoint saved for resume')
+                        logger.info('[BATCH] Batch cancelled, checkpoint saved for resume')
                 
                 batch_status.set_status_message(None)
             
             finally:
                 batch_status.futures_to_cancel.clear()
                 self.text_processing_cache.clear()
-                logger.info(f'[BATCH] Cleanup complete')
+                logger.info('[BATCH] Cleanup complete')
 
     def _collect_batch_duplicates(self, tasks: List[Dict[str, Any]]) -> Dict[Tuple, List[int]]:
         dedup_map = {}
@@ -762,7 +757,11 @@ class BatchOrchestrator:
             
             for future, chunk in done_futures:
                 try:
-                    batch_results = future.result(timeout=25.0) 
+                    # The future is already known to be done here, so result()
+                    # cannot block. Do not add an arbitrary timeout: a large
+                    # first batch (Kokoro/MMS model load) can legitimately take
+                    # longer than 25 seconds before returning its result.
+                    batch_results = future.result()
                     
                     for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
                         result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))

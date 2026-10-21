@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 
 from . import component_common
@@ -6,7 +5,6 @@ from . import component_mappingrule
 from . import component_choosepreset
 from . import config_models
 from . import constants
-from . import errors
 from . import gui_utils
 from . import logging_utils
 from . import i18n
@@ -73,7 +71,7 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
 
         # note type
         hlayout = aqt.qt.QHBoxLayout()
-        hlayout.addWidget(aqt.qt.QLabel(f'<b>Note Type:</b>'))
+        hlayout.addWidget(aqt.qt.QLabel('<b>Note Type:</b>'))
         self.note_type_label = aqt.qt.QLabel(self.hypertts.anki_utils.get_note_type_name(self.deck_note_type.model_id))
         hlayout.addWidget(self.note_type_label)
         hlayout.addStretch()
@@ -81,7 +79,7 @@ class ComponentPresetMappingRules(component_common.ConfigComponentBase):
 
         # deck info
         hlayout = aqt.qt.QHBoxLayout()
-        hlayout.addWidget(aqt.qt.QLabel(f'<b>Deck:</b>'))
+        hlayout.addWidget(aqt.qt.QLabel('<b>Deck:</b>'))
         self.deck_name_label = aqt.qt.QLabel(self.hypertts.anki_utils.get_deck_name(self.deck_note_type.deck_id))
         hlayout.addWidget(self.deck_name_label)
         hlayout.addStretch()

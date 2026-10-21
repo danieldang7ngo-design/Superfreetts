@@ -1,8 +1,6 @@
 import os
 import json
-import logging
 import shutil
-from typing import List, Dict, Optional
 
 from aqt import mw
 from aqt.qt import *

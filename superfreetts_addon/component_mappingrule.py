@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 
 from . import component_common
@@ -6,7 +5,6 @@ from . import component_batch
 from . import config_models
 from . import constants
 from . import errors
-from . import gui_utils
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
 
@@ -31,7 +29,7 @@ class ComponentMappingRule(component_common.ConfigComponentBase):
         self.model = model
         try:
             self.preset_name_label.setText(self.hypertts.get_preset_name(self.model.preset_id))
-        except errors.PresetNotFound as e:
+        except errors.PresetNotFound:
             self.preset_name_label.setText(constants.GUI_TEXT_UNKNOWN_PRESET)
         if self.model.rule_type == constants.MappingRuleType.NoteType:
             self.rule_type_note_type.setChecked(True)
@@ -89,7 +87,7 @@ class ComponentMappingRule(component_common.ConfigComponentBase):
         column_index += 1
         # hlayout.addWidget(self.rule_type_group)
 
-        self.enabled_checkbox = aqt.qt.QCheckBox(f'Enabled')
+        self.enabled_checkbox = aqt.qt.QCheckBox('Enabled')
         self.enabled_checkbox.setObjectName(f'enabled_checkbox_{gridlayout_index}')
         gridlayout.addWidget(self.enabled_checkbox, gridlayout_index, column_index)
         column_index += 1
@@ -113,10 +111,10 @@ class ComponentMappingRule(component_common.ConfigComponentBase):
     def rule_type_toggled(self, checked):
         logger.debug(f'rule_type_toggled: {checked}')
         if self.rule_type_note_type.isChecked():
-            logger.debug(f'rule_type_note_type is checked')
+            logger.debug('rule_type_note_type is checked')
             self.model.rule_type = constants.MappingRuleType.NoteType
         elif self.rule_type_deck_note_type.isChecked():
-            logger.debug(f'rule_type_deck_note_type is checked')
+            logger.debug('rule_type_deck_note_type is checked')
             self.model.rule_type = constants.MappingRuleType.DeckNoteType
         else:
             raise RuntimeError(f'Unknown rule_type: {self.model.rule_type}')

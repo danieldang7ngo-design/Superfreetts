@@ -9,7 +9,6 @@ from . import gui_utils
 from . import logging_utils
 from . import stats
 from . import i18n
-from . import component_piper_manager
 from . import component_kokoro_manager, component_mms_manager, component_supertonic_setup
 
 logger = logging_utils.get_child_logger(__name__)
@@ -441,7 +440,6 @@ class ServicesPage(component_common.ConfigComponentBase):
                 options_gridlayout.addLayout(v_layout, row, 1, 1, 1)
 
             elif isinstance(type, tuple) and type[0] == 'directory':
-                title_str = type[1]
                 h_layout = aqt.qt.QHBoxLayout()
                 lineedit = aqt.qt.QLineEdit()
                 lineedit.setText(self.model.get_service_configuration_key(service.name, key))

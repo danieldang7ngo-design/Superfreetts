@@ -60,7 +60,7 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 
 - ✅ Thêm GitHub Actions/CI để chạy test tự động: `.github/workflows/python-test.yml`.
 - ✅ Mở rộng regression tests cho batch, workflow, config migration, service fallback: ~30 file test mới (test_batch_flow, test_service_manager, test_supertonic_service, test_macos_concurrency_gate, test_ram_aware_concurrency...).
-- Còn lại: cập nhật `README.md` / `_PROJECT_DOCUMENTATION.md` khi thay đổi hành vi user-facing (lưu ý: `_PROJECT_DOCUMENTATION.md` đã xoá, docs gộp về `AI_Documents/`).
+- ✅ Đã cập nhật `README.md`, `AI_Documents/AGENTS.md`, `AI_Documents/REFERENCE.md`; docs thiết kế gộp về `AI_Documents/`, báo cáo cũ chuyển vào `AI_Documents/archive/`.
 - Chỉ thêm issue/PR templates khi repo thật sự cần nhận đóng góp ngoài.
 - Done khi test suite chạy tự động và cover được các luồng dễ regression nhất.
 
@@ -69,10 +69,10 @@ Roadmap này chỉ giữ phần còn mở. Mục đã ship đi vào `CHANGELOG.m
 - ✅ Tách `superfreetts.py` God Class: giờ là facade mỏng (~585 dòng), logic tách sang `batch_orchestrator.py`, `editor_manager.py`, `config_store.py`, `audio_generator.py`, `realtime_manager.py`, `tts_orchestrator.py`, `job_pipeline.py`.
 - ✅ Dọn legacy fallback: `component_services_legacy.py`, `performance_cache.py`, `cpu_utils.py`, `sherpa_manager.py` đã xoá; 7x `except:pass` trong `component_kokoro_manager.py` đã fix; `threading.Semaphore` → `DynamicSemaphore` trong `service_mms.py`.
 - ✅ Tăng test coverage core batch flow: `test_batch_flow.py`, `test_batch_preview_preset_switch.py`, `test_batch_state_manager.py`, `test_batch_executor_routing_and_stop.py`.
-- ⏳ **Thay hardcoded batch timeout (`future.result(timeout=25.0)`)** tại `batch_orchestrator.py:742` bằng per-engine timeout config. Hằng số `TASK_TIMEOUT_SECONDS = 120` đã có trong `batch_constants.py` nhưng chưa được dùng ở chỗ này. Còn cả `stall_timeout_seconds = 60.0` hardcode ở `batch_orchestrator.py:678`.
+- ✅ **Batch stall timeout**: `BATCH_STALL_TIMEOUT_SECONDS = 180`; `future.result()` chỉ gọi sau khi future đã done, bỏ timeout 25 giây tùy ý để batch đầu tiên (load model Kokoro/MMS) không bị hủy oan.
 - ⏳ **Giảm gánh nặng `voicelist.py`**: file 2.5MB / 43k dòng, vẫn được `service.py:16` import trực tiếp → nạp ngay khi Anki khởi động. Cần lazy-load/compress hoặc đưa dữ liệu ra ngoài source.
-- ⏳ **Xoá import trùng lặp trong `superfreetts.py:83-89`**: khối `from .tts_orchestrator import TTSOrchestrator` / `UIController` / `JobPipeline` được import 2 lần y hệt nhau (vô hại nhưng cần dọn). *Nhắc nhở AI agent: khi đọc/refactor file này, kiểm tra và gộp về 1 khối.*
-- Done khi core nhỏ hơn, timeout configurable, `voicelist.py` không còn là file quá lớn trong source, và batch refactor có test bảo vệ.
+- ✅ **Import trùng lặp trong `superfreetts.py`** đã được dọn cùng đợt lint import hygiene.
+- Done khi core nhỏ hơn, `voicelist.py` không còn là file quá lớn trong source, và batch refactor có test bảo vệ.
 
 ---
 

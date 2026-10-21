@@ -1,9 +1,6 @@
-from re import sub
-import sys
 import os
 import importlib
 import typing
-import requests
 
 import functools
 
@@ -11,12 +8,9 @@ import functools
 from . import voice as voice_module
 from . import service
 from . import errors
-from . import version
 from . import constants
 # from . import constants_events removed
-from . import config_models
 from . import logging_utils
-from . import stats
 from . import voice_cache
 logger = logging_utils.get_child_logger(__name__)
 
@@ -239,7 +233,7 @@ class ServiceManager():
             
             # Apply configuration to newly instantiated services
             if self._configuration_model is not None:
-                logger.info(f'Applying configuration from model to newly loaded expensive services')
+                logger.info('Applying configuration from model to newly loaded expensive services')
                 enabled_map = self._configuration_model.get_service_enabled_map()
                 service_config = self._configuration_model.get_service_config()
                 logger.debug(f'Enabled services map: {enabled_map}')

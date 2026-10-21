@@ -7,10 +7,8 @@ Only active when SILENT_LOGGING_MODE is False (debug mode enabled).
 """
 
 import time
-import logging
 from typing import Dict, List, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
 from . import logging_utils
 

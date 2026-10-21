@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 import time
 import html
@@ -131,7 +130,7 @@ class BatchPreviewTableModel(aqt.qt.QAbstractTableModel):
 
     def _request_processed_text(self, note_ids: List[int], page: int, generation: int):
         # Use QueryOp for background
-        op = aqt.operations.QueryOp(
+        aqt.operations.QueryOp(
             parent=aqt.mw,
             op=lambda col: self.hypertts.populate_batch_status_processed_text(
                 note_ids, self.batch_status.source_model, self.batch_status.text_processing_model, self.batch_status

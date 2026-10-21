@@ -1,25 +1,16 @@
 
 # python imports
 import os
-import sys
-import re
-import hashlib
-import random
 import copy
-import json
 import datetime
 import time
-import threading
-import concurrent.futures
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Optional, Any
 
 
 # anki imports
 import aqt
 import aqt.progress
 import aqt.addcards
-import anki.notes
-import anki.cards
 import aqt.operations
 import aqt.qt
 
@@ -27,19 +18,12 @@ from . import constants
 from . import options
 from . import voice as voice_module
 from . import errors
-from . import text_utils
 from . import config_models
-from . import context
 from . import batch_executor
 from . import logging_utils
 from . import gui
 from . import gui_utils
-from . import preset_rules_status
 from . import i18n
-from . import batch_constants
-from . import performance_tracker
-from . import system_utils
-from . import batch_progress_ui
 from . import audio_file_store
 from . import note_audio_updater
 from . import source_text_resolver
@@ -225,10 +209,7 @@ class SuperFreeTTS():
         batch_cfg = first_item['batch']
         chosen_voice = first_item.get('chosen_voice')
         
-        # 1. Prepare texts for batch
-        source_texts = [item[1]['processed_text'] for item in chunk]
-        
-        # 2. Check individual items for existing cache files to avoid redundant calling
+        # 1. Check individual items for existing cache files to avoid redundant calling
         results = [None] * len(chunk)
         missing_indices = []
         missing_texts = []
@@ -436,7 +417,8 @@ class SuperFreeTTS():
             chunk = note_id_list[i:i + CHUNK]
             placeholders = ",".join("?" * len(chunk))
             rows = aqt.mw.col.db.all(
-                f"SELECT DISTINCT mid FROM notes WHERE id IN ({placeholders})",
+                # Placeholders are generated '?' markers; values are bound.
+                f"SELECT DISTINCT mid FROM notes WHERE id IN ({placeholders})",  # nosec B608
                 *chunk,
             )
             for (mid,) in rows:

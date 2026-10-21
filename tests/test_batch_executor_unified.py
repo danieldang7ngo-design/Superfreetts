@@ -142,12 +142,12 @@ class TestBoundedThreadPoolExecutor:
             return True
             
         # Submit 2 active + 1 waiting = 3 total
-        f1 = executor.submit(slow_task)
-        f2 = executor.submit(slow_task)
-        f3 = executor.submit(slow_task)
+        executor.submit(slow_task)
+        executor.submit(slow_task)
+        executor.submit(slow_task)
         
         # 4th submission should block (using a timeout for the test)
-        start_time = time.time()
+        time.time()
         
         def attempt_4th():
             executor.submit(slow_task)

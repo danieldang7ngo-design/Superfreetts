@@ -156,10 +156,10 @@ chunks = [texts[i:i+BATCH_SIZE] for i in range(0, len(texts), BATCH_SIZE)]
 print(f"EdgeTTS Vietnamese stress test: {len(texts)} texts")
 print(f"  concurrency_workers: {batch_constants.EDGETTS_MAX_WORKERS}")
 print(f"  batch_size: {BATCH_SIZE} ({len(chunks)} chunks)")
-print(f"  max_retries: 3")
+print("  max_retries: 3")
 print(f"  voice: {voice_key}")
 print(f"  special chars: {len(SPECIAL_CHARS)} patterns")
-print(f"  html mixed: yes")
+print("  html mixed: yes")
 print()
 
 start = time.time()

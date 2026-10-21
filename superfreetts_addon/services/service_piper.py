@@ -1,10 +1,5 @@
-import sys
 import os
-import subprocess
 import json
-import io
-import threading
-import time
 import tempfile
 from typing import List, Optional
 
@@ -100,7 +95,6 @@ class PiperTTS(service.ServiceBase):
         return True
 
     def configuration_options(self):
-        from .. import system_utils
         return {
             self.CONFIG_EXECUTABLE_PATH: ('directory', 'Python Folder (Manual Override, Optional)'),
             self.CONFIG_MODELS_PATH: ('directory', 'Piper Models Folder (Manual Override, Optional)'),
@@ -246,7 +240,7 @@ class PiperTTS(service.ServiceBase):
             except PermissionError as e:
                 logger.error(f"[PiperTTS] ❌ PERMISSION DENIED accessing {models_path}")
                 logger.error(f"[PiperTTS] Error details: {e}")
-                logger.error(f"[PiperTTS] Check folder permissions or antivirus settings")
+                logger.error("[PiperTTS] Check folder permissions or antivirus settings")
                 import traceback
                 logger.error(traceback.format_exc())
             except Exception as e:
@@ -319,13 +313,13 @@ class PiperTTS(service.ServiceBase):
                 try:
                     process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
                 except (PermissionError, OSError) as e:
-                    logger.error(f"[PiperTTS] ❌ ACCESS DENIED when creating process!")
+                    logger.error("[PiperTTS] ❌ ACCESS DENIED when creating process!")
                     logger.error(f"[PiperTTS] Executable: {piper_exe}")
                     logger.error(f"[PiperTTS] Script: {script_path}")
                     logger.error(f"[PiperTTS] Error: {e}")
                     import traceback
                     logger.error(traceback.format_exc())
-                    raise errors.RequestError(source_text, voice, f"Access denied to Piper engine or script. Check antivirus or permissions.")
+                    raise errors.RequestError(source_text, voice, "Access denied to Piper engine or script. Check antivirus or permissions.")
                 
                 try:
                     # Prepare Piper-specific config
@@ -445,7 +439,7 @@ class PiperTTS(service.ServiceBase):
                 try:
                     process = _piper_pool.get_process(piper_exe, script_path, debug_enabled=debug_enabled)
                 except (PermissionError, OSError) as e:
-                    logger.error(f"[PiperTTS Batch] ❌ ACCESS DENIED when creating process!")
+                    logger.error("[PiperTTS Batch] ❌ ACCESS DENIED when creating process!")
                     logger.error(f"[PiperTTS Batch] Executable: {piper_exe}")
                     logger.error(f"[PiperTTS Batch] Script: {script_path}")
                     logger.error(f"[PiperTTS Batch] Error: {e}")

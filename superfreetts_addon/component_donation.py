@@ -1,7 +1,5 @@
 import aqt.qt
-import os
 from . import component_common
-from . import constants
 from . import i18n
 from . import logging_utils
 from . import gui_utils

@@ -184,7 +184,6 @@ class TestRealtimeGenerateTimeout:
         up after the timeout and return None so Anki's playback queue can
         move on to the next card.
         """
-        release_event = None  # never set - the call "hangs" for the test's duration
 
         def hanging_call(tag):
             time.sleep(2)  # simulates a stuck call; kept short so the ThreadPoolExecutor's

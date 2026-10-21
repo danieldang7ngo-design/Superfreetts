@@ -6,9 +6,8 @@ Tests the fix for: "Batch Preview Board Shows Wrong Source/Processed Text After 
 - Secondary fix: generation counter guards against in-flight stale responses
 """
 
-import sys
 import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 # Setup mock Anki/Qt before importing components
 from . import mock_anki
@@ -150,7 +149,7 @@ class TestBatchPreviewPresetSwitch:
         
         # === Step 1: Load Preset A ===
         preset_a_source = make_source_model("Front")
-        preset_a_model = make_batch_model(preset_a_source)
+        make_batch_model(preset_a_source)
         
         # Mock BatchPreview context to load the model
         table_model.batch_status.source_model = preset_a_source
@@ -166,7 +165,7 @@ class TestBatchPreviewPresetSwitch:
         # === Step 3: Switch to Preset B ===
         gen_before = table_model.generation
         preset_b_source = make_source_model("Back")
-        preset_b_model = make_batch_model(preset_b_source)
+        make_batch_model(preset_b_source)
         
         with patch.object(table_model, 'load_page') as mock_load_page:
             table_model.invalidate_all()
@@ -267,7 +266,7 @@ class TestBatchPreviewPresetSwitch:
         """BatchPreview.load_model() should call invalidate_all() instead of load_page(0)."""
         mock_hypertts = make_mock_hypertts()
         note_ids = [1, 2, 3]
-        bs = make_batch_status_with_notes(mock_hypertts, note_ids)
+        make_batch_status_with_notes(mock_hypertts, note_ids)
         
         # Create a minimal BatchPreview instance
         dialog_mock = MagicMock()

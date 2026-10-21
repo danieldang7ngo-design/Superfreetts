@@ -1,9 +1,6 @@
-import sys
 import aqt.qt
 
-from . import constants
 from . import component_common
-from . import batch_status
 from . import errors
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)

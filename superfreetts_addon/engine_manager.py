@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import subprocess
 import threading
@@ -10,14 +9,16 @@ from . import archive_utils
 from . import logging_utils
 from .downloader import TurboDownloader
 from . import constants
+from .download_sources import (
+    GET_PIP_SHA256,
+    GET_PIP_SIZE,
+    GET_PIP_URL,
+    PYTHON_EMBED_SHA256,
+    PYTHON_EMBED_SIZE,
+    PYTHON_EMBED_URL,
+)
 
 logger = logging_utils.get_child_logger(__name__)
-
-# Constants for Python Installation
-PYTHON_EMBED_URL = "https://www.python.org/ftp/python/3.10.11/python-3.10.11-embed-amd64.zip"
-PYTHON_EMBED_SHA256 = "608619f8619075629c9c69f361352a0da6ed7e62f83a0e19c63e0ea32eb7629d"
-PYTHON_EMBED_SIZE = 8629277
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 
 ADDON_DIR = os.path.dirname(__file__)
 
@@ -112,7 +113,12 @@ class EngineManager:
             if not os.path.exists(pip_exe):
                 get_pip_path = os.path.join(constants.SHARED_ENGINE_DIR, 'get-pip.py')
                 logger.info(f"Downloading Pip from {GET_PIP_URL}")
-                downloader = TurboDownloader(GET_PIP_URL, get_pip_path)
+                downloader = TurboDownloader(
+                    GET_PIP_URL,
+                    get_pip_path,
+                    expected_sha256=GET_PIP_SHA256,
+                    expected_size=GET_PIP_SIZE,
+                )
                 downloader.start()
                 
                 logger.info("Installing Pip...")

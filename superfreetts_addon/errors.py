@@ -1,4 +1,3 @@
-import sys
 import logging
 
 from . import constants
@@ -112,29 +111,29 @@ class RequestError(HyperTTSError):
 
 class NoVoiceSelected(HyperTTSError):
     def __init__(self):
-        message = f'No voice selected. Please select a voice, you may need to update your filters.'
+        message = 'No voice selected. Please select a voice, you may need to update your filters.'
         super().__init__(message)
 
 class NoVoicesAvailable(HyperTTSError):
     def __init__(self):
-        message = f'No voices available. You may need to configure some services in the SuperFreeTTS Configuration. ' \
+        message = 'No voices available. You may need to configure some services in the SuperFreeTTS Configuration. ' \
             '<a href="https://www.vocab.ai/tutorials/hypertts-getting-started">Please follow this tutorial: getting started with SuperFreeTTS</a>.'
         super().__init__(message)
 
 
 class NoVoicesAdded(HyperTTSError):
     def __init__(self):
-        message = f'No voices have been added. You must add at least one voice when in Random or Priority mode.'
+        message = 'No voices have been added. You must add at least one voice when in Random or Priority mode.'
         super().__init__(message)
 
 class NoNotesSelected(HyperTTSError):
     def __init__(self):
-        message = f'No notes have been selected. You must select at least one note from the browser.'
+        message = 'No notes have been selected. You must select at least one note from the browser.'
         super().__init__(message)
 
 class NoNotesSelectedPreview(HyperTTSError):
     def __init__(self):
-        message = f'No notes have been selected. Select one note to preview sound.'
+        message = 'No notes have been selected. Select one note to preview sound.'
         super().__init__(message)        
 
 class NoPresetMappingRulesDefined(HyperTTSError):
@@ -147,7 +146,7 @@ class NoPresetMappingRulesDefined(HyperTTSError):
 # template expansion errors
 class NoResultVar(HyperTTSError):
     def __init__(self):
-        message = f'No "result" variable found. You must assign the final template output to a result variable.'
+        message = 'No "result" variable found. You must assign the final template output to a result variable.'
         super().__init__(message)
 
 class TemplateExpansionError(HyperTTSError):
@@ -158,7 +157,7 @@ class TemplateExpansionError(HyperTTSError):
 # TTS related errors
 class TTSTagProcessingError(HyperTTSError):
     def __init__(self):
-        message = f'Could not process TTS Tag, please re-add TTS tag by adding Realtime Audio to Note'
+        message = 'Could not process TTS Tag, please re-add TTS tag by adding Realtime Audio to Note'
         super().__init__(message)
 
 # model validation errors

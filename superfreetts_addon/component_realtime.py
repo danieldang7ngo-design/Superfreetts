@@ -1,4 +1,3 @@
-import sys
 import aqt.qt
 
 
@@ -6,7 +5,6 @@ from . import component_common
 from . import component_realtime_side
 from . import config_models
 from . import constants
-from . import errors
 from . import gui_utils
 from . import logging_utils
 from . import i18n

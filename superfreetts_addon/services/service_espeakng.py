@@ -1,6 +1,4 @@
-import sys
 import os
-import hashlib
 import aqt.sound
 import tempfile
 import subprocess
@@ -96,10 +94,6 @@ class ESpeakNg(service.ServiceBase):
         return None
 
     def voice_list(self) -> List[voice.TtsVoice_v3]:
-        gender_map = {
-            'M': constants.Gender.Male,
-            'F': constants.Gender.Female
-        }
 
         try:
             # First check if espeak-ng is available
@@ -174,7 +168,7 @@ class ESpeakNg(service.ServiceBase):
 
         # Check if the wav file was created
         if not os.path.exists(wav_temp_file_name):
-            raise errors.RequestError(f"espeak-ng did not create output file")
+            raise errors.RequestError("espeak-ng did not create output file")
 
         # Convert wav to mp3
         fh, mp3_temp_file_name = tempfile.mkstemp(prefix='superfreetts_espeakng', suffix='.mp3') 

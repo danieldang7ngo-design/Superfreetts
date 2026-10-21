@@ -1,11 +1,8 @@
-import sys
-import abc
 import copy
 import datetime
-from dataclasses import dataclass, field, fields, is_dataclass
-import databind.json
+from dataclasses import dataclass, field
 import enum
-from typing import List, Optional, Mapping, Any
+from typing import List, Optional, Any
 
 from . import constants
 # from . import constants_events removed
@@ -113,7 +110,7 @@ class BatchSource():
         if self.mode == constants.BatchMode.simple:
             return f'{self.source_field}'
         if self.mode in [constants.BatchMode.template, constants.BatchMode.advanced_template]:
-            return f'template'
+            return 'template'
         return None
         
     def __repr__(self):
@@ -603,7 +600,7 @@ class RealtimeSourceAnkiTTS:
 
     def __str__(self):
         if self.field_name == None or self.field_type == None:
-            return f"""Undefined"""
+            return """Undefined"""
         return f"""field: {self.field_name} ({self.field_type.name})"""
 
     

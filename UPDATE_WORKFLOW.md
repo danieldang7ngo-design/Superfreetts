@@ -17,26 +17,21 @@ Common areas:
 
 - UI components: `superfreetts_addon/component_*.py`
 - Main menu and hooks: `superfreetts_addon/gui.py`, `__init__.py`
-- Text resources: `superfreetts_addon/i18n.py`
+- Text resources: `superfreetts_addon/i18n.py` + `superfreetts_addon/locales/*.json`
 - Addon update popup: `superfreetts_addon/release_notes.py`
-- Version: `superfreetts_addon/version.py`
+- Version: `manifest.json` and `superfreetts_addon/version.py`
 - Public changelog: `CHANGELOG.md`
 
 Follow existing code patterns and keep unrelated refactors out of the update.
 
 ## 3. Update Version
 
-Edit:
+Edit both version fields so they match:
 
-- `superfreetts_addon/version.py`
+- `manifest.json` → `"version": "x.y.z"`
+- `superfreetts_addon/version.py` → `ANKI_SUPER_FREE_TTS_VERSION='x.y.z'`
 
-Set:
-
-```python
-ANKI_SUPER_FREE_TTS_VERSION='x.y.z'
-```
-
-Skip this step only when the change is internal and should not trigger an addon update announcement.
+Skip this step only when the change is internal and should not trigger an addon update announcement. Never move a tag that has already been pushed; create a new version instead.
 
 ## 4. Update Addon Release Notes
 
@@ -46,11 +41,15 @@ Edit:
 
 Add a new `ReleaseNoteEntry` at the top of `RELEASE_NOTES`.
 
-Required languages:
+Required languages (all seven visible locales; English is the fallback):
 
 - `en`
 - `vi`
 - `ko`
+- `ja`
+- `zh-CN`
+- `zh-TW`
+- `sv`
 
 The release notes popup uses these entries after addon updates, so each entry should include:
 
@@ -83,15 +82,11 @@ Add Korean too when the update affects Korean UI behavior or Korean users:
 
 ## 6. Check i18n Coverage When Text Changes
 
-When the update adds or changes UI text, edit:
-
-- `superfreetts_addon/i18n.py`
-
-Make sure all new keys exist for:
-
-- `en`
-- `vi`
-- `ko`
+When the update adds or changes UI text, edit the matching
+`superfreetts_addon/locales/*.json` files. Add the English key first; add
+reviewed translations for the other six locales when available. Missing keys
+are allowed and fall back to English, but do not machine-generate unreviewed
+translations just to inflate coverage.
 
 For formatted strings, confirm placeholders match across languages, for example:
 
@@ -103,17 +98,29 @@ If the update does not touch UI text, this step can be skipped.
 
 ## 7. Verify
 
-Run compile checks for changed Python files. Start with the files touched by the update:
+Run the same gates as CI:
 
 ```powershell
-python -m py_compile .\superfreetts_addon\version.py .\superfreetts_addon\release_notes.py .\superfreetts_addon\i18n.py
+python -m pytest tests/ -q --tb=short
+ruff check superfreetts_addon tests build_share.py scripts
+bandit -r superfreetts_addon -ll
+python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json --cov-fail-under=33
+python scripts/check_critical_coverage.py coverage.json
+python scripts/vendor_deps.py --check
 ```
 
-Add any other changed Python files to the command.
+Then build and inspect the package:
 
-For UI changes, manually check the affected Anki screen.
+```powershell
+python build_share.py
+python scripts/verify_package.py SuperFreeTTS.ankiaddon
+```
 
-For language changes, manually check each affected UI language.
+For UI changes, manually check the affected Anki screen on a real Anki
+installation. For language changes, manually check each affected UI language;
+machine-only translation is not a substitute for a native review. Real
+macOS/Windows RAM and crash behavior must be verified on those platforms
+(the Linux CI smoke tests cannot prove it).
 
 Search for stale version references:
 

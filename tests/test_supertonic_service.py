@@ -4,7 +4,6 @@ import sys
 import types
 from unittest.mock import patch
 
-import pytest
 
 import tests.mock_anki as mock_anki
 
@@ -14,7 +13,7 @@ addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, addon_dir)
 sys.path.insert(0, os.path.join(addon_dir, "external"))
 
-from superfreetts_addon import batch_constants, batch_executor, languages, superfreetts
+from superfreetts_addon import batch_constants, batch_executor, languages
 from superfreetts_addon.services import service_supertonic, supertonic_runner
 
 

@@ -15,7 +15,6 @@ if runner_dir not in sys.path:
     sys.path.insert(0, runner_dir)
 
 from runner_base import setup_stdio, log
-setup_stdio()
 
 # Inject local libs path
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -47,6 +46,7 @@ def _get_piper_binary_name():
     return 'piper'
 
 def main():
+    setup_stdio()
     log("PIPER-STOCK RUNNER STARTED")
     
     # Resolve piper binary path

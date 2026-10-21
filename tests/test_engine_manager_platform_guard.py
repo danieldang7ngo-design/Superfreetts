@@ -20,7 +20,7 @@ see the fix plan for the verification that led to this narrower scope.
 
 import sys
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -66,7 +66,7 @@ class TestEngineManagerPlatformGuard:
         with patch.object(engine_manager.platform, 'system', return_value='Windows'), \
              patch.object(engine_manager.EngineManager, 'is_installed', return_value=False), \
              patch.object(engine_manager.EngineManager, '_run_command') as mock_run_command, \
-             patch.object(engine_manager, 'TurboDownloader') as mock_downloader_cls, \
+             patch.object(engine_manager, 'TurboDownloader'), \
              patch.object(engine_manager.archive_utils, 'safe_extract_zip'), \
              patch.object(engine_manager.os.path, 'exists', side_effect=_fake_exists):
             engine_manager.EngineManager._installing = False

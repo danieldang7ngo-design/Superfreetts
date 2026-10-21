@@ -59,7 +59,7 @@ TASK_TIMEOUT_SECONDS: Final[int] = 120  # 2 minutes per task
 # mark pending tasks as failed. Must be comfortably longer than the slowest
 # single task (including first-run model loading), or slow-but-healthy batches
 # would be cancelled.
-BATCH_STALL_TIMEOUT_SECONDS: Final[int] = 600
+BATCH_STALL_TIMEOUT_SECONDS: Final[int] = 180
 
 # Per-request timeout for EdgeTTS. Raised to 120s because Vietnamese and other
 # non-English text with diacritics can take significantly longer on Microsoft's

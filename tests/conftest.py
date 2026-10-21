@@ -9,7 +9,7 @@ mock_anki.mock_all()
 
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock
 
 # Add parent directory to path for imports
 addon_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -1,10 +1,8 @@
 import os
-import sys
 import tempfile
 import shutil
-from unittest.mock import MagicMock
 from superfreetts_addon.service import ServiceBase
-from superfreetts_addon.voice import TtsVoice_v3, TtsVoiceId_v3
+from superfreetts_addon.voice import TtsVoice_v3
 from superfreetts_addon import constants
 from superfreetts_addon.languages import AudioLanguage, Language
 

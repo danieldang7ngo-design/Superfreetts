@@ -5,7 +5,6 @@ Verifies local-only usage logging: session creation, aggregation, persistence
 (flush + reload), summary math, monthly series and defensive error handling.
 """
 
-import json
 import os
 import time
 

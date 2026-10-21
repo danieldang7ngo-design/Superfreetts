@@ -1,7 +1,6 @@
 import sys
 import os
 import logging
-from unittest.mock import MagicMock
 
 # Setup path
 addon_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -13,7 +12,6 @@ mock_anki.mock_all()
 
 from superfreetts_addon import superfreetts
 from superfreetts_addon import constants
-from superfreetts_addon import component_configuration
 
 # Setup logging to stdout
 logger = logging.getLogger()

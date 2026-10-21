@@ -1,4 +1,3 @@
-import sys
 import os
 import hashlib
 import aqt.sound
@@ -12,13 +11,12 @@ if os.name == 'nt':
         # Generate the SpeechLib lib and any associated files
         engine = comtypes.client.CreateObject("SAPI.SpVoice")
         stream = comtypes.client.CreateObject("SAPI.SpFileStream")
-        from comtypes.gen import SpeechLib
+        from comtypes.gen import SpeechLib  # noqa: F401 - needed after generation
     import win32com.client
 
 
 from .. import voice
 from .. import service
-from .. import errors
 from .. import constants
 from .. import languages
 from .. import logging_utils
@@ -331,7 +329,7 @@ class Windows(service.ServiceBase):
         speaker.Voice = self.get_sapi_voice_by_name(voice.voice_key)
         speaker.Rate = options.get('rate', self.DEFAULT_RATE)
 
-        logger.debug(f'opening stream')
+        logger.debug('opening stream')
         stream = win32com.client.Dispatch('SAPI.SPFileStream')
         stream.Open(full_path_wav, comtypes.gen.SpeechLib.SSFMCreateForWrite)
         temp_stream = speaker.AudioOutputStream
@@ -340,7 +338,7 @@ class Windows(service.ServiceBase):
         speaker.AudioOutputStream = temp_stream
         stream.close()
 
-        logger.debug(f'closing stream')
+        logger.debug('closing stream')
         
         # convert wav to mp3
         logger.debug(f'converting from {full_path_wav} to {full_path_mp3}')

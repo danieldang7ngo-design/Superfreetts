@@ -3,9 +3,10 @@ target-version = "py39"
 line-length = 120
 
 [tool.ruff.lint]
-# Start with the rules that catch real runtime bugs. The larger cleanup can
-# expand this list without hiding undefined names or redefinitions.
-select = ["E9", "F821", "F811"]
+# Runtime-error rules plus the import/assignment cleanup that is now complete.
+# F401 is intentional in a few registration modules and is annotated with a
+# local noqa at those call sites.
+select = ["E9", "F821", "F811", "F401", "F541", "F841"]
 
 [tool.coverage.run]
 source = ["superfreetts_addon"]

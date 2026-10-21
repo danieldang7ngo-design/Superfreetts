@@ -1,5 +1,3 @@
-import sys
-import json
 
 # pyqt / anki imports
 import aqt.qt
@@ -7,16 +5,12 @@ import aqt.editor
 import aqt.gui_hooks
 import aqt.sound
 import aqt.utils
-import anki.hooks
+import anki.hooks  # noqa: F401 - kept for Anki hook registration side effects
 
-from typing import List, Tuple
 
 # addon imports
 from . import constants
 # from . import constants_events removed
-from . import stats
-from . import config_models
-from . import errors
 from . import component_batch
 from . import component_workflow
 from . import component_realtime
@@ -26,7 +20,6 @@ from . import component_preferences
 from . import component_settings
 # from . import component_easy removed
 # from . import component_choose_easy_advanced removed
-from . import text_utils
 from . import ttsplayer
 from . import logging_utils
 from . import gui_utils
