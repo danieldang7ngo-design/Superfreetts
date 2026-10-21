@@ -56,6 +56,44 @@ class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
         return future
 
 
+def _detect_service_from_task(task: Dict) -> str:
+    """Detect the TTS service for a task from its selected voice."""
+    try:
+        voice = task.get('chosen_voice')
+        if not voice:
+            # Fallback to older mechanism if chosen_voice is not set
+            batch = task.get('batch')
+            if not batch or not hasattr(batch, 'voice_selection'):
+                return 'default'
+
+            voice_sel = batch.voice_selection
+            if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
+                voice = voice_sel._voice_with_options
+            elif hasattr(voice_sel, 'voice') and voice_sel.voice:
+                voice = voice_sel.voice
+            elif hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
+                voice = voice_sel._voice_list[0]
+            elif hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
+                voice = voice_sel.voice_list[0]
+
+        if not voice:
+            return 'default'
+
+        if hasattr(voice, 'voice_id') and hasattr(voice.voice_id, 'service'):
+            return voice.voice_id.service
+        if hasattr(voice, 'service'):
+            return voice.service
+        if hasattr(voice, 'voice') and hasattr(voice.voice, 'service'):
+            return voice.voice.service
+        for attr in ['engine', 'provider', 'tts_engine', 'service_name']:
+            if hasattr(voice, attr):
+                return getattr(voice, attr)
+    except Exception as e:
+        logger.debug(f"[BATCH] Failed to detect service: {e}")
+
+    return 'default'
+
+
 class UnifiedCache:
     """Minimal LRU cache using OrderedDict. Supports size-based or entry-count eviction."""
     
@@ -66,56 +104,66 @@ class UnifiedCache:
         self.current_size = 0
         self.hits = 0
         self.misses = 0
+        self._lock = threading.RLock()
     
     @property
     def _use_size(self) -> bool:
         return self.max_size_bytes > 0
     
     def get(self, key: str) -> Optional[Any]:
-        if key in self.cache:
-            self.cache.move_to_end(key)
-            self.hits += 1
-            val = self.cache[key]
-            return val[0] if isinstance(val, tuple) else val
-        self.misses += 1
-        return None
+        with self._lock:
+            if key in self.cache:
+                self.cache.move_to_end(key)
+                self.hits += 1
+                val = self.cache[key]
+                # In size mode the stored value is (value, size_bytes).  Do
+                # not unwrap arbitrary tuples when size mode is disabled:
+                # callers legitimately cache tuple values too.
+                if self._use_size and isinstance(val, tuple) and len(val) == 2:
+                    return val[0]
+                return val
+            self.misses += 1
+            return None
     
     def put(self, key: str, value: Any, size_bytes: int = 0):
-        if self._use_size:
-            if size_bytes == 0:
-                size_bytes = len(value) if isinstance(value, (bytes, str)) else 1000
-            
-            if key in self.cache:
-                old_val = self.cache[key]
-                if isinstance(old_val, tuple):
-                    self.current_size -= old_val[1]
-                del self.cache[key]
-            
-            self.cache[key] = (value, size_bytes)
-            self.current_size += size_bytes
-            
-            while self.current_size > self.max_size_bytes and self.cache:
-                oldest_key, (oldest_val, oldest_size) = self.cache.popitem(last=False)
-                self.current_size -= oldest_size
-        else:
-            if key in self.cache:
-                del self.cache[key]
-            self.cache[key] = value
-            while len(self.cache) > self.max_entries and self.cache:
-                self.cache.popitem(last=False)
+        with self._lock:
+            if self._use_size:
+                if size_bytes == 0:
+                    size_bytes = len(value) if isinstance(value, (bytes, str)) else 1000
+
+                if key in self.cache:
+                    old_val = self.cache[key]
+                    if isinstance(old_val, tuple):
+                        self.current_size -= old_val[1]
+                    del self.cache[key]
+
+                self.cache[key] = (value, size_bytes)
+                self.current_size += size_bytes
+
+                while self.current_size > self.max_size_bytes and self.cache:
+                    oldest_key, (oldest_val, oldest_size) = self.cache.popitem(last=False)
+                    self.current_size -= oldest_size
+            else:
+                if key in self.cache:
+                    del self.cache[key]
+                self.cache[key] = value
+                while len(self.cache) > self.max_entries and self.cache:
+                    self.cache.popitem(last=False)
     
     def clear(self):
-        self.cache.clear()
-        self.current_size = 0
+        with self._lock:
+            self.cache.clear()
+            self.current_size = 0
     
     def stats(self) -> dict:
-        total = max(self.hits + self.misses, 1)
-        return {
-            'entries': len(self.cache),
-            'hits': self.hits,
-            'misses': self.misses,
-            'hit_rate': f"{(self.hits / total * 100):.1f}%",
-        }
+        with self._lock:
+            total = max(self.hits + self.misses, 1)
+            return {
+                'entries': len(self.cache),
+                'hits': self.hits,
+                'misses': self.misses,
+                'hit_rate': f"{(self.hits / total * 100):.1f}%",
+            }
 
 
 class SimpleResourceMonitor:
@@ -136,6 +184,13 @@ class SimpleResourceMonitor:
             logger.debug("[BATCH] psutil unavailable, using platform memory fallback")
         
         self.initial_ram_mb = self._get_ram_usage()  # Now safe to call
+        # GC hysteresis baseline.  Peak RSS (ru_maxrss) never decreases, so
+        # using it as "current" made the monitor trigger GC on every chunk
+        # after a one-off allocation spike.  Track the RSS at the last GC
+        # instead and lower the baseline when memory is actually released.
+        self._last_gc_ram_mb = self.initial_ram_mb
+        self._last_gc_items = 0
+        self._gc_count = 0
     
     def _get_ram_usage(self) -> int:
         """Get current RAM usage in MB"""
@@ -148,20 +203,34 @@ class SimpleResourceMonitor:
     
     def should_gc(self, items_processed: int) -> bool:
         """
-        Simple heuristic: GC if RAM growth > 300MB or every 100 items.
-        No complex thresholds.
+        GC when RSS has grown >300MB since the last collection, or after
+        every 100 completed items since the last collection.
+
+        The baseline is current RSS, not peak RSS.  If the OS reports lower
+        RSS than the baseline (memory was released), move the baseline down
+        so a later spike is measured from the new, lower level.
         """
         ram_usage = self._get_ram_usage()
-        ram_growth = ram_usage - self.initial_ram_mb
+        if ram_usage < self._last_gc_ram_mb:
+            self._last_gc_ram_mb = ram_usage
+
+        ram_growth = ram_usage - self._last_gc_ram_mb
+        interval_elapsed = (
+            items_processed > 0
+            and items_processed - self._last_gc_items >= 100
+        )
         
         # Aggressive but simple: every 100 items OR significant growth
-        return ram_growth > 300 or (items_processed > 0 and items_processed % 100 == 0)
+        return ram_growth > 300 or interval_elapsed
     
     def maybe_gc(self, items_processed: int):
-        """Run GC if needed"""
+        """Run GC if needed and reset the hysteresis baseline."""
         if self.should_gc(items_processed):
             gc.collect()
-            logger.debug(f"[BATCH] GC triggered (items={items_processed})")
+            self._last_gc_ram_mb = self._get_ram_usage()
+            self._last_gc_items = items_processed
+            self._gc_count += 1
+            logger.debug(f"[BATCH] GC triggered (items={items_processed}, count={self._gc_count})")
     
     def get_status(self) -> str:
         """Get RAM status string"""
@@ -257,6 +326,19 @@ class UnifiedBatchExecutor:
         self.max_workers = max_workers
         self.items_processed = 0
     
+    def get_executor(self, service_name: Optional[str] = None) -> concurrent.futures.ThreadPoolExecutor:
+        """Return the underlying pool so callers can use either executor type.
+
+        ``service_name`` is accepted for interface parity with
+        ``MultiEngineExecutor.get_executor(service_name)``; the unified
+        fallback has only one pool and routes everything through it.
+        """
+        return self.executor
+
+    def detect_service(self, task: Dict) -> str:
+        """Interface parity with MultiEngineExecutor for fallback batches."""
+        return _detect_service_from_task(task)
+
     def execute(
         self,
         tasks: List[Dict],
@@ -411,11 +493,12 @@ class MultiEngineExecutor:
             cache_size_mb: Unified cache size in MB
         """
         from . import system_utils
-        cpu_default = max(2, system_utils.get_max_workers())
+        cpu_default = max(1, system_utils.get_cpu_threads())
         self.engine_config = engine_config or {
             'Piper': cpu_default,
             'Kokoro': cpu_default,
             'EdgeTTS': batch_constants.EDGETTS_MAX_WORKERS,
+            'MMS': cpu_default,
             'Supertonic': cpu_default,
             'default': cpu_default
         }
@@ -460,44 +543,8 @@ class MultiEngineExecutor:
         return executor
     
     def detect_service(self, task: Dict) -> str:
-        """
-        Detect TTS service name from task's selected voice.
-        Returns service name or 'default'
-        """
-        try:
-            voice = task.get('chosen_voice')
-            if not voice:
-                # Fallback to older mechanism if chosen_voice is not set
-                batch = task.get('batch')
-                if not batch or not hasattr(batch, 'voice_selection'):
-                    return 'default'
-
-                voice_sel = batch.voice_selection
-                if hasattr(voice_sel, '_voice_with_options') and voice_sel._voice_with_options:
-                    voice = voice_sel._voice_with_options
-                elif hasattr(voice_sel, 'voice') and voice_sel.voice:
-                    voice = voice_sel.voice
-                elif hasattr(voice_sel, '_voice_list') and voice_sel._voice_list:
-                    voice = voice_sel._voice_list[0]
-                elif hasattr(voice_sel, 'voice_list') and voice_sel.voice_list:
-                    voice = voice_sel.voice_list[0]
-
-            if not voice:
-                return 'default'
-
-            if hasattr(voice, 'voice_id') and hasattr(voice.voice_id, 'service'):
-                return voice.voice_id.service
-            if hasattr(voice, 'service'):
-                return voice.service
-            if hasattr(voice, 'voice') and hasattr(voice.voice, 'service'):
-                return voice.voice.service
-            for attr in ['engine', 'provider', 'tts_engine', 'service_name']:
-                if hasattr(voice, attr):
-                    return getattr(voice, attr)
-        except Exception as e:
-            logger.debug(f"[BATCH] Failed to detect service: {e}")
-
-        return 'default'
+        """Detect TTS service name from task's selected voice."""
+        return _detect_service_from_task(task)
     
     def execute(
         self,

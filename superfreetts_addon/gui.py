@@ -403,8 +403,20 @@ def init(hypertts):
     # Update on profile load
     aqt.gui_hooks.profile_did_open.append(lambda: update_menu_language(hypertts)) 
 
-    # Flush local usage stats when profile closes
-    aqt.gui_hooks.profile_will_close.append(lambda: hypertts.flush_usage())
+    # Flush local usage stats and stop background work when profile closes
+    tts_player = ttsplayer.AnkiSuperFreeTTSPlayer(aqt.mw.taskman, hypertts)
+
+    def _on_profile_will_close():
+        try:
+            tts_player.shutdown()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Realtime player shutdown failed: {e}')
+        try:
+            hypertts.shutdown()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Addon shutdown failed: {e}')
+
+    aqt.gui_hooks.profile_will_close.append(_on_profile_will_close)
 
     # browser menus
     aqt.gui_hooks.browser_menus_did_init.append(browerMenusInit)
@@ -413,6 +425,6 @@ def init(hypertts):
     aqt.gui_hooks.editor_did_init_buttons.append(setup_editor_buttons)
 
     # register TTS player
-    aqt.sound.av_player.players.append(ttsplayer.AnkiSuperFreeTTSPlayer(aqt.mw.taskman, hypertts))
+    aqt.sound.av_player.players.append(tts_player)
 
     

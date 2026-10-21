@@ -42,6 +42,7 @@ class SherpaProcessPool:
         self.name = name
         self._max_processes = max_processes
         self._pool = [] # List of (process, current_executable, current_script, last_used_time)
+        self._active = set() # Processes currently checked out by a worker
         self._lock = threading.Lock()
         self._semaphore = DynamicSemaphore(max_processes)
         self._cleanup_timer = None
@@ -106,12 +107,13 @@ class SherpaProcessPool:
                     if current_debug == debug_enabled:
                         logger.info(f"SherpaPool[{self.name}]: Reusing idle process {os.path.basename(script)} (debug={current_debug})")
                         p, e, s, _ = self._pool.pop(i)
+                        self._active.add(p)
                         return p
                     else:
                         logger.info(f"SherpaPool[{self.name}]: Terminating idle process {os.path.basename(script)} due to debug mismatch ({current_debug} != {debug_enabled})")
                         self.safe_terminate(proc)
                         self._pool.pop(i)
-                        self._total_spawned -= 1
+                        self._total_spawned = max(0, self._total_spawned - 1)
                         break # Start fresh
             
             # 2. If no matching idle process, but we have OTHER idle processes and we"re at capacity
@@ -121,7 +123,7 @@ class SherpaProcessPool:
                 p, e, s, _ = self._pool.pop(0)
                 logger.info(f"SherpaPool[{self.name}]: Capacity reached. Terminating oldest idle {os.path.basename(s)} for new {os.path.basename(script_path)}")
                 self.safe_terminate(p)
-                self._total_spawned -= 1
+                self._total_spawned = max(0, self._total_spawned - 1)
 
         # 3. Start new process
         try:
@@ -129,6 +131,7 @@ class SherpaProcessPool:
             new_proc.debug_enabled = debug_enabled
             with self._lock:
                 self._total_spawned += 1
+                self._active.add(new_proc)
             return new_proc
         except Exception as e:
             self._semaphore.release()
@@ -141,36 +144,31 @@ class SherpaProcessPool:
             return
 
         with self._lock:
+            self._active.discard(proc)
             is_healthy = getattr(proc, 'is_healthy', True)
             if proc.poll() is None and is_healthy:
                 self._pool.append((proc, executable_path, script_path, time.time()))
             else:
-                self._total_spawned -= 1
+                self._total_spawned = max(0, self._total_spawned - 1)
                 if not is_healthy:
                     threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
         self._semaphore.release()
 
     def stop_all(self):
+        # Include both idle and checked-out processes.  Previously only the
+        # idle pool was terminated, so active runner processes survived
+        # profile close and kept their model memory (and pipes) alive.
         with self._lock:
-            for proc, exe, script, last_time in self._pool:
-                try:
-                    proc.stdin.close()
-                except Exception: pass
-                try:
-                    proc.terminate()
-                except Exception: pass
-                try:
-                    proc.wait(timeout=2.0)
-                except Exception: pass
-                # Close stdout/stderr so their fds are released even after terminate
-                for pipe in (proc.stdout, proc.stderr):
-                    if pipe:
-                        try: pipe.close()
-                        except Exception: pass
-                if getattr(proc, 'is_healthy', False):
-                    proc.is_healthy = False
+            processes = list(self._active)
+            processes.extend(
+                proc for proc, _exe, _script, _last in self._pool
+                if proc not in self._active
+            )
+            self._active.clear()
             self._pool = []
             self._total_spawned = 0
+            for proc in processes:
+                self.safe_terminate(proc)
         # Cancel the idle-cleanup timer so it does not keep the pool alive after stop
         if self._cleanup_timer:
             try:

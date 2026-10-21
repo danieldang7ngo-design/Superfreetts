@@ -99,7 +99,11 @@ class SuperFreeTTS():
         try:
             configuration_config = self.config.get(constants.CONFIG_CONFIGURATION, {})
             service_config_map = configuration_config.get(constants.CONFIG_SERVICE_CONFIG, {})
-            engine_config = self.orchestrator.build_engine_config(service_config_map)
+            enabled_services = self.get_configuration().get_service_enabled_map()
+            engine_config = self.orchestrator.build_engine_config(
+                service_config_map,
+                enabled_services=enabled_services,
+            )
             self.executor = batch_executor.get_multi_engine_executor(engine_config=engine_config)
             self.orchestrator.executor = self.executor
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
@@ -569,6 +573,44 @@ class SuperFreeTTS():
         if self.usage_tracker is None:
             return
         self.usage_tracker.flush()
+
+    def shutdown(self):
+        """Release background executors and local-engine processes.
+
+        Called from Anki's profile_will_close hook.  Every step is defensive:
+        profile shutdown must continue even if one subsystem is already gone.
+        """
+        self.flush_usage()
+
+        try:
+            executor = getattr(self, 'executor', None)
+            if executor is not None:
+                executor.shutdown(wait=False)
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Batch executor shutdown failed: {e}')
+
+        try:
+            from .services import (
+                service_kokoro,
+                service_mms,
+                service_piper,
+                service_supertonic,
+            )
+            pools = [
+                getattr(service_piper, '_piper_pool', None),
+                getattr(service_kokoro, '_kokoro_pool', None),
+                getattr(service_mms, '_sherpa_pool', None),
+                getattr(service_supertonic, '_supertonic_pool', None),
+            ]
+            for pool in pools:
+                if pool is None:
+                    continue
+                try:
+                    pool.stop_all()
+                except Exception as e:
+                    logger.warning(f'[SHUTDOWN] Process pool stop failed: {e}')
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Could not stop local engine pools: {e}')
 
     # editor selection flag
     def set_editor_use_selection(self, use_selection): return self.config_store.set_editor_use_selection(use_selection)

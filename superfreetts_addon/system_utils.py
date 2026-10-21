@@ -4,6 +4,7 @@ import multiprocessing
 import platform
 import subprocess
 import logging
+from typing import Any, Dict, Optional, Set, Tuple
 
 # Try to import psutil for system RAM detection, but never rely on it.
 # Anki does not guarantee psutil, and a broken/incomplete vendored copy must
@@ -225,6 +226,142 @@ def compute_ram_aware_concurrency(
     ram_bound_concurrency = int(ram_budget_mb // ram_per_process_mb)
 
     return max(1, min(cpu_default, ram_bound_concurrency))
+
+
+def allocate_local_engine_workers(
+    cpu_caps: Dict[str, int],
+    ram_per_process_mb: Dict[str, int],
+    enabled_engines: Optional[Set[str]] = None,
+    available_ram_mb: Optional[int] = None,
+    manual_workers: Optional[Dict[str, int]] = None,
+    ram_budget_ratio: float = 0.5,
+) -> Tuple[Dict[str, int], Dict[str, Any]]:
+    """Size all enabled local-engine pools against one shared RAM budget.
+
+    The previous implementation called ``compute_ram_aware_concurrency()``
+    once per engine.  Each call independently assumed it could use 50% of
+    the machine's available RAM, so enabling four local engines could
+    reserve roughly 200% of RAM.  This allocator reserves one budget for
+    the whole group instead.
+
+    Rules:
+      * Disabled engines get a harmless placeholder of 1 worker and do not
+        consume RAM budget.
+      * Manual worker counts are preserved exactly as supplied.  The caller
+        is responsible for warning about them and enforcing the hard EdgeTTS
+        cap; this function never silently reduces a manual override.
+      * Automatic workers start at 1 per enabled engine so every enabled
+        engine remains usable even when the shared budget is very small.
+      * Remaining budget is handed out round-robin, cheapest engine first,
+        until no pool can grow without exceeding the budget or its CPU cap.
+      * If RAM cannot be measured, automatic workers fall back to their CPU
+        caps (the pre-RAM-awareness behaviour), never higher.
+
+    Returns:
+        ``(allocation, metadata)``.  ``allocation`` maps every engine in
+        ``cpu_caps`` to an int >= 1.  ``metadata`` is diagnostics only and
+        includes the budget, estimated footprint, and over-budget flags.
+    """
+    cpu_caps = {
+        str(engine): max(1, int(cap))
+        for engine, cap in (cpu_caps or {}).items()
+    }
+    ram_per_process_mb = {
+        str(engine): max(1, int(ram))
+        for engine, ram in (ram_per_process_mb or {}).items()
+    }
+
+    manual: Dict[str, int] = {}
+    for engine, value in (manual_workers or {}).items():
+        try:
+            requested = int(value)
+        except (TypeError, ValueError):
+            continue
+        if requested > 0:
+            manual[str(engine)] = requested
+
+    if enabled_engines is None:
+        enabled = set(cpu_caps)
+    elif hasattr(enabled_engines, "items"):
+        enabled = {
+            str(engine)
+            for engine, is_enabled in enabled_engines.items()
+            if is_enabled
+        }
+    else:
+        enabled = {str(engine) for engine in enabled_engines}
+    enabled = {engine for engine in enabled if engine in cpu_caps}
+
+    allocation: Dict[str, int] = {}
+    for engine in cpu_caps:
+        if engine in enabled:
+            allocation[engine] = manual.get(engine, 1)
+        else:
+            allocation[engine] = 1
+
+    def _estimated_mb() -> int:
+        return sum(
+            allocation[engine] * ram_per_process_mb.get(engine, 1)
+            for engine in enabled
+        )
+
+    if available_ram_mb is None:
+        for engine in enabled:
+            if engine not in manual:
+                allocation[engine] = cpu_caps[engine]
+        estimated_mb = _estimated_mb()
+        return allocation, {
+            "enabled": sorted(enabled),
+            "budget_mb": None,
+            "estimated_mb": estimated_mb,
+            "minimum_estimated_mb": estimated_mb,
+            "over_budget": False,
+            "minimum_over_budget": False,
+            "manual": dict(manual),
+        }
+
+    try:
+        budget_mb = max(0, int(float(available_ram_mb) * float(ram_budget_ratio)))
+    except (TypeError, ValueError):
+        budget_mb = 0
+
+    estimated_mb = _estimated_mb()
+    minimum_estimated_mb = sum(
+        ram_per_process_mb.get(engine, 1) for engine in enabled
+    )
+    minimum_over_budget = minimum_estimated_mb > budget_mb
+
+    # If even the one-worker-per-engine minimum does not fit, keep the
+    # minimum and let the caller warn.  Never disable an enabled engine.
+    if not minimum_over_budget:
+        while True:
+            progressed = False
+            for engine in sorted(
+                enabled,
+                key=lambda name: (ram_per_process_mb.get(name, 1), name),
+            ):
+                if engine in manual:
+                    continue
+                if allocation[engine] >= cpu_caps[engine]:
+                    continue
+                cost = ram_per_process_mb.get(engine, 1)
+                if estimated_mb + cost > budget_mb:
+                    continue
+                allocation[engine] += 1
+                estimated_mb += cost
+                progressed = True
+            if not progressed:
+                break
+
+    return allocation, {
+        "enabled": sorted(enabled),
+        "budget_mb": budget_mb,
+        "estimated_mb": estimated_mb,
+        "minimum_estimated_mb": minimum_estimated_mb,
+        "over_budget": estimated_mb > budget_mb,
+        "minimum_over_budget": minimum_over_budget,
+        "manual": dict(manual),
+    }
 
 
 def get_total_cpu_count():

@@ -166,8 +166,8 @@ class KokoroInstallManager(QDialog):
             self.log("Stopping any active Kokoro processes...")
             # 1. Kill active runner processes from our pool
             try:
-                from .services.service_mms import _sherpa_pool
-                _sherpa_pool.stop_all()
+                from .services.service_kokoro import _kokoro_pool
+                _kokoro_pool.stop_all()
             except Exception as e:
                 logger.warning(f"Pool cleanup failed: {e}")
 

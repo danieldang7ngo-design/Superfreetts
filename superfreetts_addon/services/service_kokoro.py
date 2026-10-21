@@ -96,7 +96,23 @@ class KokoroTTS(service.ServiceBase):
 
     def __init__(self):
         service.ServiceBase.__init__(self)
-        # Extreme Optimization: Eager warmup of a Kokoro process
+        # Warmup is started from configure(), not here.  ServiceManager
+        # instantiates services before applying the saved enabled flag, so
+        # starting a process in __init__ used to warm up Kokoro even when
+        # the user had it disabled.
+        self._warmup_lock = threading.Lock()
+        self._warmup_started = False
+
+    def configure(self, config):
+        super().configure(config)
+        if self.enabled:
+            self._start_warmup()
+
+    def _start_warmup(self):
+        with self._warmup_lock:
+            if self._warmup_started:
+                return
+            self._warmup_started = True
         threading.Thread(target=self._low_priority_warmup, daemon=True).start()
 
     def _get_python_exe(self):
@@ -127,6 +143,8 @@ class KokoroTTS(service.ServiceBase):
         # Wait a bit for Anki to settle
         time.sleep(2)
         try:
+            if not self.enabled:
+                return
             from aqt import mw
             engine_path = self._get_python_exe()
 

@@ -91,27 +91,47 @@ class TestBuildEngineConfigRamAware:
         # is sufficient and avoids depending on unrelated app wiring.
         return tts_orchestrator.TTSOrchestrator(MagicMock())
 
-    def test_high_core_count_low_ram_caps_heavy_engines(self):
+    def test_high_core_count_low_ram_caps_light_engine(self):
         """Simulates the user-reported scenario: a many-core machine but
-        constrained available RAM, no manual concurrency_workers override.
-        Piper (light, 200MB/proc) should get a higher default than
-        Supertonic/Kokoro/MMS (heavy, 500MB/proc estimate)."""
+        constrained available RAM, with Piper enabled.  One shared 1500MB
+        budget at 200MB/process gives 7 Piper workers (CPU default 10)."""
         orch = self._make_orchestrator()
-        with patch.object(system_utils, 'get_max_workers', return_value=10), \
+        with patch.object(system_utils, 'get_cpu_threads', return_value=10), \
+             patch.object(system_utils, 'get_max_workers', return_value=10), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=3000), \
              patch.object(orch, 'auto_scale_pool'):
-            engine_config = orch.build_engine_config(service_config_map={})
+            engine_config = orch.build_engine_config(
+                service_config_map={},
+                enabled_services={'PiperTTS'},
+            )
 
-        # 3000MB available * 0.5 budget = 1500MB budget
-        # Piper: 1500 // 200 = 7 (below cpu_default=10 -> capped)
-        # Kokoro/MMS/Supertonic: 1500 // 500 = 3 (below cpu_default=10 -> capped)
         assert engine_config['Piper'] == 7
-        assert engine_config['Kokoro'] == 3
-        assert engine_config['MMS'] == 3
-        assert engine_config['Supertonic'] == 3
+        # Disabled local engines do not spend the shared budget.
+        assert engine_config['Kokoro'] == 1
+        assert engine_config['MMS'] == 1
+        assert engine_config['Supertonic'] == 1
         # EdgeTTS is network-based, unaffected by RAM capping, unchanged behavior
         from superfreetts_addon import batch_constants
         assert engine_config['EdgeTTS'] == batch_constants.EDGETTS_MAX_WORKERS
+
+    def test_all_enabled_local_engines_share_one_budget(self):
+        """Four enabled local engines must not each receive a separate
+        50%-of-RAM budget.  With 6880MB available the shared budget is
+        3440MB, which fits two workers of each estimated engine."""
+        orch = self._make_orchestrator()
+        with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
+             patch.object(system_utils, 'get_max_workers', return_value=16), \
+             patch.object(system_utils, 'get_available_ram_mb', return_value=6880), \
+             patch.object(orch, 'auto_scale_pool'):
+            engine_config = orch.build_engine_config(
+                service_config_map={},
+                enabled_services={'PiperTTS', 'KokoroTTS', 'MmsTTS', 'SupertonicTTS'},
+            )
+
+        assert engine_config['Piper'] == 2
+        assert engine_config['Kokoro'] == 2
+        assert engine_config['MMS'] == 2
+        assert engine_config['Supertonic'] == 2
 
     def test_manual_concurrency_workers_override_is_not_ram_capped(self):
         """A user who explicitly sets concurrency_workers must keep full
@@ -119,26 +139,48 @@ class TestBuildEngineConfigRamAware:
         Phase 2 step 3 of the fix plan (must not break existing override
         behavior)."""
         orch = self._make_orchestrator()
-        with patch.object(system_utils, 'get_max_workers', return_value=10), \
+        with patch.object(system_utils, 'get_cpu_threads', return_value=10), \
+             patch.object(system_utils, 'get_max_workers', return_value=10), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=3000), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(
-                service_config_map={'SupertonicTTS': {'concurrency_workers': 9}}
+                service_config_map={'SupertonicTTS': {'concurrency_workers': 9}},
+                enabled_services={'SupertonicTTS'},
             )
 
         # Explicit user value (9) must survive even though the RAM-derived
         # default for Supertonic would have been 3 in this scenario.
         assert engine_config['Supertonic'] == 9
 
+    def test_enabled_services_are_read_from_configuration(self):
+        stts = MagicMock()
+        stts.get_configuration.return_value.get_service_enabled_map.return_value = {
+            'PiperTTS': True,
+            'KokoroTTS': False,
+        }
+        orch = tts_orchestrator.TTSOrchestrator(stts)
+        with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
+             patch.object(system_utils, 'get_max_workers', return_value=8), \
+             patch.object(system_utils, 'get_available_ram_mb', return_value=3000), \
+             patch.object(orch, 'auto_scale_pool'):
+            engine_config = orch.build_engine_config(service_config_map={})
+
+        assert engine_config['Piper'] == 7
+        assert engine_config['Kokoro'] == 1
+
     def test_no_psutil_falls_back_to_old_cpu_only_behavior(self):
         """When available RAM can't be measured at all, behavior must be
         identical to the pre-fix code (pure cpu_default), not a crash and
         not a fabricated cap."""
         orch = self._make_orchestrator()
-        with patch.object(system_utils, 'get_max_workers', return_value=8), \
+        with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
+             patch.object(system_utils, 'get_max_workers', return_value=8), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=None), \
              patch.object(orch, 'auto_scale_pool'):
-            engine_config = orch.build_engine_config(service_config_map={})
+            engine_config = orch.build_engine_config(
+                service_config_map={},
+                enabled_services={'PiperTTS', 'KokoroTTS', 'MmsTTS', 'SupertonicTTS'},
+            )
 
         assert engine_config['Piper'] == 8
         assert engine_config['Kokoro'] == 8

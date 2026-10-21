@@ -35,6 +35,40 @@ class TestUnifiedCache:
         assert cache.get("k2") == "v2" * 20
         assert cache.get("k3") == "v3" * 20
 
+    def test_tuple_value_survives_entry_mode(self):
+        cache = batch_executor.UnifiedCache(max_size_mb=0)
+        value = ("source", "file.mp3", "/tmp/file.mp3")
+        cache.put("key", value)
+        assert cache.get("key") == value
+
+    def test_concurrent_get_put_clear(self):
+        cache = batch_executor.UnifiedCache(max_size_mb=0)
+        cache.max_entries = 200
+        errors = []
+
+        def worker(worker_id):
+            try:
+                for i in range(2000):
+                    key = f"{worker_id}-{i % 50}"
+                    value = (worker_id, i)
+                    cache.put(key, value)
+                    result = cache.get(key)
+                    if result is not None and not isinstance(result, tuple):
+                        errors.append(f"bad value type: {type(result)!r}")
+                    if i % 500 == 0:
+                        cache.stats()
+            except Exception as exc:
+                errors.append(repr(exc))
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert errors == []
+        assert cache.stats()["entries"] <= 200
+
 class TestSimpleResourceMonitor:
     def test_ram_tracking(self):
         monitor = batch_executor.SimpleResourceMonitor()
@@ -45,12 +79,42 @@ class TestSimpleResourceMonitor:
         
     def test_gc_heuristic(self):
         monitor = batch_executor.SimpleResourceMonitor()
-        # Mock initial RAM to simulate growth
-        monitor.initial_ram_mb = 100
+        # Mock the GC baseline to simulate growth
+        monitor._last_gc_ram_mb = 100
         with patch.object(monitor, '_get_ram_usage', return_value=500):
             assert monitor.should_gc(0) is True # 400MB growth
             
-        assert monitor.should_gc(100) is True # Every 100 items
+        assert monitor.should_gc(100) is True # Every 100 items since last GC
+
+    def test_gc_hysteresis_resets_baseline_after_collection(self):
+        monitor = batch_executor.SimpleResourceMonitor()
+        monitor._last_gc_ram_mb = 100
+        monitor._last_gc_items = 0
+
+        with patch.object(monitor, '_get_ram_usage', return_value=500), \
+             patch.object(batch_executor.gc, 'collect') as collect:
+            monitor.maybe_gc(1)
+            assert collect.call_count == 1
+            assert monitor._last_gc_ram_mb == 500
+
+            # The old implementation kept comparing against the initial
+            # 100MB and collected on every following chunk.  After reset,
+            # no growth means no collection.
+            monitor.maybe_gc(2)
+            assert collect.call_count == 1
+
+    def test_gc_item_interval_is_relative_to_last_collection(self):
+        monitor = batch_executor.SimpleResourceMonitor()
+        monitor._last_gc_ram_mb = 500
+        monitor._last_gc_items = 100
+
+        with patch.object(monitor, '_get_ram_usage', return_value=500), \
+             patch.object(batch_executor.gc, 'collect') as collect:
+            monitor.maybe_gc(199)
+            assert collect.call_count == 0
+            monitor.maybe_gc(200)
+            assert collect.call_count == 1
+            assert monitor._last_gc_items == 200
 
 class TestCheckpointManager:
     def test_save_load_remove(self):
@@ -107,7 +171,37 @@ class TestMultiEngineExecutor:
         # Fallback
         assert executor.detect_service({}) == "default"
 
+    def test_default_local_pools_use_cpu_threads_not_logical_cores(self):
+        from superfreetts_addon import system_utils
+        with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
+             patch.object(system_utils, 'get_max_workers', return_value=32):
+            executor = batch_executor.MultiEngineExecutor()
+            try:
+                assert executor.executors["Piper"]._max_workers == 8
+                assert executor.executors["Kokoro"]._max_workers == 8
+                assert executor.executors["MMS"]._max_workers == 8
+                assert executor.executors["Supertonic"]._max_workers == 8
+                assert executor.executors["EdgeTTS"]._max_workers == 3
+            finally:
+                executor.shutdown(wait=False)
+
 class TestUnifiedBatchExecutor:
+    def test_get_executor_fallback_surface(self):
+        from types import SimpleNamespace
+
+        executor = batch_executor.UnifiedBatchExecutor(max_workers=1)
+        try:
+            assert executor.get_executor() is executor.executor
+            assert executor.get_executor("PiperTTS") is executor.executor
+            voice = SimpleNamespace(
+                voice_id=SimpleNamespace(service="PiperTTS"),
+            )
+            assert executor.detect_service({"chosen_voice": voice}) == "PiperTTS"
+            future = executor.get_executor().submit(lambda: 42)
+            assert future.result(timeout=2) == 42
+        finally:
+            executor.shutdown()
+
     def test_execute_basic(self):
         executor = batch_executor.UnifiedBatchExecutor(max_workers=1)
         

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from superfreetts_addon import component_kokoro_manager as kokoro
-from superfreetts_addon.services import service_mms
+from superfreetts_addon.services import service_kokoro
 
 
 @pytest.mark.unit
@@ -18,7 +18,7 @@ def test_uninstall_failure_reports_original_error(monkeypatch, tmp_path):
     monkeypatch.setattr(kokoro.shutil, "rmtree", MagicMock(side_effect=OSError("file in use")))
     monkeypatch.setattr(kokoro.subprocess, "run", MagicMock(return_value=MagicMock()))
     monkeypatch.setattr(kokoro.time, "sleep", lambda *_: None)
-    monkeypatch.setattr(service_mms._sherpa_pool, "stop_all", MagicMock())
+    monkeypatch.setattr(service_kokoro._kokoro_pool, "stop_all", MagicMock())
     show_warning = MagicMock()
     monkeypatch.setattr(kokoro, "showWarning", show_warning)
     monkeypatch.setattr(kokoro, "showInfo", MagicMock())

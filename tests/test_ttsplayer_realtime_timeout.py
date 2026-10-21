@@ -38,7 +38,7 @@ import os
 import time
 import importlib
 import concurrent.futures
-from types import SimpleNamespace
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -145,15 +145,18 @@ def _fixed_tts_tag_class():
     yield
 
 
-def _make_player_stub(hypertts, timeout_override=None):
+def _make_player_stub(hypertts, ttsplayer, timeout_override=None):
     """
-    Builds a minimal object with just the attributes `_play()` actually
-    reads (`self.hypertts`, `self._generate_executor`) - deliberately NOT
-    going through AnkiSuperFreeTTSPlayer(...), see module docstring.
+    Builds a minimal player instance without going through
+    AnkiSuperFreeTTSPlayer.__init__ (see module docstring), but with real
+    class methods so the production _play() body is exercised.
     """
-    stub = SimpleNamespace()
+    stub = object.__new__(ttsplayer.AnkiSuperFreeTTSPlayer)
     stub.hypertts = hypertts
     stub._generate_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    stub._in_flight = 0
+    stub._in_flight_lock = threading.Lock()
+    stub._executor_shutdown = False
     return stub
 
 
@@ -168,7 +171,7 @@ class TestRealtimeGenerateTimeout:
         """Baseline: fast generation must still work exactly as before."""
         hypertts = MagicMock()
         hypertts.get_audio_filename_tts_tag.return_value = "/tmp/fake_audio.mp3"
-        stub = _make_player_stub(hypertts)
+        stub = _make_player_stub(hypertts, ttsplayer)
         tag = _make_tag()
 
         result = ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, tag)
@@ -194,7 +197,7 @@ class TestRealtimeGenerateTimeout:
 
         hypertts = MagicMock()
         hypertts.get_audio_filename_tts_tag.side_effect = hanging_call
-        stub = _make_player_stub(hypertts)
+        stub = _make_player_stub(hypertts, ttsplayer)
         tag = _make_tag()
 
         # Use a short timeout for the test instead of the real 20s default,
@@ -210,6 +213,38 @@ class TestRealtimeGenerateTimeout:
         # logic isn't actually being exercised).
         assert elapsed < 2.0
 
+    def test_in_flight_bound_rejects_extra_work(self, ttsplayer):
+        """A stuck generation keeps its slot; once the cap is reached, a new
+        card must return immediately instead of queueing more dead work."""
+        def hanging_call(tag):
+            time.sleep(2)
+
+        hypertts = MagicMock()
+        hypertts.get_audio_filename_tts_tag.side_effect = hanging_call
+        stub = _make_player_stub(hypertts, ttsplayer)
+        tag = _make_tag()
+
+        with patch.object(ttsplayer, 'MAX_REALTIME_IN_FLIGHT', 1), \
+             patch.object(ttsplayer, 'REALTIME_GENERATE_TIMEOUT_SECONDS', 0.1):
+            assert ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, tag) is None
+            assert stub._in_flight == 1
+
+            start = time.monotonic()
+            assert ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, _make_tag()) is None
+            elapsed = time.monotonic() - start
+
+        assert elapsed < 0.5
+        assert hypertts.get_audio_filename_tts_tag.call_count == 1
+
+    def test_shutdown_rejects_new_generation(self, ttsplayer):
+        hypertts = MagicMock()
+        hypertts.get_audio_filename_tts_tag.return_value = "/tmp/never.mp3"
+        stub = _make_player_stub(hypertts, ttsplayer)
+        stub.shutdown()
+
+        assert ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, _make_tag()) is None
+        hypertts.get_audio_filename_tts_tag.assert_not_called()
+
     def test_genuine_exception_still_propagates_unchanged(self, ttsplayer):
         """
         Non-timeout errors (e.g. a real TTS service error) must propagate
@@ -218,7 +253,7 @@ class TestRealtimeGenerateTimeout:
         """
         hypertts = MagicMock()
         hypertts.get_audio_filename_tts_tag.side_effect = ValueError("boom")
-        stub = _make_player_stub(hypertts)
+        stub = _make_player_stub(hypertts, ttsplayer)
         tag = _make_tag()
 
         with pytest.raises(ValueError, match="boom"):
@@ -239,7 +274,7 @@ class TestRealtimeGenerateTimeout:
             return "/tmp/second_card.mp3"
 
         hypertts.get_audio_filename_tts_tag.side_effect = hanging_then_fast
-        stub = _make_player_stub(hypertts)
+        stub = _make_player_stub(hypertts, ttsplayer)
 
         with patch.object(ttsplayer, 'REALTIME_GENERATE_TIMEOUT_SECONDS', 0.2):
             first_result = ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, _make_tag())

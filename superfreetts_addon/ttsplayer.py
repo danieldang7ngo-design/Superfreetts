@@ -6,6 +6,7 @@ https://github.com/ankitects/anki-addons/blob/master/code/gtts_player/__init__.p
 """
 
 import concurrent.futures
+import threading
 from concurrent.futures import Future
 from typing import List
 
@@ -47,6 +48,13 @@ logger = logging_utils.get_child_logger(__name__)
 # load). Tune based on real-world reports if it proves too short/long.
 REALTIME_GENERATE_TIMEOUT_SECONDS = 20
 
+# Hard bound on abandoned realtime generations.  Anki calls _play()
+# serially, but a timed-out call keeps running on the executor.  Without a
+# cap, repeatedly flipping cards while a service is stuck would queue an
+# unbounded number of dead generations.  When this many are still in
+# flight, _play() returns None immediately instead of queueing another one.
+MAX_REALTIME_IN_FLIGHT = 4
+
 
 class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
     def __init__(self, taskman: aqt.taskman.TaskManager, hypertts) -> None:
@@ -57,9 +65,35 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
         # one at a time via AVPlayer.current_player, this just lets a timed-out
         # call keep running in the background without blocking _play() itself.
         self._generate_executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=4, thread_name_prefix='sftts-realtime-gen'
+            max_workers=MAX_REALTIME_IN_FLIGHT,
+            thread_name_prefix='sftts-realtime-gen'
         )
+        self._in_flight = 0
+        self._in_flight_lock = threading.Lock()
+        self._executor_shutdown = False
         logger.info('created AnkiSuperFreeTTSPlayer')
+
+    def _try_acquire_in_flight_slot(self) -> bool:
+        with self._in_flight_lock:
+            if self._in_flight >= MAX_REALTIME_IN_FLIGHT:
+                return False
+            self._in_flight += 1
+            return True
+
+    def _release_in_flight_slot(self) -> None:
+        with self._in_flight_lock:
+            self._in_flight = max(0, self._in_flight - 1)
+
+    def shutdown(self, wait: bool = False) -> None:
+        """Stop accepting realtime work and drop queued generations."""
+        self._executor_shutdown = True
+        try:
+            self._generate_executor.shutdown(wait=wait, cancel_futures=True)
+        except TypeError:
+            # Python < 3.9 compatibility (cancel_futures was added in 3.9).
+            self._generate_executor.shutdown(wait=wait)
+        except Exception as e:
+            logger.warning(f'Realtime executor shutdown error: {e}')
 
     # this is called the first time Anki tries to play a TTS file
     def get_available_voices(self) -> List[aqt.tts.TTSVoice]:
@@ -91,10 +125,33 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
 
         logger.info(f'playing TTS sound for {tag}, voices: {tag.voices}')
 
-        future = self._generate_executor.submit(self.hypertts.get_audio_filename_tts_tag, tag)
+        if getattr(self, '_executor_shutdown', False):
+            logger.warning('Realtime TTS player is shutting down; skipping generation')
+            return None
+        if not self._try_acquire_in_flight_slot():
+            logger.warning(
+                f'Realtime TTS already has {MAX_REALTIME_IN_FLIGHT} generations in flight; '
+                f'skipping this card instead of queueing more work'
+            )
+            return None
+
+        try:
+            future = self._generate_executor.submit(
+                self.hypertts.get_audio_filename_tts_tag, tag
+            )
+        except Exception:
+            self._release_in_flight_slot()
+            raise
+
+        future.add_done_callback(lambda _future: self._release_in_flight_slot())
         try:
             audio_filename = future.result(timeout=REALTIME_GENERATE_TIMEOUT_SECONDS)
         except concurrent.futures.TimeoutError:
+            # Best effort: this only succeeds if the task is still queued.
+            # A running call cannot be interrupted safely here, but its slot
+            # stays reserved until it actually finishes, so the number of
+            # abandoned generations remains bounded.
+            future.cancel()
             logger.warning(
                 f'TTS generation exceeded {REALTIME_GENERATE_TIMEOUT_SECONDS}s for tag {tag}; '
                 f'giving up on this card so playback can continue. The generation call is still '
