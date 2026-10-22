@@ -2,7 +2,7 @@
 
 - **Ngày bàn giao:** 2026-10-22
 - **Nhánh:** `fix/resource-management`
-- **Commit:** `ee366df` — `fix: retry executor setup on next profile open`
+- **Commit code:** `ee366df` — `fix: retry executor setup on next profile open`
 - **Commit nền:** `292668e` — `fix: harden resource management and background cleanup`
 - **Follow-up:** `004d73b` — `fix: restore runtime after profile switch`
 - **Base:** `f4ac372`
@@ -59,7 +59,7 @@
 | Mục | Giá trị |
 |---|---|
 | Nhánh làm việc | `fix/resource-management` |
-| Commit gần nhất | `ee366df` — `fix: retry executor setup on next profile open` |
+| Commit code gần nhất | `ee366df` — `fix: retry executor setup on next profile open` |
 | Commit follow-up chính | `004d73b` — `fix: restore runtime after profile switch` |
 | Commit nền | `292668e` — `fix: harden resource management and background cleanup` |
 | Commit cha của đợt chính | `f4ac372` |
