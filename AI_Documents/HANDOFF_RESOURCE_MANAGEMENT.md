@@ -22,9 +22,9 @@
 
 **Kết quả automated trên Linux:**
 
-- `339 passed, 1 skipped` trong 5.7 giây (tổng 340 test được thu thập).
+- `340 passed, 1 skipped` trong 5.7 giây (tổng 341 test được thu thập).
 - `ruff`, `bandit`, coverage critical gate, vendor dependency check và package verification đều đạt.
-- Package build ra `SuperFreeTTS.ankiaddon` khoảng **2.22 MiB** (2,328,504 bytes).
+- Package build ra `SuperFreeTTS.ankiaddon` khoảng **2.22 MiB** (2,328,523 bytes).
 - **EdgeTTS vẫn bị chặn cứng ở 3 worker.** Manual override của local engine vẫn được giữ nguyên trong trần `get_max_workers()` và chỉ cảnh báo, không tự ý hạ xuống.
 
 **Việc còn lại quan trọng nhất:** kiểm định thủ công trên **macOS và Windows thật** với model local thật, đo RSS thực tế của từng engine, rồi mới cân nhắc chỉnh các hằng số ước lượng. Hiện chưa có model local trong môi trường Linux này nên chưa thể đo RSS thật của Piper/Kokoro/MMS/Supertonic.
@@ -251,7 +251,7 @@ Commit `292668e` thay đổi 19 file: 10 file source và 9 file test. Commit fol
 - `ttsplayer.restart()` tạo `ThreadPoolExecutor` mới; thêm generation counter để callback của executor cũ không trừ nhầm slot in-flight của executor mới. `_play()` cũng xử lý `CancelledError` khi future bị hủy lúc shutdown.
 - `SherpaProcessPool` thêm `_cleanup_enabled` + `_ensure_cleanup_timer()`; cleanup timer được bật lại lazily ở `get_process()` sau khi pool được dùng lại.
 
-**Test:** `tests/test_shutdown_cleanup.py` (2 test reopen), `tests/test_batch_flow.py` (2 test singleton recreate), `tests/test_ttsplayer_realtime_timeout.py` (1 test restart), `tests/test_sherpa_process_pool.py` (1 test timer restart).
+**Test:** `tests/test_shutdown_cleanup.py` (3 test reopen), `tests/test_batch_flow.py` (2 test singleton recreate), `tests/test_ttsplayer_realtime_timeout.py` (1 test restart), `tests/test_sherpa_process_pool.py` (1 test timer restart).
 
 **Chưa xác minh thủ công:** hành vi Close Profile → mở lại trên Anki thật (macOS/Windows) vẫn nằm trong checklist §9.
 
@@ -356,7 +356,7 @@ python -m pytest tests/ -q --tb=short
 Kết quả mới nhất:
 
 ```text
-339 passed, 1 skipped in 5.74s
+340 passed, 1 skipped in 5.74s
 ```
 
 Test skip:
@@ -415,10 +415,10 @@ python scripts/verify_package.py
 
 Kết quả:
 
-- `SuperFreeTTS.ankiaddon`: **2,328,504 bytes** (~2.22 MiB).
+- `SuperFreeTTS.ankiaddon`: **2,328,523 bytes** (~2.22 MiB).
 - `verify_package.py`: pass.
 - Package smoke:
-  - `ram_mb=10964`
+  - `ram_mb=10853`
   - `ram_source=linux_meminfo`
   - `edge_cap=3`
   - `requests=2.32.4`

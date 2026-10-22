@@ -57,3 +57,14 @@ def test_profile_reopen_is_noop_on_initial_open():
     stts.on_profile_reopened()
 
     stts.reconfigure_service_manager.assert_not_called()
+
+
+@pytest.mark.unit
+def test_profile_reopen_failure_keeps_retry_flag():
+    stts = object.__new__(superfreetts.SuperFreeTTS)
+    stts._shutdown = True
+    stts.reconfigure_service_manager = MagicMock(side_effect=RuntimeError("boom"))
+
+    stts.on_profile_reopened()
+
+    assert stts._shutdown is True

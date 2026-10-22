@@ -632,8 +632,9 @@ class SuperFreeTTS():
         try:
             self.reconfigure_service_manager()
         except Exception as e:
+            # Keep _shutdown set so the next profile open retries.
             logger.warning(f'[SHUTDOWN] Failed to recreate executors: {e}')
-        finally:
+        else:
             self._shutdown = False
 
     # editor selection flag
