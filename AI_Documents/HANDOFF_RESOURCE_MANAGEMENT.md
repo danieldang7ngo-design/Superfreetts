@@ -24,7 +24,7 @@
 
 - `339 passed, 1 skipped` trong 5.7 giây (tổng 340 test được thu thập).
 - `ruff`, `bandit`, coverage critical gate, vendor dependency check và package verification đều đạt.
-- Package build ra `SuperFreeTTS.ankiaddon` khoảng **2.22 MiB** (2,328,451 bytes).
+- Package build ra `SuperFreeTTS.ankiaddon` khoảng **2.22 MiB** (2,328,504 bytes).
 - **EdgeTTS vẫn bị chặn cứng ở 3 worker.** Manual override của local engine vẫn được giữ nguyên trong trần `get_max_workers()` và chỉ cảnh báo, không tự ý hạ xuống.
 
 **Việc còn lại quan trọng nhất:** kiểm định thủ công trên **macOS và Windows thật** với model local thật, đo RSS thực tế của từng engine, rồi mới cân nhắc chỉnh các hằng số ước lượng. Hiện chưa có model local trong môi trường Linux này nên chưa thể đo RSS thật của Piper/Kokoro/MMS/Supertonic.
@@ -415,10 +415,10 @@ python scripts/verify_package.py
 
 Kết quả:
 
-- `SuperFreeTTS.ankiaddon`: **2,328,451 bytes** (~2.22 MiB).
+- `SuperFreeTTS.ankiaddon`: **2,328,504 bytes** (~2.22 MiB).
 - `verify_package.py`: pass.
 - Package smoke:
-  - `ram_mb=10682`
+  - `ram_mb=10964`
   - `ram_source=linux_meminfo`
   - `edge_cap=3`
   - `requests=2.32.4`
