@@ -2,8 +2,9 @@
 
 - **Ngày bàn giao:** 2026-10-22
 - **Nhánh:** `fix/resource-management`
-- **Commit:** `004d73b` — `fix: restore runtime after profile switch`
+- **Commit:** `ee366df` — `fix: retry executor setup on next profile open`
 - **Commit nền:** `292668e` — `fix: harden resource management and background cleanup`
+- **Follow-up:** `004d73b` — `fix: restore runtime after profile switch`
 - **Base:** `f4ac372`
 - **Phiên bản:** `26.10.2` (giữ nguyên, chưa release)
 - **Môi trường xác minh:** Linux 7.2.9-2-cachyos x86_64, Python 3.14.8, 16 logical CPU
@@ -58,8 +59,9 @@
 | Mục | Giá trị |
 |---|---|
 | Nhánh làm việc | `fix/resource-management` |
-| Commit gần nhất | `004d73b` — `fix: restore runtime after profile switch` |
-| Commit trước đó | `292668e` — `fix: harden resource management and background cleanup` |
+| Commit gần nhất | `ee366df` — `fix: retry executor setup on next profile open` |
+| Commit follow-up chính | `004d73b` — `fix: restore runtime after profile switch` |
+| Commit nền | `292668e` — `fix: harden resource management and background cleanup` |
 | Commit cha của đợt chính | `f4ac372` |
 | `main` local | `94d24bc` — release `26.10.1` |
 | `origin/main` | `94d24bc` — release `26.10.1` |
@@ -68,11 +70,11 @@
 | Đã cập nhật AnkiWeb? | **Chưa** |
 | Version hiện tại | `26.10.2` |
 
-Sau commit `292668e`, bước review P1 đã phát hiện một hồi quy: `profile_will_close` shutdown executor vĩnh viễn, nhưng Anki **không reload add-on** khi người dùng chuyển profile. Commit `004d73b` sửa hồi quy này và thêm test hồi quy (§4.10).
+Sau commit `292668e`, bước review P1 đã phát hiện một hồi quy: `profile_will_close` shutdown executor vĩnh viễn, nhưng Anki **không reload add-on** khi người dùng chuyển profile. Commit `004d73b` sửa hồi quy này và thêm test hồi quy (§4.10); commit `ee366df` giữ cờ shutdown để lần mở profile sau thử lại nếu re-init lỗi.
 
 Working tree sạch sau khi commit tài liệu handoff. Các artifact `coverage.json`, `.coverage`, `dist/` và `SuperFreeTTS.ankiaddon` là file generated và đã nằm trong `.gitignore`.
 
-Commit `292668e` thay đổi 19 file: 10 file source và 9 file test. Commit follow-up `004d73b` thay đổi 9 file: 5 file source và 4 file test. Không có thay đổi trong `external/`, `manifest.json`, `version.py`, locales hay release notes.
+Commit `292668e` thay đổi 19 file: 10 file source và 9 file test. Commit follow-up `004d73b` thay đổi 9 file: 5 file source và 4 file test. Commit `ee366df` thay đổi 3 file: 1 file source, 1 file test và tài liệu handoff. Không có thay đổi trong `external/`, `manifest.json`, `version.py`, locales hay release notes.
 
 ---
 
@@ -246,6 +248,7 @@ Commit `292668e` thay đổi 19 file: 10 file source và 9 file test. Commit fol
 **Đã sửa trong commit `004d73b`:**
 
 - `SuperFreeTTS` thêm cờ `_shutdown` và `on_profile_reopened()`; chỉ re-init khi profile thực sự được mở lại, không chạy lại ở lần mở đầu tiên.
+- `on_profile_reopened()` chỉ xóa `_shutdown` sau khi re-init thành công; nếu lỗi, cờ được giữ để lần mở profile sau thử lại (`ee366df`).
 - `gui.py` đăng ký `profile_did_open` để gọi `hypertts.on_profile_reopened()` và `tts_player.restart()`.
 - `batch_executor.get_multi_engine_executor()` / `get_batch_executor()` tự tạo instance mới nếu instance cũ đã shutdown.
 - `ttsplayer.restart()` tạo `ThreadPoolExecutor` mới; thêm generation counter để callback của executor cũ không trừ nhầm slot in-flight của executor mới. `_play()` cũng xử lý `CancelledError` khi future bị hủy lúc shutdown.
@@ -571,6 +574,7 @@ git status
 git log --oneline -5
 git show --stat 292668e
 git show --stat 004d73b
+git show --stat ee366df
 
 python -m pytest tests/ -q --tb=short
 
@@ -597,5 +601,5 @@ git -c core.whitespace=cr-at-eol diff --check
 - **Không thêm** `psutil` hoặc binary biên dịch sẵn.
 - **EdgeTTS hard cap = 3** là invariant, không được nâng trong committed source.
 - Manual override local được giữ nguyên có chủ đích; chỉ cảnh báo, không tự hạ mà không báo. Ngoại lệ có chủ đích: trần `get_max_workers()` và EdgeTTS hard cap 3, cả hai đều log warning.
-- Commit `004d73b` khôi phục executor/pool sau khi chuyển profile; khi sửa tiếp phần shutdown/reopen, giữ nguyên hành vi: lần mở profile đầu tiên không re-init, chỉ re-init sau khi `shutdown()` đã chạy.
+- Commit `004d73b` / `ee366df` khôi phục executor/pool sau khi chuyển profile; khi sửa tiếp phần shutdown/reopen, giữ nguyên hành vi: lần mở profile đầu tiên không re-init, chỉ re-init sau khi `shutdown()` đã chạy, và giữ cờ retry nếu re-init lỗi.
 - Tài liệu này được đặt tại `AI_Documents/HANDOFF_RESOURCE_MANAGEMENT.md`.
