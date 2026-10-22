@@ -46,6 +46,7 @@ class SherpaProcessPool:
         self._lock = threading.Lock()
         self._semaphore = DynamicSemaphore(max_processes)
         self._cleanup_timer = None
+        self._cleanup_enabled = True
         self._max_idle_age = 180 # 180s idle timeout as mandated
         self._total_spawned = 0 # Track total processes (active + idle)
         self._start_cleanup_timer()
@@ -53,9 +54,20 @@ class SherpaProcessPool:
     def _start_cleanup_timer(self):
         if self._cleanup_timer:
             self._cleanup_timer.cancel()
+        self._cleanup_enabled = True
         self._cleanup_timer = threading.Timer(15.0, self._cleanup_idle)
         self._cleanup_timer.daemon = True
         self._cleanup_timer.start()
+
+    def _ensure_cleanup_timer(self):
+        """Restart the idle-cleanup timer after stop_all() cancelled it.
+
+        stop_all() runs on profile close; the same pool objects are reused
+        when a profile is reopened (Anki does not reload add-ons), so the
+        timer must come back or idle engine processes would never expire.
+        """
+        if not self._cleanup_enabled or self._cleanup_timer is None:
+            self._start_cleanup_timer()
 
     def _cleanup_idle(self):
         with self._lock:
@@ -72,7 +84,8 @@ class SherpaProcessPool:
                 else:
                     alive_pool.append((proc, exe, script, last_time))
             self._pool = alive_pool
-        self._start_cleanup_timer()
+            if self._cleanup_enabled:
+                self._start_cleanup_timer()
 
     def safe_terminate(self, proc):
         """Enforce safe termination sequence and pipe closure."""
@@ -94,6 +107,7 @@ class SherpaProcessPool:
             proc.is_healthy = False
 
     def get_process(self, executable_path, script_path, debug_enabled=False):
+        self._ensure_cleanup_timer()
         # Limit concurrency - blocks if max_processes are "out"
         self._semaphore.acquire()
         
@@ -158,6 +172,9 @@ class SherpaProcessPool:
         # Include both idle and checked-out processes.  Previously only the
         # idle pool was terminated, so active runner processes survived
         # profile close and kept their model memory (and pipes) alive.
+        # Disable cleanup first so an in-flight _cleanup_idle() cannot
+        # re-arm the timer after we cancel it.
+        self._cleanup_enabled = False
         with self._lock:
             processes = list(self._active)
             processes.extend(

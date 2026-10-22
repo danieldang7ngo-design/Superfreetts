@@ -245,6 +245,25 @@ class TestRealtimeGenerateTimeout:
         assert ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, _make_tag()) is None
         hypertts.get_audio_filename_tts_tag.assert_not_called()
 
+    def test_restart_after_shutdown_allows_generation(self, ttsplayer):
+        """Switching profiles fires shutdown then profile_did_open without
+        reloading add-ons; restart() must make realtime TTS usable again."""
+        hypertts = MagicMock()
+        hypertts.get_audio_filename_tts_tag.return_value = "/tmp/after_restart.mp3"
+        stub = _make_player_stub(hypertts, ttsplayer)
+
+        stub.shutdown()
+        assert stub._executor_shutdown is True
+        stub.restart()
+        assert stub._executor_shutdown is False
+
+        try:
+            result = ttsplayer.AnkiSuperFreeTTSPlayer._play(stub, _make_tag())
+            assert result == "/tmp/after_restart.mp3"
+            assert stub._in_flight == 0
+        finally:
+            stub.shutdown(wait=True)
+
     def test_genuine_exception_still_propagates_unchanged(self, ttsplayer):
         """
         Non-timeout errors (e.g. a real TTS service error) must propagate

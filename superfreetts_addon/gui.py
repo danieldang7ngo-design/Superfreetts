@@ -400,9 +400,6 @@ def init(hypertts):
     # Initial update
     update_menu_language(hypertts)
 
-    # Update on profile load
-    aqt.gui_hooks.profile_did_open.append(lambda: update_menu_language(hypertts)) 
-
     # Flush local usage stats and stop background work when profile closes
     tts_player = ttsplayer.AnkiSuperFreeTTSPlayer(aqt.mw.taskman, hypertts)
 
@@ -417,6 +414,21 @@ def init(hypertts):
             logger.warning(f'[SHUTDOWN] Addon shutdown failed: {e}')
 
     aqt.gui_hooks.profile_will_close.append(_on_profile_will_close)
+
+    def _on_profile_did_open():
+        update_menu_language(hypertts)
+        # Anki reuses loaded add-on modules across profile switches, so the
+        # executors stopped by profile_will_close must be recreated here.
+        try:
+            hypertts.on_profile_reopened()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Addon reopen failed: {e}')
+        try:
+            tts_player.restart()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Realtime player restart failed: {e}')
+
+    aqt.gui_hooks.profile_did_open.append(_on_profile_did_open)
 
     # browser menus
     aqt.gui_hooks.browser_menus_did_init.append(browerMenusInit)

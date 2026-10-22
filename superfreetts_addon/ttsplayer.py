@@ -71,27 +71,54 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
         self._in_flight = 0
         self._in_flight_lock = threading.Lock()
         self._executor_shutdown = False
+        # Bumped on every restart so callbacks from an older executor cannot
+        # decrement the in-flight counter belonging to the new one.
+        self._generation = 0
         logger.info('created AnkiSuperFreeTTSPlayer')
 
-    def _try_acquire_in_flight_slot(self) -> bool:
+    def _release_in_flight_slot(self, generation: int = None) -> None:
         with self._in_flight_lock:
-            if self._in_flight >= MAX_REALTIME_IN_FLIGHT:
-                return False
-            self._in_flight += 1
-            return True
-
-    def _release_in_flight_slot(self) -> None:
-        with self._in_flight_lock:
+            if (
+                generation is not None
+                and generation != getattr(self, '_generation', 0)
+            ):
+                return
             self._in_flight = max(0, self._in_flight - 1)
+
+    def restart(self) -> None:
+        """Recreate the generation executor after a previous shutdown.
+
+        Anki does not reload add-ons when the user switches profiles: only
+        ``profile_will_close`` / ``profile_did_open`` fire.  Without this
+        reset, the player shut down on the first profile close would keep
+        rejecting realtime TTS until Anki restarts.
+        """
+        with self._in_flight_lock:
+            if not getattr(self, '_executor_shutdown', False):
+                return
+            self._generation = getattr(self, '_generation', 0) + 1
+            self._in_flight = 0
+            self._generate_executor = concurrent.futures.ThreadPoolExecutor(
+                max_workers=MAX_REALTIME_IN_FLIGHT,
+                thread_name_prefix='sftts-realtime-gen'
+            )
+            self._executor_shutdown = False
+        logger.info('restarted realtime TTS executor after profile reopen')
 
     def shutdown(self, wait: bool = False) -> None:
         """Stop accepting realtime work and drop queued generations."""
-        self._executor_shutdown = True
+        with self._in_flight_lock:
+            if getattr(self, '_executor_shutdown', False):
+                return
+            self._executor_shutdown = True
+            self._generation = getattr(self, '_generation', 0) + 1
+            self._in_flight = 0
+            executor = self._generate_executor
         try:
-            self._generate_executor.shutdown(wait=wait, cancel_futures=True)
+            executor.shutdown(wait=wait, cancel_futures=True)
         except TypeError:
             # Python < 3.9 compatibility (cancel_futures was added in 3.9).
-            self._generate_executor.shutdown(wait=wait)
+            executor.shutdown(wait=wait)
         except Exception as e:
             logger.warning(f'Realtime executor shutdown error: {e}')
 
@@ -125,27 +152,48 @@ class AnkiSuperFreeTTSPlayer(aqt.tts.TTSProcessPlayer):
 
         logger.info(f'playing TTS sound for {tag}, voices: {tag.voices}')
 
-        if getattr(self, '_executor_shutdown', False):
-            logger.warning('Realtime TTS player is shutting down; skipping generation')
-            return None
-        if not self._try_acquire_in_flight_slot():
-            logger.warning(
-                f'Realtime TTS already has {MAX_REALTIME_IN_FLIGHT} generations in flight; '
-                f'skipping this card instead of queueing more work'
-            )
-            return None
+        with self._in_flight_lock:
+            if getattr(self, '_executor_shutdown', False):
+                logger.warning('Realtime TTS player is shutting down; skipping generation')
+                return None
+            if self._in_flight >= MAX_REALTIME_IN_FLIGHT:
+                logger.warning(
+                    f'Realtime TTS already has {MAX_REALTIME_IN_FLIGHT} generations in flight; '
+                    f'skipping this card instead of queueing more work'
+                )
+                return None
 
-        try:
-            future = self._generate_executor.submit(
-                self.hypertts.get_audio_filename_tts_tag, tag
-            )
-        except Exception:
-            self._release_in_flight_slot()
-            raise
+            self._in_flight += 1
+            # Read the generation under the same lock used by restart() so
+            # a callback always belongs to the executor that ran the task.
+            generation = getattr(self, '_generation', 0)
+            executor = self._generate_executor
+            try:
+                future = executor.submit(
+                    self.hypertts.get_audio_filename_tts_tag, tag
+                )
+            except RuntimeError:
+                # The executor can be shut down between the flag check above
+                # and submit() when a profile closes concurrently.
+                self._in_flight = max(0, self._in_flight - 1)
+                if getattr(self, '_executor_shutdown', False):
+                    logger.warning('Realtime TTS player shut down while queuing generation')
+                    return None
+                raise
+            except Exception:
+                self._in_flight = max(0, self._in_flight - 1)
+                raise
 
-        future.add_done_callback(lambda _future: self._release_in_flight_slot())
+        future.add_done_callback(
+            lambda _future: self._release_in_flight_slot(generation)
+        )
         try:
             audio_filename = future.result(timeout=REALTIME_GENERATE_TIMEOUT_SECONDS)
+        except concurrent.futures.CancelledError:
+            logger.warning(
+                f'TTS generation for tag {tag} was cancelled during shutdown; skipping playback'
+            )
+            return None
         except concurrent.futures.TimeoutError:
             # Best effort: this only succeeds if the task is still queued.
             # A running call cannot be interrupted safely here, but its slot

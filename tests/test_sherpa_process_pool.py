@@ -66,3 +66,22 @@ def test_release_moves_process_from_active_to_idle(monkeypatch):
 
     pool.stop_all()
     assert proc.terminate_calls == 1
+
+
+@pytest.mark.unit
+def test_pool_reused_after_stop_all_restarts_cleanup_timer(monkeypatch):
+    pool = SherpaProcessPool("test", max_processes=2)
+    pool._cleanup_timer.cancel()
+    proc = FakeProcess()
+    monkeypatch.setattr(pool, "_start_new", lambda *args, **kwargs: proc)
+
+    pool.stop_all()
+    assert pool._cleanup_enabled is False
+
+    leased = pool.get_process("engine", "runner.py", debug_enabled=False)
+
+    assert leased is proc
+    assert pool._cleanup_enabled is True
+    assert pool._cleanup_timer.is_alive()
+    pool.release_process(leased, "engine", "runner.py")
+    pool.stop_all()

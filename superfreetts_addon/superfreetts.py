@@ -65,6 +65,7 @@ class SuperFreeTTS():
         self.error_manager = errors.ErrorManager(self.anki_utils)
         self.latest_saved_batch_name: Optional[str] = None
         self.text_processing_cache = {}  # Simple dict for processed text caching
+        self._shutdown = False
 
         from .tts_orchestrator import TTSOrchestrator
         from .ui_controller import UIController
@@ -580,7 +581,13 @@ class SuperFreeTTS():
         Called from Anki's profile_will_close hook.  Every step is defensive:
         profile shutdown must continue even if one subsystem is already gone.
         """
-        self.flush_usage()
+        if getattr(self, '_shutdown', False):
+            return
+        self._shutdown = True
+        try:
+            self.flush_usage()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Usage flush failed: {e}')
 
         try:
             executor = getattr(self, 'executor', None)
@@ -611,6 +618,23 @@ class SuperFreeTTS():
                     logger.warning(f'[SHUTDOWN] Process pool stop failed: {e}')
         except Exception as e:
             logger.warning(f'[SHUTDOWN] Could not stop local engine pools: {e}')
+
+    def on_profile_reopened(self):
+        """Rebuild runtime executors after a profile switch.
+
+        Anki keeps add-on modules loaded while profiles are closed and
+        reopened, so the executors shut down in ``shutdown()`` must be
+        recreated.  This is a no-op on the initial profile open.
+        """
+        if not getattr(self, '_shutdown', False):
+            return
+        logger.info('[SHUTDOWN] Profile reopened; recreating executors')
+        try:
+            self.reconfigure_service_manager()
+        except Exception as e:
+            logger.warning(f'[SHUTDOWN] Failed to recreate executors: {e}')
+        finally:
+            self._shutdown = False
 
     # editor selection flag
     def set_editor_use_selection(self, use_selection): return self.config_store.set_editor_use_selection(use_selection)

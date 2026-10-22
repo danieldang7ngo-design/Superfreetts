@@ -17,6 +17,7 @@ from superfreetts_addon.batch_executor import (
     MultiEngineExecutor,
     BoundedThreadPoolExecutor,
     get_multi_engine_executor,
+    get_batch_executor,
     reset_multi_engine_executor,
 )
 from superfreetts_addon import batch_constants
@@ -307,3 +308,31 @@ class TestMultiEngineExecutorSingleton:
         a = get_multi_engine_executor(engine_config={"EdgeTTS": 1})
         b = get_multi_engine_executor(engine_config={"EdgeTTS": 5})
         assert a is not b
+
+    def test_shutdown_executor_is_recreated(self):
+        """A profile close shuts the singleton down; the next call must not
+        return the dead executor (Anki reuses add-on modules across profile
+        switches)."""
+        a = get_multi_engine_executor(engine_config={"EdgeTTS": 1})
+        a.shutdown(wait=False)
+
+        b = get_multi_engine_executor(engine_config={"EdgeTTS": 1})
+
+        assert b is not a
+        assert b._shutdown is False
+
+
+class TestUnifiedExecutorSingleton:
+
+    def teardown_method(self):
+        import superfreetts_addon.batch_executor as batch_executor_module
+        batch_executor_module._executor = None
+
+    def test_shutdown_executor_is_recreated(self):
+        a = get_batch_executor()
+        a.shutdown(wait=False)
+
+        b = get_batch_executor()
+
+        assert b is not a
+        assert b._shutdown is False

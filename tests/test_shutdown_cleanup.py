@@ -34,3 +34,26 @@ def test_shutdown_stops_executor_and_all_local_pools(monkeypatch):
     stts.usage_tracker.flush.assert_called_once()
     for pool in pools:
         pool.stop_all.assert_called_once()
+
+
+@pytest.mark.unit
+def test_profile_reopen_recreates_executors_after_shutdown():
+    stts = object.__new__(superfreetts.SuperFreeTTS)
+    stts._shutdown = True
+    stts.reconfigure_service_manager = MagicMock()
+
+    stts.on_profile_reopened()
+
+    stts.reconfigure_service_manager.assert_called_once_with()
+    assert stts._shutdown is False
+
+
+@pytest.mark.unit
+def test_profile_reopen_is_noop_on_initial_open():
+    stts = object.__new__(superfreetts.SuperFreeTTS)
+    stts._shutdown = False
+    stts.reconfigure_service_manager = MagicMock()
+
+    stts.on_profile_reopened()
+
+    stts.reconfigure_service_manager.assert_not_called()

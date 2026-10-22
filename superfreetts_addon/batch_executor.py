@@ -325,6 +325,7 @@ class UnifiedBatchExecutor:
         self.checkpoint = CheckpointManager()
         self.max_workers = max_workers
         self.items_processed = 0
+        self._shutdown = False
     
     def get_executor(self, service_name: Optional[str] = None) -> concurrent.futures.ThreadPoolExecutor:
         """Return the underlying pool so callers can use either executor type.
@@ -448,6 +449,7 @@ class UnifiedBatchExecutor:
     
     def shutdown(self, wait: bool = True):
         """Shutdown thread pool"""
+        self._shutdown = True
         try:
             self.executor.shutdown(wait=wait)
         except Exception as e:
@@ -524,6 +526,7 @@ class MultiEngineExecutor:
         self.monitor = SimpleResourceMonitor()
         self.cache = UnifiedCache(max_size_mb=cache_size_mb)
         self.checkpoint = CheckpointManager()
+        self._shutdown = False
     
     def get_executor(self, service_name: str) -> concurrent.futures.ThreadPoolExecutor:
         """Get executor for given service/engine."""
@@ -672,6 +675,7 @@ class MultiEngineExecutor:
     
     def shutdown(self, wait: bool = True):
         """Shutdown all executors"""
+        self._shutdown = True
         for service, executor in self.executors.items():
             try:
                 executor.shutdown(wait=wait)
@@ -693,7 +697,7 @@ class MultiEngineExecutor:
 def get_batch_executor(max_workers: int = 1) -> UnifiedBatchExecutor:
     """Get or create global batch executor"""
     global _executor
-    if _executor is None:
+    if _executor is None or getattr(_executor, '_shutdown', False):
         _executor = UnifiedBatchExecutor(max_workers=max_workers)
     return _executor
 
@@ -718,7 +722,7 @@ def get_multi_engine_executor(engine_config: Dict[str, int] = None) -> MultiEngi
             }
     """
     global _multi_executor
-    if _multi_executor is None:
+    if _multi_executor is None or getattr(_multi_executor, '_shutdown', False):
         _multi_executor = MultiEngineExecutor(engine_config=engine_config)
     elif engine_config is not None and _multi_executor.engine_config != engine_config:
         # Recreate executor when worker configuration changes.
