@@ -7,6 +7,7 @@ from typing import List, Optional
 from .. import constants
 from .. import errors
 from .. import languages
+from .. import audio_transcode
 from .. import logging_utils
 from .. import service
 from .. import voice as voice_module
@@ -353,7 +354,7 @@ class SupertonicTTS(service.ServiceBase):
                     raise BrokenPipeError("Supertonic process closed stream.")
                 resp = json.loads(line.decode("utf-8", errors='replace').strip())
                 if resp.get("status") == "ok" and resp.get("audio_b64"):
-                    return base64.b64decode(resp["audio_b64"])
+                    return audio_transcode.convert_if_requested(base64.b64decode(resp["audio_b64"]), "SupertonicTTS")
                 raise RuntimeError(resp.get("message") or "Supertonic generation failed")
             except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError):
                 if process is not None:
@@ -396,7 +397,7 @@ class SupertonicTTS(service.ServiceBase):
                 results = []
                 for item in resp.get("results", []):
                     if item.get("status") == "ok" and item.get("audio_b64"):
-                        results.append(base64.b64decode(item["audio_b64"]))
+                        results.append(audio_transcode.convert_if_requested(base64.b64decode(item["audio_b64"]), "SupertonicTTS"))
                     else:
                         results.append(None)
                 if len(results) < len(source_texts):

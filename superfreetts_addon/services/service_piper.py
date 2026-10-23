@@ -1,6 +1,5 @@
 import os
 import json
-import tempfile
 from typing import List, Optional
 
 from .. import voice as voice_module
@@ -8,6 +7,7 @@ from .. import service
 from .. import errors
 from .. import constants
 from .. import languages
+from .. import audio_transcode
 from .. import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
@@ -363,38 +363,11 @@ class PiperTTS(service.ServiceBase):
                         audio_b64 = resp.get("audio_b64")
                         if audio_b64:
                             audio_data = base64.b64decode(audio_b64)
-                            
-                            # Convert to MP3 if requested
-                            # Use the global preferences from superfreetts.
-                            # Better: use the global preferences from superfreetts or similar.
-                            # In this context, we don't have direct access to the Preferences object unless we pass it.
-                            # However, we can use aqt.mw.pm.meta to get the raw config or use the existing service config.
-                            
-                            # Actually, service.py has access to the configuration via self.get_configuration_value_optional
-                            # but audio_format is a global preference.
-                            
-                            import aqt
-                            from .. import constants as addon_constants
-                            config = aqt.mw.addonManager.getConfig(addon_constants.CONFIG_ADDON_NAME) or {}
-                            prefs = config.get(addon_constants.CONFIG_PREFERENCES, {})
-                            pref_format = prefs.get("audio_format", "mp3")
-                            
-                            if pref_format == "mp3":
-                                logger.debug("PiperTTS: Converting WAV to MP3")
-                                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_file:
-                                    wav_file.write(audio_data)
-                                    wav_path = wav_file.name
-                                
-                                mp3_path = wav_path.replace(".wav", ".mp3")
-                                try:
-                                    aqt.sound._encode_mp3(wav_path, mp3_path)
-                                    with open(mp3_path, "rb") as mp3_file:
-                                        audio_data = mp3_file.read()
-                                finally:
-                                    if os.path.exists(wav_path): os.remove(wav_path)
-                                    if os.path.exists(mp3_path): os.remove(mp3_path)
-                            
-                            return audio_data
+
+                            # Transcode policy (muc 4): Piper is native WAV.
+                            # Convert to MP3 only when the user picked MP3;
+                            # otherwise keep WAV (no convert call).
+                            return audio_transcode.convert_if_requested(audio_data, "PiperTTS")
                         else:
                             raise Exception("No audio data in Piper response.")
                     else:
@@ -493,7 +466,7 @@ class PiperTTS(service.ServiceBase):
                         results = []
                         for item in resp.get("results", []):
                             if item.get("status") == "ok" and item.get("audio_b64"):
-                                results.append(base64.b64decode(item["audio_b64"]))
+                                results.append(audio_transcode.convert_if_requested(base64.b64decode(item["audio_b64"]), "PiperTTS"))
                             else:
                                 results.append(None)
                         return results

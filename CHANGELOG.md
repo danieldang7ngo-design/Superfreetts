@@ -16,6 +16,11 @@
 - CI now runs Ruff import hygiene, Bandit medium/high checks, Python 3.9/3.11/3.13/3.14 tests, Windows/macOS tests, a coverage floor, a 70% critical-module gate, and a package verifier that imports the built archive in a clean interpreter.
 - Vendored `requests`/`urllib3`/`certifi`/`idna`/`charset-normalizer` metadata now matches the actual code versions; `requirements-vendor.txt` and `scripts/vendor_deps.py --check` keep it honest.
 - All seven UI languages remain available (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); English remains the default and missing translations fall back to English.
+- Local engine IPC now has deadlines (60s single, 120s batch chunk, 150s cold start) with one kill-and-retry instead of hanging; a saturated pool reports engine-busy immediately.
+- Batch progress checkpoints by note ID with atomic writes: a crash resumes without skipping or repeating notes, and re-applying the same audio no longer duplicates `[sound:...]` tags. Batch Preview (the live batch flow) resumes the same way: reopen the batch, press Generate, already-applied notes are skipped.
+- A CPU thread budget keeps local engines within the machine's logical CPUs; manual worker overrides are warned about but never silently lowered.
+- Audio is saved in the engine's native format (offline engines: WAV, EdgeTTS: MP3); WAV-to-MP3 conversion (Piper/Kokoro/MMS/Supertonic) runs only when MP3 is picked and a converter exists — already-correct files are never re-encoded. MP3-to-WAV is unsupported and keeps the MP3.
+- OGG is retired: new files are MP3/WAV only; old OGG preferences and voice options fall back to WAV, and existing OGG cache files are still read.
 
 ### Tiếng Việt
 
@@ -31,6 +36,11 @@
 - CI chạy Ruff import hygiene, Bandit mức medium/high, test Python 3.9/3.11/3.13/3.14, test Windows/macOS, sàn coverage, gate 70% cho module trọng yếu, và bộ xác minh gói cài đặt có import thử trong môi trường sạch.
 - Metadata của `requests`/`urllib3`/`certifi`/`idna`/`charset-normalizer` đã khớp với code thực tế; `requirements-vendor.txt` và `scripts/vendor_deps.py --check` giữ cho việc này không lệch lại.
 - Cả 7 ngôn ngữ giao diện vẫn hiển thị (`en`, `vi`, `ko`, `ja`, `zh-CN`, `zh-TW`, `sv`); tiếng Anh vẫn là mặc định và bản dịch thiếu sẽ dùng tiếng Anh.
+- IPC tới engine cục bộ giờ có deadline (60 giây đơn, 120 giây chunk batch, 150 giây cold start) kèm đúng một lần kill-and-retry thay vì treo; pool cạn sẽ báo engine-busy ngay.
+- Tiến độ batch checkpoint theo note ID với ghi nguyên tử: crash có thể resume mà không bỏ sót hay lặp note, và áp lại cùng một file audio không còn nhân đôi thẻ `[sound:...]`. Batch Preview (luồng batch đang chạy thật) resume cùng cách: mở lại batch, bấm Tạo audio, các note đã áp sẽ được bỏ qua.
+- Ngân sách thread CPU giữ các engine cục bộ trong số CPU logic của máy; worker do người dùng đặt sẽ được cảnh báo nhưng không bị tự hạ.
+- Audio được lưu đúng định dạng engine tạo ra (engine offline: WAV, EdgeTTS: MP3); convert WAV→MP3 (Piper/Kokoro/MMS/Supertonic) chỉ chạy khi người dùng chọn MP3 và có bộ chuyển — file đã đúng định dạng không bao giờ bị encode lại. MP3→WAV không được hỗ trợ và sẽ giữ nguyên MP3.
+- OGG đã nghỉ hưu: file mới chỉ còn MP3/WAV; preference OGG cũ và voice option OGG được chuyển về WAV, file cache OGG cũ vẫn đọc được.
 
 ## 26.10.1 - 2026-10-14
 

@@ -5,6 +5,7 @@ import typing
 
 from .. import service, voice, errors
 from .. import constants
+from .. import audio_transcode
 from .. import languages
 from ..mms_engine_manager import MmsEngineManager
 # from .. import system_utils # lazy loaded
@@ -243,7 +244,7 @@ class MmsTTS(service.ServiceBase):
                             if os.path.exists(temp_path):
                                 with open(temp_path, 'rb') as f:
                                     audio_data = f.read()
-                                return audio_data
+                                return audio_transcode.convert_if_requested(audio_data, "MmsTTS")
                             else:
                                 raise Exception("Audio file not found after generation.")
                         else:
@@ -339,7 +340,7 @@ class MmsTTS(service.ServiceBase):
                                 t_path = temp_paths[i]
                                 if task_resp.get("status") == "ok" and os.path.exists(t_path):
                                     with open(t_path, 'rb') as f:
-                                        results.append(f.read())
+                                        results.append(audio_transcode.convert_if_requested(f.read(), "MmsTTS"))
                                 else:
                                     results.append(None)
                         else:

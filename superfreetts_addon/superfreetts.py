@@ -189,8 +189,8 @@ class SuperFreeTTS():
     def prepare_batch_audio_generation(self, note_id_list, batch, batch_status):
         return self.batch_orchestrator.prepare_batch_audio_generation(note_id_list, batch, batch_status)
 
-    def generate_prepared_batch_audio(self, prepared_batch, batch_status):
-        return self.batch_orchestrator.generate_prepared_batch_audio(prepared_batch, batch_status)
+    def generate_prepared_batch_audio(self, prepared_batch, batch_status, checkpoint=None):
+        return self.batch_orchestrator.generate_prepared_batch_audio(prepared_batch, batch_status, checkpoint)
 
     def apply_generated_batch_audio(self, generated_results, batch, batch_status, anki_collection):
         return self.batch_orchestrator.apply_generated_batch_audio(generated_results, batch, batch_status, anki_collection)
@@ -198,14 +198,11 @@ class SuperFreeTTS():
     def apply_generated_batch_audio_chunk(self, generated_results_chunk, batch, batch_status, anki_collection):
         return self.batch_orchestrator.apply_generated_batch_audio_chunk(generated_results_chunk, batch, batch_status, anki_collection)
 
-    def process_batch_audio(self, note_id_list, batch, batch_status, anki_collection):
-        return self.batch_orchestrator.process_batch_audio(note_id_list, batch, batch_status, anki_collection)
-
     def _collect_batch_duplicates(self, tasks):
         return self.batch_orchestrator._collect_batch_duplicates(tasks)
 
-    def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status):
-        return self.batch_orchestrator._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
+    def _execute_unique_tasks_unified(self, tasks, dedup_map, batch_status, checkpoint=None):
+        return self.batch_orchestrator._execute_unique_tasks_unified(tasks, dedup_map, batch_status, checkpoint)
 
     def _apply_batch_deduplication(self, tasks, dedup_map, audio_cache, batch_status):
         return self.batch_orchestrator._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)

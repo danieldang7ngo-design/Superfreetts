@@ -12,6 +12,7 @@ from . import config_models
 from . import batch_status
 from . import batch_progress_ui
 from . import component_failure_report
+from . import batch_executor
 from . import logging_utils
 from . import i18n
 from . import backup_guard
@@ -265,6 +266,9 @@ class BatchPreview(component_common.ComponentBase):
         self.batch_run_mode = 'idle'
         self._apply_chunk_index = 0
         self._last_batch_change_time = 0.0
+        # Crash-resume checkpoint for the live preview flow (handoff A+B, step B).
+        # Created after prepare (where dedup_map exists), used by generate + apply.
+        self.batch_checkpoint = None
 
         self.table_repaint_timer = TableRepaintTimer(500)
         self.status_label = None
@@ -280,6 +284,7 @@ class BatchPreview(component_common.ComponentBase):
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
         self._apply_chunk_index = 0
+        self.batch_checkpoint = None
         if self.stack is not None:
             self.hypertts.anki_utils.run_on_main(self.reset_progress_ui)
         if hasattr(self.batch_preview_table_model, 'table_view') and self.table_view is not None:
@@ -467,6 +472,7 @@ class BatchPreview(component_common.ComponentBase):
         self.prepared_batch_audio = None
         self.generated_batch_model = copy.deepcopy(self.batch_model)
         self.batch_run_mode = 'generating'
+        self.batch_checkpoint = None
         self.batch_status.begin()
         aqt.operations.QueryOp(
             parent=self.dialog,
@@ -497,26 +503,53 @@ class BatchPreview(component_common.ComponentBase):
         self._apply_chunk_index = 0
         self._run_next_apply_chunk()
 
-    def _chunk_success(self, result):
+    def _chunk_success(self, result, chunk_note_ids=None):
         elapsed = time.monotonic() - getattr(self, '_chunk_start_time', time.monotonic())
         logger.info(f'CHUNK_DONE: index={self._apply_chunk_index-1} elapsed={elapsed:.3f}s notes_written={result}')
+        if self.batch_checkpoint is not None and chunk_note_ids:
+            try:
+                # Mark AFTER the chunk commit (this runs after QueryOp success).
+                self.batch_checkpoint.mark_applied(chunk_note_ids)
+            except Exception as e:
+                logger.warning(f'[BATCH] Preview checkpoint mark_applied failed: {e}')
         self._run_next_apply_chunk()
 
     def _run_next_apply_chunk(self):
-        start = self._apply_chunk_index * self.APPLY_CHUNK_SIZE
-        end = start + self.APPLY_CHUNK_SIZE
-        chunk = self.generated_batch_results[start:end]
+        # Skip chunks whose notes were already applied by a previous run.
+        # Generation re-runs (cache hits make it fast); apply is the resume point.
+        pending_chunk = None
+        pending_note_ids = None
+        while True:
+            start = self._apply_chunk_index * self.APPLY_CHUNK_SIZE
+            end = start + self.APPLY_CHUNK_SIZE
+            chunk = self.generated_batch_results[start:end]
 
-        if not chunk or not self.batch_status.must_continue:
-            logger.info(f'CHUNK: index={self._apply_chunk_index} chunk_empty={not chunk} must_continue={self.batch_status.must_continue} → _finish_apply_chain')
-            self._finish_apply_chain()
-            return
+            if not chunk or not self.batch_status.must_continue:
+                logger.info(f'CHUNK: index={self._apply_chunk_index} chunk_empty={not chunk} must_continue={self.batch_status.must_continue} → _finish_apply_chain')
+                self._finish_apply_chain()
+                return
+
+            pending_chunk = chunk
+            if self.batch_checkpoint is not None:
+                try:
+                    pending_chunk = [row for row in chunk if not self.batch_checkpoint.is_applied(row[0])]
+                except Exception as e:
+                    logger.warning(f'[BATCH] Preview checkpoint filter failed, applying whole chunk: {e}')
+                    pending_chunk = chunk
+            if not pending_chunk:
+                logger.info(f'CHUNK: skipping fully applied chunk index={self._apply_chunk_index}')
+                self._apply_chunk_index += 1
+                continue
+            break
 
         self._apply_chunk_index += 1
-        logger.info(f'CHUNK: launching chunk index={self._apply_chunk_index-1} start={start} end={end} chunk_len={len(chunk)}')
+        pending_note_ids = [row[0] for row in pending_chunk]
+        start = (self._apply_chunk_index - 1) * self.APPLY_CHUNK_SIZE
+        end = start + self.APPLY_CHUNK_SIZE
+        logger.info(f'CHUNK: launching chunk index={self._apply_chunk_index-1} start={start} end={end} chunk_len={len(pending_chunk)}')
         self._chunk_start_time = time.monotonic()
 
-        def chunk_op(col, chunk=chunk):
+        def chunk_op(col, chunk=pending_chunk):
             undo_id = col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
             try:
                 return self.hypertts.apply_generated_batch_audio_chunk(
@@ -531,17 +564,27 @@ class BatchPreview(component_common.ComponentBase):
         aqt.operations.QueryOp(
             parent=self.dialog,
             op=chunk_op,
-            success=lambda result: self._chunk_success(result),
+            success=lambda result, ids=pending_note_ids: self._chunk_success(result, ids),
         ).failure(self._apply_chunk_failed).run_in_background()
 
     def _apply_chunk_failed(self, exception):
         logger.info(f'CHUNK_FAILED: index={getattr(self, "_apply_chunk_index", -1)-1} exception={exception}')
+        try:
+            if self.batch_checkpoint is not None:
+                self.batch_checkpoint.flush()
+        except Exception as e:
+            logger.warning(f'[BATCH] Preview checkpoint flush failed: {e}')
         self.batch_operation_failed(exception)
 
     def _finish_apply_chain(self):
         self.finished_apply_audio_fn(None)
 
     def stop_button_pressed(self):
+        try:
+            if self.batch_checkpoint is not None:
+                self.batch_checkpoint.flush()
+        except Exception as e:
+            logger.warning(f'[BATCH] Preview checkpoint flush on stop failed: {e}')
         self.batch_status.stop()
 
     def prepare_audio_fn(self, anki_collection):
@@ -552,10 +595,38 @@ class BatchPreview(component_common.ComponentBase):
         if not self.batch_status.must_continue:
             self.batch_status.end(False)
             return
+        # Attach the crash-resume checkpoint to the live preview flow.
+        # Key is stable across reopens (no memory addresses); resume happens
+        # at apply time while generation re-runs via the content cache.
+        try:
+            from . import batch_orchestrator as _orch
+            key = _orch.preview_checkpoint_key(
+                self.generated_batch_model,
+                self.note_id_list,
+                (prepared_batch or {}).get('dedup_map', {}),
+            )
+            checkpoint = batch_executor.BatchCheckpoint(
+                self.hypertts.executor.checkpoint, key, list(self.note_id_list),
+            )
+            applied_before = checkpoint.load_existing()
+            self.batch_checkpoint = checkpoint
+            if applied_before:
+                logger.info(f'[BATCH] Preview resume: skipping {applied_before} already applied notes (key={key})')
+                self.batch_status.set_status_message(f"Tiếp tục: bỏ qua {applied_before} note đã ghi")
+                for note_id in list(checkpoint.note_ids):
+                    if checkpoint.is_applied(note_id) and note_id in self.batch_status.note_status_map:
+                        self.batch_status.note_status_map[note_id].status = constants.BatchNoteStatus.Done
+                try:
+                    self.batch_status.notify_progress()
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.warning(f'[BATCH] Preview checkpoint init failed, continuing without resume: {e}')
+            self.batch_checkpoint = None
         self.hypertts.anki_utils.run_in_background(self.generate_audio_fn, self.finished_generate_audio_fn)
 
     def generate_audio_fn(self):
-        return self.hypertts.generate_prepared_batch_audio(self.prepared_batch_audio, self.batch_status)
+        return self.hypertts.generate_prepared_batch_audio(self.prepared_batch_audio, self.batch_status, self.batch_checkpoint)
 
     def finished_generate_audio_fn(self, result):
         try:
@@ -566,8 +637,14 @@ class BatchPreview(component_common.ComponentBase):
                 self.batch_run_mode = 'ready'
                 self.batch_status.end(True)
             else:
+                try:
+                    if self.batch_checkpoint is not None:
+                        self.batch_checkpoint.flush()
+                except Exception as e:
+                    logger.warning(f'[BATCH] Preview checkpoint flush on cancel failed: {e}')
                 self.generated_batch_results = None
                 self.generated_batch_model = None
+                self.batch_checkpoint = None
                 self.batch_run_mode = 'idle'
                 self.batch_status.end(False)
         except Exception as e:
@@ -578,6 +655,16 @@ class BatchPreview(component_common.ComponentBase):
     def finished_apply_audio_fn(self, result):
         logger.info(f'finished_apply_audio_fn called, result={result}')
         backup_guard.restore_backups()
+        try:
+            if self.batch_checkpoint is not None:
+                if self.batch_status.must_continue:
+                    self.batch_checkpoint.remove()
+                else:
+                    self.batch_checkpoint.flush()
+        except Exception as e:
+            logger.warning(f'[BATCH] Preview checkpoint finalize failed: {e}')
+        finally:
+            self.batch_checkpoint = None
         self.generated_batch_results = None
         self.generated_batch_model = None
         self.batch_run_mode = 'idle'
@@ -611,6 +698,13 @@ class BatchPreview(component_common.ComponentBase):
     def batch_operation_failed(self, exception):
         logger.info(f'BATCH_OP_FAILED: exception={exception}')
         backup_guard.restore_backups()
+        try:
+            if self.batch_checkpoint is not None:
+                self.batch_checkpoint.flush()
+        except Exception as e:
+            logger.warning(f'[BATCH] Preview checkpoint flush on failure failed: {e}')
+        finally:
+            self.batch_checkpoint = None
         self.batch_run_mode = 'idle'
         self.prepared_batch_audio = None
         self.generated_batch_results = None

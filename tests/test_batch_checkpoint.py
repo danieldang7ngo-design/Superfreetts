@@ -7,12 +7,10 @@ next resume skipped and repeated the wrong notes.
 """
 
 import json
-from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 
-from superfreetts_addon import batch_executor, batch_status as batch_status_module
+from superfreetts_addon import batch_executor
 from superfreetts_addon.batch_executor import (
     CHECKPOINT_STATUS_APPLIED,
     CHECKPOINT_STATUS_GENERATED,
@@ -20,7 +18,6 @@ from superfreetts_addon.batch_executor import (
     CheckpointManager,
     NullCheckpoint,
 )
-from superfreetts_addon.batch_orchestrator import BatchOrchestrator
 
 
 @pytest.fixture
@@ -186,106 +183,3 @@ def test_null_checkpoint_is_a_noop():
     checkpoint.flush()
     checkpoint.remove()
     assert checkpoint.enabled is False
-
-
-# --------------------------------------------------- orchestrator integration
-
-
-def build_orchestrator(tmp_path, note_ids):
-    hypertts = MagicMock()
-    hypertts.anki_utils.get_note_by_id.side_effect = lambda note_id: SimpleNamespace(note_id=note_id)
-    hypertts.text_processing_cache = {}
-    hypertts.executor = SimpleNamespace(checkpoint=CheckpointManager(str(tmp_path)))
-    hypertts.audio_store.build_request_key.side_effect = lambda text, voice_id, options: ("key", text)
-    hypertts.get_ui_language.return_value = "en"
-    hypertts.get_source_text.side_effect = lambda note, source, _: f"text {note.note_id}"
-    hypertts.process_text.side_effect = lambda text, _: text
-    hypertts.choose_voice.return_value = SimpleNamespace(
-        voice_id=SimpleNamespace(service="PiperTTS", voice_key="voice"),
-        options={},
-    )
-
-    orchestrator = BatchOrchestrator(hypertts)
-    status = batch_status_module.BatchStatus(MagicMock(), note_ids, MagicMock())
-    batch = MagicMock()
-    batch.name = "resume-test"
-    batch.voice_selection.selection_mode = MagicMock()
-    return orchestrator, hypertts, status, batch
-
-
-@pytest.mark.unit
-def test_completed_checkpoint_returns_without_regenerating(tmp_path, monkeypatch):
-    orchestrator, hypertts, status, batch = build_orchestrator(tmp_path, [1, 2, 3])
-    checkpoint = BatchCheckpoint(hypertts.executor.checkpoint, "resume-test", [1, 2, 3])
-    checkpoint.mark_applied([1, 2, 3])
-
-    generated = []
-    monkeypatch.setattr(
-        orchestrator,
-        "_execute_unique_tasks_unified",
-        lambda *args, **kwargs: generated.append(args) or {},
-    )
-
-    orchestrator.process_batch_audio([1, 2, 3], batch, status, MagicMock())
-
-    assert generated == [], "a completed batch must not run again"
-    assert hypertts.anki_utils.get_note_by_id.call_count == 0
-    assert not checkpoint_path(tmp_path, "resume-test").exists()
-
-
-@pytest.mark.unit
-def test_resume_generates_and_applies_only_pending_notes(tmp_path, monkeypatch):
-    note_ids = [1, 2, 3, 4]
-    orchestrator, hypertts, status, batch = build_orchestrator(tmp_path, note_ids)
-    checkpoint = BatchCheckpoint(hypertts.executor.checkpoint, "resume-test", note_ids)
-    checkpoint.mark_applied([1, 3])
-
-    captured = {}
-
-    def fake_generate(tasks, dedup_map, batch_status, checkpoint=None):
-        captured["note_ids"] = [task["note_id"] for task in tasks]
-        captured["checkpoint"] = checkpoint
-        return {
-            key: ((f"text {indices[0]}", "processed", "sound.mp3", "full.mp3"), None)
-            for key, indices in dedup_map.items()
-        }
-
-    monkeypatch.setattr(orchestrator, "_execute_unique_tasks_unified", fake_generate)
-    collection = MagicMock()
-
-    orchestrator.process_batch_audio(note_ids, batch, status, collection)
-
-    assert captured["note_ids"] == [2, 4]
-    assert isinstance(captured["checkpoint"], BatchCheckpoint)
-    applied_note_ids = [
-        call.args[0].note_id for call in hypertts._update_note_with_audio.call_args_list
-    ]
-    assert applied_note_ids == [2, 4]
-    assert collection.update_notes.call_count == 1
-    assert not checkpoint_path(tmp_path, "resume-test").exists()
-
-
-@pytest.mark.unit
-def test_cancelled_batch_keeps_checkpoint_for_resume(tmp_path, monkeypatch):
-    note_ids = [1, 2]
-    orchestrator, hypertts, status, batch = build_orchestrator(tmp_path, note_ids)
-
-    def cancel_after_first_note(*args, **kwargs):
-        status.must_continue = False
-
-    hypertts._update_note_with_audio.side_effect = cancel_after_first_note
-
-    def fake_generate(tasks, dedup_map, batch_status, checkpoint=None):
-        return {
-            key: ((f"text {indices[0]}", "processed", "sound.mp3", "full.mp3"), None)
-            for key, indices in dedup_map.items()
-        }
-
-    monkeypatch.setattr(orchestrator, "_execute_unique_tasks_unified", fake_generate)
-
-    orchestrator.process_batch_audio(note_ids, batch, status, MagicMock())
-
-    assert checkpoint_path(tmp_path, "resume-test").exists()
-    resumed = BatchCheckpoint(hypertts.executor.checkpoint, "resume-test", note_ids)
-    assert resumed.load_existing() == 0
-    assert resumed.pending_note_ids() == note_ids

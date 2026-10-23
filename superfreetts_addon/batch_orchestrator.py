@@ -11,6 +11,7 @@ Handles:
 
 import time
 import copy
+import hashlib
 import threading
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -28,6 +29,33 @@ from . import batch_constants
 from . import text_utils
 
 logger = logging_utils.get_child_logger(__name__)
+
+
+def preview_checkpoint_key(batch_model: Any, note_ids: List[int], dedup_map: Dict[Any, Any]) -> str:
+    """Stable checkpoint key for the live Batch Preview flow.
+
+    Must NOT use ``str(batch_model)`` / ``str(text_processing)``: the default
+    object repr embeds a memory address, so the key would change on every
+    open and resume could never match.  Instead the key covers:
+
+    - the ordered note selection,
+    - the preset name + target field flags (apply destination),
+    - the sorted dedup keys (text + voice + options + format fingerprint).
+
+    Changing voice, format, target field or text processing changes the
+    fingerprint, so resume starts over (safe) instead of skipping notes
+    that would now need different audio.
+    """
+    target = getattr(batch_model, 'target', None)
+    fingerprint = "|".join([
+        ",".join(str(n) for n in (note_ids or [])),
+        str(getattr(batch_model, "name", "") or ""),
+        str(getattr(target, "target_field", "") or ""),
+        str(getattr(target, "text_and_sound_tag", "")),
+        str(getattr(target, "remove_sound_tag", "")),
+        "|".join(sorted(str(k) for k in (dedup_map or {}).keys())),
+    ])
+    return "preview-" + hashlib.sha1(fingerprint.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
 
 
 class BatchOrchestrator:
@@ -185,7 +213,7 @@ class BatchOrchestrator:
             'dedup_map': dedup_map,
         }
 
-    def generate_prepared_batch_audio(self, prepared_batch: Dict[str, Any], batch_status: Any) -> List[Tuple]:
+    def generate_prepared_batch_audio(self, prepared_batch: Dict[str, Any], batch_status: Any, checkpoint: Any = None) -> List[Tuple]:
         """Generate audio files for prepared tasks without touching Anki media or notes."""
         start_time = time.time()
         lang = self.hypertts.get_ui_language()
@@ -216,7 +244,7 @@ class BatchOrchestrator:
                 ns.source_text = task['source_text']
                 ns.processed_text = task['processed_text']
 
-        audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
+        audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, checkpoint)
         logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {time.time() - start_time:.2f}s')
 
         batch_status.futures_to_cancel.clear()
@@ -330,250 +358,6 @@ class BatchOrchestrator:
         batch_status.unique_tasks_completed = 0
         batch_status.set_status_message(None)
         logger.info(f'[BATCH] Applied generated audio in {time.time() - update_start:.2f}s')
-
-    def process_batch_audio(self, note_id_list: List[int], batch: config_models.BatchConfig, batch_status: Any, anki_collection: Any) -> None:
-        start_time = time.time()
-        tasks = []
-        audio_request_context = context.AudioRequestContext(constants.AudioRequestReason.batch)
-        self._bind_usage_session(batch_status, audio_request_context)
-
-        logger.info('[BATCH] Using multi-engine batch executor')
-        batch_name = batch.name or f"batch_{int(time.time())}"
-        checkpoint = batch_executor.BatchCheckpoint(self.executor.checkpoint, batch_name, note_id_list)
-        applied_before = checkpoint.load_existing()
-        pending_notes = checkpoint.pending_note_ids()
-        if not pending_notes:
-            # Everything was applied by a previous run: clear the file and stop
-            # instead of falling through and re-running the whole batch.
-            logger.info(f'[BATCH] {batch_name} already completed ({applied_before} notes applied), clearing checkpoint')
-            checkpoint.remove()
-            batch_status.set_status_message(None)
-            return
-        if pending_notes != note_id_list:
-            logger.info(f'[BATCH] Resuming: {len(pending_notes)}/{len(note_id_list)} notes remaining ({applied_before} already applied)')
-            note_id_list = pending_notes
-        else:
-            logger.info(f'[BATCH] No applied notes in checkpoint for {batch_name}, starting fresh')
-
-        with batch_status.get_batch_running_action_context():
-            try:
-                lang = self.hypertts.get_ui_language()
-                LARGE_BATCH_THRESHOLD = 1000
-                if len(note_id_list) >= LARGE_BATCH_THRESHOLD:
-                    self._set_batch_status_with_ui_refresh(
-                        batch_status,
-                        i18n.get_text("status_loading_voices", lang),
-                        batch_progress_ui.BatchProgressPhase.LOADING,
-                    )
-                    logger.info(f'[BATCH] Pre-loading voice list ({len(note_id_list)} notes >= {LARGE_BATCH_THRESHOLD})...')
-                    pre_load_start = time.time()
-                    try:
-                        _ = self.service_manager.full_voice_list()
-                        pre_load_time = time.time() - pre_load_start
-                        logger.info(f'[BATCH] Voice list pre-loaded in {pre_load_time:.2f}s')
-                    except Exception as e:
-                        logger.warning(f'[BATCH] Voice list pre-load failed: {e}')
-                else:
-                    logger.info(f'[BATCH] Skipping voice pre-load ({len(note_id_list)} notes < threshold {LARGE_BATCH_THRESHOLD})')
-
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_preparing_notes", lang).format(len(note_id_list)),
-                    batch_progress_ui.BatchProgressPhase.PREPARING,
-                )
-                logger.info(f'[BATCH] Starting to prepare {len(note_id_list)} notes...')
-                extract_start = time.time()
-
-                for idx, note_id in enumerate(note_id_list):
-                    if not batch_status.must_continue:
-                        break
-
-                    note = self.anki_utils.get_note_by_id(note_id)
-                    try:
-                        source_text = self.hypertts.get_source_text(note, batch.source, None)
-                        
-                        cache_key = source_text_resolver.text_processing_cache_key(source_text, batch.text_processing)
-                        if cache_key not in self.text_processing_cache:
-                            processed_text = self.hypertts.process_text(source_text, batch.text_processing)
-                            self.text_processing_cache[cache_key] = processed_text
-                        else:
-                            processed_text = self.text_processing_cache[cache_key]
-                            logger.debug("[BATCH] Text cache hit")
-                        
-                        sequence_index = len(tasks)
-
-                        priority_voice_list = None
-                        if batch.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-                            priority_voice_list = copy.copy(batch.voice_selection.voice_list)
-
-                        chosen_voice = self.hypertts.choose_voice(batch.voice_selection, priority_voice_list, sequence_index)
-
-                        task = {
-                            'note_id': note_id,
-                            'source_text': source_text,
-                            'processed_text': processed_text,
-                            'batch': batch,
-                            'audio_request_context': audio_request_context,
-                            'chosen_voice': chosen_voice,
-                        }
-
-                        if priority_voice_list is not None:
-                            task['priority_voice_list'] = priority_voice_list
-                        tasks.append(task)
-                    except Exception as e:
-                        with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                            note_action_context.set_error(e)
-
-                extract_time = time.time() - extract_start
-                logger.info(f'[BATCH] Prepared {len(tasks)} notes in {extract_time:.2f}s')
-
-                if not batch_status.must_continue:
-                    return
-
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_analyzing_duplicates", lang),
-                    batch_progress_ui.BatchProgressPhase.DEDUPLICATING,
-                )
-                logger.info('[BATCH] Analyzing for duplicate (text + voice) combinations...')
-                dedup_start = time.time()
-                dedup_map = self._collect_batch_duplicates(tasks)
-                dedup_time = time.time() - dedup_start
-
-                unique_count = len(dedup_map)
-                total_count = len(tasks)
-                if unique_count < total_count:
-                    logger.info(f'[BATCH] Deduplication found: {total_count} tasks, {unique_count} unique, {total_count - unique_count} duplicates (saving {((total_count - unique_count) / total_count) * 100:.1f}% TTS calls) - analyzed in {dedup_time:.2f}s')
-                else:
-                    logger.info(f'[BATCH] No duplicates found - analyzed in {dedup_time:.2f}s')
-
-                max_workers = system_utils.get_max_workers()
-                logger.info("[BATCH] Parallel generation started: engine pools will respect their own limits")
-
-                batch_status.total_unique_tasks = unique_count
-                batch_status.unique_tasks_completed = 0
-
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_generating_audio", lang).format(unique_count),
-                    batch_progress_ui.BatchProgressPhase.GENERATING,
-                )
-                logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
-                gen_start = time.time()
-
-                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, checkpoint)
-
-                gen_time = time.time() - gen_start
-                logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {gen_time:.2f}s')
-
-                batch_status.futures_to_cancel.clear()
-
-                batch_status.total_unique_tasks = 0
-                batch_status.unique_tasks_completed = 0
-                
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_applying_notes", lang).format(len(tasks)),
-                    batch_progress_ui.BatchProgressPhase.SAVING,
-                )
-
-                logger.info(f'[BATCH] Applying audio to {len(tasks)} notes...')
-                apply_start = time.time()
-                results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
-                apply_time = time.time() - apply_start
-                logger.info(f'[BATCH] Applied results in {apply_time:.2f}s')
-
-                audio_cache.clear()
-                del audio_cache
-                dedup_map.clear()
-                del dedup_map
-                tasks.clear()
-                del tasks
-
-                self._set_batch_status_with_ui_refresh(
-                    batch_status,
-                    i18n.get_text("status_saving_collection", lang),
-                    batch_progress_ui.BatchProgressPhase.SAVING,
-                )
-                logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
-
-                notes_to_update = []
-                applied_note_ids = []
-                commit_every = int(batch_constants.CHECKPOINT_APPLY_COMMIT_EVERY)
-
-                def _commit_applied_chunk():
-                    """Commit the pending notes and checkpoint their status.
-
-                    Applying in chunks (instead of one transaction for the whole
-                    batch) lets a crash resume from the last committed chunk.
-                    Re-applying the same audio file to the same field is
-                    idempotent, so at-least-once resume is safe.
-                    """
-                    if not notes_to_update or not batch_status.must_continue:
-                        return
-                    anki_collection.update_notes(notes_to_update)
-                    logger.info(f'[BATCH] Saved {len(notes_to_update)} notes')
-                    notes_to_update.clear()
-                    checkpoint.mark_applied(applied_note_ids)
-                    applied_note_ids.clear()
-
-                for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(results):
-                    if not batch_status.must_continue:
-                        break
-
-                    note_status = batch_status.note_status_map.get(note_id)
-                    already_done = note_status and note_status.status == constants.BatchNoteStatus.Done
-
-                    with batch_status.get_note_action_context(note_id, False) as note_action_context:
-                        try:
-                            if is_error:
-                                note_action_context.set_error(is_error)
-                                checkpoint.mark_error(note_id, is_error)
-                            else:
-                                note = self.anki_utils.get_note_by_id(note_id)
-                                self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
-                                notes_to_update.append(note)
-                                applied_note_ids.append(note_id)
-
-                                if not already_done:
-                                    note_action_context.set_source_text(source_text)
-                                    note_action_context.set_processed_text(processed_text)
-                                    note_action_context.set_sound(sound_file)
-                                    note_action_context.set_status(constants.BatchNoteStatus.Done)
-                                    self._record_note_updated(batch_status)
-                        except Exception as e:
-                            logger.error(f"Error updating note {note_id}: {e}")
-                            note_action_context.set_error(e)
-                            checkpoint.mark_error(note_id, e)
-
-                    if len(notes_to_update) >= commit_every:
-                        _commit_applied_chunk()
-
-                _commit_applied_chunk()
-
-                total_time = time.time() - start_time
-                logger.info(f'[BATCH] Completed in {total_time:.2f}s')
-
-                results.clear()
-                del results
-
-                if batch_status.must_continue:
-                    checkpoint.remove()
-                    logger.info('[BATCH] Batch completed successfully')
-                else:
-                    checkpoint.flush()
-                    logger.info(f'[BATCH] Batch cancelled, checkpoint saved for resume ({len(checkpoint.pending_note_ids())} notes pending)')
-                
-                batch_status.set_status_message(None)
-            
-            finally:
-                # Persist applied notes if we leave early (cancel or error).
-                # After a successful batch this is a no-op: remove() disabled
-                # the writer so the checkpoint cannot be resurrected.
-                checkpoint.flush()
-                batch_status.futures_to_cancel.clear()
-                self.text_processing_cache.clear()
-                logger.info('[BATCH] Cleanup complete')
 
     def _collect_batch_duplicates(self, tasks: List[Dict[str, Any]]) -> Dict[Tuple, List[int]]:
         dedup_map = {}

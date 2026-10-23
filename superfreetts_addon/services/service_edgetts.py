@@ -348,11 +348,11 @@ class EdgeTTS(service.ServiceBase):
                         )
 
                         async def _collect_audio():
-                            data = b""
+                            parts = []
                             async for chunk in communicate.stream():
                                 if chunk["type"] == "audio":
-                                    data += chunk["data"]
-                            return data
+                                    parts.append(chunk["data"])
+                            return b"".join(parts)
 
                         data = await asyncio.wait_for(
                             _collect_audio(),

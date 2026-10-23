@@ -8,6 +8,7 @@ from .. import voice
 from .. import service
 from .. import errors
 from .. import constants
+from .. import audio_transcode
 from .. import languages
 from .. import logging_utils
 
@@ -295,7 +296,7 @@ class KokoroTTS(service.ServiceBase):
                         import base64
                         audio_b64 = resp.get("audio_b64")
                         if audio_b64:
-                            return base64.b64decode(audio_b64)
+                            return audio_transcode.convert_if_requested(base64.b64decode(audio_b64), "KokoroTTS")
                         else:
                             raise Exception("No audio data in Kokoro response.")
                     else:
@@ -366,7 +367,7 @@ class KokoroTTS(service.ServiceBase):
                         results = []
                         for item in resp.get("results", []):
                             if item.get("status") == "ok" and item.get("audio_b64"):
-                                results.append(base64.b64decode(item["audio_b64"]))
+                                results.append(audio_transcode.convert_if_requested(base64.b64decode(item["audio_b64"]), "KokoroTTS"))
                             else:
                                 results.append(None)
                         return results

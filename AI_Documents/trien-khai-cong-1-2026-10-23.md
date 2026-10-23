@@ -189,6 +189,11 @@ Hệ quả:
   Hoặc ngược lại, quyết định xoá `process_batch_audio()` nếu không còn kế hoạch
   dùng (đã deprecated `execute()` chết tương tự).
 
+> **Cập nhật 2026-10-23 (A+B):** đã xoá `process_batch_audio()` + facade theo
+> quyết định A+B; checkpoint đã chuyển sang `component_batch_preview`
+> (`preview_checkpoint_key`, tạo sau prepare, resume ở bước apply chunk,
+> `remove()` khi xong, `flush()` khi huỷ/lỗi). Xem `HANDOFF_TIEP_THEO_2_2026-10-23.md` §3.
+
 ---
 
 ## 3. P1-5 — Ngân sách thread (phần code + unit test)

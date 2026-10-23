@@ -11,8 +11,8 @@ def test_imports(anki_mock):
     from superfreetts_addon import source_text_resolver
     from superfreetts_addon import servicemanager
     from superfreetts_addon import batch_executor
-    from superfreetts_addon import batch_state_manager
     from superfreetts_addon import batch_status
+    from superfreetts_addon import audio_transcode
     
     assert service_edgetts is not None
     assert superfreetts is not None
@@ -22,5 +22,5 @@ def test_imports(anki_mock):
     assert source_text_resolver is not None
     assert servicemanager is not None
     assert batch_executor is not None
-    assert batch_state_manager is not None
     assert batch_status is not None
+    assert audio_transcode is not None
