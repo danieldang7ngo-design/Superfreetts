@@ -7,7 +7,7 @@
 
 - **Nhánh:** `fix/resource-management` (không push, không đổi version, không tag)
 - **Phiên bản:** vẫn `26.10.2`
-- **Test:** 418 passed, 1 skipped (trước Cổng 1: 377 passed, 1 skipped)
+- **Test:** 420 passed, 1 skipped (trước Cổng 1: 377 passed, 1 skipped)
 - **Gói:** `SuperFreeTTS.ankiaddon` 83,98 MB, `scripts/verify_package.py` OK
 
 ---
@@ -118,8 +118,10 @@ kill -CONT <pid> 2>/dev/null || true
 - `remove()` tắt luôn writer để `finally` không tạo lại file.
 
 **Chính sách resume: at-least-once.** Note `applied` được bỏ qua; note
-`generated` sinh lại (trúng cache content-addressed) rồi apply lại. Apply lại
-cùng file audio vào cùng field là idempotent, nên không mất note; xấu nhất là
+`generated` sinh lại (trúng cache content-addressed) rồi apply lại. Để apply lại
+thật sự idempotent, `note_audio_updater.update_note_with_audio()` giờ **không
+thêm `[sound:...]` trùng** khi note đã trỏ đúng file audio đó (trước đây chạy lại
+batch ở chế độ `text_and_sound_tag` sẽ nhân đôi tag). Không mất note; xấu nhất là
 apply trùng một note sau crash giữa lúc ghi note và lúc flush checkpoint.
 
 ### 2.3. Luồng batch (`batch_orchestrator.process_batch_audio`)
@@ -154,6 +156,34 @@ apply trùng một note sau crash giữa lúc ghi note và lúc flush checkpoint
 
 Test cũ dùng `mock_open` cho API checkpoint cũ đã bị xoá khỏi
 `tests/test_batch_executor_unified.py` (được thay bằng bộ test trên).
+
+### 2.5. Phát hiện quan trọng: đường batch đang chạy trong UI
+
+Khi kiểm tra người gọi, `process_batch_audio()` **không còn caller runtime**:
+
+```bash
+grep -rn "\.process_batch_audio(" --include=*.py superfreetts_addon   # chỉ facade
+grep -rn "generate_prepared_batch_audio\|prepare_batch_audio_generation" \
+  --include=*.py superfreetts_addon   # component_batch_preview.py, component_workflow.py
+```
+
+Đường UI thật sự chạy là `component_batch_preview.py`
+(`prepare_batch_audio_generation` → `generate_prepared_batch_audio`) rồi
+`_run_next_apply_chunk()` — apply theo chunk **25 note**, mỗi chunk một QueryOp.
+Đường này **không dùng checkpoint**; sau crash, audio đã nằm trong cache
+content-addressed nên sinh lại rất nhanh, và apply lại đã idempotent nhờ guard
+trên.
+
+Hệ quả:
+
+- P1-3 đã sửa đúng **kho checkpoint** (`CheckpointManager`/`BatchCheckpoint`) và
+  đúng logic resume của `process_batch_audio`, nhưng phần resume đó **chưa được
+  UI dùng**. Giá trị người dùng thấy hiện tại chủ yếu là: không còn index lệch,
+  không còn batch chạy lại khi checkpoint báo xong, apply idempotent.
+- Muốn resume thật trong UI cần một việc riêng: lưu checkpoint + sound filename
+  trong `component_batch_preview`, và thêm nút/flow "tiếp tục batch" khi mở lại.
+  Hoặc ngược lại, quyết định xoá `process_batch_audio()` nếu không còn kế hoạch
+  dùng (đã deprecated `execute()` chết tương tự).
 
 ---
 
@@ -191,7 +221,7 @@ python -m tests.manual_verify_services   # hoặc script đo riêng
 ## 4. Gates đã chạy
 
 ```text
-python -m pytest tests/ -q                                   418 passed, 1 skipped (6,5 s)
+python -m pytest tests/ -q                                   420 passed, 1 skipped (6,4 s)
 python -m pytest tests/ -q --cov=superfreetts_addon \
   --cov-report=json:coverage.json && \
   python scripts/check_critical_coverage.py coverage.json     OK
@@ -233,3 +263,6 @@ python build_share.py && python scripts/verify_package.py         OK, 83,98 MB
 4. Cổng 2: chọn việc có số đo trước (Piper persistent, `fsync`, EdgeTTS
    `bytearray`), rồi cold start, code chết, locale `ko`.
 5. Xoá hẳn `batch_state_manager.py` + 2 `execute()` chết khi có quyết định.
+6. Quyết định cho `process_batch_audio()` (mục 2.5): hoặc nối checkpoint vào
+   `component_batch_preview` + thêm flow resume khi mở lại batch, hoặc xoá
+   đường chết này và giữ `CheckpointManager` cho workflow.

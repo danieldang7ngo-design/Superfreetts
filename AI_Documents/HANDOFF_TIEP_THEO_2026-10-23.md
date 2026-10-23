@@ -12,10 +12,18 @@
 - **Trạng thái:** Cổng 0 đã xong và có test. Cổng 1–2 chưa làm.
 
 > **Cập nhật 2026-10-23 (phiên làm việc tiếp theo).** P1-2, P1-3 và phần
-> code/unit test của P1-5 đã xong trên cùng nhánh (418 passed, 1 skipped; mọi
+> code/unit test của P1-5 đã xong trên cùng nhánh (420 passed, 1 skipped; mọi
 > gate xanh, gói 83,98 MB verify OK). Chi tiết thiết kế, hành vi mới, rủi ro và
 > cách kiểm chứng thủ công: xem `trien-khai-cong-1-2026-10-23.md`. Còn lại:
 > ma trận đo worker × thread của P1-5, 5 quyết định ở §6, và toàn bộ Cổng 2.
+>
+> **Lưu ý về P1-3:** `process_batch_audio()` (nơi sửa checkpoint) hiện **không
+> có caller trong UI**; đường batch thật là `component_batch_preview.py`
+> (prepare → generate → apply theo chunk 25 note, không checkpoint). Kho
+> checkpoint và logic resume đã đúng, nhưng muốn resume trong UI cần thêm một
+> việc riêng — xem ghi chú Cổng 1 §2.5 và §6.
+>
+> Commit của phiên: `0125910` (P1-2), `4d3b6ed` (P1-3), `31ca0e1` (P1-5).
 
 ---
 
