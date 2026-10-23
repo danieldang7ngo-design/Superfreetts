@@ -1,5 +1,9 @@
 # HANDOFF — Việc tiếp theo sau Cổng 0 (2026-10-23)
 
+> **ĐÃ ĐƯỢC THAY THẾ (2026-10-23):** xem `HANDOFF_TIEP_THEO_2_2026-10-23.md`.
+> File này giữ lại để tra cứu nội dung Cổng 0/Cổng 1 gốc; danh sách việc còn lại
+> và 5 quyết định đã chốt nằm trong handoff 2.
+
 > Tài liệu này thay thế phần "việc cần làm tiếp" của `HANDOFF_RESOURCE_MANAGEMENT.md`
 > và dựa trên báo cáo `bao-cao-kiem-toan-superfreetts-2026-10-22.md` cùng ghi chú
 > `trien-khai-cong-0-2026-10-23.md`.
