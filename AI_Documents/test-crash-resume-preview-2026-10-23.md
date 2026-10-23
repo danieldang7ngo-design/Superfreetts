@@ -1,6 +1,6 @@
 # Test tay crash-resume Preview — 2026-10-23
 
-Môi trường ghi nhận: Anki <ghi version>, OS <ghi OS>, SuperFreeTTS 26.10.2, nhánh fix/resource-management.
+Môi trường ghi nhận: Chưa chạy tay trên Anki GUI (môi trường dev headless); OS Linux (CachyOS), SuperFreeTTS 26.10.2, nhánh fix/resource-management.
 
 ## Oracle
 - Không mất note nào.
