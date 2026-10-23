@@ -11,6 +11,9 @@ from . import i18n
 
 logger = logging_utils.get_child_logger(__name__)
 
+# OGG support was removed in 26.10: no bundled engine can encode it.
+AUDIO_FORMAT_CHOICES = ("wav", "mp3")
+
 
 class PreferencesPage(component_common.ConfigComponentBase):
     def __init__(self, hypertts: Any, dialog: Any) -> None:
@@ -60,9 +63,9 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.cache_retention_spinbox.setValue(self.model.cache_retention_days)
         self.cache_retention_spinbox.setEnabled(self.model.cache_enabled)
 
-        format_values = ["mp3", "wav", "ogg"]
-        current_format = getattr(self.model, "audio_format", "mp3") or "mp3"
-        self.audio_format_combobox.setCurrentIndex(format_values.index(current_format) if current_format in format_values else 0)
+        format_values = list(AUDIO_FORMAT_CHOICES)
+        current_format = getattr(self.model, "audio_format", "wav") or "wav"
+        self.audio_format_combobox.setCurrentIndex(format_values.index(current_format) if current_format in format_values else format_values.index("wav"))
 
     def get_model(self):
         return self.model
@@ -157,7 +160,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         format_row = aqt.qt.QHBoxLayout()
         format_row.setSpacing(10)
         self.audio_format_combobox.clear()
-        self.audio_format_combobox.addItems(["mp3", "wav", "ogg"])
+        self.audio_format_combobox.addItems(list(AUDIO_FORMAT_CHOICES))
         self.audio_format_combobox.setMinimumHeight(30)
         self.audio_format_combobox.setFixedWidth(120)
         format_row.addWidget(self.audio_format_combobox)
@@ -325,7 +328,7 @@ class PreferencesPage(component_common.ConfigComponentBase):
         self.model_part_updated_common()
 
     def audio_format_changed(self, index: int) -> None:
-        format_values = ["mp3", "wav", "ogg"]
+        format_values = list(AUDIO_FORMAT_CHOICES)
         if 0 <= index < len(format_values):
             self.model.audio_format = format_values[index]
         self.model_part_updated_common()

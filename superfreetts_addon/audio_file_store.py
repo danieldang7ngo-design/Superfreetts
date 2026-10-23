@@ -2,11 +2,15 @@ import dataclasses
 import hashlib
 import json
 import os
+import re
 import tempfile
 from typing import Any, Dict, Optional
 
+from . import logging_utils
 from . import options
 from . import voice as voice_module
+
+logger = logging_utils.get_child_logger(__name__)
 
 
 EXTENSION_BY_FORMAT = {
@@ -15,6 +19,85 @@ EXTENSION_BY_FORMAT = {
     options.AudioFormat.ogg_vorbis: "ogg",
     options.AudioFormat.ogg_opus: "ogg",
 }
+
+AUDIO_EXTENSIONS = ("mp3", "wav", "ogg")
+
+# Cache entries are content-addressed: ``superfreetts-<sha224>.<ext>``.
+# Anything else living in user_files (usage_log.json, the debug log,
+# checkpoint metadata, ...) must never be treated as cache.
+CACHE_FILENAME_PATTERN = re.compile(r"^superfreetts-[0-9a-f]{56}\.(?:mp3|wav|ogg)$")
+
+# Default output format.  Local engines (Piper, Kokoro, MMS, Supertonic)
+# return WAV bytes and the add-on ships no encoder for them, so WAV is the
+# only format that is honest for every local engine.  MP3 remains available
+# for engines that really produce MP3 (EdgeTTS, macOS say, eSpeak-ng) and is
+# still converted on demand for Piper single-note requests.  OGG has no
+# encoder at all and is no longer offered in the UI.
+DEFAULT_AUDIO_FORMAT = "wav"
+
+_FORMAT_BY_EXTENSION = {
+    "mp3": options.AudioFormat.mp3,
+    "wav": options.AudioFormat.wav,
+    "ogg": options.AudioFormat.ogg_opus,
+}
+
+# Values historical voice presets may contain in their `format` voice option.
+_FORMAT_ALIASES = {
+    "mp3": options.AudioFormat.mp3,
+    "wav": options.AudioFormat.wav,
+    "pcm": options.AudioFormat.wav,
+    "ogg": options.AudioFormat.ogg_opus,
+    "ogg_opus": options.AudioFormat.ogg_opus,
+    "ogg_vorbis": options.AudioFormat.ogg_vorbis,
+}
+
+_UNSUPPORTED_FORMAT_WARNED = set()
+
+
+def is_cache_audio_filename(filename: str) -> bool:
+    """Return True only for files created by this add-on's audio cache."""
+    return bool(CACHE_FILENAME_PATTERN.match(filename or ""))
+
+
+def detect_audio_format(audio_data: Optional[bytes]) -> Optional[options.AudioFormat]:
+    """Detect the container format from magic bytes (best effort).
+
+    Returns None when the bytes are unknown/short, so callers can fall back
+    to the requested format instead of guessing.
+    """
+    if not audio_data:
+        return None
+    head = bytes(audio_data[:12])
+    if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
+        return options.AudioFormat.wav
+    if head[:4] == b"OggS":
+        return options.AudioFormat.ogg_opus
+    if head[:3] == b"ID3":
+        return options.AudioFormat.mp3
+    # Bare MPEG audio frame sync (no ID3 tag): 11 bits set.
+    if len(head) >= 2 and head[0] == 0xFF and (head[1] & 0xE0) == 0xE0:
+        return options.AudioFormat.mp3
+    return None
+
+
+def _normalize_format(audio_format: Optional[options.AudioFormat]) -> options.AudioFormat:
+    """Map every format this build cannot produce onto WAV.
+
+    OGG was previously offered in the UI but no service ever encoded it, so
+    a stored ``ogg`` preference or a legacy preset ``format=ogg`` option must
+    degrade to WAV rather than producing an invalid ``.ogg`` file.
+    """
+    if audio_format is None:
+        return options.AudioFormat.wav
+    if audio_format in (options.AudioFormat.ogg_opus, options.AudioFormat.ogg_vorbis):
+        if audio_format not in _UNSUPPORTED_FORMAT_WARNED:
+            _UNSUPPORTED_FORMAT_WARNED.add(audio_format)
+            logger.warning(
+                "[FORMAT] OGG output is not supported by any bundled engine; "
+                "falling back to WAV. Existing OGG preferences are ignored."
+            )
+        return options.AudioFormat.wav
+    return audio_format
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,16 +143,26 @@ class AudioFileStore:
         self.get_preferences = get_preferences
 
     def resolve_audio_format(self, voice_options=None):
-        audio_format = options.AudioFormat.mp3
         prefs = self.get_preferences()
-        if getattr(prefs, "audio_format", None) == "wav":
+        preference_format = getattr(prefs, "audio_format", None) or DEFAULT_AUDIO_FORMAT
+        if preference_format == "mp3":
+            audio_format = options.AudioFormat.mp3
+        elif preference_format == "ogg":
+            audio_format = _normalize_format(options.AudioFormat.ogg_opus)
+        else:
             audio_format = options.AudioFormat.wav
-        elif getattr(prefs, "audio_format", None) == "ogg":
-            audio_format = options.AudioFormat.ogg_opus
 
         voice_options = voice_options or {}
         if options.AUDIO_FORMAT_PARAMETER in voice_options:
-            audio_format = options.AudioFormat[voice_options[options.AUDIO_FORMAT_PARAMETER]]
+            raw = voice_options[options.AUDIO_FORMAT_PARAMETER]
+            requested = _FORMAT_ALIASES.get(str(raw).lower())
+            if requested is None:
+                logger.warning(
+                    f"[FORMAT] ignoring unknown voice option format={raw!r}; "
+                    f"using {EXTENSION_BY_FORMAT[audio_format]} instead."
+                )
+            else:
+                audio_format = _normalize_format(requested)
         return audio_format
 
     def build_request_key(self, processed_text, voice_id, voice_options=None):
@@ -90,24 +183,69 @@ class AudioFileStore:
             os.makedirs(user_files_dir, exist_ok=True)
         return os.path.join(user_files_dir, self.get_audio_filename(hash_str, audio_format))
 
+    def _file_matches_extension(self, full_filename, audio_format):
+        """True when the stored bytes really are the format the name claims."""
+        actual = detect_audio_format(_read_magic_bytes(full_filename))
+        if actual is None:
+            # Unknown/short content: do not delete a file we cannot judge.
+            return True
+        return EXTENSION_BY_FORMAT[actual] == EXTENSION_BY_FORMAT[audio_format]
+
     def get_cached_file(self, request_key):
-        audio_format = options.AudioFormat[request_key.audio_format]
+        requested = options.AudioFormat[request_key.audio_format]
         hash_str = request_key.hash()
-        audio_filename = self.get_audio_filename(hash_str, audio_format)
-        full_filename = self.get_full_audio_file_name(hash_str, audio_format)
-        if os.path.exists(full_filename) and os.path.getsize(full_filename) > 0:
-            return AudioFileResult(full_filename, audio_filename, True)
+        candidates = [requested] + [
+            _FORMAT_BY_EXTENSION[extension]
+            for extension in AUDIO_EXTENSIONS
+            if extension != EXTENSION_BY_FORMAT[requested]
+        ]
+        seen = set()
+        for audio_format in candidates:
+            extension = EXTENSION_BY_FORMAT[audio_format]
+            if extension in seen:
+                continue
+            seen.add(extension)
+            full_filename = self.get_full_audio_file_name(hash_str, audio_format)
+            if not os.path.exists(full_filename) or os.path.getsize(full_filename) == 0:
+                continue
+            if not self._file_matches_extension(full_filename, audio_format):
+                # Left over from an older build that named files after the
+                # requested format instead of the bytes it wrote.
+                logger.warning(
+                    f"[FORMAT] ignoring stale cache file {os.path.basename(full_filename)}: "
+                    f"content does not match the extension; it will be regenerated."
+                )
+                try:
+                    os.remove(full_filename)
+                except OSError:
+                    pass
+                continue
+            return AudioFileResult(
+                full_filename,
+                self.get_audio_filename(hash_str, audio_format),
+                True,
+            )
         return None
 
-    def get_file_result(self, request_key, cache_hit=False):
-        audio_format = options.AudioFormat[request_key.audio_format]
+    def get_file_result(self, request_key, cache_hit=False, audio_format=None):
+        requested = options.AudioFormat[request_key.audio_format]
+        if audio_format is None:
+            audio_format = requested
         hash_str = request_key.hash()
         audio_filename = self.get_audio_filename(hash_str, audio_format)
         full_filename = self.get_full_audio_file_name(hash_str, audio_format)
         return AudioFileResult(full_filename, audio_filename, cache_hit)
 
     def write_audio_file_atomic(self, request_key, audio_data):
-        result = self.get_file_result(request_key, cache_hit=False)
+        requested = options.AudioFormat[request_key.audio_format]
+        actual = detect_audio_format(audio_data) or requested
+        if EXTENSION_BY_FORMAT[actual] != EXTENSION_BY_FORMAT[requested]:
+            logger.warning(
+                f"[FORMAT] engine returned {EXTENSION_BY_FORMAT[actual]} bytes for a "
+                f"{EXTENSION_BY_FORMAT[requested]} request; saving with the real "
+                f"extension so playback stays valid."
+            )
+        result = self.get_file_result(request_key, cache_hit=False, audio_format=actual)
         target_dir = os.path.dirname(result.full_filename)
         os.makedirs(target_dir, exist_ok=True)
         fd, temp_path = tempfile.mkstemp(
@@ -128,3 +266,11 @@ class AudioFileStore:
                 pass
             raise
         return result
+
+
+def _read_magic_bytes(full_filename, count=12):
+    try:
+        with open(full_filename, "rb") as f:
+            return f.read(count)
+    except OSError:
+        return b""

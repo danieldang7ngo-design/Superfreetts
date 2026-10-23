@@ -628,8 +628,10 @@ class Preferences:
     cache_retention_days: int = 30
     # Whether cache cleanup is enabled
     cache_enabled: bool = True
-    # Audio output format
-    audio_format: str = "mp3"      # "mp3", "wav", or "ogg"
+    # Audio output format.  WAV is the default because every bundled local
+    # engine returns WAV bytes and no encoder ships with the add-on; see
+    # audio_file_store.DEFAULT_AUDIO_FORMAT.  OGG is no longer supported.
+    audio_format: str = "wav"      # "mp3" or "wav"
     # UI theme ("vibrant" or "ollama")
     ui_theme: str = "vibrant"
 
@@ -675,7 +677,7 @@ def deserialize_preferences(preferences_config):
         ui_language=preferences_config.get('ui_language', 'en'),
         cache_retention_days=preferences_config.get('cache_retention_days', 30),
         cache_enabled=preferences_config.get('cache_enabled', True),
-        audio_format=preferences_config.get('audio_format', 'mp3'),
+        audio_format=preferences_config.get('audio_format', 'wav'),
         ui_theme=preferences_config.get('ui_theme', 'vibrant'),
     )
     return prefs

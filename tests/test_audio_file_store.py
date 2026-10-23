@@ -43,7 +43,10 @@ def test_audio_request_key_hash_is_stable_for_option_order(tmp_path):
 def test_audio_format_pref_and_voice_option_resolution(tmp_path):
     store = make_store(tmp_path, audio_format="ogg")
 
-    assert store.resolve_audio_format({}) == options.AudioFormat.ogg_opus
+    # OGG is not encodable by any bundled engine, so the legacy preference
+    # degrades to WAV instead of producing an invalid .ogg file.
+    assert store.resolve_audio_format({}) == options.AudioFormat.wav
+    assert store.resolve_audio_format({options.AUDIO_FORMAT_PARAMETER: "mp3"}) == options.AudioFormat.mp3
     assert store.resolve_audio_format({options.AUDIO_FORMAT_PARAMETER: "wav"}) == options.AudioFormat.wav
 
 
@@ -93,8 +96,10 @@ def test_path_generation_is_deterministic(tmp_path):
 
 
 def test_resolve_audio_format_fallback(tmp_path):
-    store = make_store(tmp_path)
-    # Default fallback to mp3
-    assert store.resolve_audio_format(None) == options.AudioFormat.mp3
+    store = make_store(tmp_path, audio_format="wav")
+    # Missing/unknown preference falls back to WAV, the only format every
+    # bundled local engine can actually produce.
+    assert store.resolve_audio_format(None) == options.AudioFormat.wav
+    assert config_models.Preferences().audio_format == "wav"
 
 
