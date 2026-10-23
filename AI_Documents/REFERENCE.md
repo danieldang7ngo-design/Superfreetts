@@ -80,7 +80,8 @@ Registered in `constants.py` (`GRAPHICS_ICON_*`), wired to buttons in
 ```powershell
 python -m pytest tests/ -q --tb=short                  # all (420 passed, ~6s)
 python -m pytest tests/test_batch_cache_dedup.py -v     # single file
-python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json
+# use the venv on this box: system python lacks pytest-cov
+.venv/bin/python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json
 python scripts/check_critical_coverage.py coverage.json
 ```
 

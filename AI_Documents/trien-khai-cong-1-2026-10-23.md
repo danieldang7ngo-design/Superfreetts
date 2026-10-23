@@ -9,6 +9,10 @@
 - **Phiên bản:** vẫn `26.10.2`
 - **Test:** 420 passed, 1 skipped (trước Cổng 1: 377 passed, 1 skipped)
 - **Gói:** `SuperFreeTTS.ankiaddon` 83,98 MB, `scripts/verify_package.py` OK
+- **Lưu ý công cụ:** `python -m pytest ... --cov` báo `unrecognized arguments`
+  vì python hệ thống thiếu `pytest-cov`; dùng `.venv/bin/python -m pytest` cho
+  bước coverage. Các bước khác (pytest thường, ruff, bandit, build) chạy được
+  bằng `python`.
 
 ---
 
@@ -222,10 +226,11 @@ python -m tests.manual_verify_services   # hoặc script đo riêng
 
 ```text
 python -m pytest tests/ -q                                   420 passed, 1 skipped (6,4 s)
-python -m pytest tests/ -q --cov=superfreetts_addon \
+# coverage: dùng .venv/bin/python (python hệ thống không có pytest-cov)
+.venv/bin/python -m pytest tests/ -q --cov=superfreetts_addon \
   --cov-report=json:coverage.json && \
   python scripts/check_critical_coverage.py coverage.json     OK
-      config_models 71,1% · batch_executor 77,2% ·
+      config_models 71,1% · batch_executor 80,7% ·
       component_text_processing 96,7% · audio_file_store 90,3% ·
       voice_cache 91,8%
 .venv/bin/python -m ruff check superfreetts_addon tests scripts   OK
