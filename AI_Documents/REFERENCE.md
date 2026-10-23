@@ -78,7 +78,7 @@ Registered in `constants.py` (`GRAPHICS_ICON_*`), wired to buttons in
 ## 5. Test Suite
 
 ```powershell
-python -m pytest tests/ -q --tb=short                  # all (~300, ~6s)
+python -m pytest tests/ -q --tb=short                  # all (418 passed, ~6s)
 python -m pytest tests/test_batch_cache_dedup.py -v     # single file
 python -m pytest tests/ -q --cov=superfreetts_addon --cov-report=json:coverage.json
 python scripts/check_critical_coverage.py coverage.json
@@ -115,8 +115,9 @@ directly.
 |------|------|
 | `batch_constants.py` | Worker caps, timeouts, GC |
 | `batch_progress_ui.py` | Batch progress/status UI |
-| `batch_state_manager.py` | Checkpoint/resume |
-| `system_utils.py` | CPU detection + cross-platform available-RAM detection |
+| `batch_state_manager.py` | DEPRECATED — unused; live checkpoint is `batch_executor.CheckpointManager` |
+| `services/process_pool.py` | Local-engine process pool, IPC deadlines, kill/retry |
+| `system_utils.py` | CPU detection, available-RAM detection, thread budget |
 | `performance_tracker.py` | Latency tracking |
 | `logging_utils.py` | NullLogger, SentryLogger |
 | `constants.py` | Enums, paths, stylesheets |

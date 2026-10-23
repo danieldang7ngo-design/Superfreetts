@@ -11,6 +11,12 @@
 - **Môi trường đã xác minh:** Linux x86_64, Python 3.14.8, 16 logical CPU, ~15,4 GB RAM
 - **Trạng thái:** Cổng 0 đã xong và có test. Cổng 1–2 chưa làm.
 
+> **Cập nhật 2026-10-23 (phiên làm việc tiếp theo).** P1-2, P1-3 và phần
+> code/unit test của P1-5 đã xong trên cùng nhánh (418 passed, 1 skipped; mọi
+> gate xanh, gói 83,98 MB verify OK). Chi tiết thiết kế, hành vi mới, rủi ro và
+> cách kiểm chứng thủ công: xem `trien-khai-cong-1-2026-10-23.md`. Còn lại:
+> ma trận đo worker × thread của P1-5, 5 quyết định ở §6, và toàn bộ Cổng 2.
+
 ---
 
 ## 1. Trạng thái hiện tại
@@ -294,13 +300,16 @@ python build_share.py && python scripts/verify_package.py
 
 ## 8. Checklist bàn giao cho phiên tiếp theo
 
-- [ ] Đọc `AI_Documents/AGENTS.md`, báo cáo kiểm toán và ghi chú Cổng 0.
-- [ ] `git status` sạch, `git log --oneline -6` khớp mục 1.1.
-- [ ] Chạy lại 377 test + gates trước khi sửa (baseline).
+- [x] Đọc `AI_Documents/AGENTS.md`, báo cáo kiểm toán và ghi chú Cổng 0.
+- [x] `git status` sạch, `git log --oneline -6` khớp mục 1.1.
+- [x] Chạy lại 377 test + gates trước khi sửa (baseline: 377 passed, 1 skipped).
 - [ ] Chốt 5 quyết định ở mục 6.
-- [ ] P1-2: thêm deadline + `acquire(timeout)` + kill/retry + test `SIGSTOP`.
-- [ ] P1-3: checkpoint theo chunk/note ID; xoá `execute()` chết; test kill 25/50/75%.
-- [ ] P1-5: ngân sách thread + ma trận đo; cập nhật default có bằng chứng.
+- [x] P1-2: deadline + `acquire(timeout)` + kill/retry + 18 unit test. **Còn:**
+      chạy `SIGSTOP` thủ công với từng engine đã cài (xem ghi chú Cổng 1 §1.4).
+- [x] P1-3: checkpoint theo chunk/note ID + atomic + migrate v1 + resume đúng
+      + 15 test (kill 25/50/75% mô phỏng); `execute()` chết đã deprecated.
+- [x] P1-5: ngân sách thread (`Σ workers × threads ≤ logical CPU`) + 9 unit test.
+      **Còn:** ma trận đo worker × thread; default chưa đổi vì chưa có số đo.
 - [ ] P2: chọn việc có số đo trước (Piper persistent, fsync, EdgeTTS bytearray).
 - [ ] Cập nhật `CHANGELOG.md` + version khi được duyệt; build/verify lại.
-- [ ] Không push/release nếu chưa có approval rõ ràng.
+- [x] Không push/release, không đổi version.
