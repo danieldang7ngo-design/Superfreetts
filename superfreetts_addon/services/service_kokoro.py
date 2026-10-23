@@ -13,7 +13,12 @@ from .. import logging_utils
 
 logger = logging_utils.get_child_logger(__name__)
 
-from .service_mms import SherpaProcessPool
+from .service_mms import (
+    EngineBusyError,
+    IpcTimeoutError,
+    SherpaProcessPool,
+    read_response,
+)
 _kokoro_pool = SherpaProcessPool("Kokoro", max_processes=2)
 
 # Standard Voices included in the 35MB Official v1.0 Bundle
@@ -276,7 +281,7 @@ class KokoroTTS(service.ServiceBase):
                     process.stdin.write(payload.encode('utf-8'))
                     process.stdin.flush()
                     
-                    response_line = process.stdout.readline()
+                    response_line = read_response(process, "Kokoro")
                     if not response_line:
                         raise BrokenPipeError("Kokoro process closed stream.")
                     
@@ -296,7 +301,7 @@ class KokoroTTS(service.ServiceBase):
                     else:
                         raise Exception(f"Kokoro Error: {resp.get('message')}")
                         
-                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError) as e:
                     process.is_healthy = False
                     if attempt == 1:
                         logger.warning(f"KokoroTTS: Retry 1/1 after process failure: {e}")
@@ -305,6 +310,8 @@ class KokoroTTS(service.ServiceBase):
                 finally:
                     _kokoro_pool.release_process(process, engine_path, script_path)
             except Exception as e:
+                if isinstance(e, EngineBusyError):
+                    raise errors.RequestError(source_text, voice, str(e))
                 if attempt == 2:
                     logger.warning(f"Exception while generating kokoro audio (persistent): {e}")
                     raise errors.RequestError(source_text, voice, str(e))
@@ -344,7 +351,7 @@ class KokoroTTS(service.ServiceBase):
                     process.stdin.write(payload.encode('utf-8'))
                     process.stdin.flush()
                     
-                    response_line = process.stdout.readline()
+                    response_line = read_response(process, "Kokoro", chunk=True)
                     if not response_line:
                         raise BrokenPipeError("Kokoro process closed stream.")
                     
@@ -366,7 +373,7 @@ class KokoroTTS(service.ServiceBase):
                     else:
                         raise Exception(f"Kokoro batch Error: {resp.get('message')}")
                 
-                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError) as e:
                     process.is_healthy = False
                     if attempt == 1:
                         logger.warning(f"Kokoro Batch: Retry 1/1 after process failure: {e}")
@@ -376,6 +383,9 @@ class KokoroTTS(service.ServiceBase):
                     _kokoro_pool.release_process(process, engine_path, script_path)
                     
             except Exception as e:
+                if isinstance(e, EngineBusyError):
+                    logger.error(f"Kokoro batch skipped, engine busy: {e}")
+                    return [None] * len(source_texts)
                 if attempt == 2:
                     logger.warning(f"Exception while generating kokoro audio batch (persistent): {e}")
                     return [None] * len(source_texts)

@@ -1,10 +1,7 @@
 import os
 import json
 import logging
-import subprocess
-import threading
 import typing
-import time
 
 from .. import service, voice, errors
 from .. import constants
@@ -14,293 +11,15 @@ from ..mms_engine_manager import MmsEngineManager
 
 logger = logging.getLogger(__name__)
 
-class DynamicSemaphore:
-    """Semaphore with dynamic max count. Adjust limit at runtime without leaking permits."""
-    def __init__(self, value=1):
-        self._max = value
-        self._count = 0
-        self._cond = threading.Condition()
-
-    def acquire(self):
-        with self._cond:
-            while self._count >= self._max:
-                self._cond.wait()
-            self._count += 1
-
-    def release(self):
-        with self._cond:
-            self._count -= 1
-            self._cond.notify()
-
-    def set_max(self, new_max):
-        with self._cond:
-            self._max = new_max
-            self._cond.notify_all()
-
-class SherpaProcessPool:
-    def __init__(self, name="Shared", max_processes=4):
-        self.name = name
-        self._max_processes = max_processes
-        self._pool = [] # List of (process, current_executable, current_script, last_used_time)
-        self._active = set() # Processes currently checked out by a worker
-        self._lock = threading.Lock()
-        self._semaphore = DynamicSemaphore(max_processes)
-        self._cleanup_timer = None
-        self._cleanup_enabled = True
-        self._max_idle_age = 180 # 180s idle timeout as mandated
-        self._total_spawned = 0 # Track total processes (active + idle)
-        self._start_cleanup_timer()
-
-    def _start_cleanup_timer(self):
-        if self._cleanup_timer:
-            self._cleanup_timer.cancel()
-        self._cleanup_enabled = True
-        self._cleanup_timer = threading.Timer(15.0, self._cleanup_idle)
-        self._cleanup_timer.daemon = True
-        self._cleanup_timer.start()
-
-    def _ensure_cleanup_timer(self):
-        """Restart the idle-cleanup timer after stop_all() cancelled it.
-
-        stop_all() runs on profile close; the same pool objects are reused
-        when a profile is reopened (Anki does not reload add-ons), so the
-        timer must come back or idle engine processes would never expire.
-        """
-        if not self._cleanup_enabled or self._cleanup_timer is None:
-            self._start_cleanup_timer()
-
-    def _cleanup_idle(self):
-        with self._lock:
-            now = time.time()
-            alive_pool = []
-            for proc, exe, script, last_time in self._pool:
-                # If process died, hit idle timeout, or is unhealthy, terminate it
-                is_unhealthy = not getattr(proc, 'is_healthy', True)
-                if proc.poll() is not None or (now - last_time > self._max_idle_age) or is_unhealthy:
-                    logger.info(f"SherpaPool[{self.name}]: Cleaning up process {os.path.basename(script)} (Reason: {'Health' if is_unhealthy else 'Timeout/Dead'})")
-                    # Offload termination to avoid blocking the lock
-                    threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
-                    self._total_spawned -= 1
-                else:
-                    alive_pool.append((proc, exe, script, last_time))
-            self._pool = alive_pool
-            if self._cleanup_enabled:
-                self._start_cleanup_timer()
-
-    def safe_terminate(self, proc):
-        """Enforce safe termination sequence and pipe closure."""
-        try:
-            proc.terminate()
-            try:
-                proc.wait(timeout=2.0)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait(timeout=1.0)
-        except Exception:
-            pass
-        finally:
-            # Guaranteed triple pipe closure
-            for pipe in [proc.stdin, proc.stdout, proc.stderr]:
-                if pipe:
-                    try: pipe.close()
-                    except Exception: pass
-            proc.is_healthy = False
-
-    def get_process(self, executable_path, script_path, debug_enabled=False):
-        self._ensure_cleanup_timer()
-        # Limit concurrency - blocks if max_processes are "out"
-        self._semaphore.acquire()
-        
-        with self._lock:
-            logger.info(f"SherpaPool[{self.name}]: get_process (debug_enabled={debug_enabled})")
-            # 1. Try to find an idle process for THIS script with SAME debug setting
-            for i, (proc, exe, script, last_time) in enumerate(self._pool):
-                if proc.poll() is None and exe == executable_path and script == script_path:
-                    # Check if debug setting matches (we need to store it in the pool)
-                    current_debug = getattr(proc, 'debug_enabled', False)
-                    if current_debug == debug_enabled:
-                        logger.info(f"SherpaPool[{self.name}]: Reusing idle process {os.path.basename(script)} (debug={current_debug})")
-                        p, e, s, _ = self._pool.pop(i)
-                        self._active.add(p)
-                        return p
-                    else:
-                        logger.info(f"SherpaPool[{self.name}]: Terminating idle process {os.path.basename(script)} due to debug mismatch ({current_debug} != {debug_enabled})")
-                        self.safe_terminate(proc)
-                        self._pool.pop(i)
-                        self._total_spawned = max(0, self._total_spawned - 1)
-                        break # Start fresh
-            
-            # 2. If no matching idle process, but we have OTHER idle processes and we"re at capacity
-            # we should kill the oldest idle one to make room for a NEW type (Script)
-            if self._total_spawned >= self._max_processes and self._pool:
-                # Kill oldest (first in list)
-                p, e, s, _ = self._pool.pop(0)
-                logger.info(f"SherpaPool[{self.name}]: Capacity reached. Terminating oldest idle {os.path.basename(s)} for new {os.path.basename(script_path)}")
-                self.safe_terminate(p)
-                self._total_spawned = max(0, self._total_spawned - 1)
-
-        # 3. Start new process
-        try:
-            new_proc = self._start_new(executable_path, script_path, debug_enabled)
-            new_proc.debug_enabled = debug_enabled
-            with self._lock:
-                self._total_spawned += 1
-                self._active.add(new_proc)
-            return new_proc
-        except Exception as e:
-            self._semaphore.release()
-            logger.error(f"SherpaPool[{self.name}]: Failed to start process {os.path.basename(script_path)}: {e}")
-            raise e
-
-    def release_process(self, proc, executable_path, script_path):
-        if proc is None:
-            self._semaphore.release()
-            return
-
-        with self._lock:
-            self._active.discard(proc)
-            is_healthy = getattr(proc, 'is_healthy', True)
-            if proc.poll() is None and is_healthy:
-                self._pool.append((proc, executable_path, script_path, time.time()))
-            else:
-                self._total_spawned = max(0, self._total_spawned - 1)
-                if not is_healthy:
-                    threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
-        self._semaphore.release()
-
-    def stop_all(self):
-        # Include both idle and checked-out processes.  Previously only the
-        # idle pool was terminated, so active runner processes survived
-        # profile close and kept their model memory (and pipes) alive.
-        # Disable cleanup first so an in-flight _cleanup_idle() cannot
-        # re-arm the timer after we cancel it.
-        self._cleanup_enabled = False
-        with self._lock:
-            processes = list(self._active)
-            processes.extend(
-                proc for proc, _exe, _script, _last in self._pool
-                if proc not in self._active
-            )
-            self._active.clear()
-            self._pool = []
-            self._total_spawned = 0
-            for proc in processes:
-                self.safe_terminate(proc)
-        # Cancel the idle-cleanup timer so it does not keep the pool alive after stop
-        if self._cleanup_timer:
-            try:
-                self._cleanup_timer.cancel()
-            except Exception: pass
-
-    def update_max_processes(self, new_max):
-        with self._lock:
-            if new_max == self._max_processes:
-                return
-            logger.info(f"SherpaPool[{self.name}]: Updating max_processes from {self._max_processes} to {new_max}")
-            self._max_processes = new_max
-            self._semaphore.set_max(new_max)
-
-    def _start_new(self, executable_path, script_path, debug_enabled=False):
-        cwd = os.path.dirname(executable_path)
-        startupinfo = None
-        if os.name == 'nt':
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-        env = os.environ.copy()
-        
-        # For Piper: pass DATA_DIR so it can find piper.exe in the profile folder
-        if 'piper' in script_path.lower():
-            try:
-                from .. import constants
-                data_dir = constants.DATA_DIR
-                env['superfreetts_DATA_DIR'] = data_dir
-                logger.info(f"SherpaPool[{self.name}]: Set superfreetts_DATA_DIR={data_dir}")
-            except Exception as e:
-                logger.warning(f"SherpaPool[{self.name}]: Failed to set superfreetts_DATA_DIR: {e}")
-        
-        logger.info(f"SherpaPool[{self.name}]: Starting NEW Process: {os.path.basename(script_path)} (debug_enabled={debug_enabled})")
-
-        # Observability Upgrade: Initialize the output sink (default to DEVNULL)
-        stderr_sink = subprocess.DEVNULL
-        
-        if debug_enabled:
-            try:
-                # Log Strategy: Per-engine files in user_files/log
-                # Absolute path to the addon's root user_files/log
-                script_dir = os.path.dirname(os.path.abspath(__file__))
-                addon_root = os.path.normpath(os.path.join(script_dir, ".."))
-                log_dir = os.path.join(addon_root, 'user_files', 'log')
-                
-                logger.info(f"SherpaPool[{self.name}]: Creating log directory at {log_dir}")
-                os.makedirs(log_dir, exist_ok=True)
-                
-                log_path = os.path.join(log_dir, f"{self.name.lower()}_runtime.log")
-                logger.info(f"SherpaPool[{self.name}]: Logging stderr to {log_path}")
-                
-                # Lightweight Log Rotation (Roll to .old if file > 5MB)
-                if os.path.exists(log_path) and os.path.getsize(log_path) > 5 * 1024 * 1024:
-                    backup_path = log_path + ".old"
-                    if os.path.exists(backup_path): os.remove(backup_path)
-                    os.rename(log_path, backup_path)
-                
-                # Use file-based logging (Safe: No PIPE deadlock risk)
-                stderr_sink = open(log_path, "a", encoding='utf-8', buffering=1, errors='replace') # Line-buffered
-            except Exception as e:
-                logger.warning(f"SherpaPool[{self.name}]: Failed to create log sink: {e}")
-                stderr_sink = subprocess.DEVNULL
-
-        # IPC BREAKING BUG FIX: 
-        # Previously actual_stderr was set to subprocess.STDOUT, which merges logs into 
-        # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
-        try:
-            proc = subprocess.Popen(
-                [executable_path, "-u", script_path],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=(stderr_sink if debug_enabled else subprocess.PIPE), # capture or redirect to file
-                cwd=cwd,
-                startupinfo=startupinfo,
-                env=env,
-                text=False,
-                bufsize=0
-            )
-        except Exception:
-            # If Popen fails (e.g. executable missing), ensure the sink handle is
-            # closed to avoid leaking a file descriptor on every failed spawn.
-            if debug_enabled and hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
-                try:
-                    stderr_sink.close()
-                except Exception:
-                    pass
-            raise
-        proc.is_healthy = True
-
-        # If we captured stderr as a PIPE (debug not enabled), drain & log it at INFO level
-        def _drain_stderr(p, debug):
-            try:
-                for line in iter(p.stderr.readline, b''):
-                    try:
-                        decoded = line.decode('utf-8', errors='replace')
-                        # Not a debug-only channel: surface stderr at INFO so we always have a record
-                        logger.info(f"{self.name} stderr: {decoded.rstrip()}")
-                    except Exception:
-                        pass
-            finally:
-                try: p.stderr.close()
-                except Exception: pass
-
-        if not debug_enabled:
-            threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
-
-        # Guard: Close our file sink handle in parent after child inherits it to avoid leaks
-        if debug_enabled and hasattr(stderr_sink, 'close') and stderr_sink != subprocess.DEVNULL:
-            try:
-                stderr_sink.close()
-            except Exception:
-                pass
-
-        return proc
+from .process_pool import (  # noqa: F401 - re-exported for the other local engines
+    DynamicSemaphore,
+    EngineBusyError,
+    IpcTimeoutError,
+    SherpaProcessPool,
+    read_response,
+    start_stdout_reader,
+    terminate_process,
+)
 
 # Default pool for MMS and other legacy services
 _sherpa_pool = SherpaProcessPool("MMS", max_processes=2)
@@ -514,7 +233,7 @@ class MmsTTS(service.ServiceBase):
                         process.stdin.write(payload.encode('utf-8'))
                         process.stdin.flush()
                         
-                        response_line = process.stdout.readline()
+                        response_line = read_response(process, "MMS")
                         if not response_line:
                             raise BrokenPipeError("Sherpa process closed stream.")
                         
@@ -530,7 +249,7 @@ class MmsTTS(service.ServiceBase):
                         else:
                             raise Exception(f"Sherpa Error: {resp.get('message')}")
                             
-                    except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                    except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError) as e:
                         process.is_healthy = False
                         if attempt == 1:
                             logger.warning(f"MmsTTS: Retry 1/1 after process failure: {e}")
@@ -540,6 +259,8 @@ class MmsTTS(service.ServiceBase):
                         # Return process to pool
                         _sherpa_pool.release_process(process, python_path, script_path)
                 except Exception as e:
+                    if isinstance(e, EngineBusyError):
+                        raise errors.RequestError(source_text, voice, str(e))
                     if attempt == 2:
                         raise errors.RequestError(source_text, voice, str(e))
         finally:
@@ -606,7 +327,7 @@ class MmsTTS(service.ServiceBase):
                         process.stdin.write(payload.encode('utf-8'))
                         process.stdin.flush()
 
-                        response_line = process.stdout.readline()
+                        response_line = read_response(process, "MMS", chunk=True)
                         if not response_line:
                             raise BrokenPipeError("Sherpa process closed stream during batch.")
 
@@ -636,7 +357,7 @@ class MmsTTS(service.ServiceBase):
                             except OSError:
                                 pass
                             
-                except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+                except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError) as e:
                     process.is_healthy = False
                     if attempt == 1:
                         logger.warning(f"MmsTTS Batch: Retry 1/1 after process failure: {e}")
@@ -645,6 +366,9 @@ class MmsTTS(service.ServiceBase):
                 finally:
                     _sherpa_pool.release_process(process, python_path, script_path)
             except Exception as e:
+                if isinstance(e, EngineBusyError):
+                    logger.error(f"MmsTTS batch skipped, engine busy: {e}")
+                    return [None] * len(source_texts)
                 if attempt == 2:
                     logger.error(f"MmsTTS Batch Failed: {e}")
                     return [None] * len(source_texts)

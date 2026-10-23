@@ -10,7 +10,12 @@ from .. import languages
 from .. import logging_utils
 from .. import service
 from .. import voice as voice_module
-from .service_mms import SherpaProcessPool
+from .service_mms import (
+    EngineBusyError,
+    IpcTimeoutError,
+    SherpaProcessPool,
+    read_response,
+)
 
 logger = logging_utils.get_child_logger(__name__)
 
@@ -343,20 +348,22 @@ class SupertonicTTS(service.ServiceBase):
                 request = self._base_task(source_text, voice, options)
                 process.stdin.write((json.dumps(request) + "\n").encode("utf-8"))
                 process.stdin.flush()
-                line = process.stdout.readline()
+                line = read_response(process, "Supertonic")
                 if not line:
                     raise BrokenPipeError("Supertonic process closed stream.")
                 resp = json.loads(line.decode("utf-8", errors='replace').strip())
                 if resp.get("status") == "ok" and resp.get("audio_b64"):
                     return base64.b64decode(resp["audio_b64"])
                 raise RuntimeError(resp.get("message") or "Supertonic generation failed")
-            except (BrokenPipeError, ConnectionResetError, EOFError):
+            except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError):
                 if process is not None:
                     process.is_healthy = False
                 if attempt == 1:
                     continue
                 raise
             except Exception as exc:
+                if isinstance(exc, EngineBusyError):
+                    raise errors.RequestError(source_text, voice, str(exc))
                 if attempt == 2:
                     logger.warning(f"Exception while generating Supertonic audio: {exc}")
                     raise errors.RequestError(source_text, voice, str(exc))
@@ -380,7 +387,7 @@ class SupertonicTTS(service.ServiceBase):
                 request = {"action": "generate_batch", "tasks": tasks}
                 process.stdin.write((json.dumps(request) + "\n").encode("utf-8"))
                 process.stdin.flush()
-                line = process.stdout.readline()
+                line = read_response(process, "Supertonic", chunk=True)
                 if not line:
                     raise BrokenPipeError("Supertonic process closed stream.")
                 resp = json.loads(line.decode("utf-8", errors='replace').strip())
@@ -395,13 +402,16 @@ class SupertonicTTS(service.ServiceBase):
                 if len(results) < len(source_texts):
                     results.extend([None] * (len(source_texts) - len(results)))
                 return results[: len(source_texts)]
-            except (BrokenPipeError, ConnectionResetError, EOFError):
+            except (BrokenPipeError, ConnectionResetError, EOFError, IpcTimeoutError):
                 if process is not None:
                     process.is_healthy = False
                 if attempt == 1:
                     continue
                 raise
             except Exception as exc:
+                if isinstance(exc, EngineBusyError):
+                    logger.error(f"Supertonic batch skipped, engine busy: {exc}")
+                    return [None] * len(source_texts)
                 if attempt == 2:
                     logger.warning(f"Exception while generating Supertonic audio batch: {exc}")
                     return [None] * len(source_texts)
