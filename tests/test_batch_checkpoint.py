@@ -183,3 +183,30 @@ def test_null_checkpoint_is_a_noop():
     checkpoint.flush()
     checkpoint.remove()
     assert checkpoint.enabled is False
+
+
+# ---------------------------------------------------------- kill/resume matrix (25/50/75%)
+
+
+@pytest.mark.parametrize("applied_count", [2, 5, 8])
+def test_kill_resume_at_fraction_applies_only_remaining(manager, applied_count):
+    all_notes = list(range(1, 11))
+    applied = all_notes[:applied_count]
+
+    # First run commits `applied_count` notes, then "crashes".
+    first = BatchCheckpoint(manager, "batch", all_notes)
+    first.mark_applied(applied)
+
+    # Reopen with the same key (resume).
+    resumed = BatchCheckpoint(manager, "batch", all_notes)
+    assert resumed.load_existing() == applied_count
+    assert resumed.pending_note_ids() == all_notes[applied_count:]
+
+    # Apply the rest; nothing is applied twice.
+    resumed.mark_applied(all_notes[applied_count:])
+    final = BatchCheckpoint(manager, "batch", all_notes)
+    assert final.load_existing() == len(all_notes)
+    assert final.pending_note_ids() == []
+    stored = manager.load("batch")
+    assert set(stored["statuses"]) == {str(n) for n in all_notes}
+    assert all(v == CHECKPOINT_STATUS_APPLIED for v in stored["statuses"].values())

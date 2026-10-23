@@ -212,3 +212,45 @@ def test_preview_cancel_keeps_checkpoint_for_resume(tmp_path):
     assert set(resumed.pending_note_ids()) == set(note_ids) - {
         int(k) for k, v in stored["statuses"].items() if v == "applied"
     }
+
+
+# ---------------------------------------------------------- kill/resume matrix
+
+
+@pytest.mark.parametrize("applied_fraction", [0.25, 0.5, 0.75])
+def test_preview_resume_after_kill_at_fraction(tmp_path, applied_fraction):
+    note_ids = list(range(1, 21))
+    preview, hypertts = make_preview(tmp_path, note_ids)
+    preview.APPLY_CHUNK_SIZE = 5
+
+    applied_count = int(len(note_ids) * applied_fraction)
+    killed_after = note_ids[:applied_count]
+
+    key = preview_checkpoint_key(preview.batch_model, note_ids, make_dedup(["k"]))
+    checkpoint = BatchCheckpoint(hypertts.executor.checkpoint, key, note_ids)
+    # Simulate a crash after `applied_count` notes committed but before the
+    # rest of the batch; the in-flight chunk is NOT marked applied.
+    checkpoint.mark_applied(killed_after)
+    preview.batch_checkpoint = checkpoint
+
+    preview.generated_batch_results = fake_results(note_ids)
+    preview.batch_status.begin()
+
+    seen = []
+
+    def fake_apply(chunk, batch_model, batch_status, col, added_media_files=None):
+        seen.extend(row[0] for row in chunk)
+        return len(chunk)
+
+    hypertts.apply_generated_batch_audio_chunk.side_effect = fake_apply
+
+    with patch_query_op():
+        preview._run_next_apply_chunk()
+
+    # Only the not-yet-applied notes go through apply (no double apply).
+    assert seen == note_ids[applied_count:]
+    # Already-applied notes are never re-applied.
+    assert not (set(seen) & set(killed_after))
+    # Full successful run removes the checkpoint so the next batch starts clean.
+    assert hypertts.executor.checkpoint.load(key) is None
+    assert preview.batch_checkpoint is None
