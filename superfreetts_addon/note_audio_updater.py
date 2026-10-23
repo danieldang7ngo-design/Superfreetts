@@ -30,11 +30,16 @@ def update_note_with_audio(anki_utils, note, batch, source_text, sound_file, ful
     if batch.target.remove_sound_tag:
         target_field_content = text_utils.strip_sound_tag(target_field_content)
 
+    # Idempotent re-apply: a checkpointed resume (or a batch re-run) can target
+    # a note that already references this exact audio file.  Never add a second
+    # identical [sound:...] tag.
     if batch.target.text_and_sound_tag:
-        target_field_content = f"{target_field_content} {sound_tag}"
+        if sound_tag not in target_field_content:
+            target_field_content = f"{target_field_content} {sound_tag}"
     else:
         target_field_content = keep_only_sound_tags(target_field_content)
-        target_field_content = f"{target_field_content} {sound_tag}"
+        if sound_tag not in target_field_content:
+            target_field_content = f"{target_field_content} {sound_tag}"
 
     note[target_field] = target_field_content.strip()
     if update_collection:

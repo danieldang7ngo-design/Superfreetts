@@ -74,3 +74,23 @@ def test_update_note_missing_target_field_raises():
             MockAnkiUtils(), {"Front": "text"}, make_batch(), "source", "new.mp3", "/tmp/new.mp3", Mock()
         )
 
+def test_update_note_text_and_sound_is_idempotent():
+    """Resume/at-least-once apply must not duplicate an identical sound tag."""
+    note = {"Audio": "text [sound:new.mp3]"}
+
+    result = note_audio_updater.update_note_with_audio(
+        MockAnkiUtils(), note, make_batch(text_and_sound_tag=True), "source", "new.mp3", "/tmp/new.mp3", Mock()
+    )
+
+    assert result == "text [sound:new.mp3]"
+    assert result.count("[sound:new.mp3]") == 1
+
+
+def test_update_note_sound_only_is_idempotent():
+    note = {"Audio": "[sound:new.mp3]"}
+
+    result = note_audio_updater.update_note_with_audio(
+        MockAnkiUtils(), note, make_batch(remove_sound_tag=False), "source", "new.mp3", "/tmp/new.mp3", Mock()
+    )
+
+    assert result == "[sound:new.mp3]"
