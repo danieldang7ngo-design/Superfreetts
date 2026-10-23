@@ -9,6 +9,7 @@
 - **Phiên bản:** `26.10.2` (giữ nguyên, chưa release)
 - **Môi trường xác minh:** Linux 7.2.9-2-cachyos x86_64, Python 3.14.8, 16 logical CPU
 - **Trạng thái:** code + automated gates đã xong trên Linux. Chưa push, chưa tạo GitHub release, chưa cập nhật AnkiWeb.
+- **Cập nhật 2026-10-23:** Cổng 0 đã hoàn tất (Kokoro cap, format WAV, cleanup, MMS temp). Việc tiếp theo xem `HANDOFF_TIEP_THEO_2026-10-23.md`.
 
 ---
 
