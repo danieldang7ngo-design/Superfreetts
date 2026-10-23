@@ -1,6 +1,11 @@
 """
-Batch state management for crash recovery and progress resumption.
-Enables auto-save of batch progress and resumption on crash.
+DEPRECATED - not used at runtime.
+
+The live batch pipeline checkpoints through
+``batch_executor.CheckpointManager`` / ``BatchCheckpoint`` (note-id keyed,
+atomic writes).  This module kept an older index-based checkpoint design and
+is retained only for backwards compatibility; do not add call sites.  It can
+be deleted once no external caller imports it.
 """
 
 import json

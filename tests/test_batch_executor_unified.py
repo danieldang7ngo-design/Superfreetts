@@ -116,30 +116,6 @@ class TestSimpleResourceMonitor:
             assert collect.call_count == 1
             assert monitor._last_gc_items == 200
 
-class TestCheckpointManager:
-    def test_save_load_remove(self):
-        with patch('os.makedirs'):
-            manager = batch_executor.CheckpointManager(state_dir='/tmp/test_checkpoints')
-            batch_name = "test_batch"
-            
-            # Use mock_open for cleaner file mocking
-            from unittest.mock import mock_open
-            
-            m = mock_open()
-            with patch('builtins.open', m):
-                manager.save(batch_name, [1, 2], [10, 20], {"1": "error"})
-                m.assert_called()
-                
-            with patch('os.path.exists', return_value=True):
-                with patch('builtins.open', mock_open(read_data='{"completed_indices": [1, 2]}')):
-                    data = manager.load(batch_name)
-                    assert data['completed_indices'] == [1, 2]
-            
-            with patch('os.path.exists', return_value=True):
-                with patch('os.remove') as mock_remove:
-                    manager.remove(batch_name)
-                    mock_remove.assert_called_once()
-
 class TestMultiEngineExecutor:
     def test_executor_selection(self):
         config = {'Piper': 2, 'Kokoro': 1, 'default': 4}

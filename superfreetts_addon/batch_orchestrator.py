@@ -339,29 +339,21 @@ class BatchOrchestrator:
 
         logger.info('[BATCH] Using multi-engine batch executor')
         batch_name = batch.name or f"batch_{int(time.time())}"
-        original_note_id_list = note_id_list[:]
-        checkpoint_data = self.executor.checkpoint.load(batch_name)
-        checkpoint = None
-        checkpoint_enabled = True
-        
-        if checkpoint_data and checkpoint_data.get('completed_indices'):
-            completed = checkpoint_data.get('completed_indices', [])
-            pending_notes = [note_id_list[i] for i in range(len(note_id_list)) if i not in completed]
-            if pending_notes:
-                logger.info(f'[BATCH] Resuming: {len(pending_notes)}/{len(note_id_list)} notes remaining')
-                note_id_list = pending_notes
-                checkpoint = checkpoint_data
-            else:
-                logger.info(f'[BATCH] {batch_name} already completed')
-                self.executor.checkpoint.remove(batch_name)
-                checkpoint = None
+        checkpoint = batch_executor.BatchCheckpoint(self.executor.checkpoint, batch_name, note_id_list)
+        applied_before = checkpoint.load_existing()
+        pending_notes = checkpoint.pending_note_ids()
+        if not pending_notes:
+            # Everything was applied by a previous run: clear the file and stop
+            # instead of falling through and re-running the whole batch.
+            logger.info(f'[BATCH] {batch_name} already completed ({applied_before} notes applied), clearing checkpoint')
+            checkpoint.remove()
+            batch_status.set_status_message(None)
+            return
+        if pending_notes != note_id_list:
+            logger.info(f'[BATCH] Resuming: {len(pending_notes)}/{len(note_id_list)} notes remaining ({applied_before} already applied)')
+            note_id_list = pending_notes
         else:
-            checkpoint = {
-                'batch_name': batch_name,
-                'completed_indices': [],
-                'note_id_list': original_note_id_list,
-                'errors': {}
-            }
+            logger.info(f'[BATCH] No applied notes in checkpoint for {batch_name}, starting fresh')
 
         with batch_status.get_batch_running_action_context():
             try:
@@ -469,7 +461,7 @@ class BatchOrchestrator:
                 logger.info(f"[BATCH] Starting audio generation with {max_workers} workers ({unique_count} unique combinations)")
                 gen_start = time.time()
 
-                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status)
+                audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, checkpoint)
 
                 gen_time = time.time() - gen_start
                 logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {gen_time:.2f}s')
@@ -506,6 +498,25 @@ class BatchOrchestrator:
                 logger.info(f'[BATCH] Updating Anki collection with {len(results)} note changes...')
 
                 notes_to_update = []
+                applied_note_ids = []
+                commit_every = int(batch_constants.CHECKPOINT_APPLY_COMMIT_EVERY)
+
+                def _commit_applied_chunk():
+                    """Commit the pending notes and checkpoint their status.
+
+                    Applying in chunks (instead of one transaction for the whole
+                    batch) lets a crash resume from the last committed chunk.
+                    Re-applying the same audio file to the same field is
+                    idempotent, so at-least-once resume is safe.
+                    """
+                    if not notes_to_update or not batch_status.must_continue:
+                        return
+                    anki_collection.update_notes(notes_to_update)
+                    logger.info(f'[BATCH] Saved {len(notes_to_update)} notes')
+                    notes_to_update.clear()
+                    checkpoint.mark_applied(applied_note_ids)
+                    applied_note_ids.clear()
+
                 for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(results):
                     if not batch_status.must_continue:
                         break
@@ -517,12 +528,12 @@ class BatchOrchestrator:
                         try:
                             if is_error:
                                 note_action_context.set_error(is_error)
-                                if checkpoint:
-                                    checkpoint['errors'][str(idx)] = str(is_error)
+                                checkpoint.mark_error(note_id, is_error)
                             else:
                                 note = self.anki_utils.get_note_by_id(note_id)
                                 self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
                                 notes_to_update.append(note)
+                                applied_note_ids.append(note_id)
 
                                 if not already_done:
                                     note_action_context.set_source_text(source_text)
@@ -533,24 +544,12 @@ class BatchOrchestrator:
                         except Exception as e:
                             logger.error(f"Error updating note {note_id}: {e}")
                             note_action_context.set_error(e)
-                            if checkpoint:
-                                checkpoint['errors'][str(idx)] = str(e)
+                            checkpoint.mark_error(note_id, e)
 
-                if notes_to_update and batch_status.must_continue:
-                    logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
-                    anki_collection.update_notes(notes_to_update)
-                    logger.info('[BATCH] Notes saved successfully')
-                    
-                    if checkpoint and checkpoint_enabled:
-                        try:
-                            completed_list = checkpoint.get('completed_indices', [])
-                            for idx in range(len(results)):
-                                if idx not in completed_list:
-                                    completed_list.append(idx)
-                            self.executor.checkpoint.save(batch_name, completed_list, checkpoint.get('note_id_list', []), checkpoint.get('errors', {}))
-                        except Exception as e:
-                            logger.warning(f'[BATCH] Failed to save checkpoint: {e}')
-                            checkpoint_enabled = False
+                    if len(notes_to_update) >= commit_every:
+                        _commit_applied_chunk()
+
+                _commit_applied_chunk()
 
                 total_time = time.time() - start_time
                 logger.info(f'[BATCH] Completed in {total_time:.2f}s')
@@ -559,16 +558,19 @@ class BatchOrchestrator:
                 del results
 
                 if batch_status.must_continue:
-                    if checkpoint and checkpoint_enabled:
-                        self.executor.checkpoint.remove(batch_name)
+                    checkpoint.remove()
                     logger.info('[BATCH] Batch completed successfully')
                 else:
-                    if checkpoint and checkpoint_enabled:
-                        logger.info('[BATCH] Batch cancelled, checkpoint saved for resume')
+                    checkpoint.flush()
+                    logger.info(f'[BATCH] Batch cancelled, checkpoint saved for resume ({len(checkpoint.pending_note_ids())} notes pending)')
                 
                 batch_status.set_status_message(None)
             
             finally:
+                # Persist applied notes if we leave early (cancel or error).
+                # After a successful batch this is a no-op: remove() disabled
+                # the writer so the checkpoint cannot be resurrected.
+                checkpoint.flush()
                 batch_status.futures_to_cancel.clear()
                 self.text_processing_cache.clear()
                 logger.info('[BATCH] Cleanup complete')
@@ -595,7 +597,9 @@ class BatchOrchestrator:
 
         return dedup_map
 
-    def _execute_unique_tasks_unified(self, tasks: List[Dict], dedup_map: Dict, batch_status: Any) -> Dict[Any, Tuple]:
+    def _execute_unique_tasks_unified(self, tasks: List[Dict], dedup_map: Dict, batch_status: Any, checkpoint: Any = None) -> Dict[Any, Tuple]:
+        # Preview generation has no apply phase, so no checkpoint is needed.
+        checkpoint = checkpoint or batch_executor.NullCheckpoint()
         lang = self.hypertts.get_ui_language()
         audio_cache = {}
         completed_count = 0
@@ -744,11 +748,14 @@ class BatchOrchestrator:
                                 audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))
                                 completed_count += 1
                                 batch_status.unique_tasks_completed = completed_count
+                                stall_error = Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled")
                                 for task_idx in task_indices:
                                     note_id = tasks[task_idx]['note_id']
                                     with batch_status.get_note_action_context(note_id, False) as ctx:
-                                        ctx.set_error(Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))
+                                        ctx.set_error(stall_error)
+                                    checkpoint.mark_error(note_id, stall_error)
                                     batch_status.notify_change(note_id)
+                    checkpoint.flush()
                     # Mark stalled tasks and continue processing remaining futures instead of aborting
                     batch_status.set_status_message(i18n.get_text("status_batch_stalled", lang) if i18n.get_text("status_batch_stalled", lang) else None)
 
@@ -762,6 +769,7 @@ class BatchOrchestrator:
                     # first batch (Kokoro/MMS model load) can legitimately take
                     # longer than 25 seconds before returning its result.
                     batch_results = future.result()
+                    generated_ids = []
                     
                     for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
                         result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
@@ -781,9 +789,14 @@ class BatchOrchestrator:
                                     ctx.set_processed_text(proc)
                                     ctx.set_sound(audio_fn)
                                     ctx.set_status(constants.BatchNoteStatus.Generated)
+                                    generated_ids.append(note_id)
                                 else:
-                                    ctx.set_error(error if error else Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                                    failure = error if error else Exception(i18n.get_text("error_audio_gen_failed", lang))
+                                    ctx.set_error(failure)
+                                    checkpoint.mark_error(note_id, failure)
                             batch_status.notify_change(note_id)
+                    # Checkpoint after every completed chunk (flushed on cadence)
+                    checkpoint.mark_generated(generated_ids)
                     
                     batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
                     self.executor.monitor.maybe_gc(completed_count)
@@ -809,14 +822,17 @@ class BatchOrchestrator:
         # Fill any dedup_keys that were never submitted (submit thread error, cancel, etc.)
         for dedup_key, task_indices in dedup_map.items():
             if dedup_key not in audio_cache:
-                audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                missing_error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+                audio_cache[dedup_key] = (None, missing_error)
                 completed_count += 1
                 for task_idx in task_indices:
                     note_id = tasks[task_idx]['note_id']
                     with batch_status.get_note_action_context(note_id, False) as ctx:
-                        ctx.set_error(Exception(i18n.get_text("error_audio_gen_failed", lang)))
+                        ctx.set_error(missing_error)
+                    checkpoint.mark_error(note_id, missing_error)
                     batch_status.notify_change(note_id)
 
+        checkpoint.flush()
         return audio_cache
 
     def _apply_batch_deduplication(self, tasks: List[Dict], dedup_map: Dict, audio_cache: Dict, batch_status: Any) -> List[Tuple]:

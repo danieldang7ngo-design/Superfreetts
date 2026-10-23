@@ -238,55 +238,100 @@ class SimpleResourceMonitor:
         return f"RAM: {ram}MB/{self.max_ram_mb}MB"
 
 
+CHECKPOINT_VERSION = 2
+CHECKPOINT_STATUS_GENERATED = "generated"
+CHECKPOINT_STATUS_APPLIED = "applied"
+
+
 class CheckpointManager:
+    """Crash-recovery checkpoint keyed by stable note ID.
+
+    The old format stored two parallel index lists: ``completed_indices``
+    (positions in the original selection) next to ``note_id_list``.  A resume
+    ran on a filtered list but wrote its indices back as if they indexed the
+    original list, so the next resume skipped the wrong notes.
+
+    v2 stores the original note id list once and a ``{note_id: status}`` map
+    (``generated`` / ``applied``).  Writes are atomic (temp file +
+    ``os.replace``): a crash mid-write keeps the previous checkpoint intact.
+    Legacy v1 files are migrated on load.
     """
-    Lightweight crash recovery - saves progress after each note.
-    """
-    
+
     def __init__(self, state_dir: Optional[str] = None):
         self.state_dir = state_dir or self._get_default_state_dir()
         self._lock = threading.Lock()
         os.makedirs(self.state_dir, exist_ok=True)
-    
+
     def _get_default_state_dir(self) -> str:
         """Get default checkpoint directory"""
         addon_dir = os.path.dirname(os.path.dirname(__file__))
         return os.path.join(addon_dir, 'user_files', 'batch_state')
-    
+
     def _get_path(self, batch_name: str) -> str:
         """Get checkpoint file path"""
         safe_name = "".join(c for c in batch_name if c.isalnum() or c in ('-', '_'))[:50]
         return os.path.join(self.state_dir, f"{safe_name}.checkpoint.json")
-    
-    def save(self, batch_name: str, completed_indices: List[int], note_id_list: List[int], errors: Dict = None):
-        """Save checkpoint"""
+
+    def save(self, batch_name: str, note_ids: List[int], statuses: Dict, errors: Dict = None):
+        """Atomically persist the note id -> status map for a batch."""
         with self._lock:
             try:
                 path = self._get_path(batch_name)
                 data = {
+                    'version': CHECKPOINT_VERSION,
                     'batch_name': batch_name,
-                    'completed_indices': completed_indices,
-                    'note_id_list': note_id_list,
-                    'errors': errors or {},
+                    'note_ids': list(note_ids),
+                    'statuses': {str(key): value for key, value in statuses.items()},
+                    'errors': {str(key): value for key, value in (errors or {}).items()},
                     'timestamp': datetime.now().isoformat(),
                 }
-                with open(path, 'w') as f:
+                tmp_path = path + '.tmp'
+                with open(tmp_path, 'w', encoding='utf-8') as f:
                     json.dump(data, f)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_path, path)
             except Exception as e:
                 logger.warning(f"[BATCH] Checkpoint save failed: {e}")
-    
+
     def load(self, batch_name: str) -> Optional[dict]:
-        """Load checkpoint if exists"""
+        """Load a checkpoint, migrating legacy v1 files to the v2 shape."""
         with self._lock:
             try:
                 path = self._get_path(batch_name)
                 if os.path.exists(path):
-                    with open(path, 'r') as f:
-                        return json.load(f)
+                    with open(path, 'r', encoding='utf-8') as f:
+                        return self._migrate(json.load(f))
             except Exception as e:
                 logger.warning(f"[BATCH] Checkpoint load failed: {e}")
         return None
-    
+
+    @staticmethod
+    def _migrate(data: dict) -> dict:
+        if data.get('statuses') is not None:
+            return {
+                'version': CHECKPOINT_VERSION,
+                'batch_name': data.get('batch_name', ''),
+                'note_ids': list(data.get('note_ids') or []),
+                'statuses': {str(k): v for k, v in (data.get('statuses') or {}).items()},
+                'errors': {str(k): v for k, v in (data.get('errors') or {}).items()},
+                'timestamp': data.get('timestamp'),
+            }
+        # Legacy v1: completed_indices are positions in note_id_list.
+        note_ids = list(data.get('note_id_list') or [])
+        statuses = {}
+        for index in data.get('completed_indices') or []:
+            if isinstance(index, int) and 0 <= index < len(note_ids):
+                statuses[str(note_ids[index])] = CHECKPOINT_STATUS_APPLIED
+        return {
+            'version': CHECKPOINT_VERSION,
+            'batch_name': data.get('batch_name', ''),
+            'note_ids': note_ids,
+            'statuses': statuses,
+            'errors': {str(k): v for k, v in (data.get('errors') or {}).items()},
+            'timestamp': data.get('timestamp'),
+        }
+
     def remove(self, batch_name: str):
         """Remove checkpoint after batch complete"""
         with self._lock:
@@ -296,6 +341,120 @@ class CheckpointManager:
                     os.remove(path)
             except Exception as e:
                 logger.warning(f"[BATCH] Checkpoint remove failed: {e}")
+
+
+class BatchCheckpoint:
+    """Per-note status for one batch run, flushed to disk in chunks.
+
+    Resume policy is **at-least-once**: notes marked ``applied`` are skipped,
+    everything else is retried.  Retrying a ``generated`` note is free (the
+    audio is content-addressed in the cache) and applying the same audio file
+    twice is idempotent, so no note can be lost; a note can only be applied
+    again after a crash that happened after the audio was written but before
+    the checkpoint flush.
+    """
+
+    def __init__(self, manager: CheckpointManager, batch_name: str, note_ids: List[int], flush_every: Optional[int] = None):
+        self.manager = manager
+        self.batch_name = batch_name
+        self.note_ids = list(note_ids)
+        self.errors: Dict[str, str] = {}
+        self.enabled = True
+        self._flush_every = int(flush_every or batch_constants.CHECKPOINT_FLUSH_EVERY)
+        self._statuses: Dict[str, str] = {}
+        self._pending_writes = 0
+
+    def load_existing(self) -> int:
+        """Load a previous checkpoint; returns how many notes are applied."""
+        data = self.manager.load(self.batch_name)
+        if not data:
+            return 0
+        # Keep ids that a previous (possibly filtered) run stored: statuses for
+        # notes outside this run must survive so they are never applied twice.
+        for stored_id in data.get('note_ids') or []:
+            if stored_id not in self.note_ids:
+                self.note_ids.append(stored_id)
+        allowed = {str(note_id) for note_id in self.note_ids}
+        self._statuses = {
+            key: value for key, value in (data.get('statuses') or {}).items()
+            if key in allowed
+        }
+        self.errors = {
+            key: value for key, value in (data.get('errors') or {}).items()
+            if key in allowed
+        }
+        return sum(1 for value in self._statuses.values() if value == CHECKPOINT_STATUS_APPLIED)
+
+    def status_of(self, note_id) -> Optional[str]:
+        return self._statuses.get(str(note_id))
+
+    def is_applied(self, note_id) -> bool:
+        return self.status_of(note_id) == CHECKPOINT_STATUS_APPLIED
+
+    def pending_note_ids(self) -> List[int]:
+        return [note_id for note_id in self.note_ids if not self.is_applied(note_id)]
+
+    def mark_generated(self, note_ids: List[int]) -> None:
+        self._mark(note_ids, CHECKPOINT_STATUS_GENERATED)
+
+    def mark_applied(self, note_ids: List[int], force_flush: bool = True) -> None:
+        self._mark(note_ids, CHECKPOINT_STATUS_APPLIED, force_flush=force_flush)
+
+    def mark_error(self, note_id, error) -> None:
+        self.errors[str(note_id)] = str(error)
+        self._pending_writes += 1
+
+    def _mark(self, note_ids, status: str, force_flush: bool = False) -> None:
+        changed = 0
+        for note_id in note_ids:
+            key = str(note_id)
+            current = self._statuses.get(key)
+            # Never downgrade an applied note back to generated.
+            if current == CHECKPOINT_STATUS_APPLIED and status != CHECKPOINT_STATUS_APPLIED:
+                continue
+            if current != status:
+                self._statuses[key] = status
+                changed += 1
+        self._pending_writes += changed
+        if force_flush or self._pending_writes >= self._flush_every:
+            self.flush()
+
+    def flush(self) -> None:
+        """Write the checkpoint if there is something new to persist."""
+        if not self.enabled:
+            return
+        try:
+            self.manager.save(self.batch_name, self.note_ids, self._statuses, self.errors)
+            self._pending_writes = 0
+        except Exception as e:
+            logger.warning(f"[BATCH] Failed to save checkpoint: {e}")
+            self.enabled = False
+
+    def remove(self) -> None:
+        """Delete the checkpoint and stop any later flush from recreating it."""
+        self.enabled = False
+        self.manager.remove(self.batch_name)
+
+
+class NullCheckpoint:
+    """No-op checkpoint for preview generation, which never applies notes."""
+
+    enabled = False
+
+    def mark_generated(self, note_ids):
+        pass
+
+    def mark_applied(self, note_ids, force_flush: bool = True):
+        pass
+
+    def mark_error(self, note_id, error):
+        pass
+
+    def flush(self):
+        pass
+
+    def remove(self):
+        pass
 
 
 class UnifiedBatchExecutor:
@@ -358,6 +517,11 @@ class UnifiedBatchExecutor:
             
         Returns:
             List of (note_id, source_text, processed_text, sound_file, full_filename, is_error) tuples
+
+        .. deprecated::
+            The live batch pipeline drives generation through
+            ``batch_orchestrator._execute_unique_tasks_unified()``.  This method
+            is kept for backwards compatibility only; do not add call sites.
         """
         results = []
         completed_indices = []
@@ -370,10 +534,16 @@ class UnifiedBatchExecutor:
         if enable_checkpoint:
             checkpoint_data = self.checkpoint.load(batch_name)
             if checkpoint_data:
-                completed_indices = checkpoint_data.get('completed_indices', [])
+                statuses = checkpoint_data.get('statuses', {})
+                completed_indices = [
+                    index for index, task in enumerate(tasks)
+                    if statuses.get(str(task.get('note_id'))) == CHECKPOINT_STATUS_APPLIED
+                ]
                 errors = checkpoint_data.get('errors', {})
                 logger.info(f"[BATCH] Resuming batch: {len(completed_indices)} already done")
         
+        all_note_ids = [task.get('note_id') for task in tasks]
+
         # Submit only non-completed tasks
         for idx, task in enumerate(tasks):
             if idx in completed_indices:
@@ -396,16 +566,21 @@ class UnifiedBatchExecutor:
                 if on_progress:
                     on_progress(task['note_id'], result)
                 
-                # Save checkpoint
+                # Save checkpoint (note ids, not positions)
                 if enable_checkpoint:
-                    self.checkpoint.save(batch_name, completed_indices, [t['note_id'] for t in tasks], errors)
+                    statuses = {
+                        str(all_note_ids[index]): CHECKPOINT_STATUS_GENERATED
+                        for index in completed_indices
+                        if 0 <= index < len(all_note_ids)
+                    }
+                    self.checkpoint.save(batch_name, all_note_ids, statuses, errors)
                 
                 # Lightweight GC
                 self.monitor.maybe_gc(items_processed)
                 
             except Exception as e:
                 logger.error(f"[BATCH] Task {idx} failed: {e}")
-                errors[str(idx)] = str(e)
+                errors[str(task.get('note_id'))] = str(e)
                 result = (task['note_id'], None, None, None, None, True)  # error marker
                 results.append(result)
                 if on_progress:
@@ -567,6 +742,11 @@ class MultiEngineExecutor:
             
         Returns:
             List of (note_id, source_text, processed_text, sound_file, full_filename, is_error)
+
+        .. deprecated::
+            The live batch pipeline drives generation through
+            ``batch_orchestrator._execute_unique_tasks_unified()``.  This method
+            is kept for backwards compatibility only; do not add call sites.
         """
         results = []
         completed_indices = []
@@ -578,10 +758,16 @@ class MultiEngineExecutor:
         if enable_checkpoint:
             checkpoint_data = self.checkpoint.load(batch_name)
             if checkpoint_data:
-                completed_indices = checkpoint_data.get('completed_indices', [])
+                statuses = checkpoint_data.get('statuses', {})
+                completed_indices = [
+                    index for index, task in enumerate(tasks)
+                    if statuses.get(str(task.get('note_id'))) == CHECKPOINT_STATUS_APPLIED
+                ]
                 errors = checkpoint_data.get('errors', {})
                 logger.info(f"[BATCH] Resuming: {len(completed_indices)} already done")
         
+        all_note_ids = [task.get('note_id') for task in tasks]
+
         # Group tasks by service/engine for load analysis
         tasks_by_service = {}
         for idx, task in enumerate(tasks):
@@ -626,25 +812,18 @@ class MultiEngineExecutor:
                     on_progress(task['note_id'], result)
                 
                 if enable_checkpoint:
-                    checkpoint_data_to_save = checkpoint_data or {
-                        'batch_name': batch_name,
-                        'completed_indices': [],
-                        'note_id_list': [t.get('note_id') for t in tasks],
-                        'errors': {}
+                    statuses = {
+                        str(all_note_ids[index]): CHECKPOINT_STATUS_GENERATED
+                        for index in completed_indices
+                        if 0 <= index < len(all_note_ids)
                     }
-                    checkpoint_data_to_save['completed_indices'] = completed_indices
-                    self.checkpoint.save(
-                        batch_name,
-                        completed_indices,
-                        checkpoint_data_to_save.get('note_id_list', []),
-                        errors
-                    )
+                    self.checkpoint.save(batch_name, all_note_ids, statuses, errors)
                 
                 self.monitor.maybe_gc(items_processed)
                 
             except Exception as e:
                 logger.error(f"[BATCH] Task {idx} ({service}) failed: {e}")
-                errors[str(idx)] = str(e)
+                errors[str(task.get('note_id'))] = str(e)
                 result = (task['note_id'], None, None, None, None, True)
                 results.append(result)
                 if on_progress:
