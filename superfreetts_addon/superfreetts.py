@@ -120,7 +120,12 @@ class SuperFreeTTS():
 
     def cleanup_user_files(self) -> None:
         """
-        Delete files in user_files older than cache_retention_days.
+        Delete stale *audio cache* files from user_files.
+
+        Only content-addressed cache entries (``superfreetts-<sha224>.<ext>``)
+        are considered.  Everything else in user_files - usage_log.json, the
+        debug log, checkpoint state, config backups - is user data and must
+        survive a cleanup pass, however old it is.
 
         Notes:
         - Runs quickly and defensively on the main thread.
@@ -145,6 +150,7 @@ class SuperFreeTTS():
             logger.info(f'[CACHE] Starting cache cleanup. Retention: {retention_days} days.')
             deleted = 0
             scanned = 0
+            skipped = 0
 
             # Use scandir for better performance and to avoid extra stat calls
             with os.scandir(user_files_dir) as it:
@@ -152,6 +158,9 @@ class SuperFreeTTS():
                     if not entry.is_file():
                         continue
                     scanned += 1
+                    if not audio_file_store.is_cache_audio_filename(entry.name):
+                        skipped += 1
+                        continue
                     try:
                         file_mtime = entry.stat().st_mtime
                         if file_mtime < cutoff_time:
@@ -160,7 +169,10 @@ class SuperFreeTTS():
                     except OSError as e:
                         logger.warning(f'[CACHE] Error deleting {entry.path}: {e}')
 
-            logger.info(f'[CACHE] Cache cleanup finished. Scanned {scanned} files, deleted {deleted} old files.')
+            logger.info(
+                f'[CACHE] Cache cleanup finished. Scanned {scanned} entries, '
+                f'deleted {deleted} old cache files, kept {skipped} non-cache files.'
+            )
         except Exception as e:
             logger.error(f'[CACHE] Error during cache cleanup: {e}')
 

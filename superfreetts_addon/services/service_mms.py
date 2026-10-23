@@ -581,57 +581,60 @@ class MmsTTS(service.ServiceBase):
                     import tempfile
                     tasks = []
                     temp_paths = []
-                    for text in source_texts:
-                        fd, t_path = tempfile.mkstemp(suffix='.wav')
-                        os.close(fd)
-                        temp_paths.append(t_path)
-                        
-                        clean_text = text.replace("\n", " ").strip()
-                        tasks.append({
-                            "text": clean_text,
-                            "model_dir": model_dir,
-                            "output_file": t_path,
-                            "speed": options.get('speed', 1.0)
-                        })
+                    try:
+                        for text in source_texts:
+                            fd, t_path = tempfile.mkstemp(suffix='.wav')
+                            os.close(fd)
+                            temp_paths.append(t_path)
 
-                    request = {
-                        "action": "generate_batch",
-                        "tasks": tasks,
-                        "num_threads": int(threads_opt),
-                        "provider": provider
-                    }
-                    
-                    payload = json.dumps(request) + "\n"
-                    process.stdin.write(payload.encode('utf-8'))
-                    process.stdin.flush()
-                    
-                    response_line = process.stdout.readline()
-                    if not response_line:
-                        raise BrokenPipeError("Sherpa process closed stream during batch.")
-                    
-                    resp = json.loads(response_line.decode('utf-8', errors='replace').strip())
-                    
-                    results = []
-                    if resp.get("status") == "ok":
-                        for i, task_resp in enumerate(resp.get("results", [])):
-                            t_path = temp_paths[i]
-                            if task_resp.get("status") == "ok" and os.path.exists(t_path):
-                                with open(t_path, 'rb') as f:
-                                    results.append(f.read())
-                            else:
-                                results.append(None)
-                    else:
-                        logger.error(f"MmsTTS Batch Error: {resp.get('message')}")
-                        results = [None] * len(source_texts)
-                    
-                    # Cleanup temp files
-                    for t_path in temp_paths:
-                        try:
-                            if os.path.exists(t_path): os.remove(t_path)
-                        except Exception:
-                            pass
-                        
-                    return results
+                            clean_text = text.replace("\n", " ").strip()
+                            tasks.append({
+                                "text": clean_text,
+                                "model_dir": model_dir,
+                                "output_file": t_path,
+                                "speed": options.get('speed', 1.0)
+                            })
+
+                        request = {
+                            "action": "generate_batch",
+                            "tasks": tasks,
+                            "num_threads": int(threads_opt),
+                            "provider": provider
+                        }
+
+                        payload = json.dumps(request) + "\n"
+                        process.stdin.write(payload.encode('utf-8'))
+                        process.stdin.flush()
+
+                        response_line = process.stdout.readline()
+                        if not response_line:
+                            raise BrokenPipeError("Sherpa process closed stream during batch.")
+
+                        resp = json.loads(response_line.decode('utf-8', errors='replace').strip())
+
+                        results = []
+                        if resp.get("status") == "ok":
+                            for i, task_resp in enumerate(resp.get("results", [])):
+                                t_path = temp_paths[i]
+                                if task_resp.get("status") == "ok" and os.path.exists(t_path):
+                                    with open(t_path, 'rb') as f:
+                                        results.append(f.read())
+                                else:
+                                    results.append(None)
+                        else:
+                            logger.error(f"MmsTTS Batch Error: {resp.get('message')}")
+                            results = [None] * len(source_texts)
+
+                        return results
+                    finally:
+                        # Run even on readline/JSON/retry failures so a broken
+                        # chunk cannot leak temp WAV files into the system /tmp.
+                        for t_path in temp_paths:
+                            try:
+                                if os.path.exists(t_path):
+                                    os.remove(t_path)
+                            except OSError:
+                                pass
                             
                 except (BrokenPipeError, ConnectionResetError, EOFError) as e:
                     process.is_healthy = False
