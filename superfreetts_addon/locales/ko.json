@@ -138,7 +138,7 @@
   "preferences_cache_tooltip": "활성화하면 user_files의 오래된 파일을 시작 시 자동 삭제합니다.",
   "preferences_cache_helper": "오래된 생성 음성 파일은 Anki 시작 시 자동으로 정리됩니다.",
   "pref_audio_format_desc": "저장할 TTS 오디오 파일의 형식",
-  "preferences_audio_format_helper": "대부분의 사용자에게는 mp3를 권장합니다. WAV는 더 크고 OGG는 호환성이 낮을 수 있습니다.",
+  "preferences_audio_format_helper": "파일은 엔진이 생성한 형식 그대로 저장됩니다(오프라인 엔진: WAV, EdgeTTS: MP3). MP3 또는 WAV를 선택하면 지원되는 경우 변환되며, 이미 선택한 형식이면 그대로 유지됩니다.",
   "preferences_group_shortcuts_title": "단축키",
   "preferences_group_shortcuts_desc": "에디터 작업 흐름용 선택 단축키입니다.",
   "preferences_group_troubleshooting_title": "문제 해결",

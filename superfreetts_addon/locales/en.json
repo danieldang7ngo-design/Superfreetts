@@ -212,7 +212,7 @@
   "pref_item_kokoro_efficient": "Efficient (INT8, 100MB RAM)",
   "pref_audio_format": "Audio Output Format",
   "pref_audio_format_desc": "Format for saved TTS audio files",
-  "preferences_audio_format_helper": "WAV is recommended: every offline engine produces WAV and it always plays. MP3 is larger-engine dependent: cloud engines such as EdgeTTS always return MP3.",
+  "preferences_audio_format_helper": "Files are saved in the format the engine produces (offline engines: WAV, EdgeTTS: MP3). Pick MP3 or WAV to convert when that conversion is supported; if the file is already in the chosen format, it is kept as is.",
   "preferences_group_shortcuts_title": "Keyboard Shortcuts",
   "preferences_group_shortcuts_desc": "Optional shortcuts for the editor workflow.",
   "preferences_group_troubleshooting_title": "Troubleshooting",

@@ -206,7 +206,7 @@
   "preferences_group_general_title": "Chung",
   "preferences_group_general_desc": "Chọn các cài đặt mà đa số người dùng thường thay đổi đầu tiên.",
   "preferences_cache_helper": "Các tệp âm thanh cũ trong user_files sẽ được tự động dọn khi Anki khởi động.",
-  "preferences_audio_format_helper": "Khuyên dùng WAV: mọi engine offline đều tạo WAV và luôn phát được. MP3 phụ thuộc engine: engine đám mây như EdgeTTS luôn trả MP3.",
+  "preferences_audio_format_helper": "File được lưu đúng định dạng engine tạo ra (engine offline: WAV, EdgeTTS: MP3). Chọn MP3 hoặc WAV để chuyển đổi khi định dạng đó được hỗ trợ; nếu file đã đúng định dạng đã chọn thì giữ nguyên.",
   "preferences_group_shortcuts_title": "Phím tắt",
   "preferences_group_shortcuts_desc": "Các phím tắt tùy chọn cho quy trình làm việc trong editor.",
   "preferences_group_troubleshooting_title": "Khắc phục sự cố",

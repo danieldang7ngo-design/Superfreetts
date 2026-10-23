@@ -301,7 +301,7 @@ Chưa có số đo thì **không đổi default** và **không công bố "nhanh
    phần `TestMultiEngineBatchFlow` trong `tests/test_batch_flow.py`,
    `tests/test_import.py` bỏ import `batch_state_manager`).
 4. **EdgeTTS luôn MP3**: đã chốt giữ MP3; ghi rõ trong helper/UI (mục 4).
-5. **Locale `ko`**: nhờ người Hàn review; không machine-translate.
+5. **Locale `ko`** (đã sửa một phần, 2026-10-23): câu helper `preferences_audio_format_helper` cũ ở `ko.json` khuyên MP3 và còn nhắc OGG đã được thay bằng chính sách "lưu đúng định dạng engine, convert khi cần"; `en`/`vi` cũng được cập nhật cho khớp. Không sửa gì khác; nếu có người Hàn review thì nhờ rà lại câu chữ, **không machine-translate** thêm.
 
 ---
 
