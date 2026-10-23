@@ -87,11 +87,13 @@ def test_build_engine_config_logs_real_ram_and_caps(monkeypatch):
             enabled_services={"PiperTTS", "KokoroTTS", "MmsTTS", "SupertonicTTS"},
         )
 
-    # One shared 4290MB budget for all four local engines.
+    # One shared 4290MB budget for all four local engines.  With the measured
+    # estimates (Kokoro 2400MB, Supertonic 700MB) the minimum of one worker
+    # per engine is 3800MB, so only Piper can grow within the budget.
     assert config["Piper"] == 3
-    assert config["Kokoro"] == 3
-    assert config["MMS"] == 2
-    assert config["Supertonic"] == 2
+    assert config["Kokoro"] == 1
+    assert config["MMS"] == 1
+    assert config["Supertonic"] == 1
     info_messages = [str(call.args[0]) for call in logger.info.call_args_list]
     assert any(
         "[RAM] source=linux_meminfo available_mb=8580" in message
@@ -178,7 +180,7 @@ def test_build_engine_config_warns_when_ram_unknown(monkeypatch):
             enabled_services={"PiperTTS", "KokoroTTS", "MmsTTS", "SupertonicTTS"},
         )
 
-    assert config["Kokoro"] == 8
+    assert config["Kokoro"] == tts_orchestrator.KOKORO_MAX_AUTO_WORKERS
     warning_messages = [str(call.args[0]) for call in logger.warning.call_args_list]
     assert any(
         "local engine pools are NOT RAM-capped" in message

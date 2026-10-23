@@ -116,22 +116,31 @@ class TestBuildEngineConfigRamAware:
 
     def test_all_enabled_local_engines_share_one_budget(self):
         """Four enabled local engines must not each receive a separate
-        50%-of-RAM budget.  With 6880MB available the shared budget is
-        3440MB, which fits two workers of each estimated engine."""
+        50%-of-RAM budget.  With 20000MB available the shared budget is
+        10000MB; the measured per-engine estimates (Piper 200MB,
+        Kokoro 2400MB, MMS 500MB, Supertonic 700MB) fit 5/2/4/3 workers,
+        which totals 9900MB - not four independent 10000MB budgets."""
         orch = self._make_orchestrator()
         with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
              patch.object(system_utils, 'get_max_workers', return_value=16), \
-             patch.object(system_utils, 'get_available_ram_mb', return_value=6880), \
+             patch.object(system_utils, 'get_available_ram_mb', return_value=20000), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(
                 service_config_map={},
                 enabled_services={'PiperTTS', 'KokoroTTS', 'MmsTTS', 'SupertonicTTS'},
             )
 
-        assert engine_config['Piper'] == 2
+        assert engine_config['Piper'] == 5
         assert engine_config['Kokoro'] == 2
-        assert engine_config['MMS'] == 2
-        assert engine_config['Supertonic'] == 2
+        assert engine_config['MMS'] == 4
+        assert engine_config['Supertonic'] == 3
+        estimated_mb = (
+            engine_config['Piper'] * tts_orchestrator.RAM_PER_PROCESS_MB_ESTIMATE['PiperTTS']
+            + engine_config['Kokoro'] * tts_orchestrator.RAM_PER_PROCESS_MB_ESTIMATE['KokoroTTS']
+            + engine_config['MMS'] * tts_orchestrator.RAM_PER_PROCESS_MB_ESTIMATE['MmsTTS']
+            + engine_config['Supertonic'] * tts_orchestrator.RAM_PER_PROCESS_MB_ESTIMATE['SupertonicTTS']
+        )
+        assert estimated_mb <= 20000 * 0.5
 
     def test_manual_concurrency_workers_override_is_not_ram_capped(self):
         """A user who explicitly sets concurrency_workers must keep full
@@ -168,10 +177,11 @@ class TestBuildEngineConfigRamAware:
         assert engine_config['Piper'] == 7
         assert engine_config['Kokoro'] == 1
 
-    def test_no_psutil_falls_back_to_old_cpu_only_behavior(self):
-        """When available RAM can't be measured at all, behavior must be
-        identical to the pre-fix code (pure cpu_default), not a crash and
-        not a fabricated cap."""
+    def test_no_psutil_falls_back_to_cpu_only_except_kokoro_safety_cap(self):
+        """When available RAM can't be measured at all, pools fall back to
+        the CPU-derived default instead of a fabricated RAM cap.  The one
+        exception is the measured-memory safety ceiling for Kokoro, which
+        must hold even when RAM is unknown."""
         orch = self._make_orchestrator()
         with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
              patch.object(system_utils, 'get_max_workers', return_value=8), \
@@ -183,6 +193,36 @@ class TestBuildEngineConfigRamAware:
             )
 
         assert engine_config['Piper'] == 8
-        assert engine_config['Kokoro'] == 8
+        assert engine_config['Kokoro'] == tts_orchestrator.KOKORO_MAX_AUTO_WORKERS
         assert engine_config['MMS'] == 8
         assert engine_config['Supertonic'] == 8
+
+    def test_kokoro_auto_workers_are_hard_capped_with_plenty_of_ram(self):
+        """Even on a huge machine the automatic Kokoro pool must stay at or
+        below KOKORO_MAX_AUTO_WORKERS: one measured runner peaked at ~3.9GB,
+        so 8 auto workers would be ~31GB."""
+        orch = self._make_orchestrator()
+        with patch.object(system_utils, 'get_cpu_threads', return_value=16), \
+             patch.object(system_utils, 'get_max_workers', return_value=16), \
+             patch.object(system_utils, 'get_available_ram_mb', return_value=65536), \
+             patch.object(orch, 'auto_scale_pool'):
+            engine_config = orch.build_engine_config(
+                service_config_map={},
+                enabled_services={'KokoroTTS'},
+            )
+
+        assert engine_config['Kokoro'] == tts_orchestrator.KOKORO_MAX_AUTO_WORKERS
+
+    def test_kokoro_manual_override_bypasses_the_auto_cap(self):
+        """An explicit concurrency_workers value remains the user's call."""
+        orch = self._make_orchestrator()
+        with patch.object(system_utils, 'get_cpu_threads', return_value=16), \
+             patch.object(system_utils, 'get_max_workers', return_value=16), \
+             patch.object(system_utils, 'get_available_ram_mb', return_value=65536), \
+             patch.object(orch, 'auto_scale_pool'):
+            engine_config = orch.build_engine_config(
+                service_config_map={'KokoroTTS': {'concurrency_workers': 4}},
+                enabled_services={'KokoroTTS'},
+            )
+
+        assert engine_config['Kokoro'] == 4

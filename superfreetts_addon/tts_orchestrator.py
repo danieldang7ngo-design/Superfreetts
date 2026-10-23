@@ -14,21 +14,33 @@ logger = logging_utils.get_child_logger(__name__)
 # (CPU-core-derived) concurrency for local engine process pools - see root
 # cause 2.6 in superfreetts_macos_crash_fix_plan.md.
 #
-# IMPORTANT - these numbers are NOT an agent-measured benchmark. They come
-# from a user-reported real-world observation (Piper ~100-200MB/process,
-# Kokoro/MMS/Supertonic ~300-500MB/process) and were not independently
-# verified with psutil against the actual bundled models in this
-# environment (no local engine models are installed here to measure). They
-# are deliberately picked toward the upper/conservative end of the reported
-# range. If these turn out to be inaccurate for a given model/voice, the
-# existing per-service `concurrency_workers` config field always overrides
-# this estimate-driven default - this table only affects the fallback.
+# These values were re-based on the 2026-10-22 resource audit
+# (AI_Documents/bao-cao-kiem-toan-superfreetts-2026-10-22.md, P0-1):
+#   * Kokoro: 3,933 MB tree RSS for one runner, 4,662 MB for two.  The old
+#     500 MB figure was a user report, never measured, and let the allocator
+#     hand Kokoro 6 workers on a 16 GB host.  2,400 MB/worker is the measured
+#     marginal cost of an extra runner, but a single cold runner peaks much
+#     higher, so automatic scaling is hard-capped by
+#     KOKORO_MAX_AUTO_WORKERS below instead of relying on this number alone.
+#   * Supertonic: 687 MB measured for one runner (was 500).
+#   * Piper (327 MB tree for two runners) and MMS (450 MB) matched their
+#     existing estimates closely enough to keep.
+# Manual per-service `concurrency_workers` always overrides this table; it
+# only affects the computed default.
 RAM_PER_PROCESS_MB_ESTIMATE = {
     'PiperTTS': 200,
-    'KokoroTTS': 500,
+    'KokoroTTS': 2400,
     'MmsTTS': 500,
-    'SupertonicTTS': 500,
+    'SupertonicTTS': 700,
 }
+
+# Hard ceiling for the *automatic* Kokoro pool size, independent of measured
+# available RAM.  A single Kokoro runner peaked at ~3.9 GB, so the old
+# auto-scaled 6-8 workers on a 16 GB machine could exhaust physical RAM.
+# This limit only applies when no explicit `concurrency_workers` value is
+# configured for KokoroTTS; manual overrides are still honoured and only log
+# a warning when they exceed the RAM-safe estimate.
+KOKORO_MAX_AUTO_WORKERS = 2
 
 class TTSOrchestrator:
     def __init__(self, superfreetts):
@@ -145,8 +157,24 @@ class TTSOrchestrator:
             manual_workers[pool_name] = requested
             manual_service_by_pool[pool_name] = service_name
 
+        # Safety ceiling for automatic Kokoro scaling (see
+        # KOKORO_MAX_AUTO_WORKERS).  Applied to the CPU cap handed to the
+        # allocator so it also holds when available RAM cannot be measured;
+        # an explicit per-service override bypasses it.
+        cpu_caps = {pool: cpu_default for pool in ram_per_pool_mb}
+        if 'Kokoro' in enabled_pools and 'Kokoro' not in manual_workers:
+            capped_kokoro = min(cpu_caps['Kokoro'], KOKORO_MAX_AUTO_WORKERS)
+            if capped_kokoro < cpu_caps['Kokoro']:
+                logger.info(
+                    f'[RAM-CAP] KokoroTTS automatic concurrency capped to '
+                    f'{capped_kokoro} by the measured-memory safety limit '
+                    f'(KOKORO_MAX_AUTO_WORKERS={KOKORO_MAX_AUTO_WORKERS}); '
+                    f'set concurrency_workers manually to override.'
+                )
+            cpu_caps['Kokoro'] = capped_kokoro
+
         allocation, budget_meta = system_utils.allocate_local_engine_workers(
-            cpu_caps={pool: cpu_default for pool in ram_per_pool_mb},
+            cpu_caps=cpu_caps,
             ram_per_process_mb=ram_per_pool_mb,
             enabled_engines=enabled_pools,
             available_ram_mb=available_ram_mb,
