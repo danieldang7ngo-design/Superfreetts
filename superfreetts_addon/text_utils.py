@@ -85,8 +85,9 @@ def strip_cloze_markers(text):
     Handles patterns like {{c1::text}} and {{c1::text::hint}}
     """
     # Pattern matches {{c<number>::content}} or {{c<number>::content::hint}}
-    # Captures just the content part, ignoring the hint if present
-    pattern = r'\{\{c\d+::([^:}]+)(?:::[^}]+)?\}\}'
+    # Content may include single colons (e.g. times like 19:30); only a
+    # double colon starts the optional hint part.
+    pattern = r'\{\{c\d+::(.*?)(?:::(.*?))?\}\}'
     return re.sub(pattern, r'\1', text)
 
 def sanitize_special_characters(text):

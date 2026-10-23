@@ -14,17 +14,23 @@ def keep_only_sound_tags(field_value):
     return " ".join(matches)
 
 
-def get_collection_sound_tag(anki_utils, full_filename, audio_filename):
-    anki_utils.media_add_file(full_filename)
+def get_collection_sound_tag(anki_utils, full_filename, audio_filename, added_media_files=None):
+    # A batch usually shares one audio file between many notes.  media_add_file
+    # is idempotent but not free, so callers may pass a per-batch set to skip
+    # repeat calls for files that were already imported.
+    if added_media_files is None or full_filename not in added_media_files:
+        anki_utils.media_add_file(full_filename)
+        if added_media_files is not None:
+            added_media_files.add(full_filename)
     return f"[sound:{audio_filename}]", audio_filename
 
 
-def update_note_with_audio(anki_utils, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True):
+def update_note_with_audio(anki_utils, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True, added_media_files=None):
     target_field = batch.target.target_field
     if target_field not in note:
         raise errors.TargetFieldNotFoundError(target_field)
 
-    sound_tag, _ = get_collection_sound_tag(anki_utils, full_filename, sound_file)
+    sound_tag, _ = get_collection_sound_tag(anki_utils, full_filename, sound_file, added_media_files)
     target_field_content = note[target_field]
 
     if batch.target.remove_sound_tag:
@@ -82,9 +88,22 @@ def tag_error_notes(
     Returns the number of notes actually tagged.
     """
     tagged_count = 0
+    notes_to_update = []
     for note_id in dict.fromkeys(note_ids):
         note = anki_utils.get_note_by_id(note_id)
         if ensure_note_tag(note, tag_name):
+            notes_to_update.append(note)
+
+    if not notes_to_update:
+        return tagged_count
+
+    update_notes = getattr(anki_collection, 'update_notes', None)
+    if callable(update_notes):
+        update_notes(notes_to_update)
+        tagged_count = len(notes_to_update)
+    else:
+        # Older Anki builds / test doubles may only expose update_note().
+        for note in notes_to_update:
             anki_collection.update_note(note)
             tagged_count += 1
     return tagged_count

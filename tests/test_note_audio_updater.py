@@ -1,5 +1,6 @@
 import os
 import sys
+import types
 from unittest.mock import Mock
 
 import pytest
@@ -94,3 +95,60 @@ def test_update_note_sound_only_is_idempotent():
     )
 
     assert result == "[sound:new.mp3]"
+
+
+def test_added_media_files_set_skips_repeated_media_add():
+    anki_utils = MockAnkiUtils()
+    added_media_files = set()
+    first = {"Audio": ""}
+    second = {"Audio": ""}
+
+    note_audio_updater.update_note_with_audio(
+        anki_utils, first, make_batch(), "source", "shared.mp3", "/tmp/shared.mp3", Mock(),
+        added_media_files=added_media_files,
+    )
+    note_audio_updater.update_note_with_audio(
+        anki_utils, second, make_batch(), "source", "shared.mp3", "/tmp/shared.mp3", Mock(),
+        added_media_files=added_media_files,
+    )
+
+    assert anki_utils.added == ["/tmp/shared.mp3"]
+    assert first["Audio"] == "[sound:shared.mp3]"
+    assert second["Audio"] == "[sound:shared.mp3]"
+
+
+def test_tag_error_notes_uses_single_batch_update():
+    notes = {1: types.SimpleNamespace(tags=[]), 2: types.SimpleNamespace(tags=[])}
+    anki_utils = Mock()
+    anki_utils.get_note_by_id.side_effect = notes.get
+    collection = Mock()
+
+    tagged = note_audio_updater.tag_error_notes(
+        anki_utils, [1, 2, 2], collection, tag_name="tts-error"
+    )
+
+    assert tagged == 2
+    assert notes[1].tags == ["tts-error"]
+    collection.update_notes.assert_called_once()
+    collection.update_note.assert_not_called()
+
+
+def test_tag_error_notes_falls_back_to_update_note_without_batch_api():
+    class LegacyCollection:
+        def __init__(self):
+            self.updated = []
+
+        def update_note(self, note):
+            self.updated.append(note)
+
+    notes = {1: types.SimpleNamespace(tags=[])}
+    anki_utils = Mock()
+    anki_utils.get_note_by_id.side_effect = notes.get
+    collection = LegacyCollection()
+
+    tagged = note_audio_updater.tag_error_notes(
+        anki_utils, [1], collection, tag_name="tts-error"
+    )
+
+    assert tagged == 1
+    assert collection.updated == [notes[1]]

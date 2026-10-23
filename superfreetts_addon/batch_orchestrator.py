@@ -19,6 +19,7 @@ from . import constants
 from . import config_models
 from . import errors
 from . import context
+from . import audio_file_store
 from . import batch_progress_ui
 from . import system_utils
 from . import logging_utils
@@ -223,6 +224,14 @@ class BatchOrchestrator:
         if not batch_status.must_continue:
             return []
 
+        # Available RAM may have changed since the executor was built (e.g.
+        # Anki has been open for hours).  Re-size the local engine pools before
+        # any new runner process is spawned.
+        try:
+            self.hypertts.orchestrator.refresh_engine_pools_for_current_ram()
+        except Exception as e:
+            logger.debug(f'[BATCH] Pre-batch RAM refresh skipped: {e}')
+
         max_workers = system_utils.get_max_workers()
         unique_count = len(dedup_map)
         batch_status.total_unique_tasks = unique_count
@@ -254,6 +263,14 @@ class BatchOrchestrator:
         results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
         audio_cache.clear()
         self.text_processing_cache.clear()
+        # The legacy UnifiedCache was write-only in the live path.  Ensure no
+        # stale tuples survive the batch if another caller populated it.
+        executor_cache = getattr(self.executor, 'cache', None)
+        if executor_cache is not None:
+            try:
+                executor_cache.clear()
+            except Exception as e:
+                logger.debug(f'[BATCH] Could not clear executor cache: {e}')
 
         self._set_batch_status_with_ui_refresh(
             batch_status,
@@ -263,7 +280,7 @@ class BatchOrchestrator:
         logger.info(f'[BATCH] Audio generation ready to apply: {len(results)} note results')
         return results
 
-    def apply_generated_batch_audio_chunk(self, generated_results_chunk: List[Tuple], batch: config_models.BatchConfig, batch_status: Any, anki_collection: Any) -> int:
+    def apply_generated_batch_audio_chunk(self, generated_results_chunk: List[Tuple], batch: config_models.BatchConfig, batch_status: Any, anki_collection: Any, added_media_files: Optional[set] = None) -> int:
         """
         Apply ONE chunk of generated audio results to Anki media and notes.
 
@@ -280,6 +297,8 @@ class BatchOrchestrator:
 
         Returns the number of notes actually written in this chunk.
         """
+        if added_media_files is None:
+            added_media_files = set()
         notes_to_update = []
         for (note_id, source_text, processed_text, sound_file, full_filename, is_error) in generated_results_chunk:
             if not batch_status.must_continue:
@@ -291,7 +310,7 @@ class BatchOrchestrator:
                         note_action_context.set_error(is_error)
                     else:
                         note = self.anki_utils.get_note_by_id(note_id)
-                        self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
+                        self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False, added_media_files=added_media_files)
                         notes_to_update.append(note)
                         note_action_context.set_source_text(source_text)
                         note_action_context.set_processed_text(processed_text)
@@ -325,6 +344,7 @@ class BatchOrchestrator:
         update_start = time.time()
 
         notes_to_update = []
+        added_media_files = set()
         for idx, (note_id, source_text, processed_text, sound_file, full_filename, is_error) in enumerate(generated_results):
             if not batch_status.must_continue:
                 break
@@ -335,7 +355,7 @@ class BatchOrchestrator:
                         note_action_context.set_error(is_error)
                     else:
                         note = self.anki_utils.get_note_by_id(note_id)
-                        self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False)
+                        self.hypertts._update_note_with_audio(note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=False, added_media_files=added_media_files)
                         notes_to_update.append(note)
                         note_action_context.set_source_text(source_text)
                         note_action_context.set_processed_text(processed_text)
@@ -389,17 +409,68 @@ class BatchOrchestrator:
         completed_count = 0
         unique_count = len(dedup_map)
         engine_groups = {}
+        cache_hit_count = 0
+
         for dedup_key, task_indices in dedup_map.items():
+            if not batch_status.must_continue:
+                break
+
             task_idx = task_indices[0]
             task_data = tasks[task_idx]
-            service_name = self.executor.detect_service(task_data)
             chosen_voice = task_data.get('chosen_voice')
-            voice_id_str = str(chosen_voice.voice_id) if chosen_voice else "None"
 
-            group_key = (service_name, voice_id_str)
+            # Resolve disk-cache hits before grouping.  Submitting cached work
+            # to an engine executor used to waste a pool slot, a process round
+            # trip and a batch slot on audio that already exists.
+            if isinstance(dedup_key, audio_file_store.AudioRequestKey) and chosen_voice is not None:
+                cached_file = self.audio_store.get_cached_file(dedup_key)
+                if cached_file is not None:
+                    source_text = task_data['source_text']
+                    processed_text = task_data['processed_text']
+                    audio_cache[dedup_key] = (
+                        (source_text, processed_text, cached_file.audio_filename, cached_file.full_filename),
+                        None,
+                    )
+                    completed_count += 1
+                    cache_hit_count += 1
+                    batch_status.unique_tasks_completed = completed_count
+
+                    generated_ids = []
+                    for cached_idx in task_indices:
+                        note_id = tasks[cached_idx]['note_id']
+                        with batch_status.get_note_action_context(note_id, False) as ctx:
+                            ctx.set_source_text(source_text)
+                            ctx.set_processed_text(processed_text)
+                            ctx.set_sound(cached_file.audio_filename)
+                            ctx.set_status(constants.BatchNoteStatus.Generated)
+                        generated_ids.append(note_id)
+                        batch_status.notify_change(note_id)
+
+                    checkpoint.mark_generated(generated_ids)
+                    try:
+                        audio_request_context = task_data.get('audio_request_context')
+                        if audio_request_context is not None and audio_request_context.audio_request_reason != constants.AudioRequestReason.preview:
+                            service_name = getattr(chosen_voice.voice_id, 'service', 'unknown')
+                            self.hypertts.usage_tracker.record_cache_hit(
+                                audio_request_context, service_name, len(processed_text)
+                            )
+                    except Exception as usage_error:
+                        logger.debug(f"[USAGE] cache hit record failed: {usage_error}")
+                    continue
+
+            service_name = self.executor.detect_service(task_data)
+
+            group_key = service_name
             if group_key not in engine_groups:
                 engine_groups[group_key] = []
             engine_groups[group_key].append((dedup_key, task_data, task_indices))
+
+        if cache_hit_count:
+            checkpoint.flush()
+            batch_status.set_status_message(
+                i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count)
+            )
+            logger.info(f"[BATCH] {cache_hit_count} unique task(s) served from disk cache")
 
         BATCH_SIZE_BY_ENGINE = {
             'EdgeTTS': 3,
@@ -415,13 +486,15 @@ class BatchOrchestrator:
         DEFAULT_BATCH_SIZE = 1
         all_chunks = []
 
-        for (service_name, _), group_tasks in engine_groups.items():
+        for service_name, group_tasks in engine_groups.items():
             max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
             chunk = []
             chunk_chars = 0
             for item in group_tasks:
                 dedup_key, task_data, task_indices = item
-                text = task_data['source_text']
+                # Chunking is about the payload sent to the engine, which is
+                # the processed text (not the raw source text).
+                text = task_data['processed_text']
                 text_len = len(text)
 
                 if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):

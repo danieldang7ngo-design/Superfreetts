@@ -224,7 +224,14 @@ def test_generate_audio_batch_task_separates_same_text_with_different_options(tm
     results = app._generate_audio_batch_task(chunk)
 
     assert len(results) == 2
-    assert service_manager.batch_calls == [(["hello", "hello"], tasks[0]["chosen_voice"].voice_id, {"speed": 1})]
+    # Same text with different voice options must be generated separately —
+    # one service batch call per voice/options group, each with its own voice.
+    # (A single mixed call would synth both items with the first item's voice
+    # and store the wrong audio under the second item's cache key.)
+    assert service_manager.batch_calls == [
+        (["hello"], tasks[0]["chosen_voice"].voice_id, {"speed": 1}),
+        (["hello"], tasks[1]["chosen_voice"].voice_id, {"speed": 2}),
+    ]
 
 
 def test_generate_audio_write_file_uses_disk_cache_without_service_call(tmp_path):
@@ -278,3 +285,87 @@ def test_execute_unique_tasks_submits_offline_items_individually_for_continuous_
 
     assert sorted(len(chunk) for chunk in app.executor.pool.submitted_chunks) == [3]
     assert len(audio_cache) == 3
+
+
+def test_execute_unique_tasks_serves_disk_cache_without_submitting(tmp_path):
+    app, _ = make_app(tmp_path)
+    app.executor = ContinuousBatchExecutor()
+    app.usage_tracker = Mock()
+    chosen_voice = make_voice()
+    cached_text = "already synthesised"
+    request_key = app.audio_store.build_request_key(
+        cached_text, chosen_voice.voice_id, chosen_voice.options
+    )
+    cached = app.audio_store.write_audio_file_atomic(request_key, b"RIFF....WAVEfmt ")
+
+    tasks = [
+        make_task(1, cached_text, chosen_voice),
+        make_task(2, "new text", chosen_voice),
+    ]
+    dedup_map = app._collect_batch_duplicates(tasks)
+    submitted = []
+
+    def fake_generate_audio_batch_task(chunk):
+        results = []
+        for _, task_data, _ in chunk:
+            submitted.append(task_data["note_id"])
+            results.append((
+                (
+                    task_data["source_text"],
+                    task_data["processed_text"],
+                    f"{task_data['note_id']}.mp3",
+                    os.path.join(str(tmp_path), f"{task_data['note_id']}.mp3"),
+                ),
+                None,
+            ))
+        return results
+
+    app._generate_audio_batch_task = fake_generate_audio_batch_task
+    status = DummyBatchStatus()
+
+    audio_cache = app._execute_unique_tasks_unified(tasks, dedup_map, status)
+    app.executor.pool.shutdown()
+
+    # The cached key never reaches an engine pool or a worker chunk.
+    assert submitted == [2]
+    assert len(audio_cache) == 2
+    assert status.unique_tasks_completed == 2
+    assert audio_cache[request_key][0][2] == cached.audio_filename
+    app.usage_tracker.record_cache_hit.assert_called_once()
+
+
+def test_execute_unique_tasks_chunks_by_processed_text_length(tmp_path):
+    app, _ = make_app(tmp_path)
+    app.executor = ContinuousBatchExecutor()
+    chosen_voice = make_voice(service="PiperTTS")
+    tasks = []
+    for note_id in (1, 2):
+        task = make_task(note_id, "x", chosen_voice)
+        # The engine receives processed_text; chunk sizing must use it, not
+        # the (here tiny) source text.
+        task["processed_text"] = "y" * 2000 + str(note_id)
+        tasks.append(task)
+    dedup_map = app._collect_batch_duplicates(tasks)
+
+    def fake_generate_audio_batch_task(chunk):
+        return [
+            (
+                (
+                    task_data["source_text"],
+                    task_data["processed_text"],
+                    f"{task_data['note_id']}.mp3",
+                    os.path.join(str(tmp_path), f"{task_data['note_id']}.mp3"),
+                ),
+                None,
+            )
+            for _, task_data, _ in chunk
+        ]
+
+    app._generate_audio_batch_task = fake_generate_audio_batch_task
+
+    audio_cache = app._execute_unique_tasks_unified(tasks, dedup_map, DummyBatchStatus())
+    app.executor.pool.shutdown()
+
+    # 2 x 2000 processed chars exceed the 3000-char chunk limit.
+    assert sorted(len(chunk) for chunk in app.executor.pool.submitted_chunks) == [1, 1]
+    assert len(audio_cache) == 2

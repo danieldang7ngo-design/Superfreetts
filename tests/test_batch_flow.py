@@ -1,17 +1,12 @@
 """
 Integration tests for batch_executor — focusing on MultiEngineExecutor routing logic,
-detect_service(), get_executor(), and end-to-end execute() flow.
+detect_service(), get_executor(), and singleton lifecycle.
 
 Strategy:
-- Patch _execute_single_task to return a fake result tuple so we test routing /
-  progress / checkpoint logic without needing real TTS audio generation.
 - All helpers are local to avoid polluting the session-level ServiceBase subclass list.
 """
 
-import os
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from superfreetts_addon.batch_executor import (
     MultiEngineExecutor,
@@ -54,12 +49,6 @@ def _make_task(note_id: int, text: str = "hello", service_name: str = "EdgeTTS")
         "audio_request_context": MagicMock(),
         "chosen_voice": voice,
     }
-
-
-def _fake_result(task: dict):
-    """Fake result tuple: (note_id, src, processed, sound, full_path, is_error)."""
-    return (task["note_id"], task["processed_text"], task["processed_text"],
-            f"audio_{task['note_id']}.mp3", f"/tmp/audio_{task['note_id']}.mp3", False)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -178,104 +167,6 @@ class TestMultiEngineExecutorInit:
                     f"Expected BoundedThreadPoolExecutor for {name}, got {type(pool)}"
         finally:
             executor.shutdown(wait=False)
-
-
-# ─────────────────────────────────────────────────────────────
-# execute() — end-to-end batch flow (patched _execute_single_task)
-# ─────────────────────────────────────────────────────────────
-
-class TestMultiEngineBatchFlow:
-    """Integration tests that patch _execute_single_task to return fake tuples."""
-
-    @pytest.fixture(autouse=True)
-    def executor(self):
-        """Provide a fresh MultiEngineExecutor and shut it down after each test."""
-        ex = MultiEngineExecutor(engine_config={"EdgeTTS": 2, "default": 1})
-        yield ex
-        ex.shutdown(wait=False)
-
-    def test_execute_empty_task_list_returns_empty(self, executor):
-        """execute() with no tasks returns an empty list."""
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            results = executor.execute([], on_progress=None, enable_checkpoint=False)
-        assert results == []
-
-    def test_execute_returns_one_result_per_task(self, executor):
-        """execute() returns exactly one result for each submitted task."""
-        tasks = [_make_task(i) for i in range(5)]
-
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            results = executor.execute(tasks, on_progress=None, enable_checkpoint=False)
-
-        assert len(results) == 5
-
-    def test_execute_calls_on_progress_for_each_task(self, executor):
-        """on_progress callback is invoked once per completed task."""
-        tasks = [_make_task(i) for i in range(3)]
-        progress_calls = []
-
-        def on_progress(note_id, result):
-            progress_calls.append(note_id)
-
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            executor.execute(tasks, on_progress=on_progress, enable_checkpoint=False)
-
-        assert len(progress_calls) == 3
-        assert sorted(progress_calls) == [0, 1, 2]
-
-    def test_execute_no_error_flag_in_successful_results(self, executor):
-        """Successful results have is_error=False (last element of tuple)."""
-        tasks = [_make_task(10)]
-
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            results = executor.execute(tasks, on_progress=None, enable_checkpoint=False)
-
-        assert results[0][-1] is False   # is_error flag
-
-    def test_execute_error_flag_set_on_exception(self, executor):
-        """If _execute_single_task raises, result tuple has is_error=True."""
-        tasks = [_make_task(1)]
-
-        with patch.object(executor, "_execute_single_task",
-                          side_effect=RuntimeError("deliberate failure")):
-            results = executor.execute(tasks, on_progress=None, enable_checkpoint=False)
-
-        assert len(results) == 1
-        assert results[0][-1] is True   # is_error flag
-
-    def test_execute_checkpoint_cleaned_up_after_completion(self, executor, tmp_path):
-        """Checkpoint file is removed after a successful batch run."""
-        # Point checkpoint dir to tmp_path
-        executor.checkpoint.state_dir = str(tmp_path)
-        tasks = [_make_task(i) for i in range(2)]
-
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            executor.execute(tasks, on_progress=None, batch_name="testbatch",
-                             enable_checkpoint=True)
-
-        # Checkpoint should have been cleaned up
-        leftover = [f for f in os.listdir(str(tmp_path)) if "testbatch" in f]
-        assert leftover == []
-
-    def test_execute_tasks_routed_to_edgetts_pool(self, executor):
-        """EdgeTTS tasks are submitted to the EdgeTTS executor, not the default."""
-        tasks = [_make_task(i, service_name="EdgeTTS") for i in range(2)]
-        edgetts_pool = executor.executors["EdgeTTS"]
-
-        submit_calls = []
-        original_submit = edgetts_pool.submit
-
-        def tracking_submit(fn, *args, **kwargs):
-            submit_calls.append(fn)
-            return original_submit(fn, *args, **kwargs)
-
-        edgetts_pool.submit = tracking_submit
-
-        with patch.object(executor, "_execute_single_task", side_effect=_fake_result):
-            executor.execute(tasks, on_progress=None, enable_checkpoint=False)
-
-        # All 2 tasks should have been routed through the EdgeTTS pool
-        assert len(submit_calls) == 2
 
 
 # ─────────────────────────────────────────────────────────────

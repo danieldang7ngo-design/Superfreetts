@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
 from superfreetts_addon import system_utils
 from superfreetts_addon import tts_orchestrator
+from superfreetts_addon import batch_executor
 
 
 @pytest.mark.unit
@@ -227,3 +228,50 @@ class TestBuildEngineConfigRamAware:
             )
 
         assert engine_config['Kokoro'] == 4
+
+
+@pytest.mark.unit
+class TestPreBatchRamRefresh:
+    """The batch pipeline re-evaluates RAM before spawning runners."""
+
+    def _make_orchestrator(self):
+        stts = MagicMock()
+        stts.get_configuration.return_value.get_service_config.return_value = {}
+        stts.get_configuration.return_value.get_service_enabled_map.return_value = {
+            'PiperTTS': True,
+        }
+        return tts_orchestrator.TTSOrchestrator(stts), stts
+
+    def test_rebuilds_executor_when_current_ram_changes_worker_count(self):
+        orch, stts = self._make_orchestrator()
+        old_executor = MagicMock(engine_config={'Piper': 8, 'default': 8})
+        orch.executor = old_executor
+        stts.executor = old_executor
+        new_executor = MagicMock(engine_config={'Piper': 2, 'default': 2})
+
+        with patch.object(orch, 'build_engine_config', return_value={'Piper': 2, 'default': 2}), \
+             patch.object(batch_executor, 'get_multi_engine_executor', return_value=new_executor):
+            result = orch.refresh_engine_pools_for_current_ram()
+
+        assert result == {'Piper': 2, 'default': 2}
+        assert orch.executor is new_executor
+        assert stts.executor is new_executor
+
+    def test_keeps_executor_when_config_is_unchanged(self):
+        orch, stts = self._make_orchestrator()
+        executor = MagicMock(engine_config={'Piper': 2, 'default': 2})
+        orch.executor = executor
+        stts.executor = executor
+
+        with patch.object(orch, 'build_engine_config', return_value={'Piper': 2, 'default': 2}), \
+             patch.object(batch_executor, 'get_multi_engine_executor') as get_executor:
+            result = orch.refresh_engine_pools_for_current_ram()
+
+        assert result == {'Piper': 2, 'default': 2}
+        get_executor.assert_not_called()
+        assert orch.executor is executor
+
+    def test_refresh_failure_is_non_fatal(self):
+        orch, _ = self._make_orchestrator()
+        with patch.object(orch, 'build_engine_config', side_effect=RuntimeError('boom')):
+            assert orch.refresh_engine_pools_for_current_ram() is None

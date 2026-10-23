@@ -2,7 +2,8 @@
 Unified Batch Executor - Simplified threading, resource management, and caching.
 
 Replaces:
-  - resource_manager.py (ResourceMonitor, MemoryPool, SmartLRUCache)
+  - the old MemoryPool/SmartLRUCache helpers (only RSS monitoring remains
+    in resource_manager.py)
   - batch_state_manager.py (complex checkpoint logic)
   - Complex threading in superfreetts.py
 
@@ -19,7 +20,7 @@ import gc
 import json
 import threading
 import concurrent.futures
-from typing import Dict, Optional, Any, List, Callable, Tuple
+from typing import Dict, Optional, Any, List
 from datetime import datetime
 from collections import OrderedDict
 
@@ -164,6 +165,53 @@ class UnifiedCache:
                 'misses': self.misses,
                 'hit_rate': f"{(self.hits / total * 100):.1f}%",
             }
+
+
+class BoundedLRUDict:
+    """Small thread-safe LRU mapping used for processed-text caching.
+
+    A plain ``dict`` grew without bound across long Anki sessions (20k-note
+    batches).  This keeps a fixed ceiling and exposes the mapping surface the
+    batch orchestrator needs (``in``, ``[]``, ``clear``).
+    """
+
+    def __init__(self, max_entries: int = 2048):
+        self.max_entries = max(1, int(max_entries))
+        self._data = OrderedDict()
+        self._lock = threading.RLock()
+
+    def __contains__(self, key) -> bool:
+        with self._lock:
+            return key in self._data
+
+    def __getitem__(self, key):
+        with self._lock:
+            if key not in self._data:
+                raise KeyError(key)
+            self._data.move_to_end(key)
+            return self._data[key]
+
+    def __setitem__(self, key, value) -> None:
+        with self._lock:
+            if key in self._data:
+                self._data.move_to_end(key)
+            self._data[key] = value
+            while len(self._data) > self.max_entries:
+                self._data.popitem(last=False)
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def clear(self) -> None:
+        with self._lock:
+            self._data.clear()
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._data)
 
 
 class SimpleResourceMonitor:
@@ -470,11 +518,8 @@ class UnifiedBatchExecutor:
     
     Usage:
         executor = UnifiedBatchExecutor(max_workers=4)
-        results = executor.execute(
-            tasks=task_list,
-            on_progress=callback,
-            batch_name='my_batch'
-        )
+        pool = executor.get_executor()
+        future = pool.submit(work_function, task)
     """
     
     def __init__(self, max_workers: int = 1, max_ram_mb: int = 3000, cache_size_mb: int = 100):
@@ -499,129 +544,6 @@ class UnifiedBatchExecutor:
         """Interface parity with MultiEngineExecutor for fallback batches."""
         return _detect_service_from_task(task)
 
-    def execute(
-        self,
-        tasks: List[Dict],
-        on_progress: Callable,
-        batch_name: str = 'default',
-        enable_checkpoint: bool = True,
-    ) -> List[Tuple]:
-        """
-        Execute batch of tasks with thread pool.
-        
-        Args:
-            tasks: List of task dicts
-            on_progress: Callback(note_id, result_tuple) after each task completes
-            batch_name: Name for checkpoint/logging
-            enable_checkpoint: Save progress for crash recovery
-            
-        Returns:
-            List of (note_id, source_text, processed_text, sound_file, full_filename, is_error) tuples
-
-        .. deprecated::
-            The live batch pipeline drives generation through
-            ``batch_orchestrator._execute_unique_tasks_unified()``.  This method
-            is kept for backwards compatibility only; do not add call sites.
-        """
-        results = []
-        completed_indices = []
-        errors = {}
-        future_to_task = {}
-        items_processed = 0
-        
-        # Check for resumable checkpoint
-        checkpoint_data = None
-        if enable_checkpoint:
-            checkpoint_data = self.checkpoint.load(batch_name)
-            if checkpoint_data:
-                statuses = checkpoint_data.get('statuses', {})
-                completed_indices = [
-                    index for index, task in enumerate(tasks)
-                    if statuses.get(str(task.get('note_id'))) == CHECKPOINT_STATUS_APPLIED
-                ]
-                errors = checkpoint_data.get('errors', {})
-                logger.info(f"[BATCH] Resuming batch: {len(completed_indices)} already done")
-        
-        all_note_ids = [task.get('note_id') for task in tasks]
-
-        # Submit only non-completed tasks
-        for idx, task in enumerate(tasks):
-            if idx in completed_indices:
-                continue  # Skip already done
-            
-            future = self.executor.submit(self._execute_single_task, task)
-            future_to_task[future] = (idx, task)
-        
-        # Collect results as they complete
-        for future in concurrent.futures.as_completed(future_to_task):
-            idx, task = future_to_task[future]
-            items_processed += 1
-            
-            try:
-                result = future.result()
-                results.append(result)
-                completed_indices.append(idx)
-                
-                # Callback for UI update
-                if on_progress:
-                    on_progress(task['note_id'], result)
-                
-                # Save checkpoint (note ids, not positions)
-                if enable_checkpoint:
-                    statuses = {
-                        str(all_note_ids[index]): CHECKPOINT_STATUS_GENERATED
-                        for index in completed_indices
-                        if 0 <= index < len(all_note_ids)
-                    }
-                    self.checkpoint.save(batch_name, all_note_ids, statuses, errors)
-                
-                # Lightweight GC
-                self.monitor.maybe_gc(items_processed)
-                
-            except Exception as e:
-                logger.error(f"[BATCH] Task {idx} failed: {e}")
-                errors[str(task.get('note_id'))] = str(e)
-                result = (task['note_id'], None, None, None, None, True)  # error marker
-                results.append(result)
-                if on_progress:
-                    on_progress(task['note_id'], result)
-        
-        # Cleanup checkpoint after success
-        if enable_checkpoint:
-            self.checkpoint.remove(batch_name)
-        
-        self.items_processed += items_processed
-        logger.info(f"[BATCH] Completed {items_processed} tasks. Cache: {self.cache.stats()}")
-        
-        return results
-    
-    def _execute_single_task(self, task: Dict) -> Tuple:
-        """
-        Execute single audio generation task in worker thread.
-        Returns: (note_id, source_text, processed_text, sound_file, full_filename, is_error)
-        """
-        note_id = task['note_id']
-        processed_text = task['processed_text']
-
-        # Check cache first
-        chosen_voice = task.get('chosen_voice')
-        voice_id_str = str(chosen_voice.voice_id) if chosen_voice else 'None'
-        cache_key = f"{processed_text}_{voice_id_str}"
-        cached = self.cache.get(cache_key)
-        if cached:
-            source_text, audio_filename, full_filename = cached
-            return (note_id, source_text, processed_text, audio_filename, full_filename, False)
-        
-        # Cache miss - generate audio (this is the expensive part - passed to caller)
-        # Caller (superfreetts.py) will call get_audio_file() 
-        # We just return placeholder; actual implementation in superfreetts
-        return None  # Caller handles generation
-    
-    def cache_result(self, processed_text: str, voice_id: str, source_text: str, audio_filename: str, full_filename: str):
-        """Cache successful audio generation result"""
-        cache_key = f"{processed_text}_{voice_id}"
-        self.cache.put(cache_key, (source_text, audio_filename, full_filename))
-    
     def shutdown(self, wait: bool = True):
         """Shutdown thread pool"""
         self._shutdown = True
@@ -660,7 +582,8 @@ class MultiEngineExecutor:
             'Kokoro': 1,
             'default': 4
         })
-        results = executor.execute(tasks, on_progress, batch_name)
+        pool = executor.get_executor('Piper')
+        future = pool.submit(work_function, task)
     """
     
     def __init__(self, engine_config: Dict[str, int] = None, cache_size_mb: int = 100):
@@ -723,134 +646,6 @@ class MultiEngineExecutor:
     def detect_service(self, task: Dict) -> str:
         """Detect TTS service name from task's selected voice."""
         return _detect_service_from_task(task)
-    
-    def execute(
-        self,
-        tasks: List[Dict],
-        on_progress: Callable,
-        batch_name: str = 'default',
-        enable_checkpoint: bool = True,
-    ) -> List[Tuple]:
-        """
-        Execute batch with per-engine worker pools.
-        
-        Args:
-            tasks: List of task dicts with 'batch' containing voice_selection
-            on_progress: Callback(note_id, result)
-            batch_name: Name for checkpoint
-            enable_checkpoint: Enable crash recovery
-            
-        Returns:
-            List of (note_id, source_text, processed_text, sound_file, full_filename, is_error)
-
-        .. deprecated::
-            The live batch pipeline drives generation through
-            ``batch_orchestrator._execute_unique_tasks_unified()``.  This method
-            is kept for backwards compatibility only; do not add call sites.
-        """
-        results = []
-        completed_indices = []
-        errors = {}
-        future_to_task = {}
-        
-        # Check for resumable checkpoint
-        checkpoint_data = None
-        if enable_checkpoint:
-            checkpoint_data = self.checkpoint.load(batch_name)
-            if checkpoint_data:
-                statuses = checkpoint_data.get('statuses', {})
-                completed_indices = [
-                    index for index, task in enumerate(tasks)
-                    if statuses.get(str(task.get('note_id'))) == CHECKPOINT_STATUS_APPLIED
-                ]
-                errors = checkpoint_data.get('errors', {})
-                logger.info(f"[BATCH] Resuming: {len(completed_indices)} already done")
-        
-        all_note_ids = [task.get('note_id') for task in tasks]
-
-        # Group tasks by service/engine for load analysis
-        tasks_by_service = {}
-        for idx, task in enumerate(tasks):
-            if idx in completed_indices:
-                continue
-            
-            service = self.detect_service(task)
-            if service not in tasks_by_service:
-                tasks_by_service[service] = []
-            tasks_by_service[service].append((idx, task))
-        
-        # Log distribution
-        for service, task_list in tasks_by_service.items():
-            executor = self.get_executor(service)
-            worker_count = executor._max_workers
-            logger.info(f"[BATCH] Engine {service}: {len(task_list)} tasks → {worker_count} workers")
-        
-        # Submit tasks to appropriate engine-specific executors
-        for idx, task in enumerate(tasks):
-            if idx in completed_indices:
-                continue
-            
-            service = self.detect_service(task)
-            executor = self.get_executor(service)
-            
-            # Submit to service-specific executor
-            future = executor.submit(self._execute_single_task, task)
-            future_to_task[future] = (idx, task, service)
-        
-        # Collect results as they complete (in any order, from any executor)
-        items_processed = 0
-        for future in concurrent.futures.as_completed(future_to_task):
-            idx, task, service = future_to_task[future]
-            items_processed += 1
-            
-            try:
-                result = future.result()
-                results.append(result)
-                completed_indices.append(idx)
-                
-                if on_progress:
-                    on_progress(task['note_id'], result)
-                
-                if enable_checkpoint:
-                    statuses = {
-                        str(all_note_ids[index]): CHECKPOINT_STATUS_GENERATED
-                        for index in completed_indices
-                        if 0 <= index < len(all_note_ids)
-                    }
-                    self.checkpoint.save(batch_name, all_note_ids, statuses, errors)
-                
-                self.monitor.maybe_gc(items_processed)
-                
-            except Exception as e:
-                logger.error(f"[BATCH] Task {idx} ({service}) failed: {e}")
-                errors[str(task.get('note_id'))] = str(e)
-                result = (task['note_id'], None, None, None, None, True)
-                results.append(result)
-                if on_progress:
-                    on_progress(task['note_id'], result)
-        
-        # Cleanup
-        if enable_checkpoint:
-            self.checkpoint.remove(batch_name)
-        
-        logger.info(f"[BATCH] Completed {items_processed} tasks via multi-engine executor. Distribution:")
-        for service in self.engine_config.keys():
-            if service != 'default':
-                executor = self.get_executor(service)
-                logger.info(f"  {service}: {executor._max_workers} workers, {self.cache.stats()}")
-        
-        return results
-    
-    def _execute_single_task(self, task: Dict) -> Tuple:
-        """Execute single task - implemented by caller via callback"""
-        # This is just placeholder - actual implementation is in superfreetts.py
-        # For now return None to indicate generation needed
-        return None
-    
-    def cache_result(self, processed_text: str, voice_id: str, source_text: str, audio_filename: str, full_filename: str):
-        """Cache result"""
-        cache_key = f"{processed_text}_{voice_id}"
-        self.cache.put(cache_key, (source_text, audio_filename, full_filename))
     
     def shutdown(self, wait: bool = True):
         """Shutdown all executors"""

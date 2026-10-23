@@ -496,6 +496,7 @@ class BatchPreview(component_common.ComponentBase):
         backup_guard.disable_backups()
         self.apply_to_notes_batch_started = True
         self.failed_note_ids_to_tag = []
+        self._added_media_files = set()
         self.batch_run_mode = 'applying'
         self.batch_status.begin()
         self.batch_status.total_unique_tasks = len(self.generated_batch_results)
@@ -553,7 +554,8 @@ class BatchPreview(component_common.ComponentBase):
             undo_id = col.add_custom_undo_entry(constants.UNDO_ENTRY_NAME)
             try:
                 return self.hypertts.apply_generated_batch_audio_chunk(
-                    chunk, self.generated_batch_model, self.batch_status, col
+                    chunk, self.generated_batch_model, self.batch_status, col,
+                    added_media_files=getattr(self, '_added_media_files', None),
                 )
             finally:
                 try:

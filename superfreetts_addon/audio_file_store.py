@@ -4,6 +4,8 @@ import json
 import os
 import re
 import tempfile
+import threading
+from collections import OrderedDict
 from typing import Any, Dict, Optional
 
 from . import logging_utils
@@ -152,9 +154,56 @@ def serialize_voice_id(voice_id: voice_module.TtsVoiceId_v3) -> str:
 
 
 class AudioFileStore:
+    # Magic-byte validation is cheap per file but is repeated for every note
+    # that shares a content-addressed file.  Remembering recently validated
+    # paths turns the hot path into a single os.path.exists() + size check.
+    MAX_VERIFIED_ENTRIES = 4096
+
     def __init__(self, anki_utils, get_preferences):
         self.anki_utils = anki_utils
         self.get_preferences = get_preferences
+        self._verified_files = OrderedDict()
+        self._verified_lock = threading.RLock()
+
+    def _is_verified(self, full_filename):
+        with self._verified_lock:
+            if full_filename not in self._verified_files:
+                return False
+            self._verified_files.move_to_end(full_filename)
+            return True
+
+    def _remember_verified(self, full_filename):
+        with self._verified_lock:
+            self._verified_files[full_filename] = True
+            self._verified_files.move_to_end(full_filename)
+            while len(self._verified_files) > self.MAX_VERIFIED_ENTRIES:
+                self._verified_files.popitem(last=False)
+
+    def _forget_verified(self, full_filename):
+        with self._verified_lock:
+            self._verified_files.pop(full_filename, None)
+
+    def clear_verified_cache(self):
+        """Drop remembered magic-byte validations (called after cleanup)."""
+        with self._verified_lock:
+            self._verified_files.clear()
+
+    def remove_cached_file_if_unused(self, full_filename):
+        """Remove a cache file unless a live cache hit has claimed it.
+
+        Cleanup runs on a background thread.  Cache reads and writes mark a
+        path verified while holding this lock, so cleanup cannot delete a file
+        that a batch has just selected or a writer has just published.  The
+        caller is still responsible for checking the file's age.
+        """
+        with self._verified_lock:
+            if full_filename in self._verified_files:
+                return False
+            try:
+                os.remove(full_filename)
+                return True
+            except FileNotFoundError:
+                return False
 
     def resolve_audio_format(self, voice_options=None):
         prefs = self.get_preferences()
@@ -220,27 +269,32 @@ class AudioFileStore:
                 continue
             seen.add(extension)
             full_filename = self.get_full_audio_file_name(hash_str, audio_format)
-            if not os.path.exists(full_filename) or os.path.getsize(full_filename) == 0:
-                continue
-            if not self._file_matches_extension(full_filename, audio_format):
-                # Left over from an older build that named files after the
-                # requested format instead of the bytes it wrote.
-                _log_mismatch_once(
-                    "stale-cache",
-                    "[FORMAT] ignoring cache files whose content does not match "
-                    "their extension (written by an older build); they are "
-                    "deleted and regenerated. This message is logged once.",
+            with self._verified_lock:
+                if not os.path.exists(full_filename) or os.path.getsize(full_filename) == 0:
+                    self._forget_verified(full_filename)
+                    continue
+                if not self._is_verified(full_filename):
+                    if not self._file_matches_extension(full_filename, audio_format):
+                        # Left over from an older build that named files after the
+                        # requested format instead of the bytes it wrote.
+                        _log_mismatch_once(
+                            "stale-cache",
+                            "[FORMAT] ignoring cache files whose content does not match "
+                            "their extension (written by an older build); they are "
+                            "deleted and regenerated. This message is logged once.",
+                        )
+                        self._forget_verified(full_filename)
+                        try:
+                            os.remove(full_filename)
+                        except OSError:
+                            pass
+                        continue
+                    self._remember_verified(full_filename)
+                return AudioFileResult(
+                    full_filename,
+                    self.get_audio_filename(hash_str, audio_format),
+                    True,
                 )
-                try:
-                    os.remove(full_filename)
-                except OSError:
-                    pass
-                continue
-            return AudioFileResult(
-                full_filename,
-                self.get_audio_filename(hash_str, audio_format),
-                True,
-            )
         return None
 
     def get_file_result(self, request_key, cache_hit=False, audio_format=None):
@@ -274,9 +328,16 @@ class AudioFileStore:
             with os.fdopen(fd, "wb") as f:
                 f.write(audio_data)
                 f.flush()
-                os.fsync(f.fileno())
-            os.replace(temp_path, result.full_filename)
+                # No per-file fsync: os.replace() already publishes the complete
+                # file atomically.  BatchCheckpoint keeps its fsync for crash
+                # recovery, and a 0-byte file is detected and regenerated by
+                # get_cached_file() on the next run.  A 500-note batch used to
+                # block on 500 disk flushes here.
+            with self._verified_lock:
+                os.replace(temp_path, result.full_filename)
+                self._remember_verified(result.full_filename)
         except Exception:
+            self._forget_verified(result.full_filename)
             try:
                 os.remove(temp_path)
             except OSError:

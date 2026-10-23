@@ -76,6 +76,56 @@ def test_atomic_write_creates_final_file(tmp_path):
         assert f.read() == b"audio-bytes"
 
 
+def test_verified_cache_skips_repeated_magic_byte_reads(tmp_path, monkeypatch):
+    store = make_store(tmp_path)
+    request_key = store.build_request_key("hello", make_voice_id(), {})
+    result = store.get_file_result(request_key)
+    os.makedirs(os.path.dirname(result.full_filename), exist_ok=True)
+    with open(result.full_filename, "wb") as f:
+        f.write(b"ID3" + b"0" * 32)
+
+    reads = []
+    original = audio_file_store._read_magic_bytes
+
+    def counting_read(path, count=12):
+        reads.append(path)
+        return original(path, count)
+
+    monkeypatch.setattr(audio_file_store, "_read_magic_bytes", counting_read)
+
+    assert store.get_cached_file(request_key) is not None
+    assert store.get_cached_file(request_key) is not None
+    assert len(reads) == 1
+
+    store.clear_verified_cache()
+    assert store.get_cached_file(request_key) is not None
+    assert len(reads) == 2
+
+
+def test_cleanup_removal_respects_verified_cache(tmp_path):
+    store = make_store(tmp_path)
+    request_key = store.build_request_key("hello", make_voice_id(), {})
+    result = store.write_audio_file_atomic(request_key, b"ID3" + b"0" * 32)
+
+    assert store.remove_cached_file_if_unused(result.full_filename) is False
+    assert os.path.exists(result.full_filename)
+
+    store.clear_verified_cache()
+    assert store.remove_cached_file_if_unused(result.full_filename) is True
+    assert not os.path.exists(result.full_filename)
+
+
+def test_verified_cache_is_bounded(tmp_path, monkeypatch):
+    store = make_store(tmp_path)
+    store.MAX_VERIFIED_ENTRIES = 2
+    for index in range(3):
+        store._remember_verified(f"/tmp/file-{index}.wav")
+        store._remember_verified(f"/tmp/file-{index}.wav")
+
+    assert len(store._verified_files) == 2
+    assert "/tmp/file-0.wav" not in store._verified_files
+
+
 def test_path_generation_is_deterministic(tmp_path):
     store = make_store(tmp_path)
     voice_id1 = make_voice_id(name="Jenny", service="EdgeTTS")

@@ -3,6 +3,7 @@
 import os
 import copy
 import datetime
+import threading
 import time
 from typing import List, Optional, Any
 
@@ -64,8 +65,12 @@ class SuperFreeTTS():
         self.service_manager = service_manager
         self.error_manager = errors.ErrorManager(self.anki_utils)
         self.latest_saved_batch_name: Optional[str] = None
-        self.text_processing_cache = {}  # Simple dict for processed text caching
+        # Processed-text memoization is capped so a 20k-note session cannot
+        # grow this mapping without bound.
+        self.text_processing_cache = batch_executor.BoundedLRUDict(max_entries=2048)
         self._shutdown = False
+        self._cleanup_lock = threading.Lock()
+        self._cleanup_thread = None
 
         from .tts_orchestrator import TTSOrchestrator
         from .ui_controller import UIController
@@ -116,7 +121,23 @@ class SuperFreeTTS():
         # Maintenance: migration, audio registration, cache cleanup
         self.perform_config_migration()
         self.config_register_added_audio()
-        self.cleanup_user_files()
+        self.schedule_cleanup_user_files()
+
+    def schedule_cleanup_user_files(self):
+        """Run cache retention on a daemon thread instead of the UI thread.
+
+        Large ``user_files`` directories used to block Anki startup while
+        ``scandir``/``stat``/``remove`` ran synchronously.  The synchronous
+        ``cleanup_user_files()`` remains available for tests and manual calls.
+        """
+        thread = threading.Thread(
+            target=self.cleanup_user_files,
+            name='sftts-cache-cleanup',
+            daemon=True,
+        )
+        self._cleanup_thread = thread
+        thread.start()
+        return thread
 
     def cleanup_user_files(self) -> None:
         """
@@ -128,53 +149,77 @@ class SuperFreeTTS():
         survive a cleanup pass, however old it is.
 
         Notes:
-        - Runs quickly and defensively on the main thread.
+        - Scheduled on a daemon thread during startup, but still safe to call
+          synchronously (unit tests and manual maintenance do).
         - Only touches the addon's own user_files directory.
         - Uses os.scandir for better performance on large directories.
+        - Files younger than 60 seconds are never deleted, which avoids a race
+          with audio being written by an in-flight batch.
         """
-        try:
-            prefs = self.get_preferences()
-            if not prefs.cache_enabled:
-                return
+        lock = getattr(self, '_cleanup_lock', None)
+        if lock is None:
+            lock = threading.Lock()
+            self._cleanup_lock = lock
+        with lock:
+            try:
+                prefs = self.get_preferences()
+                if not prefs.cache_enabled:
+                    return
 
-            retention_days = max(0, prefs.cache_retention_days)
-            if retention_days == 0:
-                return
+                retention_days = max(0, prefs.cache_retention_days)
+                if retention_days == 0:
+                    return
 
-            cutoff_time = datetime.datetime.now().timestamp() - (retention_days * 86400)
+                now_ts = datetime.datetime.now().timestamp()
+                cutoff_time = now_ts - (retention_days * 86400)
+                recent_cutoff = now_ts - 60
 
-            user_files_dir = os.path.join(self.anki_utils.get_addon_dir(), 'user_files')
-            if not os.path.isdir(user_files_dir):
-                return
+                user_files_dir = os.path.join(self.anki_utils.get_addon_dir(), 'user_files')
+                if not os.path.isdir(user_files_dir):
+                    return
 
-            logger.info(f'[CACHE] Starting cache cleanup. Retention: {retention_days} days.')
-            deleted = 0
-            scanned = 0
-            skipped = 0
+                logger.info(f'[CACHE] Starting cache cleanup. Retention: {retention_days} days.')
+                deleted = 0
+                scanned = 0
+                skipped = 0
+                audio_store = getattr(self, 'audio_store', None)
 
-            # Use scandir for better performance and to avoid extra stat calls
-            with os.scandir(user_files_dir) as it:
-                for entry in it:
-                    if not entry.is_file():
-                        continue
-                    scanned += 1
-                    if not audio_file_store.is_cache_audio_filename(entry.name):
-                        skipped += 1
-                        continue
-                    try:
-                        file_mtime = entry.stat().st_mtime
-                        if file_mtime < cutoff_time:
-                            os.remove(entry.path)
-                            deleted += 1
-                    except OSError as e:
-                        logger.warning(f'[CACHE] Error deleting {entry.path}: {e}')
+                # Use scandir for better performance and to avoid extra stat calls
+                with os.scandir(user_files_dir) as it:
+                    for entry in it:
+                        if getattr(self, '_shutdown', False):
+                            logger.info('[CACHE] Cleanup interrupted by profile close.')
+                            break
+                        if not entry.is_file():
+                            continue
+                        scanned += 1
+                        if not audio_file_store.is_cache_audio_filename(entry.name):
+                            skipped += 1
+                            continue
+                        try:
+                            file_mtime = entry.stat().st_mtime
+                            if file_mtime < cutoff_time and file_mtime < recent_cutoff:
+                                if isinstance(audio_store, audio_file_store.AudioFileStore):
+                                    if audio_store.remove_cached_file_if_unused(entry.path):
+                                        deleted += 1
+                                    else:
+                                        skipped += 1
+                                else:
+                                    os.remove(entry.path)
+                                    deleted += 1
+                        except OSError as e:
+                            logger.warning(f'[CACHE] Error deleting {entry.path}: {e}')
 
-            logger.info(
-                f'[CACHE] Cache cleanup finished. Scanned {scanned} entries, '
-                f'deleted {deleted} old cache files, kept {skipped} non-cache files.'
-            )
-        except Exception as e:
-            logger.error(f'[CACHE] Error during cache cleanup: {e}')
+                clear_verified = getattr(audio_store, 'clear_verified_cache', None)
+                if callable(clear_verified):
+                    clear_verified()
+
+                logger.info(
+                    f'[CACHE] Cache cleanup finished. Scanned {scanned} entries, '
+                    f'deleted {deleted} old cache files, kept {skipped} non-cache/protected files.'
+                )
+            except Exception as e:
+                logger.error(f'[CACHE] Error during cache cleanup: {e}')
 
     def _set_batch_status_with_ui_refresh(self, batch_status, message, phase=None):
         """Set stable batch phase/status; UI refresh is scheduled by BatchStatus."""
@@ -195,8 +240,8 @@ class SuperFreeTTS():
     def apply_generated_batch_audio(self, generated_results, batch, batch_status, anki_collection):
         return self.batch_orchestrator.apply_generated_batch_audio(generated_results, batch, batch_status, anki_collection)
 
-    def apply_generated_batch_audio_chunk(self, generated_results_chunk, batch, batch_status, anki_collection):
-        return self.batch_orchestrator.apply_generated_batch_audio_chunk(generated_results_chunk, batch, batch_status, anki_collection)
+    def apply_generated_batch_audio_chunk(self, generated_results_chunk, batch, batch_status, anki_collection, added_media_files=None):
+        return self.batch_orchestrator.apply_generated_batch_audio_chunk(generated_results_chunk, batch, batch_status, anki_collection, added_media_files=added_media_files)
 
     def _collect_batch_duplicates(self, tasks):
         return self.batch_orchestrator._collect_batch_duplicates(tasks)
@@ -221,80 +266,129 @@ class SuperFreeTTS():
     def _generate_audio_batch_task(self, chunk):
         first_item = chunk[0][1]
         batch_cfg = first_item['batch']
-        chosen_voice = first_item.get('chosen_voice')
-        
-        # 1. Check individual items for existing cache files to avoid redundant calling
+
+        # 1. Check individual items for existing cache files to avoid redundant calling.
+        # Each item keeps its OWN voice: sequence/random presets assign a different
+        # voice per note, so the request key must come from the item's own voice,
+        # never from the first item in the chunk.
         results = [None] * len(chunk)
         missing_indices = []
-        missing_texts = []
-        
-        voice_id = chosen_voice.voice_id if chosen_voice else None
-        voice_options = chosen_voice.options if chosen_voice else {}
-        
+
         for i, (dedup_key, task_data, _) in enumerate(chunk):
             proc_text = task_data['processed_text']
-            request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
-            cached_file = self.audio_store.get_cached_file(request_key)
+            if isinstance(dedup_key, audio_file_store.AudioRequestKey):
+                request_key = dedup_key
+            else:
+                item_voice = task_data.get('chosen_voice')
+                if item_voice is None:
+                    request_key = None
+                else:
+                    request_key = self.audio_store.build_request_key(proc_text, item_voice.voice_id, item_voice.options)
+            cached_file = self.audio_store.get_cached_file(request_key) if request_key is not None else None
 
             if cached_file is not None:
                 results[i] = ((task_data['source_text'], proc_text, cached_file.audio_filename, cached_file.full_filename), None)
             else:
                 missing_indices.append(i)
-                missing_texts.append(proc_text)
-        
-        # 3. Call batch API for missing items
-        if missing_texts:
-            service_error = None
-            try:
-                # Locate actual voice object
-                voice = self.service_manager.locate_voice(voice_id)
-                batch_call_start = time.time()
-                audio_datas = self.service_manager.get_tts_audio_batch(missing_texts, voice, voice_options)
-                batch_call_elapsed = time.time() - batch_call_start
-                # Spread the measured wall-clock time across generated files
-                per_file_elapsed = batch_call_elapsed / max(len(missing_texts), 1)
-                
-                for i, idx in enumerate(missing_indices):
-                    audio_data = audio_datas[i] if i < len(audio_datas) else None
-                    task_data = chunk[idx][1]
-                    if audio_data:
-                        proc_text = task_data['processed_text']
-                        dedup_key = chunk[idx][0]
-                        request_key = dedup_key if isinstance(dedup_key, audio_file_store.AudioRequestKey) else self.audio_store.build_request_key(proc_text, voice_id, voice_options)
-                        file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
-                        
-                        # Cache in memory
-                        self.executor.cache_result(proc_text, str(request_key), task_data['source_text'], file_result.audio_filename, file_result.full_filename)
-                        results[idx] = ((task_data['source_text'], proc_text, file_result.audio_filename, file_result.full_filename), None)
-                        try:
-                            service_name = getattr(voice_id, 'service', 'unknown')
-                            self.usage_tracker.record_file_generated(
-                                task_data.get('audio_request_context'), service_name, len(proc_text), per_file_elapsed
-                            )
-                        except Exception as usage_error:
-                            logger.debug(f"[USAGE] batch record failed: {usage_error}")
-                    else:
+
+        # 2. Group the cache misses by voice and call the batch API once per
+        # voice. The service batch API takes a single voice for the whole call,
+        # so sending mixed voices in one call generated every item with the
+        # first item's voice (and poisoned the disk cache: the wrong audio was
+        # stored under the other items' correct keys, which is why re-running
+        # the batch and later previews kept playing the wrong voice).
+        if missing_indices:
+            voice_groups = {}
+            for idx in missing_indices:
+                item_voice = chunk[idx][1].get('chosen_voice')
+                voice_groups.setdefault(self._batch_task_voice_key(item_voice), []).append(idx)
+
+            for group_indices in voice_groups.values():
+                group_task = chunk[group_indices[0]][1]
+                group_voice = group_task.get('chosen_voice')
+                if group_voice is None:
+                    group_error = Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language()))
+                    for idx in group_indices:
+                        task_data = chunk[idx][1]
                         if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
                             results[idx] = self._generate_audio_with_priority_fallback(task_data)
                         else:
-                            results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
-            except Exception as e:
-                logger.error(f"[BATCH] Service batch call failed: {e}")
-                service_error = e
-            
-            # If service call failed, try fallback for priority mode or mark missing items with that error
-            if service_error:
-                for idx in missing_indices:
-                    task_data = chunk[idx][1]
-                    if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
-                        results[idx] = self._generate_audio_with_priority_fallback(task_data)
-                    else:
-                        results[idx] = (None, service_error)
+                            results[idx] = (None, group_error)
+                    continue
+                group_voice_id = group_voice.voice_id
+                group_options = group_voice.options
+                group_texts = [chunk[idx][1]['processed_text'] for idx in group_indices]
+                service_error = None
+                try:
+                    # Locate actual voice object
+                    voice = self.service_manager.locate_voice(group_voice_id)
+                    batch_call_start = time.time()
+                    audio_datas = self.service_manager.get_tts_audio_batch(group_texts, voice, group_options)
+                    batch_call_elapsed = time.time() - batch_call_start
+                    # Spread the measured wall-clock time across generated files
+                    per_file_elapsed = batch_call_elapsed / max(len(group_texts), 1)
+
+                    for i, idx in enumerate(group_indices):
+                        audio_data = audio_datas[i] if i < len(audio_datas) else None
+                        task_data = chunk[idx][1]
+                        if audio_data:
+                            proc_text = task_data['processed_text']
+                            dedup_key = chunk[idx][0]
+                            if isinstance(dedup_key, audio_file_store.AudioRequestKey):
+                                request_key = dedup_key
+                            else:
+                                request_key = self.audio_store.build_request_key(proc_text, group_voice_id, group_options)
+                            file_result = self.audio_store.write_audio_file_atomic(request_key, audio_data)
+                            results[idx] = ((task_data['source_text'], proc_text, file_result.audio_filename, file_result.full_filename), None)
+                            try:
+                                service_name = getattr(group_voice_id, 'service', 'unknown')
+                                self.usage_tracker.record_file_generated(
+                                    task_data.get('audio_request_context'), service_name, len(proc_text), per_file_elapsed
+                                )
+                            except Exception as usage_error:
+                                logger.debug(f"[USAGE] batch record failed: {usage_error}")
+                        else:
+                            if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                                results[idx] = self._generate_audio_with_priority_fallback(task_data)
+                            else:
+                                results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
+                except Exception as e:
+                    logger.error(f"[BATCH] Service batch call failed: {e}")
+                    service_error = e
+
+                # If service call failed, try fallback for priority mode or mark group items with that error
+                if service_error:
+                    for idx in group_indices:
+                        task_data = chunk[idx][1]
+                        if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
+                            results[idx] = self._generate_audio_with_priority_fallback(task_data)
+                        else:
+                            results[idx] = (None, service_error)
         for i in range(len(results)):
             if results[i] is None:
                 results[i] = (None, Exception("Audio generation was skipped or interrupted"))
-                
+
         return results
+
+    @staticmethod
+    def _batch_task_voice_key(chosen_voice):
+        """Group key so one service batch call never mixes voices."""
+        if chosen_voice is None:
+            return ('__no_voice__',)
+        try:
+            voice_id = chosen_voice.voice_id
+            options = chosen_voice.options
+            if hasattr(voice_id, 'voice_key'):
+                voice_part = (getattr(voice_id, 'service', None), repr(voice_id.voice_key))
+            else:
+                voice_part = (getattr(voice_id, 'service', None), repr(voice_id))
+            if isinstance(options, dict):
+                options_part = repr(sorted(options.items(), key=lambda kv: str(kv[0])))
+            else:
+                options_part = repr(options)
+            return (voice_part, options_part)
+        except Exception:
+            return ('__voice_%d__' % id(chosen_voice),)
 
     def _generate_audio_with_priority_fallback(self, task_data):
         """Try remaining priority voices one by one for a single batch task."""
@@ -314,14 +408,12 @@ class SuperFreeTTS():
         while len(priority_voice_list) > 0:
             voice_with_options = self.choose_voice(voice_selection, priority_voice_list)
             try:
-                request_key = self.audio_store.build_request_key(processed_text, voice_with_options.voice_id, voice_with_options.options)
                 full_filename, audio_filename = self.generate_audio_write_file(
                     processed_text,
                     voice_with_options.voice_id,
                     voice_with_options.options,
                     task_data['audio_request_context'],
                 )
-                self.executor.cache_result(processed_text, str(request_key), source_text, audio_filename, full_filename)
                 return ((source_text, processed_text, audio_filename, full_filename), None)
             except errors.AudioNotFoundError:
                 continue
@@ -359,7 +451,7 @@ class SuperFreeTTS():
     # Note update helpers — delegated to note_audio_updater
     # =========================================================================
 
-    def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True):
+    def _update_note_with_audio(self, note, batch, source_text, sound_file, full_filename, anki_collection, update_collection=True, added_media_files=None):
         note_audio_updater.update_note_with_audio(
             self.anki_utils,
             note,
@@ -369,6 +461,7 @@ class SuperFreeTTS():
             full_filename,
             anki_collection,
             update_collection=update_collection,
+            added_media_files=added_media_files,
         )
 
     def ensure_note_tag(self, note, tag_name: str) -> bool:

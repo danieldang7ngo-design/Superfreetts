@@ -69,6 +69,30 @@ class TestUnifiedCache:
         assert errors == []
         assert cache.stats()["entries"] <= 200
 
+class TestBoundedLRUDict:
+    def test_evicts_oldest_entry(self):
+        cache = batch_executor.BoundedLRUDict(max_entries=2)
+        cache["a"] = 1
+        cache["b"] = 2
+        cache["a"]  # refresh a
+        cache["c"] = 3
+
+        assert "a" in cache
+        assert "b" not in cache
+        assert cache["c"] == 3
+        assert len(cache) == 2
+
+    def test_get_and_clear(self):
+        cache = batch_executor.BoundedLRUDict(max_entries=2)
+        cache["a"] = 1
+
+        assert cache.get("a") == 1
+        assert cache.get("missing", "fallback") == "fallback"
+
+        cache.clear()
+        assert len(cache) == 0
+
+
 class TestSimpleResourceMonitor:
     def test_ram_tracking(self):
         monitor = batch_executor.SimpleResourceMonitor()
@@ -177,29 +201,6 @@ class TestUnifiedBatchExecutor:
             assert future.result(timeout=2) == 42
         finally:
             executor.shutdown()
-
-    def test_execute_basic(self):
-        executor = batch_executor.UnifiedBatchExecutor(max_workers=1)
-        
-        # Mock task
-        task = {
-            'note_id': 123,
-            'processed_text': 'hello',
-            'batch': MagicMock(),
-            'audio_request_context': MagicMock(),
-            'chosen_voice': MagicMock()
-        }
-        
-        # We need to mock _execute_single_task to return a result
-        # because the base implementation in batch_executor.py returns None
-        with patch.object(executor, '_execute_single_task', return_value=(123, 'hello', 'hello', 'f.mp3', '/p/f.mp3', False)):
-            on_progress = MagicMock()
-            results = executor.execute([task], on_progress=on_progress, enable_checkpoint=False)
-            
-            assert len(results) == 1
-            assert results[0][0] == 123
-            on_progress.assert_called_once()
-            assert executor.items_processed == 1
 
 class TestBoundedThreadPoolExecutor:
     def test_concurrency_limit(self):

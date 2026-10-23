@@ -292,6 +292,50 @@ class TTSOrchestrator:
 
         return engine_config
 
+    def refresh_engine_pools_for_current_ram(self):
+        """Re-evaluate the RAM/CPU budget just before a batch starts.
+
+        Service pools are normally sized when the add-on starts or Settings
+        are saved.  After a long Anki session the machine's available RAM can
+        be much lower, so a large batch must not spawn the old worker count.
+        Returns the freshly computed engine config (or None on failure).
+        """
+        try:
+            configuration = self.stts.get_configuration()
+            service_config_map = configuration.get_service_config()
+            enabled_services = configuration.get_service_enabled_map()
+            engine_config = self.build_engine_config(
+                service_config_map,
+                enabled_services=enabled_services,
+            )
+        except Exception as e:
+            logger.warning(f'[RAM] Pre-batch concurrency refresh failed: {e}')
+            return None
+
+        current_executor = getattr(self, 'executor', None)
+        current_config = getattr(current_executor, 'engine_config', None)
+        if current_executor is not None and current_config == engine_config:
+            return engine_config
+
+        try:
+            new_executor = batch_executor.get_multi_engine_executor(
+                engine_config=engine_config
+            )
+        except Exception as e:
+            logger.warning(f'[RAM] Could not rebuild batch executor: {e}')
+            return None
+
+        self.executor = new_executor
+        try:
+            self.stts.executor = new_executor
+        except Exception:
+            pass
+        logger.info(
+            f'[RAM] Pre-batch concurrency updated: '
+            f'{current_config or {}} -> {engine_config}'
+        )
+        return engine_config
+
     def _local_thread_counts(self, service_config_map: dict) -> Dict[str, int]:
         """Read ``num_threads`` per local engine pool (the engine default is 1)."""
         counts = {}

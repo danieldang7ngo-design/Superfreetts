@@ -164,7 +164,7 @@ def test_preview_apply_skips_applied_and_removes_checkpoint(tmp_path):
 
     seen = []
 
-    def fake_apply(chunk, batch_model, batch_status, col):
+    def fake_apply(chunk, batch_model, batch_status, col, added_media_files=None):
         seen.extend(row[0] for row in chunk)
         return len(chunk)
 
@@ -195,7 +195,7 @@ def test_preview_cancel_keeps_checkpoint_for_resume(tmp_path):
     preview.generated_batch_results = fake_results(note_ids)
     preview.batch_status.begin()
 
-    def fake_apply_cancel_after_first(chunk, batch_model, batch_status, col):
+    def fake_apply_cancel_after_first(chunk, batch_model, batch_status, col, added_media_files=None):
         # Simulate the user pressing Stop right after the first chunk commits.
         batch_status.stop()
         return len(chunk)

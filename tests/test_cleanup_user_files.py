@@ -7,11 +7,12 @@ window, including usage_log.json and the debug log.
 
 import os
 import time
+import threading
 from unittest.mock import MagicMock
 
 import pytest
 
-from superfreetts_addon import config_models, superfreetts
+from superfreetts_addon import audio_file_store, config_models, superfreetts, voice
 
 
 def make_stts(tmp_path, retention_days=30, cache_enabled=True):
@@ -106,3 +107,62 @@ def test_cleanup_ignores_subdirectories_and_odd_cache_names(tmp_path):
 
     assert short_hash.exists()
     assert nested_cache.exists()
+
+
+@pytest.mark.unit
+def test_scheduled_cleanup_runs_on_daemon_thread(tmp_path, monkeypatch):
+    stts = make_stts(tmp_path)
+    called = threading.Event()
+    monkeypatch.setattr(stts, "cleanup_user_files", called.set)
+
+    thread = stts.schedule_cleanup_user_files()
+
+    assert thread.daemon is True
+    assert called.wait(2.0), "scheduled cleanup did not run"
+    assert stts._cleanup_thread is thread
+
+
+@pytest.mark.unit
+def test_cleanup_stops_when_profile_is_closing(tmp_path):
+    stts = make_stts(tmp_path)
+    stts._shutdown = True
+    cache_file = tmp_path / "user_files" / ("superfreetts-" + "a" * 56 + ".wav")
+    cache_file.write_bytes(b"x")
+    age_file(cache_file)
+
+    stts.cleanup_user_files()
+
+    assert cache_file.exists()
+
+
+@pytest.mark.unit
+def test_cleanup_clears_audio_store_verified_cache(tmp_path):
+    stts = make_stts(tmp_path)
+    audio_store = MagicMock()
+    stts.audio_store = audio_store
+    cache_file = tmp_path / "user_files" / ("superfreetts-" + "b" * 56 + ".wav")
+    cache_file.write_bytes(b"x")
+    age_file(cache_file)
+
+    stts.cleanup_user_files()
+
+    assert not cache_file.exists()
+    audio_store.clear_verified_cache.assert_called_once()
+
+
+@pytest.mark.unit
+def test_cleanup_does_not_delete_file_selected_by_live_cache(tmp_path):
+    stts = make_stts(tmp_path)
+    user_files = tmp_path / "user_files"
+    stts.anki_utils.get_user_files_dir.return_value = str(user_files)
+    store = audio_file_store.AudioFileStore(stts.anki_utils, stts.get_preferences)
+    stts.audio_store = store
+
+    voice_id = voice.TtsVoiceId_v3({"name": "Jenny"}, "EdgeTTS")
+    request_key = store.build_request_key("hello", voice_id, {})
+    result = store.write_audio_file_atomic(request_key, b"ID3" + b"0" * 32)
+    age_file(result.full_filename)
+
+    stts.cleanup_user_files()
+
+    assert os.path.exists(result.full_filename)
