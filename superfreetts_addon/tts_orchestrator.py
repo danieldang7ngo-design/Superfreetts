@@ -42,6 +42,15 @@ RAM_PER_PROCESS_MB_ESTIMATE = {
 # a warning when they exceed the RAM-safe estimate.
 KOKORO_MAX_AUTO_WORKERS = 2
 
+SERVICE_POOL_MAP = {
+    'PiperTTS': 'Piper',
+    'KokoroTTS': 'Kokoro',
+    'EdgeTTS': 'EdgeTTS',
+    'MmsTTS': 'MMS',
+    'SupertonicTTS': 'Supertonic',
+}
+
+
 class TTSOrchestrator:
     def __init__(self, superfreetts):
         self.stts = superfreetts
@@ -275,8 +284,100 @@ class TTSOrchestrator:
                 concurrency = allocation.get(pool_name, 1)
 
             engine_config[pool_name] = max(1, concurrency)
-            self.auto_scale_pool(pool_name, engine_config[pool_name])
 
+        self._enforce_thread_budget(engine_config, service_config_map, manual_workers, enabled_pools)
+
+        for pool_name, concurrency in engine_config.items():
+            self.auto_scale_pool(pool_name, concurrency)
+
+        return engine_config
+
+    def _local_thread_counts(self, service_config_map: dict) -> Dict[str, int]:
+        """Read ``num_threads`` per local engine pool (the engine default is 1)."""
+        counts = {}
+        for service_name, pool_name in SERVICE_POOL_MAP.items():
+            if pool_name == 'EdgeTTS' or pool_name in counts:
+                continue
+            service_config = service_config_map.get(service_name, {}) or {}
+            try:
+                threads = int(service_config.get('num_threads', 1) or 1)
+            except (TypeError, ValueError):
+                threads = 1
+            counts[pool_name] = max(1, threads)
+        return counts
+
+    def _enforce_thread_budget(self, engine_config: dict, service_config_map: dict, manual_workers: Dict[str, int], enabled_pools=None) -> dict:
+        """Keep sum(workers x threads) within the real logical CPU count.
+
+        The budget is the machine's logical CPU count, not ``get_cpu_threads()``
+        (which is a default worker count capped at 8).  Automatic allocations
+        are lowered, largest product first; explicit ``concurrency_workers``
+        overrides are preserved and only warned about.
+        """
+        thread_counts = self._local_thread_counts(service_config_map)
+        # Disabled engines keep a 1-worker pool but never run, so they do not
+        # consume the budget (same rule as the shared RAM allocator).
+        active_pools = set(enabled_pools) if enabled_pools is not None else set(engine_config)
+        active_workers = {
+            pool: workers for pool, workers in engine_config.items()
+            if pool in active_pools or pool in manual_workers
+        }
+        budget = system_utils.compute_thread_budget(active_workers, thread_counts)
+
+        pool_summary = {pool: info['threads_total'] for pool, info in budget['per_pool'].items()}
+        if not budget['over_budget']:
+            logger.info(
+                f"[THREAD-BUDGET] total_threads={budget['total_threads']} "
+                f"logical_cpus={budget['cpu_count']} per_pool={pool_summary}"
+            )
+            return engine_config
+
+        logger.warning(
+            f"[THREAD-CAP] sum(workers x threads)={budget['total_threads']} exceeds "
+            f"{budget['cpu_count']} logical CPUs; lowering automatic worker counts. "
+            f"Set num_threads/concurrency_workers in Advanced settings to override."
+        )
+
+        auto_pools = [
+            pool_name for pool_name, info in budget['per_pool'].items()
+            if pool_name not in manual_workers and info['workers'] > 1
+        ]
+        while budget['total_threads'] > budget['cpu_count'] and auto_pools:
+            pool_name = max(
+                auto_pools,
+                key=lambda name: engine_config.get(name, 1) * thread_counts.get(name, 1),
+            )
+            new_workers = max(1, engine_config.get(pool_name, 1) - 1)
+            logger.info(
+                f"[THREAD-CAP] {pool_name}: {engine_config.get(pool_name, 1)} -> {new_workers} "
+                f"workers (threads={thread_counts.get(pool_name, 1)})"
+            )
+            engine_config[pool_name] = new_workers
+            auto_pools = [name for name in auto_pools if engine_config.get(name, 1) > 1]
+            active_workers = {
+                pool: workers for pool, workers in engine_config.items()
+                if pool in active_pools or pool in manual_workers
+            }
+            budget = system_utils.compute_thread_budget(active_workers, thread_counts)
+
+        if budget['total_threads'] > budget['cpu_count']:
+            manual_detail = ', '.join(
+                f"{pool}={engine_config.get(pool, 1)}x{thread_counts.get(pool, 1)}"
+                for pool in active_workers
+                if pool in manual_workers
+            ) or 'none'
+            logger.warning(
+                f"[THREAD-CAP] still {budget['total_threads']} threads > "
+                f"{budget['cpu_count']} logical CPUs after lowering automatic pools; "
+                f"manual overrides are kept ({manual_detail}). Lower num_threads or "
+                f"concurrency_workers if the machine feels sluggish."
+            )
+
+        pool_summary = {pool: info['threads_total'] for pool, info in budget['per_pool'].items()}
+        logger.info(
+            f"[THREAD-BUDGET] total_threads={budget['total_threads']} "
+            f"logical_cpus={budget['cpu_count']} per_pool={pool_summary}"
+        )
         return engine_config
 
     def auto_scale_pool(self, pool_name: str, concurrency: int) -> None:

@@ -364,6 +364,55 @@ def allocate_local_engine_workers(
     }
 
 
+def compute_thread_budget(worker_counts, thread_counts=None, cpu_count=None):
+    """Compute the local-engine thread budget: sum(workers x threads).
+
+    ``get_cpu_threads()`` is a *default worker count* (cores minus one, capped
+    at 8).  It must not be reused as the total budget: doing so allows e.g.
+    8 workers x 8 threads = 64 compute threads on an 8-thread machine, which
+    oversubscribes the CPU and makes every engine slower.
+
+    EdgeTTS is network-bound and excluded from the budget.  Unknown or invalid
+    values degrade to 1 so a bad config can never produce a zero budget.
+
+    Returns a dict with ``cpu_count``, ``total_threads``, ``over_budget`` and a
+    ``per_pool`` breakdown of ``{workers, threads, threads_total}``.
+    """
+    try:
+        cpu_count = max(1, int(cpu_count if cpu_count is not None else get_total_cpu_count()))
+    except Exception:
+        cpu_count = 1
+    thread_counts = thread_counts or {}
+
+    per_pool = {}
+    total = 0
+    for pool_name, raw_workers in (worker_counts or {}).items():
+        if pool_name == 'EdgeTTS':
+            continue
+        try:
+            workers = max(1, int(raw_workers))
+        except (TypeError, ValueError):
+            workers = 1
+        try:
+            threads = max(1, int(thread_counts.get(pool_name, 1)))
+        except (TypeError, ValueError):
+            threads = 1
+        threads_total = workers * threads
+        per_pool[pool_name] = {
+            'workers': workers,
+            'threads': threads,
+            'threads_total': threads_total,
+        }
+        total += threads_total
+
+    return {
+        'cpu_count': cpu_count,
+        'total_threads': total,
+        'over_budget': total > cpu_count,
+        'per_pool': per_pool,
+    }
+
+
 def get_total_cpu_count():
     """Returns the total number of logical processors."""
     try:

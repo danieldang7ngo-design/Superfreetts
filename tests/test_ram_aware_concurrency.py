@@ -185,6 +185,7 @@ class TestBuildEngineConfigRamAware:
         orch = self._make_orchestrator()
         with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
              patch.object(system_utils, 'get_max_workers', return_value=8), \
+             patch.object(system_utils, 'get_total_cpu_count', return_value=32), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=None), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(
