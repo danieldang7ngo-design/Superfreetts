@@ -6,8 +6,6 @@ from . import voice as voice_module
 from . import errors
 from . import logging_utils
 
-from .services import voicelist
-
 logger = logging_utils.get_child_logger(__name__)
 
 
@@ -77,8 +75,16 @@ class ServiceBase(abc.ABC):
 
     # some helper functions
     def basic_voice_list(self) -> typing.List[voice_module.TtsVoice_v3]:
-        """basic processing for voice list which should work for most services which are represented in voicelist.py"""
-        voice_list = voicelist.VOICE_LIST
+        """Basic voice-list filtering for services represented in voicelist.py.
+
+        The import is intentionally lazy: the legacy voicelist module is large
+        and is not needed by any bundled free service at startup.
+        """
+        from .services import voicelist
+
+        voice_list = getattr(voicelist, 'VOICE_LIST', None)
+        if voice_list is None:
+            voice_list = voicelist.get_voice_list()
         service_voices = [voice_candidate for voice_candidate in voice_list if voice_candidate.service == self.name]
         return service_voices
 

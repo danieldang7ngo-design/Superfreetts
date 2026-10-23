@@ -6,6 +6,7 @@ import pkgutil
 import pytest
 
 from superfreetts_addon import services as services_package
+from superfreetts_addon.services import voicelist
 
 
 _RUNNER_MODULES = (
@@ -44,3 +45,10 @@ def test_runner_modules_import_without_loading_runtime_dependencies():
             failures.append(f"{full_name}: {type(exc).__name__}: {exc}")
 
     assert not failures, "Runner modules failed to import:\n" + "\n".join(failures)
+
+
+@pytest.mark.unit
+def test_legacy_voicelist_exports_stay_empty():
+    """The paid HyperTTS list is gone; its public names remain importable."""
+    assert voicelist.VOICE_LIST == []
+    assert voicelist.get_voice_list() is voicelist.VOICE_LIST
