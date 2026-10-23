@@ -6,9 +6,11 @@ Branch: `fix/resource-management` · Version: `26.10.2` (giữ nguyên) · Khôn
 - Commit A (voicelist lazy + service + test imports): `7a7943efbec087338fa889d7241c7c6057a45725`
 - Commit B1 (core batch/resource/superfreetts): `b40c864eea0006936a5e78eed213832a86883289`
 - Commit B2 (runners hardening): `0a767e892ca49fd2abc7549c098cb948702ef746`
+- Commit C (remove_tts_tag non-greedy): `e3b6c6c453668a4965d9fc6794f7b25b5709aaac`
+- Commit D (crash-resume preview tests + docs): `c5a4a8161e95b4f12aec07d8b85bde424a20e1d0`
 
 ## Full gate
-- `.venv/bin/python -m pytest`: 434 passed, 1 skipped
+- `.venv/bin/python -m pytest`: 440 passed, 1 skipped
 - coverage critical: config_models 71.1%, batch_executor 84.8%, component_text_processing 96.7%, audio_file_store 91.7%, voice_cache 91.8% (min 70%)
 - ruff (superfreetts_addon + tests): All checks passed
 - bandit -ll (superfreetts_addon): No issues identified (medium/high)
