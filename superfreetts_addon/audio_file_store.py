@@ -52,6 +52,20 @@ _FORMAT_ALIASES = {
 }
 
 _UNSUPPORTED_FORMAT_WARNED = set()
+_MISMATCH_WARNED = set()
+
+
+def _log_mismatch_once(key: str, message: str) -> None:
+    """Warn once per situation; repeat occurrences stay at debug level.
+
+    A 500-note batch under a mismatched preference must not produce 500
+    identical warnings.
+    """
+    if key in _MISMATCH_WARNED:
+        logger.debug(message)
+        return
+    _MISMATCH_WARNED.add(key)
+    logger.warning(message)
 
 
 def is_cache_audio_filename(filename: str) -> bool:
@@ -211,9 +225,11 @@ class AudioFileStore:
             if not self._file_matches_extension(full_filename, audio_format):
                 # Left over from an older build that named files after the
                 # requested format instead of the bytes it wrote.
-                logger.warning(
-                    f"[FORMAT] ignoring stale cache file {os.path.basename(full_filename)}: "
-                    f"content does not match the extension; it will be regenerated."
+                _log_mismatch_once(
+                    "stale-cache",
+                    "[FORMAT] ignoring cache files whose content does not match "
+                    "their extension (written by an older build); they are "
+                    "deleted and regenerated. This message is logged once.",
                 )
                 try:
                     os.remove(full_filename)
@@ -240,10 +256,11 @@ class AudioFileStore:
         requested = options.AudioFormat[request_key.audio_format]
         actual = detect_audio_format(audio_data) or requested
         if EXTENSION_BY_FORMAT[actual] != EXTENSION_BY_FORMAT[requested]:
-            logger.warning(
+            _log_mismatch_once(
+                f"engine {EXTENSION_BY_FORMAT[actual]} -> {EXTENSION_BY_FORMAT[requested]} request",
                 f"[FORMAT] engine returned {EXTENSION_BY_FORMAT[actual]} bytes for a "
                 f"{EXTENSION_BY_FORMAT[requested]} request; saving with the real "
-                f"extension so playback stays valid."
+                f"extension so playback stays valid.",
             )
         result = self.get_file_result(request_key, cache_hit=False, audio_format=actual)
         target_dir = os.path.dirname(result.full_filename)
