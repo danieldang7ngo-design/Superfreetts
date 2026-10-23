@@ -18,6 +18,12 @@ def test_strip_cloze_markers():
     assert text_utils.strip_cloze_markers("hello {{c1::world}}") == "hello world"
     # {{c1::word::hint}}
     assert text_utils.strip_cloze_markers("hello {{c2::world::hint}}") == "hello world"
+    # content containing a single colon (e.g. a time) is preserved
+    assert text_utils.strip_cloze_markers("hello {{c1::19:30}}") == "hello 19:30"
+    # a double colon still starts the optional hint part
+    assert text_utils.strip_cloze_markers("hello {{c1::19:30::hint}}") == "hello 19:30"
+    # multiple clozes, one with a colon
+    assert text_utils.strip_cloze_markers("{{c1::09:00}} and {{c2::text}}") == "09:00 and text"
     # no-cloze passthrough
     assert text_utils.strip_cloze_markers("hello world") == "hello world"
 
