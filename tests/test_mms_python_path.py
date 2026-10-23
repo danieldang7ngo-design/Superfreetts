@@ -13,6 +13,26 @@ def _make_service() -> service_mms.MmsTTS:
 
 
 @pytest.mark.unit
+def test_mms_constructor_has_no_filesystem_side_effects():
+    with patch.object(service_mms.MmsTTS, "_ensure_python_environment") as ensure:
+        svc = service_mms.MmsTTS()
+
+    ensure.assert_not_called()
+    assert svc._env_checked is False
+
+
+@pytest.mark.unit
+def test_mms_environment_is_checked_once_when_enabled(tmp_path):
+    with patch.object(service_mms.MmsTTS, "_ensure_python_environment") as ensure:
+        svc = service_mms.MmsTTS()
+        svc.configure({"engine_path": str(tmp_path)})
+        svc.configure({"engine_path": str(tmp_path)})
+        svc._get_python_exe()
+
+    assert ensure.call_count == 1
+
+
+@pytest.mark.unit
 def test_mms_empty_config_uses_engine_manager_fallback():
     svc = _make_service()
     svc.configure({})

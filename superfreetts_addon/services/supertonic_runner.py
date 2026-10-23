@@ -15,7 +15,32 @@ from runner_base import setup_stdio, log
 
 _ENGINE = None
 _ENGINE_CACHE_KEY = None
+_ENGINE_THREADS = None
 _VOICE_STYLE_CACHE = {}
+
+
+def _normalize_num_threads(num_threads):
+    try:
+        threads = int(num_threads)
+    except (TypeError, ValueError):
+        threads = 1
+    return threads if threads > 0 else 1
+
+
+def _configure_thread_env(num_threads):
+    """Bound ONNX/OpenMP thread pools before the engine is imported.
+
+    Without this each Supertonic worker spawned one thread per logical CPU,
+    bypassing the shared thread budget computed by the add-on.
+    """
+    threads = str(_normalize_num_threads(num_threads))
+    for name in (
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "ORT_INTRA_OP_NUM_THREADS",
+    ):
+        os.environ[name] = threads
 
 
 def _set_cache_env(cache_path):
@@ -31,20 +56,30 @@ def _set_cache_env(cache_path):
     os.environ["SUPERTONIC_CACHE_DIR"] = cache_path
 
 
-def _get_engine(cache_path, auto_download=False):
-    global _ENGINE, _ENGINE_CACHE_KEY
+def _get_engine(cache_path, auto_download=False, num_threads=1):
+    global _ENGINE, _ENGINE_CACHE_KEY, _ENGINE_THREADS
     _set_cache_env(cache_path)
+    threads = _normalize_num_threads(num_threads)
+    _configure_thread_env(threads)
     cache_key = os.path.abspath(cache_path or "")
-    if _ENGINE is not None and _ENGINE_CACHE_KEY == cache_key:
+    if (
+        _ENGINE is not None
+        and _ENGINE_CACHE_KEY == cache_key
+        and _ENGINE_THREADS == threads
+    ):
         return _ENGINE
 
     from supertonic import TTS
 
+    # Rebuilding after a num_threads change must release the old model first,
+    # otherwise the runner can hold two full ONNX models at once.
+    _ENGINE = None
     try:
         _ENGINE = TTS(auto_download=auto_download, cache_dir=cache_path)
     except TypeError:
         _ENGINE = TTS(auto_download=auto_download)
     _ENGINE_CACHE_KEY = cache_key
+    _ENGINE_THREADS = threads
     return _ENGINE
 
 
@@ -210,7 +245,11 @@ def generate_one(task):
         raise ValueError("Empty text")
 
     cache_path = task.get("cache_path")
-    engine = _get_engine(cache_path, auto_download=bool(task.get("auto_download", False)))
+    engine = _get_engine(
+        cache_path,
+        auto_download=bool(task.get("auto_download", False)),
+        num_threads=task.get("num_threads", 1),
+    )
     voice_key = task.get("voice") or "M1"
     custom_voice_path = task.get("custom_voice_path")
     voice_value = _load_custom_voice(engine, custom_voice_path) if custom_voice_path else _load_builtin_voice_style(engine, voice_key)
@@ -233,10 +272,23 @@ def handle_request(request):
     return {"status": "ok", "audio_b64": base64.b64encode(audio).decode("ascii")}
 
 
+def _iter_request_lines(stream):
+    """Read one request per call instead of relying on Python's file iterator.
+
+    The buffered iterator may read ahead, which delayed small JSON requests
+    on some platforms.  readline() returns as soon as a complete line exists.
+    """
+    while True:
+        line = stream.readline()
+        if not line:
+            break
+        yield line
+
+
 def main():
     setup_stdio()
     log("Supertonic runner ready")
-    for line in sys.stdin.buffer:
+    for line in _iter_request_lines(sys.stdin.buffer):
         try:
             request = json.loads(line.decode("utf-8"))
             response = handle_request(request)

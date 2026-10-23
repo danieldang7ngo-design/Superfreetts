@@ -28,7 +28,20 @@ _sherpa_pool = SherpaProcessPool("MMS", max_processes=2)
 class MmsTTS(service.ServiceBase):
     def __init__(self):
         super().__init__()
-        # Proactively ensure the portable python environment is correctly configured
+        # Discovery instantiates every service class to read its metadata.
+        # Do not touch the filesystem here: the portable Python environment is
+        # prepared lazily when the service is configured/enabled or first used.
+        self._env_checked = False
+
+    def configure(self, config):
+        super().configure(config)
+        if self.enabled:
+            self._ensure_python_environment_once()
+
+    def _ensure_python_environment_once(self):
+        if self._env_checked:
+            return
+        self._env_checked = True
         self._ensure_python_environment()
 
     def _ensure_python_environment(self):
@@ -90,6 +103,7 @@ class MmsTTS(service.ServiceBase):
         Falls back to the dedicated Windows embeddable engine, then to the
         system interpreter.
         """
+        self._ensure_python_environment_once()
         engine_path = self.get_configuration_value_optional(self.CONFIG_ENGINE_PATH, '')
         if engine_path and os.path.exists(engine_path):
             if os.path.isdir(engine_path):

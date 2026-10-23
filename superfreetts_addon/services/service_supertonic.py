@@ -151,6 +151,7 @@ class SupertonicTTS(service.ServiceBase):
 
         return {
             "concurrency_workers": ("number", "Concurrency Workers (1-N)", 1, 1, system_utils.get_max_workers()),
+            "num_threads": ("number", "CPU Threads (0=Auto/Serial)", 1, 0, system_utils.get_total_cpu_count()),
             "total_steps": ("number", "Generation Steps (5-12)", 8, 5, 12),
             "max_chunk_length": ("number", "Max Chunk Length", 300, 80, 1000),
             "silence_duration": ("number", "Silence Between Chunks", 0.3, 0, 3),
@@ -314,12 +315,20 @@ class SupertonicTTS(service.ServiceBase):
         voice_key = voice.voice_key
         style_key = self._get_voice_style_key(voice_key)
         custom_voice_path = self._get_custom_voice_path(voice_key)
+        threads = self.get_configuration_value_optional("num_threads", 1)
+        try:
+            threads = int(threads)
+        except (TypeError, ValueError):
+            threads = 1
+        if threads <= 0:
+            threads = 1
         return {
             "text": text,
             "voice": style_key,
             "custom_voice_path": custom_voice_path,
             "cache_path": self._get_cache_path(),
             "lang": self._language_code(voice),
+            "num_threads": threads,
             "speed": options.get("speed", 1.0),
             "total_steps": self.get_configuration_value_optional("total_steps", 8),
             "max_chunk_length": self.get_configuration_value_optional("max_chunk_length", 300),

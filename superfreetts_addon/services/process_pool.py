@@ -22,6 +22,7 @@ Deadlines live in ``batch_constants`` so they are tunable in one place.
 import logging
 import os
 import queue
+import signal
 import subprocess
 import threading
 import time
@@ -92,17 +93,41 @@ class DynamicSemaphore:
             return self._count
 
 
+def _signal_process_group(proc, sig):
+    """Signal the runner's process group on POSIX.
+
+    Local runners are started with ``start_new_session=True`` so they own a
+    process group.  Killing the whole group is what reaps grand-children such
+    as the stock ``piper`` binary when the Python runner is wedged.
+    """
+    if os.name == 'nt' or not getattr(proc, 'owns_process_group', False):
+        return False
+    pid = getattr(proc, 'pid', None)
+    if not pid:
+        return False
+    try:
+        os.killpg(pid, sig)
+        return True
+    except ProcessLookupError:
+        return True
+    except OSError:
+        return False
+
+
 def terminate_process(proc):
-    """Terminate a runner, wait for it, close its pipes and mark it unhealthy."""
+    """Terminate a runner and its process group, then close its pipes."""
     if proc is None:
         return
     try:
         if proc.poll() is None:
-            proc.terminate()
+            group_signalled = _signal_process_group(proc, signal.SIGTERM)
+            if not group_signalled:
+                proc.terminate()
             try:
                 proc.wait(timeout=2.0)
             except subprocess.TimeoutExpired:
-                proc.kill()
+                if not _signal_process_group(proc, signal.SIGKILL):
+                    proc.kill()
                 try:
                     proc.wait(timeout=1.0)
                 except Exception:
@@ -241,7 +266,9 @@ class SherpaProcessPool:
         self._cleanup_enabled = True
         self._max_idle_age = 180  # 180s idle timeout as mandated
         self._total_spawned = 0  # Track total processes (active + idle)
-        self._start_cleanup_timer()
+        # The timer is armed lazily by release_process(): an empty pool needs
+        # no periodic wake-up.  Four service imports used to create/destroy
+        # 960 daemon threads per hour just to inspect empty lists.
 
     def _start_cleanup_timer(self):
         if self._cleanup_timer:
@@ -250,16 +277,6 @@ class SherpaProcessPool:
         self._cleanup_timer = threading.Timer(15.0, self._cleanup_idle)
         self._cleanup_timer.daemon = True
         self._cleanup_timer.start()
-
-    def _ensure_cleanup_timer(self):
-        """Restart the idle-cleanup timer after stop_all() cancelled it.
-
-        stop_all() runs on profile close; the same pool objects are reused
-        when a profile is reopened (Anki does not reload add-ons), so the
-        timer must come back or idle engine processes would never expire.
-        """
-        if not self._cleanup_enabled or self._cleanup_timer is None:
-            self._start_cleanup_timer()
 
     def _cleanup_idle(self):
         with self._lock:
@@ -280,8 +297,12 @@ class SherpaProcessPool:
                 else:
                     alive_pool.append((proc, exe, script, last_time))
             self._pool = alive_pool
-            if self._cleanup_enabled:
+            if self._cleanup_enabled and self._pool:
                 self._start_cleanup_timer()
+            else:
+                # No idle processes left: end the timer chain instead of
+                # keeping a daemon thread alive forever.
+                self._cleanup_timer = None
 
     def safe_terminate(self, proc):
         """Enforce safe termination sequence and pipe closure."""
@@ -293,7 +314,6 @@ class SherpaProcessPool:
         Waits at most ``timeout`` seconds (default ``IPC_ACQUIRE_TIMEOUT_SECONDS``)
         for a permit and raises ``EngineBusyError`` instead of hanging forever.
         """
-        self._ensure_cleanup_timer()
         if timeout is None:
             timeout = float(batch_constants.IPC_ACQUIRE_TIMEOUT_SECONDS)
         wait_started = time.monotonic()
@@ -310,6 +330,11 @@ class SherpaProcessPool:
             )
         if waited >= 1.0:
             logger.info("[IPC] pool=%s waited=%.2fs acquired=True", self.name, waited)
+
+        # stop_all() disables the idle timer during profile close.  A later
+        # checkout means the pool is being reused, so allow release_process()
+        # to arm the cleanup timer again.
+        self._cleanup_enabled = True
 
         with self._lock:
             logger.info(f"SherpaPool[{self.name}]: get_process (debug_enabled={debug_enabled})")
@@ -362,6 +387,10 @@ class SherpaProcessPool:
             is_healthy = getattr(proc, 'is_healthy', True)
             if proc.poll() is None and is_healthy:
                 self._pool.append((proc, executable_path, script_path, time.time()))
+                if self._cleanup_enabled and (
+                    self._cleanup_timer is None or not self._cleanup_timer.is_alive()
+                ):
+                    self._start_cleanup_timer()
             else:
                 self._total_spawned = max(0, self._total_spawned - 1)
                 if not is_healthy:
@@ -392,6 +421,7 @@ class SherpaProcessPool:
                 self._cleanup_timer.cancel()
             except Exception:
                 pass
+        self._cleanup_timer = None
 
     def update_max_processes(self, new_max):
         with self._lock:
@@ -454,6 +484,11 @@ class SherpaProcessPool:
         # IPC BREAKING BUG FIX:
         # Previously actual_stderr was set to subprocess.STDOUT, which merges logs into
         # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
+        popen_kwargs = {}
+        if os.name != 'nt':
+            # Give every runner its own process group so terminate_process()
+            # can reap grand-children (e.g. the piper binary) as well.
+            popen_kwargs['start_new_session'] = True
         try:
             proc = subprocess.Popen(
                 [executable_path, "-u", script_path],
@@ -464,7 +499,8 @@ class SherpaProcessPool:
                 startupinfo=startupinfo,
                 env=env,
                 text=False,
-                bufsize=0
+                bufsize=0,
+                **popen_kwargs
             )
         except Exception:
             # If Popen fails (e.g. executable missing), ensure the sink handle is
@@ -476,6 +512,7 @@ class SherpaProcessPool:
                     pass
             raise
         proc.is_healthy = True
+        proc.owns_process_group = os.name != 'nt'
         # Deadline-enabled reader: every response is read through a queue so a
         # wedged runner can be killed instead of blocking the worker forever.
         start_stdout_reader(proc, self.name)

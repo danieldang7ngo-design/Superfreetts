@@ -90,6 +90,68 @@ def test_dict_voice_key_carries_language_and_style(tmp_path):
     assert task["lang"] == "vi"
 
 
+def test_base_task_passes_configured_thread_count(tmp_path):
+    svc = service_supertonic.SupertonicTTS()
+    svc.configure({
+        "engine_path": "python.exe",
+        "cache_path": str(tmp_path / "cache"),
+        "custom_voices_path": str(tmp_path / "voices"),
+        "num_threads": 3,
+    })
+    voice = types.SimpleNamespace(voice_key={"style": "F1", "lang": "en"}, audio_languages=[languages.AudioLanguage.en_US])
+
+    task = svc._base_task("hello", voice, {})
+
+    assert task["num_threads"] == 3
+    assert "num_threads" in svc.advanced_configuration_options()
+
+
+def test_iter_request_lines_yields_one_line_per_readline():
+    class FakeStream:
+        def __init__(self, lines):
+            self._lines = list(lines)
+
+        def readline(self):
+            return self._lines.pop(0) if self._lines else b""
+
+    stream = FakeStream([b'{"text": "one"}\n', b'{"text": "two"}\n'])
+
+    assert list(supertonic_runner._iter_request_lines(stream)) == [
+        b'{"text": "one"}\n',
+        b'{"text": "two"}\n',
+    ]
+
+
+def test_thread_env_is_bounded_before_engine_import(monkeypatch):
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "ORT_INTRA_OP_NUM_THREADS"):
+        monkeypatch.setenv(name, "99")
+
+    supertonic_runner._configure_thread_env(2)
+
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "ORT_INTRA_OP_NUM_THREADS"):
+        assert os.environ[name] == "2"
+
+
+def test_engine_rebuilt_when_thread_count_changes(monkeypatch, tmp_path):
+    install_fake_supertonic(monkeypatch)
+    created = []
+
+    class TrackingTTS(FakeTTS):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            created.append(self)
+
+    monkeypatch.setattr(sys.modules["supertonic"], "TTS", TrackingTTS)
+
+    first = supertonic_runner._get_engine(str(tmp_path), num_threads=1)
+    same = supertonic_runner._get_engine(str(tmp_path), num_threads=1)
+    rebuilt = supertonic_runner._get_engine(str(tmp_path), num_threads=2)
+
+    assert first is same
+    assert rebuilt is not first
+    assert len(created) == 2
+
+
 def test_batch_executor_selects_supertonic_pool():
     executor = batch_executor.MultiEngineExecutor(engine_config={"Supertonic": 3, "default": 1})
     try:

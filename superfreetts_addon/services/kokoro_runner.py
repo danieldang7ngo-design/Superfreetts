@@ -11,6 +11,14 @@ if runner_dir not in sys.path:
 
 from runner_base import setup_stdio, log, write_response
 
+# Voice prefix to Kokoro language mapping. Kept at module level so it can be
+# unit-tested without starting the runner loop.
+LANG_MAP = {
+    'a': 'en-us', 'b': 'en-gb', 'j': 'ja', 'z': 'zh',
+    'k': 'ko', 'f': 'fr', 'e': 'es', 'p': 'pt',
+    'i': 'it', 's': 'sv', 'h': 'hi'
+}
+
 
 def main():
     setup_stdio()
@@ -84,6 +92,11 @@ def main():
             sess_options.intra_op_num_threads = threads if threads > 0 else 1
             sess_options.inter_op_num_threads = 1
 
+            # Only one ONNX session is kept per runner process. Device or
+            # thread-count changes would otherwise leave the previous engine
+            # (and its native memory) alive indefinitely.
+            engines.clear()
+
             # Standard Stock Initialization
             try:
                 engine = Kokoro(model_path, voices_path, sess_options=sess_options)
@@ -97,13 +110,6 @@ def main():
         except Exception as e:
             log(f"Failed to load engine: {e}")
             return None
-
-    # Voice to Lang mapping for Kokoro
-    LANG_MAP = {
-        'a': 'en-us', 'b': 'en-gb', 'j': 'ja', 'z': 'zh', 
-        'k': 'ko', 'f': 'fr', 'e': 'es', 'p': 'pt', 
-        'i': 'it', 's': 'sv'
-    }
 
     def generate_single(kokoro, text, voice_name, speed, lang_code, output_file):
         try:

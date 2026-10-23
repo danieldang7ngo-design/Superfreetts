@@ -45,6 +45,30 @@ def _get_piper_binary_name():
         return 'piper.exe'
     return 'piper'
 
+# Model config sample rates never change during a runner's lifetime, so cache
+# them instead of re-reading the JSON file for every request.
+DEFAULT_SAMPLE_RATE = 22050
+_MODEL_SR_CACHE = {}
+
+def get_model_sample_rate(model_path):
+    """Return the cached sample rate for a piper model (22050 by default)."""
+    cached = _MODEL_SR_CACHE.get(model_path)
+    if cached is not None:
+        return cached
+
+    sample_rate = DEFAULT_SAMPLE_RATE
+    try:
+        config_path = model_path + ".json"
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                sample_rate = int(config.get('audio', {}).get('sample_rate', DEFAULT_SAMPLE_RATE))
+    except Exception:
+        sample_rate = DEFAULT_SAMPLE_RATE
+
+    _MODEL_SR_CACHE[model_path] = sample_rate
+    return sample_rate
+
 def main():
     setup_stdio()
     log("PIPER-STOCK RUNNER STARTED")
@@ -157,19 +181,25 @@ def generate_single(piper_exe, data, global_threads=1):
             startupinfo=startupinfo
         )
         
-        # Send text and close stdin with timeout to avoid hangs
+        # Always reap the child, even when communicate() raises: otherwise a
+        # timed-out or interrupted request can leave piper.exe running.
         try:
-            stdout, stderr = process.communicate(input=text.encode('utf-8'), timeout=30)
-        except subprocess.TimeoutExpired:
             try:
-                process.kill()
-            except Exception: pass
+                stdout, stderr = process.communicate(input=text.encode('utf-8'), timeout=30)
+            except subprocess.TimeoutExpired:
+                tb = traceback.format_exc()
+                log(f"Piper timeout: {tb}")
+                return {"status": "error", "message": "piper.exe timed out after 30s", "traceback": tb}
+        finally:
+            if process.poll() is None:
+                try:
+                    process.kill()
+                except Exception:
+                    pass
             try:
                 process.wait(timeout=1)
-            except Exception: pass
-            tb = traceback.format_exc()
-            log(f"Piper timeout: {tb}")
-            return {"status": "error", "message": "piper.exe timed out after 30s", "traceback": tb}
+            except Exception:
+                pass
         
         if process.returncode != 0:
             err_msg = stderr.decode('utf-8', errors='replace')
@@ -179,16 +209,9 @@ def generate_single(piper_exe, data, global_threads=1):
         if not stdout:
             return {"status": "error", "message": "No audio output from piper.exe"}
 
-        # piper.exe outputs raw 16-bit mono PCM at 22050Hz (usually)
-        # We need to get the sample rate from the .json config to be precise
-        sample_rate = 22050
-        try:
-            config_path = model_path + ".json"
-            if os.path.exists(config_path):
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    sample_rate = config.get('audio', {}).get('sample_rate', 22050)
-        except Exception: pass
+        # piper.exe outputs raw 16-bit mono PCM at the rate declared in the
+        # model's .json config (22050Hz when unavailable).
+        sample_rate = get_model_sample_rate(model_path)
 
         wav_data = pcm_to_wav(stdout, sample_rate=sample_rate)
         audio_b64 = base64.b64encode(wav_data).decode('utf-8')
