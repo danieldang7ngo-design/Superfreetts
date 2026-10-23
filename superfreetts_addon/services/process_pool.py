@@ -93,6 +93,29 @@ class DynamicSemaphore:
             return self._count
 
 
+def _terminate_process_tree_windows(proc):
+    """Best-effort process-tree kill on Windows.
+
+    ``taskkill /T`` walks the child process tree, so a wedged ``piper.exe``
+    grand-child is reaped even though Python's ``Popen`` only tracks the
+    runner process.  Returns True when taskkill reported success.
+    """
+    if os.name != 'nt':
+        return False
+    pid = getattr(proc, 'pid', None)
+    if not pid:
+        return False
+    try:
+        result = subprocess.run(
+            ['taskkill', '/PID', str(pid), '/T', '/F'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def _signal_process_group(proc, sig):
     """Signal the runner's process group on POSIX.
 
@@ -120,14 +143,24 @@ def terminate_process(proc):
         return
     try:
         if proc.poll() is None:
-            group_signalled = _signal_process_group(proc, signal.SIGTERM)
+            if os.name == 'nt':
+                group_signalled = _terminate_process_tree_windows(proc)
+            else:
+                group_signalled = _signal_process_group(proc, signal.SIGTERM)
             if not group_signalled:
                 proc.terminate()
             try:
                 proc.wait(timeout=2.0)
             except subprocess.TimeoutExpired:
-                if not _signal_process_group(proc, signal.SIGKILL):
-                    proc.kill()
+                if os.name == 'nt':
+                    if not _terminate_process_tree_windows(proc):
+                        try:
+                            proc.kill()
+                        except Exception:
+                            pass
+                else:
+                    if not _signal_process_group(proc, signal.SIGKILL):
+                        proc.kill()
                 try:
                     proc.wait(timeout=1.0)
                 except Exception:
@@ -485,7 +518,11 @@ class SherpaProcessPool:
         # Previously actual_stderr was set to subprocess.STDOUT, which merges logs into
         # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
         popen_kwargs = {}
-        if os.name != 'nt':
+        if os.name == 'nt':
+            # Create a new process group so the runner (and any grand-child
+            # such as piper.exe) can be terminated as a tree via taskkill /T.
+            popen_kwargs['creationflags'] = getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
+        else:
             # Give every runner its own process group so terminate_process()
             # can reap grand-children (e.g. the piper binary) as well.
             popen_kwargs['start_new_session'] = True
@@ -512,7 +549,7 @@ class SherpaProcessPool:
                     pass
             raise
         proc.is_healthy = True
-        proc.owns_process_group = os.name != 'nt'
+        setattr(proc, "owns_process_group", True)
         # Deadline-enabled reader: every response is read through a queue so a
         # wedged runner can be killed instead of blocking the worker forever.
         start_stdout_reader(proc, self.name)
