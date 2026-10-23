@@ -317,6 +317,25 @@ class TTSOrchestrator:
         if current_executor is not None and current_config == engine_config:
             return engine_config
 
+        # Never tear down a pool while another thread is submitting to it:
+        # get_multi_engine_executor() would otherwise shut the old
+        # ThreadPoolExecutor down and every concurrent submit() would raise
+        # "cannot schedule new futures after shutdown".  When the executor is
+        # busy, keep the current pools and let the caller retry later.
+        busy = 0
+        if current_executor is not None:
+            active_raw = getattr(current_executor, 'active_tasks', 0)
+            if type(active_raw) is int:
+                busy = active_raw
+            else:
+                busy = 0
+        if busy > 0:
+            logger.info(
+                f'[RAM] Pre-batch concurrency refresh deferred: '
+                f'{busy} task(s) still in flight; keeping current pools'
+            )
+            return current_config if current_config is not None else engine_config
+
         try:
             new_executor = batch_executor.get_multi_engine_executor(
                 engine_config=engine_config
@@ -324,6 +343,10 @@ class TTSOrchestrator:
         except Exception as e:
             logger.warning(f'[RAM] Could not rebuild batch executor: {e}')
             return None
+
+        # get_multi_engine_executor may have kept the old executor (busy race).
+        if new_executor is current_executor:
+            return current_config if current_config is not None else engine_config
 
         self.executor = new_executor
         try:

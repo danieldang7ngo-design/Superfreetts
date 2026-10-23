@@ -40,6 +40,13 @@ class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     def __init__(self, max_workers, thread_name_prefix='', max_waiting_tasks=50):
         super().__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix)
         self._semaphore = threading.Semaphore(max_workers + max_waiting_tasks)
+        self._active_count = 0
+        self._active_lock = threading.Lock()
+
+    @property
+    def active_tasks(self) -> int:
+        with self._active_lock:
+            return self._active_count
 
     def submit(self, fn, *args, **kwargs):
         timeout = kwargs.pop('timeout', None)
@@ -54,7 +61,15 @@ class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
             self._semaphore.release()
             raise
         future.add_done_callback(lambda x: self._semaphore.release())
+        with self._active_lock:
+            self._active_count += 1
+        future.add_done_callback(self._mark_done)
         return future
+
+    def _mark_done(self, _future):
+        with self._active_lock:
+            if self._active_count > 0:
+                self._active_count -= 1
 
 
 def _detect_service_from_task(task: Dict) -> str:
@@ -323,6 +338,7 @@ class CheckpointManager:
     def save(self, batch_name: str, note_ids: List[int], statuses: Dict, errors: Dict = None):
         """Atomically persist the note id -> status map for a batch."""
         with self._lock:
+            tmp_path = None
             try:
                 path = self._get_path(batch_name)
                 data = {
@@ -339,8 +355,15 @@ class CheckpointManager:
                     f.flush()
                     os.fsync(f.fileno())
                 os.replace(tmp_path, path)
+                tmp_path = None
             except Exception as e:
                 logger.warning(f"[BATCH] Checkpoint save failed: {e}")
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
 
     def load(self, batch_name: str) -> Optional[dict]:
         """Load a checkpoint, migrating legacy v1 files to the v2 shape."""
@@ -625,6 +648,14 @@ class MultiEngineExecutor:
         self.cache = UnifiedCache(max_size_mb=cache_size_mb)
         self.checkpoint = CheckpointManager()
         self._shutdown = False
+
+    @property
+    def active_tasks(self) -> int:
+        total = 0
+        for executor in self.executors.values():
+            total += getattr(executor, 'active_tasks', 0)
+        total += getattr(self.default_executor, 'active_tasks', 0)
+        return total
     
     def get_executor(self, service_name: str) -> concurrent.futures.ThreadPoolExecutor:
         """Get executor for given service/engine."""
@@ -699,6 +730,19 @@ def get_multi_engine_executor(engine_config: Dict[str, int] = None) -> MultiEngi
     if _multi_executor is None or getattr(_multi_executor, '_shutdown', False):
         _multi_executor = MultiEngineExecutor(engine_config=engine_config)
     elif engine_config is not None and _multi_executor.engine_config != engine_config:
+        # Do not tear down an executor that still has in-flight submissions:
+        # shutting its ThreadPoolExecutor down makes every concurrent submit()
+        # raise "cannot schedule new futures after shutdown".  When busy, keep
+        # the existing pool and let the caller retry on the next pass.
+        old_active = getattr(_multi_executor, 'active_tasks', 0)
+        if type(old_active) is not int:
+            old_active = 0
+        if old_active > 0:
+            logger.warning(
+                f"[BATCH] Executor config changed but {old_active} task(s) are "
+                f"in flight; keeping the existing executor to avoid shutdown race"
+            )
+            return _multi_executor
         # Recreate executor when worker configuration changes.
         _multi_executor.shutdown(wait=False)
         _multi_executor = MultiEngineExecutor(engine_config=engine_config)

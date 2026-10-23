@@ -529,11 +529,32 @@ class BatchOrchestrator:
                             submit_kwargs = {}
                             if isinstance(executor_pool, batch_executor.BoundedThreadPoolExecutor):
                                 submit_kwargs['timeout'] = 0.1
-                            future = executor_pool.submit(
-                                self.hypertts._generate_audio_batch_task,
-                                list(chunk_items),
-                                **submit_kwargs,
-                            )
+                            try:
+                                future = executor_pool.submit(
+                                    self.hypertts._generate_audio_batch_task,
+                                    list(chunk_items),
+                                    **submit_kwargs,
+                                )
+                            except RuntimeError as exc:
+                                # A concurrent refresh may have shut down the
+                                # pool this thread captured.  Retry once on the
+                                # freshly rebuilt executor instead of failing
+                                # the whole submit.
+                                if 'cannot schedule new futures after shutdown' not in str(exc).lower():
+                                    raise
+                                try:
+                                    self.hypertts.orchestrator.refresh_engine_pools_for_current_ram()
+                                except Exception:
+                                    pass
+                                executor_pool = self.executor.get_executor(service_name)
+                                submit_kwargs = {}
+                                if isinstance(executor_pool, batch_executor.BoundedThreadPoolExecutor):
+                                    submit_kwargs['timeout'] = 0.1
+                                future = executor_pool.submit(
+                                    self.hypertts._generate_audio_batch_task,
+                                    list(chunk_items),
+                                    **submit_kwargs,
+                                )
                             with future_lock:
                                 future_to_chunk[future] = list(chunk_items)
                                 batch_status.futures_to_cancel.append(future)
