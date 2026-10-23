@@ -121,7 +121,10 @@ class RealtimeManager:
         return None
 
     def remove_tts_tag(self, card_template: str) -> str:
-        return re.sub('{{tts.*}}', '', card_template)
+        # Non-greedy so two separate tags (A {{tts X}} B {{tts Y}} C) are
+        # removed individually instead of collapsing everything between the
+        # first '{{tts' and the last '}}'.
+        return re.sub('{{tts.*?}}', '', card_template)
 
     def set_tts_tag_note_model(
         self,
