@@ -93,23 +93,28 @@ class DynamicSemaphore:
             return self._count
 
 
-def _terminate_process_tree_windows(proc):
+def _terminate_process_tree_windows(proc, force=False):
     """Best-effort process-tree kill on Windows.
 
-    ``taskkill /T`` walks the child process tree, so a wedged ``piper.exe``
-    grand-child is reaped even though Python's ``Popen`` only tracks the
-    runner process.  Returns True when taskkill reported success.
+    ``taskkill`` without ``/F`` asks the process tree to exit gracefully first;
+    ``/F`` is only used as a fallback when the graceful request does not
+    terminate the process.  ``CREATE_NEW_PROCESS_GROUP`` is not required for
+    ``taskkill /T`` to walk the child tree.
     """
     if os.name != 'nt':
         return False
     pid = getattr(proc, 'pid', None)
     if not pid:
         return False
+    cmd = ['taskkill', '/PID', str(pid), '/T']
+    if force:
+        cmd.append('/F')
     try:
         result = subprocess.run(
-            ['taskkill', '/PID', str(pid), '/T', '/F'],
+            cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            timeout=5.0,
         )
         return result.returncode == 0
     except Exception:
@@ -145,26 +150,43 @@ def terminate_process(proc):
         if proc.poll() is None:
             if os.name == 'nt':
                 group_signalled = _terminate_process_tree_windows(proc)
-            else:
-                group_signalled = _signal_process_group(proc, signal.SIGTERM)
-            if not group_signalled:
-                proc.terminate()
-            try:
-                proc.wait(timeout=2.0)
-            except subprocess.TimeoutExpired:
-                if os.name == 'nt':
-                    if not _terminate_process_tree_windows(proc):
+                if group_signalled:
+                    try:
+                        proc.wait(timeout=2.0)
+                    except subprocess.TimeoutExpired:
+                        _terminate_process_tree_windows(proc, force=True)
                         try:
-                            proc.kill()
+                            proc.wait(timeout=1.0)
                         except Exception:
                             pass
                 else:
+                    try:
+                        proc.terminate()
+                        proc.wait(timeout=2.0)
+                    except subprocess.TimeoutExpired:
+                        if not _terminate_process_tree_windows(proc, force=True):
+                            try:
+                                proc.kill()
+                            except Exception:
+                                pass
+                        try:
+                            proc.wait(timeout=1.0)
+                        except Exception:
+                            pass
+            else:
+                group_signalled = _signal_process_group(proc, signal.SIGTERM)
+            if not group_signalled and os.name != 'nt':
+                proc.terminate()
+            if os.name != 'nt':
+                try:
+                    proc.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
                     if not _signal_process_group(proc, signal.SIGKILL):
                         proc.kill()
-                try:
-                    proc.wait(timeout=1.0)
-                except Exception:
-                    pass
+                    try:
+                        proc.wait(timeout=1.0)
+                    except Exception:
+                        pass
     except Exception:
         pass
     finally:
@@ -519,9 +541,9 @@ class SherpaProcessPool:
         # the JSON stream. We now use stderr_sink to keep stdout (JSON) clean.
         popen_kwargs = {}
         if os.name == 'nt':
-            # Create a new process group so the runner (and any grand-child
-            # such as piper.exe) can be terminated as a tree via taskkill /T.
-            popen_kwargs['creationflags'] = getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
+            # ``taskkill /T`` walks the child tree by PID; a new process group
+            # is not needed for termination.
+            pass
         else:
             # Give every runner its own process group so terminate_process()
             # can reap grand-children (e.g. the piper binary) as well.
@@ -549,7 +571,7 @@ class SherpaProcessPool:
                     pass
             raise
         proc.is_healthy = True
-        setattr(proc, "owns_process_group", True)
+        setattr(proc, "owns_process_group", os.name != 'nt')
         # Deadline-enabled reader: every response is read through a queue so a
         # wedged runner can be killed instead of blocking the worker forever.
         start_stdout_reader(proc, self.name)

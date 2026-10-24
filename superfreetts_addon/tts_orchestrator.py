@@ -1,4 +1,5 @@
 import os
+import threading
 from typing import Dict, Set
 
 from . import constants
@@ -58,6 +59,8 @@ class TTSOrchestrator:
         self.service_manager = superfreetts.service_manager
         self.config_store = superfreetts.config_store
         self.executor = None
+        self._refresh_lock = threading.RLock()
+        self._deferred_engine_config = None
 
     def _enabled_local_pools(self, enabled_services=None) -> Set[str]:
         """Return local-engine pool names that are currently enabled.
@@ -312,52 +315,113 @@ class TTSOrchestrator:
             logger.warning(f'[RAM] Pre-batch concurrency refresh failed: {e}')
             return None
 
-        current_executor = getattr(self, 'executor', None)
-        current_config = getattr(current_executor, 'engine_config', None)
-        if current_executor is not None and current_config == engine_config:
+        with self._refresh_lock:
+            current_executor = getattr(self, 'executor', None)
+            current_config = getattr(current_executor, 'engine_config', None)
+            if current_executor is not None and current_config == engine_config:
+                self._deferred_engine_config = None
+                return engine_config
+
+            # A shutdown executor must be rebuilt even if a stale busy count
+            # remains; otherwise retry-on-shutdown paths keep using the dead pool.
+            is_shutdown = bool(getattr(current_executor, '_shutdown', False)) if current_executor is not None else False
+
+            busy = 0
+            if current_executor is not None and not is_shutdown:
+                active_raw = getattr(current_executor, 'active_tasks', 0)
+                if type(active_raw) is int:
+                    busy = active_raw
+                else:
+                    busy = 0
+
+            if busy > 0:
+                # Defer the rebuild until the in-flight work drains.  Keep the
+                # desired config so a hook can re-apply it later instead of
+                # running the whole batch with the old (possibly too large)
+                # worker count.
+                self._deferred_engine_config = engine_config
+                logger.info(
+                    f'[RAM] Pre-batch concurrency refresh deferred: '
+                    f'{busy} task(s) still in flight; keeping current pools'
+                )
+                return current_config if current_config is not None else engine_config
+
+            try:
+                new_executor = batch_executor.get_multi_engine_executor(
+                    engine_config=engine_config
+                )
+            except Exception as e:
+                logger.warning(f'[RAM] Could not rebuild batch executor: {e}')
+                return None
+
+            # get_multi_engine_executor may have kept the old executor (busy race).
+            if new_executor is current_executor:
+                self._deferred_engine_config = None
+                return current_config if current_config is not None else engine_config
+
+            self.executor = new_executor
+            try:
+                self.stts.executor = new_executor
+            except Exception:
+                pass
+            self._deferred_engine_config = None
+            logger.info(
+                f'[RAM] Pre-batch concurrency updated: '
+                f'{current_config or {}} -> {engine_config}'
+            )
             return engine_config
 
-        # Never tear down a pool while another thread is submitting to it:
-        # get_multi_engine_executor() would otherwise shut the old
-        # ThreadPoolExecutor down and every concurrent submit() would raise
-        # "cannot schedule new futures after shutdown".  When the executor is
-        # busy, keep the current pools and let the caller retry later.
-        busy = 0
-        if current_executor is not None:
-            active_raw = getattr(current_executor, 'active_tasks', 0)
-            if type(active_raw) is int:
-                busy = active_raw
-            else:
-                busy = 0
-        if busy > 0:
+    def apply_deferred_engine_pools(self):
+        """Re-apply a refresh that was deferred because the pool was busy."""
+        with self._refresh_lock:
+            deferred = self._deferred_engine_config
+            if deferred is None:
+                return None
+
+            current_executor = getattr(self, 'executor', None)
+            current_config = getattr(current_executor, 'engine_config', None)
+            if current_executor is not None and current_config == deferred:
+                self._deferred_engine_config = None
+                return deferred
+
+            is_shutdown = bool(getattr(current_executor, '_shutdown', False)) if current_executor is not None else False
+            busy = 0
+            if current_executor is not None and not is_shutdown:
+                active_raw = getattr(current_executor, 'active_tasks', 0)
+                if type(active_raw) is int:
+                    busy = active_raw
+            if busy > 0:
+                return current_config if current_config is not None else deferred
+
+            try:
+                new_executor = batch_executor.get_multi_engine_executor(
+                    engine_config=deferred
+                )
+            except Exception as e:
+                logger.warning(f'[RAM] Deferred concurrency refresh failed: {e}')
+                return None
+
+            if new_executor is not current_executor:
+                self.executor = new_executor
+                try:
+                    self.stts.executor = new_executor
+                except Exception:
+                    pass
+            self._deferred_engine_config = None
             logger.info(
-                f'[RAM] Pre-batch concurrency refresh deferred: '
-                f'{busy} task(s) still in flight; keeping current pools'
+                f'[RAM] Deferred concurrency updated: '
+                f'{current_config or {}} -> {deferred}'
             )
-            return current_config if current_config is not None else engine_config
+            return deferred
 
-        try:
-            new_executor = batch_executor.get_multi_engine_executor(
-                engine_config=engine_config
-            )
-        except Exception as e:
-            logger.warning(f'[RAM] Could not rebuild batch executor: {e}')
-            return None
+    # Backwards/alternative names for callers and tests.
+    apply_deferred_engine_refresh = apply_deferred_engine_pools
+    reapply_deferred_engine_pools = apply_deferred_engine_pools
+    flush_deferred_engine_pools = apply_deferred_engine_pools
 
-        # get_multi_engine_executor may have kept the old executor (busy race).
-        if new_executor is current_executor:
-            return current_config if current_config is not None else engine_config
-
-        self.executor = new_executor
-        try:
-            self.stts.executor = new_executor
-        except Exception:
-            pass
-        logger.info(
-            f'[RAM] Pre-batch concurrency updated: '
-            f'{current_config or {}} -> {engine_config}'
-        )
-        return engine_config
+    @property
+    def deferred_engine_config(self):
+        return self._deferred_engine_config
 
     def _local_thread_counts(self, service_config_map: dict) -> Dict[str, int]:
         """Read ``num_threads`` per local engine pool (the engine default is 1)."""

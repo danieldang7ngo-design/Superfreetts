@@ -275,3 +275,69 @@ class TestPreBatchRamRefresh:
         orch, _ = self._make_orchestrator()
         with patch.object(orch, 'build_engine_config', side_effect=RuntimeError('boom')):
             assert orch.refresh_engine_pools_for_current_ram() is None
+
+
+@pytest.mark.unit
+class TestDeferredRefreshFollowup:
+    def _make_orchestrator(self):
+        stts = MagicMock()
+        stts.get_configuration.return_value.get_service_config.return_value = {}
+        stts.get_configuration.return_value.get_service_enabled_map.return_value = {
+            'PiperTTS': True,
+        }
+        return tts_orchestrator.TTSOrchestrator(stts), stts
+
+    def test_refresh_defers_when_busy_and_stores_desired_config(self):
+        orch, stts = self._make_orchestrator()
+        old_executor = MagicMock(engine_config={'Piper': 8, 'default': 8})
+        old_executor.active_tasks = 3
+        old_executor._shutdown = False
+        orch.executor = old_executor
+        stts.executor = old_executor
+        new_executor = MagicMock(engine_config={'Piper': 2, 'default': 2})
+
+        with patch.object(orch, 'build_engine_config', return_value={'Piper': 2, 'default': 2}), \
+             patch.object(batch_executor, 'get_multi_engine_executor', return_value=new_executor):
+            result = orch.refresh_engine_pools_for_current_ram()
+
+        assert result == {'Piper': 8, 'default': 8}
+        assert orch.deferred_engine_config == {'Piper': 2, 'default': 2}
+        assert orch.executor is old_executor
+
+    def test_apply_deferred_rebuilds_when_idle(self):
+        orch, stts = self._make_orchestrator()
+        old_executor = MagicMock(engine_config={'Piper': 8, 'default': 8})
+        old_executor.active_tasks = 3
+        old_executor._shutdown = False
+        orch.executor = old_executor
+        stts.executor = old_executor
+        new_executor = MagicMock(engine_config={'Piper': 2, 'default': 2})
+
+        with patch.object(orch, 'build_engine_config', return_value={'Piper': 2, 'default': 2}), \
+             patch.object(batch_executor, 'get_multi_engine_executor', return_value=new_executor):
+            orch.refresh_engine_pools_for_current_ram()
+
+        old_executor.active_tasks = 0
+        with patch.object(batch_executor, 'get_multi_engine_executor', return_value=new_executor):
+            result = orch.apply_deferred_engine_pools()
+
+        assert result == {'Piper': 2, 'default': 2}
+        assert orch.executor is new_executor
+        assert orch.deferred_engine_config is None
+
+    def test_refresh_rebuilds_shutdown_executor_even_when_busy_count_stale(self):
+        orch, stts = self._make_orchestrator()
+        old_executor = MagicMock(engine_config={'Piper': 8, 'default': 8})
+        old_executor.active_tasks = 5
+        old_executor._shutdown = True
+        orch.executor = old_executor
+        stts.executor = old_executor
+        new_executor = MagicMock(engine_config={'Piper': 2, 'default': 2})
+        new_executor._shutdown = False
+
+        with patch.object(orch, 'build_engine_config', return_value={'Piper': 2, 'default': 2}), \
+             patch.object(batch_executor, 'get_multi_engine_executor', return_value=new_executor):
+            result = orch.refresh_engine_pools_for_current_ram()
+
+        assert result == {'Piper': 2, 'default': 2}
+        assert orch.executor is new_executor

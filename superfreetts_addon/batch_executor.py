@@ -55,14 +55,20 @@ class BoundedThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
         else:
             if not self._semaphore.acquire(timeout=timeout):
                 raise TimeoutError('Timed out waiting for executor slot')
+        # Increment before scheduling so a concurrent shutdown cannot miss an
+        # in-flight task (the count must reflect the submitted work, not only
+        # work that has already entered the pool).
+        with self._active_lock:
+            self._active_count += 1
         try:
             future = super().submit(fn, *args, **kwargs)
         except Exception:
+            with self._active_lock:
+                if self._active_count > 0:
+                    self._active_count -= 1
             self._semaphore.release()
             raise
         future.add_done_callback(lambda x: self._semaphore.release())
-        with self._active_lock:
-            self._active_count += 1
         future.add_done_callback(self._mark_done)
         return future
 
@@ -648,14 +654,34 @@ class MultiEngineExecutor:
         self.cache = UnifiedCache(max_size_mb=cache_size_mb)
         self.checkpoint = CheckpointManager()
         self._shutdown = False
+        self._state_lock = threading.RLock()
+        self._deferred_engine_config = None
 
     @property
     def active_tasks(self) -> int:
-        total = 0
-        for executor in self.executors.values():
-            total += getattr(executor, 'active_tasks', 0)
-        total += getattr(self.default_executor, 'active_tasks', 0)
-        return total
+        with self._state_lock:
+            total = 0
+            for executor in list(self.executors.values()):
+                total += getattr(executor, 'active_tasks', 0)
+            total += getattr(self.default_executor, 'active_tasks', 0)
+            return total
+
+    def shutdown(self, wait: bool = True):
+        """Shutdown all executors"""
+        with self._state_lock:
+            self._shutdown = True
+            executors = list(self.executors.items())
+            default_executor = self.default_executor
+        for service, executor in executors:
+            try:
+                executor.shutdown(wait=wait)
+            except Exception as e:
+                logger.warning(f"[BATCH] {service} executor shutdown error: {e}")
+
+        try:
+            default_executor.shutdown(wait=wait)
+        except Exception as e:
+            logger.warning(f"[BATCH] Default executor shutdown error: {e}")
     
     def get_executor(self, service_name: str) -> concurrent.futures.ThreadPoolExecutor:
         """Get executor for given service/engine."""
@@ -677,21 +703,7 @@ class MultiEngineExecutor:
     def detect_service(self, task: Dict) -> str:
         """Detect TTS service name from task's selected voice."""
         return _detect_service_from_task(task)
-    
-    def shutdown(self, wait: bool = True):
-        """Shutdown all executors"""
-        self._shutdown = True
-        for service, executor in self.executors.items():
-            try:
-                executor.shutdown(wait=wait)
-            except Exception as e:
-                logger.warning(f"[BATCH] {service} executor shutdown error: {e}")
-        
-        try:
-            self.default_executor.shutdown(wait=wait)
-        except Exception as e:
-            logger.warning(f"[BATCH] Default executor shutdown error: {e}")
-    
+
     def reset(self):
         """Reset all caches"""
         self.cache.clear()
@@ -710,12 +722,13 @@ def get_batch_executor(max_workers: int = 1) -> UnifiedBatchExecutor:
 
 # Multi-engine executor singleton
 _multi_executor: Optional[MultiEngineExecutor] = None
+_multi_executor_lock = threading.RLock()
 
 
 def get_multi_engine_executor(engine_config: Dict[str, int] = None) -> MultiEngineExecutor:
     """
     Get or create multi-engine executor.
-    
+
     Args:
         engine_config: {service_name: worker_count}
         Example:
@@ -727,26 +740,31 @@ def get_multi_engine_executor(engine_config: Dict[str, int] = None) -> MultiEngi
             }
     """
     global _multi_executor
-    if _multi_executor is None or getattr(_multi_executor, '_shutdown', False):
-        _multi_executor = MultiEngineExecutor(engine_config=engine_config)
-    elif engine_config is not None and _multi_executor.engine_config != engine_config:
-        # Do not tear down an executor that still has in-flight submissions:
-        # shutting its ThreadPoolExecutor down makes every concurrent submit()
-        # raise "cannot schedule new futures after shutdown".  When busy, keep
-        # the existing pool and let the caller retry on the next pass.
-        old_active = getattr(_multi_executor, 'active_tasks', 0)
-        if type(old_active) is not int:
-            old_active = 0
-        if old_active > 0:
-            logger.warning(
-                f"[BATCH] Executor config changed but {old_active} task(s) are "
-                f"in flight; keeping the existing executor to avoid shutdown race"
-            )
-            return _multi_executor
-        # Recreate executor when worker configuration changes.
-        _multi_executor.shutdown(wait=False)
-        _multi_executor = MultiEngineExecutor(engine_config=engine_config)
-    return _multi_executor
+    with _multi_executor_lock:
+        if _multi_executor is None or getattr(_multi_executor, '_shutdown', False):
+            _multi_executor = MultiEngineExecutor(engine_config=engine_config)
+        elif engine_config is not None and _multi_executor.engine_config != engine_config:
+            # Do not tear down an executor that still has in-flight submissions:
+            # shutting its ThreadPoolExecutor down makes every concurrent submit()
+            # raise "cannot schedule new futures after shutdown".  When busy, keep
+            # the existing pool and let the caller retry on the next pass.
+            old_active = getattr(_multi_executor, 'active_tasks', 0)
+            if type(old_active) is not int:
+                old_active = 0
+            if old_active > 0:
+                logger.warning(
+                    f"[BATCH] Executor config changed but {old_active} task(s) are "
+                    f"in flight; keeping the existing executor to avoid shutdown race"
+                )
+                try:
+                    _multi_executor._deferred_engine_config = engine_config
+                except Exception as e:
+                    logger.debug(f'[BATCH] Could not defer engine configuration: {e}')
+                return _multi_executor
+            # Recreate executor when worker configuration changes.
+            _multi_executor.shutdown(wait=False)
+            _multi_executor = MultiEngineExecutor(engine_config=engine_config)
+        return _multi_executor
 
 
 def reset_multi_engine_executor():

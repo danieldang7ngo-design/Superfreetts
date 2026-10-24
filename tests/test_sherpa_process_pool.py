@@ -126,3 +126,31 @@ def test_pool_reused_after_stop_all_restarts_cleanup_timer(monkeypatch):
     assert pool._cleanup_timer is not None
     assert pool._cleanup_timer.is_alive()
     pool.stop_all()
+
+
+class FakeWindowsProcess(FakeProcess):
+    pass
+
+
+@pytest.mark.unit
+def test_terminate_process_tree_windows_graceful_first(monkeypatch):
+    proc = FakeProcess()
+    monkeypatch.setattr(process_pool.os, "name", "nt", raising=False)
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(list(cmd))
+        result = MagicMock()
+        result.returncode = 0
+        return result
+
+    monkeypatch.setattr(process_pool.subprocess, "run", fake_run)
+    # proc.wait returns None first? Make wait return immediately
+    proc.wait = lambda timeout=None: None
+    proc.poll = lambda: None
+
+    process_pool.terminate_process(proc)
+
+    assert calls and calls[0] == ["taskkill", "/PID", str(proc.pid), "/T"]
+    assert "/F" not in calls[0]
+    assert proc.is_healthy is False
