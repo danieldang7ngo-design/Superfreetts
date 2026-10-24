@@ -98,6 +98,6 @@ class StatsContext:
         self.context = context
     def event(self, event, event_mode = None):
         return StatsEvent(self.context, event, event_mode)
-    def send_event(self, event, event_mode = None, properties = {}):
+    def send_event(self, event, event_mode = None, properties = None):
         pass
 

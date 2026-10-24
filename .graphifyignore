@@ -1,0 +1,11 @@
+# Graphify index exclusions for superfreetts
+# Vendored/bundled third-party libraries: exclude so graph queries hit our own code.
+external/
+# Build artefacts & caches
+__pycache__/
+graphify-out/
+*.pyc
+# Local venvs / node deps if ever added
+.venv/
+venv/
+node_modules/

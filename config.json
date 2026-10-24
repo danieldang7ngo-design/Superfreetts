@@ -7,7 +7,6 @@
             "MmsTTS": false,
             "SupertonicTTS": false,
             "GoogleTranslate": false,
-            "NaverTTS": false,
             "Sapi5TTS": false,
             "EspeakNgTTS": false
         },

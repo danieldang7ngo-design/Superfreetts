@@ -2,7 +2,7 @@ name: Tests, lint and package
 
 on:
   push:
-    branches: [main, fix/release-readiness]
+    branches: ["**"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -21,6 +21,8 @@ jobs:
       - run: pip install ruff
       - name: Ruff (runtime errors and import hygiene)
         run: ruff check superfreetts_addon build_share.py scripts tests
+      - name: i18n key coverage
+        run: python scripts/i18n_audit.py --check
 
   bandit:
     runs-on: ubuntu-latest

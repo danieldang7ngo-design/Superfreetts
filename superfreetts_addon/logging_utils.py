@@ -3,6 +3,7 @@ import os
 import io
 import logging
 import inspect
+from logging.handlers import RotatingFileHandler
 
 if hasattr(sys, '_sentry_crash_reporting'):
     import sentry_sdk
@@ -132,7 +133,9 @@ def get_stream_handler():
 
 def get_file_handler(filename):
     # Use UTF-8 encoding to properly handle all Unicode characters
-    handler = logging.FileHandler(filename, encoding='utf-8')
+    # Diagnostics logging is opt-in, but a long-running install must not
+    # grow a multi-GB file: keep 5 x 5 MB and drop the rest.
+    handler = RotatingFileHandler(filename, maxBytes=5_000_000, backupCount=3, encoding='utf-8')
     handler.setFormatter(logging.Formatter(fmt='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(name)s: %(message)s', datefmt='%H:%M:%S'))
     return handler    
 

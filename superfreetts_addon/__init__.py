@@ -26,11 +26,6 @@ else:
     import aqt.gui_hooks
     import anki.sound  # noqa: F401 - required for Anki sound hooks
 
-    # need to declare upfront whether we're doing crash reporting
-    # ============================================================
-    if False: # Super Free TTS Lite: Always disable crash reporting
-        sys._sentry_crash_reporting = True
-
     # setup logger
     # ============
 
