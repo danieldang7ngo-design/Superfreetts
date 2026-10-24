@@ -17,7 +17,9 @@ NOT responsible for:
   - Anki UI interactions beyond writing config
 """
 
+import json
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from . import constants
@@ -29,6 +31,9 @@ from . import i18n
 from . import gui_utils
 
 logger = logging_utils.get_child_logger(__name__)
+
+CONFIG_BACKUP_PREFIX = 'config_backup_schema'
+CONFIG_BACKUP_KEEP = 5
 
 
 def _sanitize_for_json(obj):
@@ -73,8 +78,68 @@ class ConfigStore:
     # ------------------------------------------------------------------
 
     def perform_config_migration(self) -> None:
+        try:
+            previous_version = int(self.config.get(constants.CONFIG_SCHEMA, 0))
+        except (TypeError, ValueError):
+            previous_version = 0
+        if 0 < previous_version < constants.CONFIG_SCHEMA_VERSION:
+            # Copy the user's settings before anything is rewritten.  A backup
+            # costs a few KB; losing presets, mapping rules or worker overrides
+            # on upgrade is unrecoverable.
+            self.backup_config_before_migration(previous_version)
         self.config = config_models.migrate_configuration(self.anki_utils, self.config)
         self._write()
+
+    def _config_backup_dir(self) -> Optional[str]:
+        getter = getattr(self.anki_utils, 'get_user_files_dir', None)
+        if not callable(getter):
+            # No host-provided directory (tests, exotic hosts): skip the backup
+            # rather than writing into the add-on install folder.
+            return None
+        directory = getter()
+        return directory or None
+
+    def backup_config_before_migration(self, previous_version: int) -> Optional[str]:
+        """Write a timestamped copy of the pre-migration config.
+
+        Returns the backup path, or None when there is nothing to save (fresh
+        install) or the write failed.  Never raises: a failed backup must not
+        block the add-on from starting.
+        """
+        if previous_version <= 0:
+            return None
+        try:
+            directory = self._config_backup_dir()
+            if not directory:
+                return None
+            os.makedirs(directory, exist_ok=True)
+            stamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+            filename = f'{CONFIG_BACKUP_PREFIX}{previous_version}_{stamp}.json'
+            path = os.path.join(directory, filename)
+            with open(path, 'w', encoding='utf-8') as handle:
+                json.dump(_sanitize_for_json(self.config), handle, indent=2, ensure_ascii=False)
+            self._prune_config_backups(directory)
+            logger.info(f'[CONFIG] Backed up schema {previous_version} config to {path}')
+            return path
+        except Exception as e:
+            logger.warning(f'[CONFIG] Pre-migration config backup failed: {e}')
+            return None
+
+    @staticmethod
+    def _prune_config_backups(directory: str) -> None:
+        """Keep only the newest CONFIG_BACKUP_KEEP migration backups."""
+        try:
+            names = sorted(
+                name for name in os.listdir(directory)
+                if name.startswith(CONFIG_BACKUP_PREFIX) and name.endswith('.json')
+            )
+            for stale in names[:-CONFIG_BACKUP_KEEP]:
+                try:
+                    os.remove(os.path.join(directory, stale))
+                except OSError:
+                    pass
+        except OSError as e:
+            logger.debug(f'[CONFIG] Could not prune config backups: {e}')
 
     # ------------------------------------------------------------------
     # Presets

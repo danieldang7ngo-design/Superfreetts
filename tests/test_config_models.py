@@ -198,7 +198,7 @@ class TestConfigSerializationAndMigration:
         assert deserialized_rules.rules[0].preset_id == "preset-1"
 
     def test_migration_v1_to_latest(self, mock_anki_utils):
-        # Migration test from schema version 1 (presets are cleared in v6, so we verify they are empty)
+        # A v1 batch_config entry is converted into a preset and kept
         v1_config = {
             constants.CONFIG_SCHEMA: 1,
             constants.CONFIG_BATCH_CONFIG: {
@@ -222,7 +222,9 @@ class TestConfigSerializationAndMigration:
         
         migrated = config_models.migrate_configuration(mock_anki_utils, v1_config)
         assert migrated[constants.CONFIG_SCHEMA] == constants.CONFIG_SCHEMA_VERSION
-        assert len(migrated[constants.CONFIG_PRESETS]) == 0
+        # Converting legacy presets must not discard them.
+        assert len(migrated[constants.CONFIG_PRESETS]) == 1
+        assert migrated[constants.CONFIG_PRESETS]["test-uuid-12345"]["name"] == "Preset One"
 
     def test_migration_v6_to_latest(self, mock_anki_utils):
         # Presets should be preserved when migrating from v6
@@ -254,7 +256,7 @@ class TestConfigSerializationAndMigration:
         assert migrated[constants.CONFIG_PRESETS]["preset-uuid"]["name"] == "Preset One"
 
     def test_migration_v5_to_latest(self, mock_anki_utils):
-        # Migration from v5 to check thread/worker clamping
+        # Migration from v5 must keep the worker values the user chose
         v5_config = {
             constants.CONFIG_SCHEMA: 5,
             constants.CONFIG_SERVICE_CONFIG: {
@@ -269,14 +271,14 @@ class TestConfigSerializationAndMigration:
         migrated = config_models.migrate_configuration(mock_anki_utils, v5_config)
         assert migrated[constants.CONFIG_SCHEMA] == constants.CONFIG_SCHEMA_VERSION
         
-        # All workers must be forced/clamped to 1
+        # User settings are preserved; runtime caps enforce safe limits instead.
         edge_config = migrated[constants.CONFIG_SERVICE_CONFIG]["EdgeTTS"]
-        assert edge_config["num_threads"] == 1
-        assert edge_config["concurrency_workers"] == 1
-        
+        assert edge_config["num_threads"] == 20
+        assert edge_config["concurrency_workers"] == 20
+
         prefs = migrated[constants.CONFIG_PREFERENCES]
-        assert prefs["piper_workers"] == 1
-        assert prefs["batch_concurrency"] == 1
+        assert prefs["piper_workers"] == 4
+        assert prefs["batch_concurrency"] == 4
 
     def test_preset_crud_operations(self, mock_anki_utils, mock_service_manager):
         from superfreetts_addon.superfreetts import SuperFreeTTS

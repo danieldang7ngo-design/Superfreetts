@@ -863,26 +863,23 @@ class TrialRequestReponse:
     error: Optional[str] = None
 
 
-def _force_single_worker_mode(config, worker_keys, force_exist=False):
-    service_config = config.get(constants.CONFIG_SERVICE_CONFIG, {})
-    for service_name, s_config in service_config.items():
-        if force_exist or 'num_threads' in s_config:
-            s_config['num_threads'] = 1
-        if force_exist or 'concurrency_workers' in s_config:
-            s_config['concurrency_workers'] = 1
-
-    if constants.CONFIG_PREFERENCES in config:
-        prefs = config[constants.CONFIG_PREFERENCES]
-        for worker_key in worker_keys:
-            if force_exist or worker_key in prefs:
-                prefs[worker_key] = 1
-
 
 def migrate_configuration(anki_utils, config):
+    # Rule: a migration never rewrites a setting the user picked.  It may add
+    # missing containers, convert legacy shapes and bump the schema; worker
+    # counts, presets, mapping rules and realtime config are left untouched.
+    # Safe limits are enforced at runtime instead (EdgeTTS = 3, CPU budget).
     current_config_schema_version = config.get(constants.CONFIG_SCHEMA, 0)
+    try:
+        current_config_schema_version = int(current_config_schema_version)
+    except (TypeError, ValueError):
+        # A hand-edited/corrupt schema value must not crash add-on startup.
+        current_config_schema_version = 0
     if current_config_schema_version < 2:
-        config[constants.CONFIG_PRESETS] = {}
-        # need to convert presets to the uuid format
+        # Convert legacy batch_config entries into presets.  Never reset the
+        # preset map first: a user upgrading from an early build may already have
+        # entries there, and migration must not delete them.
+        presets = config.setdefault(constants.CONFIG_PRESETS, {})
         if constants.CONFIG_BATCH_CONFIG in config:
             for key, value in config[constants.CONFIG_BATCH_CONFIG].items():
                 batch_name = key
@@ -891,8 +888,8 @@ def migrate_configuration(anki_utils, config):
                 batch['uuid'] = batch_uuid
                 batch['name'] = batch_name
                 # Add default for skip_anki_backup during migration
-                batch['skip_anki_backup'] = True 
-                config[constants.CONFIG_PRESETS][batch_uuid] = batch
+                batch['skip_anki_backup'] = True
+                presets.setdefault(batch_uuid, batch)
 
     if current_config_schema_version < 3:
         def voice_to_voice_id_conversion(voice_data):
@@ -939,31 +936,16 @@ def migrate_configuration(anki_utils, config):
                                 voice_entry['voice_id'] = voice_to_voice_id_conversion(voice_data)
                                 voice_entry.pop('voice', None)
 
-    if current_config_schema_version < 5:
-        # Super Free TTS: Force all users to safe serial mode (1 thread, 1 worker) by default.
-        # This resolves issues where older defaults (Auto=2) were persisted.
-        _force_single_worker_mode(
-            config,
-            ['piper_workers', 'kokoro_workers', 'edgetts_workers', 'mms_workers', 'default_workers', 'batch_concurrency'],
-            force_exist=False
-        )
-
     if current_config_schema_version < 6:
-        # Super Free TTS: Clear all presets, mapping rules and realtime configs
-        # and ensure "đơn nhân" (single-core/single-worker) configuration.
-        config[constants.CONFIG_PRESETS] = {}
-        config[constants.CONFIG_MAPPING_RULES] = serialize_preset_mapping_rules(PresetMappingRules())
-        config[constants.CONFIG_REALTIME_CONFIG] = {}
-        
-        _force_single_worker_mode(
-            config,
-            [
-                'piper_workers', 'kokoro_workers', 'edgetts_workers', 
-                'mms_workers', 'default_workers', 'batch_concurrency',
-                'batch_max_cores', 'sherpa_max_processes'
-            ],
-            force_exist=True
+        # Never clear user data here.  Older builds wiped presets, mapping rules
+        # and realtime settings at this step, so an upgrade could destroy work the
+        # user had already configured.  Only create containers that are missing.
+        config.setdefault(constants.CONFIG_PRESETS, {})
+        config.setdefault(
+            constants.CONFIG_MAPPING_RULES,
+            serialize_preset_mapping_rules(PresetMappingRules()),
         )
+        config.setdefault(constants.CONFIG_REALTIME_CONFIG, {})
 
     if current_config_schema_version < 7:
         if constants.CONFIG_WORKFLOWS not in config:
