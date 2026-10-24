@@ -1,5 +1,27 @@
 # Changelog
 
+## 26.10.3 - 2026-10-24
+
+### English
+
+- Updating no longer resets your setup: presets, workflows, mapping rules and worker counts are kept, and a copy of the old config is saved first.
+- Cancel keeps what is done: notes that already finished are saved, and the rest are no longer marked as errors.
+- Much smaller download: about 2 MB instead of 84 MB, because engines and voice models are fetched only when you use them.
+- Every button and message now has English and Vietnamese text, so no raw labels are shown anymore.
+- A batch that stops responding now stops cleanly and tells you, instead of hanging silently.
+- The log file no longer grows forever: it rotates at 5 MB and keeps 3 older copies.
+- Cleaner internals (smaller batch functions, fewer hidden errors), so problems are easier to find and fix.
+
+### Tiếng Việt
+
+- Cập nhật không còn làm mất cài đặt: preset, workflow, quy tắc gán và số luồng được giữ nguyên, đồng thời có bản sao lưu cấu hình cũ trước khi đổi.
+- Bấm Huỷ vẫn giữ phần đã xong: các note đã tạo xong được lưu, phần còn lại không bị đánh dấu lỗi nữa.
+- File tải về nhẹ hơn nhiều: khoảng 2 MB thay vì 84 MB, vì engine và model giọng chỉ được tải khi bạn dùng.
+- Mọi nút và thông báo đều có tiếng Anh và tiếng Việt, không còn hiện chữ thô.
+- Batch bị treo sẽ dừng gọn và báo rõ, không treo im lặng nữa.
+- File log không phình mãi: tự xoay vòng ở 5 MB và giữ 3 bản cũ.
+- Bên trong gọn hơn (hàm batch nhỏ hơn, ít lỗi bị bỏ qua), nên dễ tìm và sửa lỗi hơn.
+
 ## 26.10.2 - 2026-10-21
 
 ### English
