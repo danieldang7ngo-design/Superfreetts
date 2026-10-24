@@ -60,6 +60,8 @@ EXCLUDE_FILE_SUFFIXES = (
     ".dll",
     ".dylib",
     ".exe",
+    ".onnx",          # engine models (downloaded at runtime)
+    ".ort",           # onnxruntime tuned models (downloaded at runtime)
 )
 EXCLUDE_FILE_NAMES = {
     "meta.json",                       # Anki regenerates this on install
@@ -74,14 +76,56 @@ def log(msg: str) -> None:
     print(f"[build] {msg}")
 
 
+ENGINE_DATA_DIR = ROOT / "superfreetts_addon" / "data"
+
+BINARY_MAGICS = (
+    b"\x7fELF",            # ELF (Linux)
+    b"MZ",                 # PE / Windows
+    b"\xca\xfe\xba\xbe",  # Mach-O universal
+    b"\xce\xfa\xed\xfe",  # Mach-O 32-bit LE
+    b"\xcf\xfa\xed\xfe",  # Mach-O 64-bit LE
+    b"\xfe\xed\xfa\xce",  # Mach-O 32-bit BE
+    b"\xfe\xed\xfa\xcf",  # Mach-O 64-bit BE
+)
+
+
+def is_engine_data(path: Path) -> bool:
+    """True inside superfreetts_addon/data: engines/models are downloaded at runtime."""
+    try:
+        resolved = path.resolve()
+        engine_dir = ENGINE_DATA_DIR.resolve()
+    except OSError:
+        return False
+    return resolved == engine_dir or engine_dir in resolved.parents
+
+
+def looks_like_binary(path: Path) -> bool:
+    """Detect compiled binaries by magic bytes, not by file name.
+
+    Filtering by suffix alone let versioned shared libraries
+    (``libonnxruntime.so.1.14.1``), extensionless executables (``piper``) and
+    model files (``*.onnx``) into the published archive.
+    """
+    try:
+        with path.open("rb") as handle:
+            head = handle.read(4)
+    except OSError:
+        return False
+    return any(head.startswith(magic) for magic in BINARY_MAGICS)
+
+
 def should_skip_dir(path: Path) -> bool:
-    return path.name in EXCLUDE_DIR_NAMES
+    if path.name in EXCLUDE_DIR_NAMES:
+        return True
+    return is_engine_data(path)
 
 
 def should_skip_file(path: Path) -> bool:
     if path.name in EXCLUDE_FILE_NAMES:
         return True
     if path.suffix.lower() in EXCLUDE_FILE_SUFFIXES:
+        return True
+    if is_engine_data(path) or looks_like_binary(path):
         return True
     # Skip test files inside vendored libs (comtypes/test, gtts/tests, *_test.py)
     if path.name.endswith("_test.py") or path.name.startswith("test_"):

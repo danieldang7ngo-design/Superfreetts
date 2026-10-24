@@ -26,7 +26,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET_VERSION = "26.10.2"
+TARGET_VERSION = "26.10.3"
 
 REQUIRED_FILES = {
     "__init__.py",
@@ -54,6 +54,7 @@ FORBIDDEN_DIR_PREFIXES = (
     "external/psutil-",
     "user_files/",
     "superfreetts_addon/cache/",
+    "superfreetts_addon/data/",   # engines/models are downloaded at runtime
 )
 
 FORBIDDEN_FILE_NAMES = {
@@ -64,7 +65,40 @@ FORBIDDEN_FILE_NAMES = {
     "service_onnx_general.py",
 }
 
-FORBIDDEN_SUFFIXES = (".so", ".pyd", ".dll", ".dylib", ".exe", ".pyc", ".pyo")
+FORBIDDEN_SUFFIXES = (
+    ".so",
+    ".pyd",
+    ".dll",
+    ".dylib",
+    ".exe",
+    ".pyc",
+    ".pyo",
+    ".onnx",
+    ".ort",
+)
+
+BINARY_MAGICS = (
+    b"\x7fELF",
+    b"MZ",
+    b"\xca\xfe\xba\xbe",
+    b"\xce\xfa\xed\xfe",
+    b"\xcf\xfa\xed\xfe",
+    b"\xfe\xed\xfa\xce",
+    b"\xfe\xed\xfa\xcf",
+)
+
+# A source-only add-on is a few MB.  Anything larger means runtime engine or
+# model data leaked into the archive (117 MB once shipped this way).
+MAX_ARCHIVE_BYTES = 25 * 1024 * 1024
+
+
+def _has_binary_magic(archive: zipfile.ZipFile, name: str) -> bool:
+    try:
+        with archive.open(name) as handle:
+            head = handle.read(4)
+    except Exception:
+        return False
+    return any(head.startswith(magic) for magic in BINARY_MAGICS)
 
 
 def _error(message: str) -> None:
@@ -89,6 +123,13 @@ def verify_archive(archive: Path) -> list[str]:
     if not archive.is_file():
         return [f"archive not found: {archive}"]
 
+    size_mb = archive.stat().st_size / 1024 / 1024
+    if archive.stat().st_size > MAX_ARCHIVE_BYTES:
+        errors.append(
+            f"archive is too large ({size_mb:.1f} MB); runtime engine/model data "
+            "must not be bundled"
+        )
+
     with zipfile.ZipFile(archive) as zf:
         names = {name.replace("\\", "/") for name in zf.namelist() if not name.endswith("/")}
 
@@ -103,6 +144,10 @@ def verify_archive(archive: Path) -> list[str]:
             if Path(lower).name in FORBIDDEN_FILE_NAMES:
                 errors.append(f"forbidden local-state file: {name}")
             if lower.endswith(FORBIDDEN_SUFFIXES):
+                errors.append(f"compiled/binary file in package: {name}")
+            if ".so." in lower:
+                errors.append(f"versioned shared library in package: {name}")
+            if _has_binary_magic(zf, name):
                 errors.append(f"compiled/binary file in package: {name}")
             if "/tests/" in lower or lower.startswith("tests/"):
                 errors.append(f"test file in package: {name}")
