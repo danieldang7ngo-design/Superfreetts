@@ -256,7 +256,7 @@ class BatchOrchestrator:
         audio_cache = self._execute_unique_tasks_unified(tasks, dedup_map, batch_status, checkpoint)
         logger.info(f'[BATCH] Generated {len(audio_cache)} audio files in {time.time() - start_time:.2f}s')
 
-        batch_status.futures_to_cancel.clear()
+        batch_status.clear_futures()
         batch_status.total_unique_tasks = 0
         batch_status.unique_tasks_completed = 0
 
@@ -324,7 +324,9 @@ class BatchOrchestrator:
             batch_status.unique_tasks_completed += 1
             batch_status.notify_change(note_id)
 
-        if notes_to_update and batch_status.must_continue:
+        # Cancelling stops FUTURE notes.  Notes already processed are saved so
+        # the "Done" rows shown in the progress table match the collection.
+        if notes_to_update:
             anki_collection.update_notes(notes_to_update)
 
         return len(notes_to_update)
@@ -369,7 +371,9 @@ class BatchOrchestrator:
             batch_status.unique_tasks_completed = idx + 1
             batch_status.notify_change(note_id)
 
-        if notes_to_update and batch_status.must_continue:
+        # Same rule as the chunked apply: a cancel must not throw away notes
+        # that were already processed and reported as Done.
+        if notes_to_update:
             logger.info(f'[BATCH] Saving {len(notes_to_update)} notes in single transaction...')
             anki_collection.update_notes(notes_to_update)
             logger.info('[BATCH] Notes saved successfully')
@@ -472,41 +476,7 @@ class BatchOrchestrator:
             )
             logger.info(f"[BATCH] {cache_hit_count} unique task(s) served from disk cache")
 
-        BATCH_SIZE_BY_ENGINE = {
-            'EdgeTTS': 3,
-            'PiperTTS': 5,
-            'KokoroTTS': 5,
-            'MmsTTS': 5,
-            'Piper': 5,
-            'Kokoro': 5,
-            'MMS': 5,
-            'SupertonicTTS': 5,
-            'Supertonic': 5,
-        }
-        DEFAULT_BATCH_SIZE = 1
-        all_chunks = []
-
-        for service_name, group_tasks in engine_groups.items():
-            max_batch = BATCH_SIZE_BY_ENGINE.get(service_name, DEFAULT_BATCH_SIZE)
-            chunk = []
-            chunk_chars = 0
-            for item in group_tasks:
-                dedup_key, task_data, task_indices = item
-                # Chunking is about the payload sent to the engine, which is
-                # the processed text (not the raw source text).
-                text = task_data['processed_text']
-                text_len = len(text)
-
-                if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
-                    all_chunks.append((service_name, list(chunk)))
-                    chunk = []
-                    chunk_chars = 0
-
-                chunk.append(item)
-                chunk_chars += text_len
-
-            if chunk:
-                all_chunks.append((service_name, list(chunk)))
+        all_chunks = self._build_all_chunks(engine_groups)
 
         future_to_chunk = {}
         future_lock = threading.Lock()
@@ -523,6 +493,10 @@ class BatchOrchestrator:
                 for chunk_items in chunk_items_list:
                     if not batch_status.must_continue:
                         break
+                    try:
+                        self.hypertts.orchestrator.apply_deferred_engine_pools()
+                    except Exception as e:
+                        logger.debug(f'[BATCH] Deferred pool refresh skipped: {e}')
                     executor_pool = self.executor.get_executor(service_name)
                     while batch_status.must_continue:
                         try:
@@ -544,8 +518,25 @@ class BatchOrchestrator:
                                     raise
                                 try:
                                     self.hypertts.orchestrator.refresh_engine_pools_for_current_ram()
-                                except Exception:
-                                    pass
+                                except Exception as e:
+                                    logger.warning(f'[BATCH] Pool refresh failed during submit retry: {e}')
+                                # If the pool is still shut down (refresh was
+                                # deferred or did not rebuild), force a new
+                                # executor before retrying.
+                                try:
+                                    current_executor = getattr(self.hypertts.orchestrator, 'executor', None)
+                                    if getattr(current_executor, '_shutdown', False):
+                                        rebuilt = batch_executor.get_multi_engine_executor(
+                                            engine_config=getattr(current_executor, 'engine_config', None) or {}
+                                        )
+                                        self.hypertts.orchestrator.executor = rebuilt
+                                        self.hypertts.executor = rebuilt
+                                except Exception as e:
+                                    logger.warning(f'[BATCH] Forced executor rebuild failed: {e}')
+                                try:
+                                    self.hypertts.orchestrator.apply_deferred_engine_pools()
+                                except Exception as e:
+                                    logger.debug(f'[BATCH] Deferred pool refresh skipped: {e}')
                                 executor_pool = self.executor.get_executor(service_name)
                                 submit_kwargs = {}
                                 if isinstance(executor_pool, batch_executor.BoundedThreadPoolExecutor):
@@ -557,7 +548,7 @@ class BatchOrchestrator:
                                 )
                             with future_lock:
                                 future_to_chunk[future] = list(chunk_items)
-                                batch_status.futures_to_cancel.append(future)
+                            batch_status.register_future(future)
                             break
                         except TimeoutError:
                             time.sleep(0.05)
@@ -591,10 +582,7 @@ class BatchOrchestrator:
                 for future in list(future_to_chunk):
                     if future.done():
                         done_futures.append((future, future_to_chunk.pop(future)))
-                        try:
-                            batch_status.futures_to_cancel.remove(future)
-                        except ValueError:
-                            pass
+                        batch_status.unregister_future(future)
             
             if not done_futures:
                 current_time = time.time()
@@ -613,29 +601,10 @@ class BatchOrchestrator:
                 # detect stall: no completed futures for a while -> cancel pending and mark errors
                 if current_time - last_progress_time > stall_timeout_seconds and len(future_to_chunk) > 0:
                     logger.error(f"[BATCH] Generation stalled for {stall_timeout_seconds}s, cancelling pending tasks")
-                    with future_lock:
-                        pending = list(future_to_chunk.items())
-                        future_to_chunk.clear()
-                        for pending_future, chunk in pending:
-                            try:
-                                pending_future.cancel()
-                            except Exception as e:
-                                logger.error(f"Failed to cancel pending future during stall: {e}")
-                            # mark each task in chunk as failed due to stall
-                            for dedup_key, task_data, task_indices in chunk:
-                                audio_cache[dedup_key] = (None, Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled"))
-                                completed_count += 1
-                                batch_status.unique_tasks_completed = completed_count
-                                stall_error = Exception(i18n.get_text("error_batch_stalled", lang) if i18n.get_text("error_batch_stalled", lang) else "Batch generation stalled")
-                                for task_idx in task_indices:
-                                    note_id = tasks[task_idx]['note_id']
-                                    with batch_status.get_note_action_context(note_id, False) as ctx:
-                                        ctx.set_error(stall_error)
-                                    checkpoint.mark_error(note_id, stall_error)
-                                    batch_status.notify_change(note_id)
-                    checkpoint.flush()
-                    # Mark stalled tasks and continue processing remaining futures instead of aborting
-                    batch_status.set_status_message(i18n.get_text("status_batch_stalled", lang) if i18n.get_text("status_batch_stalled", lang) else None)
+                    completed_count = self._handle_stall(
+                        future_to_chunk, future_lock, tasks, audio_cache,
+                        checkpoint, batch_status, lang, completed_count,
+                    )
 
                 time.sleep(0.05)
                 continue
@@ -647,34 +616,10 @@ class BatchOrchestrator:
                     # first batch (Kokoro/MMS model load) can legitimately take
                     # longer than 25 seconds before returning its result.
                     batch_results = future.result()
-                    generated_ids = []
-                    
-                    for i, (dedup_key, task_data, task_indices) in enumerate(chunk):
-                        result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
-                        audio_cache[dedup_key] = result_tuple
-                        result, error = result_tuple
-                        
-                        completed_count += 1
-                        batch_status.unique_tasks_completed = completed_count
-                        
-                        is_successful = result is not None
-                        for task_idx in task_indices:
-                            note_id = tasks[task_idx]['note_id']
-                            with batch_status.get_note_action_context(note_id, False) as ctx:
-                                if is_successful:
-                                    src, proc, audio_fn, full_fn = result
-                                    ctx.set_source_text(src)
-                                    ctx.set_processed_text(proc)
-                                    ctx.set_sound(audio_fn)
-                                    ctx.set_status(constants.BatchNoteStatus.Generated)
-                                    generated_ids.append(note_id)
-                                else:
-                                    failure = error if error else Exception(i18n.get_text("error_audio_gen_failed", lang))
-                                    ctx.set_error(failure)
-                                    checkpoint.mark_error(note_id, failure)
-                            batch_status.notify_change(note_id)
-                    # Checkpoint after every completed chunk (flushed on cadence)
-                    checkpoint.mark_generated(generated_ids)
+                    completed_count = self._apply_chunk_results(
+                        chunk, batch_results, tasks, audio_cache,
+                        checkpoint, batch_status, lang, completed_count,
+                    )
                     
                     batch_status.set_status_message(i18n.get_text("status_generating_audio_progress", lang).format(completed_count, unique_count))
                     self.executor.monitor.maybe_gc(completed_count)
@@ -682,14 +627,9 @@ class BatchOrchestrator:
                     last_progress_time = time.time()
                 except Exception as e:
                     logger.error(f"[BATCH] Batch execution failed: {e}")
-                    for dedup_key, _, task_indices in chunk:
-                        audio_cache[dedup_key] = (None, e)
-                        completed_count += 1
-                        for task_idx in task_indices:
-                            note_id = tasks[task_idx]['note_id']
-                            with batch_status.get_note_action_context(note_id, False) as ctx:
-                                ctx.set_error(e)
-                            batch_status.notify_change(note_id)
+                    completed_count = self._fail_chunk(
+                        chunk, e, tasks, audio_cache, batch_status, completed_count,
+                    )
                     self.executor.monitor.maybe_gc(completed_count)
         
         for thread in submit_threads:
@@ -697,21 +637,155 @@ class BatchOrchestrator:
         if submit_error[0]:
             logger.error(f"[BATCH] Submit thread encountered an error: {submit_error[0]}")
 
-        # Fill any dedup_keys that were never submitted (submit thread error, cancel, etc.)
-        for dedup_key, task_indices in dedup_map.items():
-            if dedup_key not in audio_cache:
-                missing_error = Exception(i18n.get_text("error_audio_gen_failed", lang))
-                audio_cache[dedup_key] = (None, missing_error)
-                completed_count += 1
-                for task_idx in task_indices:
-                    note_id = tasks[task_idx]['note_id']
-                    with batch_status.get_note_action_context(note_id, False) as ctx:
-                        ctx.set_error(missing_error)
-                    checkpoint.mark_error(note_id, missing_error)
-                    batch_status.notify_change(note_id)
+        if batch_status.must_continue:
+            # A submit/worker error is a real failure: surface it and record it.
+            self._fill_missing_results(tasks, dedup_map, audio_cache, batch_status, checkpoint)
+        else:
+            # A user cancel is not a failure.  Leave the remaining notes
+            # untouched: no red rows, no error records in the checkpoint (a
+            # resume retries every note that is not applied anyway).
+            logger.info('[BATCH] Batch cancelled; leaving unprocessed notes untouched')
 
         checkpoint.flush()
         return audio_cache
+
+    def _fill_missing_results(self, tasks: List[Dict], dedup_map: Dict, audio_cache: Dict, batch_status: Any, checkpoint: Any) -> int:
+        """Mark notes whose audio never arrived as failed.
+
+        Only used when the run ended on its own (submit thread error, worker
+        exception).  A user cancel deliberately skips this so cancelled notes
+        are not reported or checkpointed as errors.
+        """
+        filled = 0
+        lang = self.hypertts.get_ui_language()
+        for dedup_key, task_indices in dedup_map.items():
+            if dedup_key in audio_cache:
+                continue
+            missing_error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+            audio_cache[dedup_key] = (None, missing_error)
+            filled += 1
+            for task_idx in task_indices:
+                note_id = tasks[task_idx]['note_id']
+                with batch_status.get_note_action_context(note_id, False) as ctx:
+                    ctx.set_error(missing_error)
+                checkpoint.mark_error(note_id, missing_error)
+                batch_status.notify_change(note_id)
+        return filled
+
+    def _build_all_chunks(self, engine_groups: Dict) -> List[Tuple[str, List[Tuple]]]:
+        """Split each engine's tasks into payload-sized chunks.
+
+        Chunking is about what one engine call receives, so the limit is based
+        on the *processed* text length, not the raw source text.
+        """
+        batch_size_by_engine = {
+            'EdgeTTS': 3,
+            'PiperTTS': 5,
+            'KokoroTTS': 5,
+            'MmsTTS': 5,
+            'Piper': 5,
+            'Kokoro': 5,
+            'MMS': 5,
+            'SupertonicTTS': 5,
+            'Supertonic': 5,
+        }
+        default_batch_size = 1
+        all_chunks = []
+        for service_name, group_tasks in engine_groups.items():
+            max_batch = batch_size_by_engine.get(service_name, default_batch_size)
+            chunk = []
+            chunk_chars = 0
+            for item in group_tasks:
+                _, task_data, _ = item
+                text_len = len(task_data['processed_text'])
+
+                if len(chunk) >= max_batch or (chunk_chars + text_len > 3000 and chunk):
+                    all_chunks.append((service_name, list(chunk)))
+                    chunk = []
+                    chunk_chars = 0
+
+                chunk.append(item)
+                chunk_chars += text_len
+
+            if chunk:
+                all_chunks.append((service_name, list(chunk)))
+        return all_chunks
+
+    def _apply_chunk_results(self, chunk: List[Tuple], batch_results: List[Tuple], tasks: List[Dict], audio_cache: Dict, checkpoint: Any, batch_status: Any, lang: str, completed_count: int) -> int:
+        """Store one finished chunk and update every note that used it."""
+        generated_ids = []
+
+        for i, (dedup_key, _, task_indices) in enumerate(chunk):
+            result_tuple = batch_results[i] if i < len(batch_results) else (None, Exception("Internal error"))
+            audio_cache[dedup_key] = result_tuple
+            result, error = result_tuple
+
+            completed_count += 1
+            batch_status.unique_tasks_completed = completed_count
+
+            is_successful = result is not None
+            for task_idx in task_indices:
+                note_id = tasks[task_idx]['note_id']
+                with batch_status.get_note_action_context(note_id, False) as ctx:
+                    if is_successful:
+                        src, proc, audio_fn, _ = result
+                        ctx.set_source_text(src)
+                        ctx.set_processed_text(proc)
+                        ctx.set_sound(audio_fn)
+                        ctx.set_status(constants.BatchNoteStatus.Generated)
+                        generated_ids.append(note_id)
+                    else:
+                        failure = error if error else Exception(i18n.get_text("error_audio_gen_failed", lang))
+                        ctx.set_error(failure)
+                        checkpoint.mark_error(note_id, failure)
+                batch_status.notify_change(note_id)
+
+        # Checkpoint after every completed chunk (flushed on cadence)
+        checkpoint.mark_generated(generated_ids)
+        return completed_count
+
+    def _fail_chunk(self, chunk: List[Tuple], error: Exception, tasks: List[Dict], audio_cache: Dict, batch_status: Any, completed_count: int) -> int:
+        """Mark every note in a chunk as failed after an unexpected error."""
+        for dedup_key, _, task_indices in chunk:
+            audio_cache[dedup_key] = (None, error)
+            completed_count += 1
+            for task_idx in task_indices:
+                note_id = tasks[task_idx]['note_id']
+                with batch_status.get_note_action_context(note_id, False) as ctx:
+                    ctx.set_error(error)
+                batch_status.notify_change(note_id)
+        return completed_count
+
+    def _handle_stall(self, future_to_chunk: Dict, future_lock: Any, tasks: List[Dict], audio_cache: Dict, checkpoint: Any, batch_status: Any, lang: str, completed_count: int) -> int:
+        """Cancel pending futures after the stall timeout and mark their notes.
+
+        The batch keeps running afterwards: another engine may still have
+        healthy futures in flight.
+        """
+        stalled_text = i18n.get_text("error_batch_stalled", lang) or "Batch generation stalled"
+        with future_lock:
+            pending = list(future_to_chunk.items())
+            future_to_chunk.clear()
+            for pending_future, chunk in pending:
+                try:
+                    pending_future.cancel()
+                except Exception as e:
+                    logger.error(f"Failed to cancel pending future during stall: {e}")
+                for dedup_key, _, task_indices in chunk:
+                    stall_error = Exception(stalled_text)
+                    audio_cache[dedup_key] = (None, stall_error)
+                    completed_count += 1
+                    batch_status.unique_tasks_completed = completed_count
+                    for task_idx in task_indices:
+                        note_id = tasks[task_idx]['note_id']
+                        with batch_status.get_note_action_context(note_id, False) as ctx:
+                            ctx.set_error(stall_error)
+                        checkpoint.mark_error(note_id, stall_error)
+                        batch_status.notify_change(note_id)
+
+        checkpoint.flush()
+        batch_status.set_status_message(i18n.get_text("status_batch_stalled", lang) or None)
+        return completed_count
 
     def _apply_batch_deduplication(self, tasks: List[Dict], dedup_map: Dict, audio_cache: Dict, batch_status: Any) -> List[Tuple]:
         results = []

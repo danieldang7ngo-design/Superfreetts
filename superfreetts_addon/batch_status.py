@@ -1,3 +1,4 @@
+import threading
 import time
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
@@ -125,6 +126,7 @@ class BatchStatus():
         self.unique_tasks_completed: int = 0
         self.total_unique_tasks: int = 0
         self.futures_to_cancel: List[Any] = []
+        self._futures_lock = threading.Lock()
         self.usage_session_id: Optional[str] = None
         self._change_notify_min_interval = 0.1
         self._last_change_notify_time = None
@@ -149,14 +151,34 @@ class BatchStatus():
         """Check if batch is currently running."""
         return self.task_running
 
+    def register_future(self, future: Any) -> None:
+        """Track a submitted future so stop() can cancel it."""
+        with self._futures_lock:
+            self.futures_to_cancel.append(future)
+
+    def unregister_future(self, future: Any) -> None:
+        """Forget a finished future; never raises if it is already gone."""
+        with self._futures_lock:
+            try:
+                self.futures_to_cancel.remove(future)
+            except ValueError:
+                pass
+
+    def clear_futures(self) -> None:
+        with self._futures_lock:
+            self.futures_to_cancel.clear()
+
     def stop(self) -> None:
         """Stop the running batch and cancel pending futures."""
         logger.info("Stopping current batch")
         self.must_continue = False
-        # Cancel all pending futures to avoid blocking on executor shutdown
-        for future in self.futures_to_cancel:
+        # Snapshot under the lock: worker threads may be appending or
+        # removing futures while the user clicks Cancel.
+        with self._futures_lock:
+            futures = list(self.futures_to_cancel)
+            self.futures_to_cancel.clear()
+        for future in futures:
             future.cancel()
-        self.futures_to_cancel.clear()
 
     def __getitem__(self, array_index: int) -> NoteStatus:
         """Get note status by array index."""

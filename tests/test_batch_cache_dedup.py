@@ -132,6 +132,18 @@ class DummyBatchStatus:
     def notify_change(self, note_id):
         pass
 
+    def register_future(self, future):
+        self.futures_to_cancel.append(future)
+
+    def unregister_future(self, future):
+        try:
+            self.futures_to_cancel.remove(future)
+        except ValueError:
+            pass
+
+    def clear_futures(self):
+        self.futures_to_cancel.clear()
+
 
 def make_app(tmp_path):
     anki_utils = DummyAnkiUtils(tmp_path)
