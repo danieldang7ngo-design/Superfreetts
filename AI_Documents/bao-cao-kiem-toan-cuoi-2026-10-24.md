@@ -164,3 +164,16 @@ Những việc sau cần người dùng phê duyệt rõ ràng, không được 
 Nợ kỹ thuật không chặn cho bản sau: 43 vị trí B110 (bắt đầu từ `process_pool.py`), tách nhỏ `draw_service_options` và `_execute_unique_tasks_unified`, kiểm thử cho module giao diện, dọn 232 khóa i18n thừa, bổ sung dịch ko/sv/ja/zh.
 
 Không bump version, không sửa mã nguồn, không đổi gói trong lần kiểm toán này. Việc commit báo cáo, push nhánh và gắn thẻ `26.10.3` được thực hiện sau khi kiểm toán PASS và sau bước review độc lập, theo phê duyệt của người dùng (xem §8).
+
+## 8. Nhật ký ship (24-10-2026, 21:14–21:16 +07)
+
+Thực hiện sau khi kiểm toán PASS và review độc lập kết luận `APPROVE-WITH-NITS` (5 điểm minor + nit trong báo cáo đã sửa, không có critical/major, không đụng tới mã nguồn hay gói).
+
+| Việc | Kết quả |
+|---|---|
+| Commit báo cáo | `850436a` — "docs: final audit report for 26.10.3 (PASS, 18/18 gates)" |
+| Push nhánh | `fix/resource-management` → `origin`, `55089d3..850436a`, remote HEAD = `850436a` |
+| Thẻ phát hành | `26.10.3` (annotated, "Release 26.10.3") trỏ vào commit `55089d3` — đúng commit "release: 26.10.3" |
+| Push thẻ | remote `refs/tags/26.10.3` = `172859d8e847e8bdedb3a5d05f0dc69e4c3e329d`, deref = `55089d3882e3ab6a3929dfecff2150d0b97e51f5` |
+| Gói phát hành | `SuperFreeTTS.ankiaddon`, 2.281.489 byte, sha256 `f96e524bcdafaa02a038812a2e4fd3034aa8724021faa049e74b82ab9c548aa3` |
+| Còn lại | Chỉ còn việc đăng gói lên nơi phát hành (AnkiWeb/GitHub release) — người dùng tự làm, kèm sha256 và số byte ở trên. |
