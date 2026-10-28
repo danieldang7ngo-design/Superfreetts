@@ -307,7 +307,10 @@ class SuperFreeTTS():
                 group_task = chunk[group_indices[0]][1]
                 group_voice = group_task.get('chosen_voice')
                 if group_voice is None:
-                    group_error = Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language()))
+                    base_msg = i18n.get_text("error_audio_gen_failed", self.get_ui_language())
+                    preview = str(group_task.get('processed_text', ''))[:120]
+                    logger.error(f"[BATCH] No voice selected for batch group of {len(group_indices)} item(s); text={preview}")
+                    group_error = Exception(f"{base_msg} (no voice selected; text={preview})")
                     for idx in group_indices:
                         task_data = chunk[idx][1]
                         if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
@@ -351,9 +354,12 @@ class SuperFreeTTS():
                             if batch_cfg.voice_selection.selection_mode == constants.VoiceSelectionMode.priority:
                                 results[idx] = self._generate_audio_with_priority_fallback(task_data)
                             else:
-                                results[idx] = (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
+                                base_msg = i18n.get_text("error_audio_gen_failed", self.get_ui_language())
+                                detail = f"empty audio from service; voice={group_voice_id}; text={task_data['processed_text'][:120]}"
+                                logger.error(f"[BATCH] Service returned no audio: {detail}")
+                                results[idx] = (None, Exception(f"{base_msg} ({detail})"))
                 except Exception as e:
-                    logger.error(f"[BATCH] Service batch call failed: {e}")
+                    logger.error(f"[BATCH] Service batch call failed: {type(e).__name__}: {e} (status={getattr(e, 'status', None)})")
                     service_error = e
 
                 # If service call failed, try fallback for priority mode or mark group items with that error
@@ -395,7 +401,10 @@ class SuperFreeTTS():
         batch_cfg = task_data['batch']
         voice_selection = batch_cfg.voice_selection
         if voice_selection.selection_mode != constants.VoiceSelectionMode.priority:
-            return (None, Exception(i18n.get_text("error_audio_gen_failed", self.get_ui_language())))
+            base_msg = i18n.get_text("error_audio_gen_failed", self.get_ui_language())
+            detail = f"no fallback voices left; text={task_data.get('processed_text', '')[:120]}"
+            logger.error(f"[BATCH] Priority fallback exhausted: {detail}")
+            return (None, Exception(f"{base_msg} ({detail})"))
 
         priority_voice_list = task_data.get('priority_voice_list')
         if priority_voice_list is None:

@@ -626,7 +626,7 @@ class BatchOrchestrator:
                     del batch_results
                     last_progress_time = time.time()
                 except Exception as e:
-                    logger.error(f"[BATCH] Batch execution failed: {e}")
+                    logger.error(f"[BATCH] Batch execution failed: {type(e).__name__}: {e} (status={getattr(e, 'status', None)})")
                     completed_count = self._fail_chunk(
                         chunk, e, tasks, audio_cache, batch_status, completed_count,
                     )
@@ -661,7 +661,10 @@ class BatchOrchestrator:
         for dedup_key, task_indices in dedup_map.items():
             if dedup_key in audio_cache:
                 continue
-            missing_error = Exception(i18n.get_text("error_audio_gen_failed", lang))
+            base_msg = i18n.get_text("error_audio_gen_failed", lang)
+            detail = f"missing result after run ended; dedup_key={dedup_key}; notes={len(task_indices)}"
+            logger.error(f"[BATCH] No audio result received: {detail}")
+            missing_error = Exception(f"{base_msg} ({detail})")
             audio_cache[dedup_key] = (None, missing_error)
             filled += 1
             for task_idx in task_indices:
@@ -735,7 +738,13 @@ class BatchOrchestrator:
                         ctx.set_status(constants.BatchNoteStatus.Generated)
                         generated_ids.append(note_id)
                     else:
-                        failure = error if error else Exception(i18n.get_text("error_audio_gen_failed", lang))
+                        if error is not None:
+                            failure = error
+                        else:
+                            base_msg = i18n.get_text("error_audio_gen_failed", lang)
+                            detail = f"empty result from service; note_id={note_id}; dedup_key={dedup_key}"
+                            logger.error(f"[BATCH] Chunk returned no audio and no error: {detail}")
+                            failure = Exception(f"{base_msg} ({detail})")
                         ctx.set_error(failure)
                         checkpoint.mark_error(note_id, failure)
                 batch_status.notify_change(note_id)

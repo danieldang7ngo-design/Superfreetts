@@ -4,6 +4,7 @@ end-users. The other classes and functions are for internal use only."""
 import asyncio
 import concurrent.futures
 import json
+import logging
 import ssl
 import time
 import uuid
@@ -45,6 +46,8 @@ from .exceptions import (
 from .typing import CommunicateState, TTSChunk
 
 _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+
+logger = logging.getLogger(__name__)
 
 
 def get_headers_and_data(
@@ -588,13 +591,52 @@ class Communicate:
                 async for message in self.__stream():
                     yield message
             except aiohttp.ClientResponseError as e:
-                if e.status != 403:
+                if e.status == 403:
+                    # 403 doubles as the clock-skew signal (Sec-MS-GEC is
+                    # time-derived), so try the skew path conditionally:
+                    # retry only when the Date header proves significant
+                    # skew, otherwise re-raise the original error so a real
+                    # rejection (e.g. wrong endpoint) is never masked by
+                    # SkewAdjustmentError.
+                    if not DRM.adjust_skew_if_significant(e):
+                        logger.error(
+                            "EdgeTTS synthesis handshake failed: HTTP %s: %s (headers=%s)",
+                            e.status,
+                            e.message,
+                            dict(e.headers) if e.headers else None,
+                        )
+                        raise
+                    logger.info(
+                        "EdgeTTS clock skew adjusted to %.1fs; retrying synthesis once",
+                        DRM.clock_skew_seconds,
+                    )
+                    self.state["chunk_audio_bytes"] = 0
+                    try:
+                        async for message in self.__stream():
+                            yield message
+                    except aiohttp.ClientResponseError as retry_e:
+                        logger.error(
+                            "EdgeTTS synthesis retry failed: HTTP %s: %s (headers=%s)",
+                            retry_e.status,
+                            retry_e.message,
+                            dict(retry_e.headers) if retry_e.headers else None,
+                        )
+                        raise
+                elif e.status is not None and 400 <= e.status < 500:
+                    # Other 4xx are real rejections, not clock-skew issues:
+                    # surface them with their real status.
+                    logger.error(
+                        "EdgeTTS synthesis handshake failed: HTTP %s: %s (headers=%s)",
+                        e.status,
+                        e.message,
+                        dict(e.headers) if e.headers else None,
+                    )
                     raise
-
-                DRM.handle_client_response_error(e)
-                self.state["chunk_audio_bytes"] = 0
-                async for message in self.__stream():
-                    yield message
+                else:
+                    DRM.handle_client_response_error(e)
+                    self.state["chunk_audio_bytes"] = 0
+                    async for message in self.__stream():
+                        yield message
 
     async def save(
         self,

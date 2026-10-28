@@ -203,6 +203,28 @@ class EdgeTTS(service.ServiceBase):
             or 'no audio' in error_message.lower()
         )
 
+    def _is_auth_error(self, exception: Exception) -> bool:
+        # A present status code is authoritative: only 401/403 count as
+        # auth failures. Fall back to name/message matching only when the
+        # exception carries no status (e.g. plain OSError from connect()).
+        # SkewAdjustmentError is deliberately NOT auth: clock skew is a
+        # local-clock issue, not a credential/network-block issue.
+        status = getattr(exception, 'status', None)
+        if status is not None:
+            return status in (401, 403)
+        if type(exception).__name__ == 'WSServerHandshakeError':
+            return True
+        # Word-boundary match so codes embedded in longer numbers
+        # (e.g. '14030') do not count.
+        return bool(re.search(r'\b40[13]\b', str(exception)))
+
+    def _describe_error(self, exception: Exception) -> str:
+        detail = f"{type(exception).__name__}: {exception}"
+        status = getattr(exception, 'status', None)
+        if status is not None and str(status) not in detail:
+            detail = f"HTTP {status} {detail}"
+        return detail
+
     def _friendly_error_message(self, exception: Exception, text: str, voice_key: str):
         if self._is_timeout_error(exception):
             return (
@@ -216,6 +238,14 @@ class EdgeTTS(service.ServiceBase):
                 "Please check your connection and try again. "
                 f"Voice: {voice_key}; text: {text[:120]}"
             )
+        if self._is_auth_error(exception):
+            return (
+                "Microsoft Edge TTS rejected the request "
+                f"({self._describe_error(exception)}). "
+                "This usually means the service blocked this network or client. "
+                "Please check your connection and try again later. "
+                f"Voice: {voice_key}; text: {text[:120]}"
+            )
         if self._is_no_audio_error(exception):
             return (
                 "Microsoft Edge TTS returned no audio. This usually means the service "
@@ -223,7 +253,7 @@ class EdgeTTS(service.ServiceBase):
                 "Please wait 15-30 minutes, or reduce EdgeTTS concurrency/delay settings. "
                 f"Voice: {voice_key}; text: {text[:120]}"
             )
-        return str(exception)
+        return self._describe_error(exception)
 
     def _normalize_text(self, text: str):
         text = unicodedata.normalize('NFC', str(text or ''))

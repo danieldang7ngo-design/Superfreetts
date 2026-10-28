@@ -18,6 +18,12 @@ from .exceptions import SkewAdjustmentError
 WIN_EPOCH = 11644473600
 S_TO_NS = 1e9
 
+# Minimum |server - client| skew (seconds) that justifies a synthesis or
+# voice-list retry. HTTP 403 doubles as the Sec-MS-GEC clock-skew signal,
+# but most 403s are real rejections (wrong endpoint, blocked network), so
+# a retry is only attempted when the Date header proves significant skew.
+CLOCK_SKEW_RETRY_THRESHOLD_SECONDS = 60.0
+
 # FIPS 180-4:
 # https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 _SHA256_INITIAL = (
@@ -535,8 +541,38 @@ class DRM:
             if parsed.tzinfo is None:
                 parsed = parsed.replace(tzinfo=tz.utc)
             return parsed.timestamp()
-        except (TypeError, ValueError, OverflowError):
+        except (TypeError, ValueError, OverflowError, IndexError):
             return None
+
+    @staticmethod
+    def adjust_skew_if_significant(
+        e: aiohttp.ClientResponseError,
+        threshold: float = CLOCK_SKEW_RETRY_THRESHOLD_SECONDS,
+    ) -> bool:
+        """
+        Conditionally apply clock-skew correction for a 403 response.
+
+        Returns True only when the Date header parses AND |server - client|
+        skew exceeds `threshold`, in which case the skew is applied and the
+        caller may retry the request exactly once. Returns False when the
+        Date header is missing/unparsable or the skew is too small to
+        explain the 403 -- the caller must then re-raise the original error
+        unchanged so a real rejection is never masked by SkewAdjustmentError.
+        """
+        headers = getattr(e, "headers", None)
+        if headers is None:
+            return False
+        server_date = headers.get("Date", None)
+        if server_date is None or not isinstance(server_date, str):
+            return False
+        server_ts = DRM.parse_rfc2616_date(server_date)
+        if server_ts is None:
+            return False
+        skew = server_ts - DRM.get_unix_timestamp()
+        if abs(skew) <= threshold:
+            return False
+        DRM.adj_clock_skew_seconds(skew)
+        return True
 
     @staticmethod
     def handle_client_response_error(e: aiohttp.ClientResponseError) -> None:

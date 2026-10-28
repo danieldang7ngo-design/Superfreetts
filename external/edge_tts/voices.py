@@ -2,6 +2,7 @@
 correct voice based on their attributes."""
 
 import json
+import logging
 import ssl
 from typing import Any, List, Optional
 
@@ -14,6 +15,8 @@ from .drm import DRM
 from .typing import Voice, VoicesManagerFind, VoicesManagerVoice
 
 _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+
+logger = logging.getLogger(__name__)
 
 
 async def __list_voices(
@@ -75,11 +78,46 @@ async def list_voices(
         try:
             data = await __list_voices(session, _SSL_CTX, proxy)
         except aiohttp.ClientResponseError as e:
-            if e.status != 403:
+            if e.status == 403:
+                # 403 doubles as the clock-skew signal, so try the skew path
+                # conditionally: retry only when the Date header proves
+                # significant skew, otherwise re-raise the original error so
+                # a real rejection is never masked by SkewAdjustmentError.
+                if not DRM.adjust_skew_if_significant(e):
+                    logger.error(
+                        "EdgeTTS voice-list request failed: HTTP %s: %s (headers=%s)",
+                        e.status,
+                        e.message,
+                        dict(e.headers) if e.headers else None,
+                    )
+                    raise
+                logger.info(
+                    "EdgeTTS clock skew adjusted to %.1fs; retrying voice list once",
+                    DRM.clock_skew_seconds,
+                )
+                try:
+                    data = await __list_voices(session, _SSL_CTX, proxy)
+                except aiohttp.ClientResponseError as retry_e:
+                    logger.error(
+                        "EdgeTTS voice-list retry failed: HTTP %s: %s (headers=%s)",
+                        retry_e.status,
+                        retry_e.message,
+                        dict(retry_e.headers) if retry_e.headers else None,
+                    )
+                    raise
+            elif e.status is not None and 400 <= e.status < 500:
+                # Other 4xx are real rejections, not clock-skew issues:
+                # surface them with their real status.
+                logger.error(
+                    "EdgeTTS voice-list request failed: HTTP %s: %s (headers=%s)",
+                    e.status,
+                    e.message,
+                    dict(e.headers) if e.headers else None,
+                )
                 raise
-
-            DRM.handle_client_response_error(e)
-            data = await __list_voices(session, _SSL_CTX, proxy)
+            else:
+                DRM.handle_client_response_error(e)
+                data = await __list_voices(session, _SSL_CTX, proxy)
     return data
 
 
