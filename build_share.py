@@ -66,9 +66,10 @@ EXCLUDE_FILE_SUFFIXES = (
 EXCLUDE_FILE_NAMES = {
     "meta.json",                       # Anki regenerates this on install
     "superfreetts-work.index",
+    # Local-only EdgeTTS worker-cap override (the supported replacement for the
+    # removed set_edge_workers_20.py helper). Never ship this file.
     "_local_override.py",
     "build_share.py",
-    "set_edge_workers_20.py",
 }
 
 
@@ -179,13 +180,21 @@ def patch_file(path: Path, replacements: list[tuple[str, str]], *, regex: bool =
 
 
 # No longer patching code since the source files now use EDGETTS_MAX_WORKERS = 3 by default.
-# The user can toggle to 20 locally via set_edge_workers_20.py which is gitignored.
+# A developer who needs a higher cap on one machine creates
+# superfreetts_addon/_local_override.py with EDGETTS_MAX_WORKERS = N; that file is
+# gitignored and excluded from the build above, so the shipped cap stays 3.
 
 
 def _read_edge_workers_cap() -> int:
     """Read the committed source cap without importing the add-on package."""
     source = (ROOT / "superfreetts_addon" / "batch_constants.py").read_text(encoding="utf-8")
-    match = re.search(r"EDGETTS_MAX_WORKERS\s*:\s*Final\[int\]\s*=\s*(\d+)", source)
+    # Same two-name layout as scripts/verify_package.py: the immutable
+    # ``_DEFAULT_EDGETTS_MAX_WORKERS: Final[int] = 3`` literal wins.
+    match = re.search(
+        r"^(?:_DEFAULT_)?EDGETTS_MAX_WORKERS\s*(?::\s*(?:Final\[int\]|int))?\s*=\s*(\d+)",
+        source,
+        flags=re.MULTILINE,
+    )
     if not match:
         raise RuntimeError("Could not find EDGETTS_MAX_WORKERS in batch_constants.py")
     return int(match.group(1))

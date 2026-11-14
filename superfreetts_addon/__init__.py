@@ -154,6 +154,11 @@ else:
     hyper_tts = superfreetts.SuperFreeTTS(ankiutils, service_manager)
     aqt.mw.hyper_tts = hyper_tts
 
+    # Last-resort cleanup: stop local-engine runner processes even when
+    # profile_will_close never fires (crash, forced quit).  Idempotent.
+    from .services import process_pool as _process_pool
+    _process_pool.ensure_atexit_registration()
+
     # Configure services based on current configuration.
     # At this point no concrete services may be instantiated yet;
     # ServiceManager stores the configuration and will apply it

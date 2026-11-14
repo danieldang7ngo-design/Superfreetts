@@ -12,6 +12,10 @@ import os
 import time
 import threading
 
+from . import logging_utils
+
+logger = logging_utils.get_child_logger(__name__)
+
 # Log directory (relative to this file's location)
 _ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = os.path.join(_ADDON_DIR, 'user_files', 'log')
@@ -37,8 +41,8 @@ def _rotate_if_needed(filepath):
             if os.path.exists(backup):
                 os.remove(backup)
             os.rename(filepath, backup)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f'Log rotation failed for {filepath}: {e}', exc_info=True)
 
 
 def _get_log_path(service_name, log_type):
@@ -82,8 +86,9 @@ def write_log(service_name, log_type, level, message, details=None):
         with _write_lock:
             with open(filepath, 'a', encoding='utf-8') as f:
                 f.write(entry)
-    except Exception:
-        pass  # Never crash the addon due to logging
+    except Exception as e:
+        # Never crash the addon due to logging, but leave a trace when debugging.
+        logger.debug(f'Could not append to service log {_get_log_path(service_name, log_type)}: {e}', exc_info=True)
 
 
 def write_install_separator(service_name, command_text):
@@ -108,8 +113,8 @@ def write_install_separator(service_name, command_text):
         with _write_lock:
             with open(filepath, 'a', encoding='utf-8') as f:
                 f.write(block)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f'Could not write install separator to {_get_log_path(service_name, "install")}: {e}', exc_info=True)
 
 
 def write_install_result(service_name, exit_code, stdout=None, stderr=None):
@@ -134,8 +139,8 @@ def write_install_result(service_name, exit_code, stdout=None, stderr=None):
         with _write_lock:
             with open(filepath, 'a', encoding='utf-8') as f:
                 f.write('\n'.join(lines) + '\n')
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f'Could not write install result to {_get_log_path(service_name, "install")}: {e}', exc_info=True)
 
 
 def get_log_dir():

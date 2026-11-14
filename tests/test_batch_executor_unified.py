@@ -16,59 +16,6 @@ sys.path.insert(0, os.path.join(addon_dir, 'external'))
 
 from superfreetts_addon import batch_executor
 
-class TestUnifiedCache:
-    def test_basic_get_set(self):
-        cache = batch_executor.UnifiedCache(max_size_mb=1)
-        cache.put("key1", "value1", size_bytes=10)
-        assert cache.get("key1") == "value1"
-        assert cache.get("miss") is None
-        
-    def test_lru_eviction(self):
-        cache = batch_executor.UnifiedCache(max_size_mb=0)
-        cache.max_size_bytes = 100
-        
-        cache.put("k1", "v1" * 20, size_bytes=40)
-        cache.put("k2", "v2" * 20, size_bytes=40)
-        cache.put("k3", "v3" * 20, size_bytes=40)  # Should evict k1
-        
-        assert cache.get("k1") is None
-        assert cache.get("k2") == "v2" * 20
-        assert cache.get("k3") == "v3" * 20
-
-    def test_tuple_value_survives_entry_mode(self):
-        cache = batch_executor.UnifiedCache(max_size_mb=0)
-        value = ("source", "file.mp3", "/tmp/file.mp3")
-        cache.put("key", value)
-        assert cache.get("key") == value
-
-    def test_concurrent_get_put_clear(self):
-        cache = batch_executor.UnifiedCache(max_size_mb=0)
-        cache.max_entries = 200
-        errors = []
-
-        def worker(worker_id):
-            try:
-                for i in range(2000):
-                    key = f"{worker_id}-{i % 50}"
-                    value = (worker_id, i)
-                    cache.put(key, value)
-                    result = cache.get(key)
-                    if result is not None and not isinstance(result, tuple):
-                        errors.append(f"bad value type: {type(result)!r}")
-                    if i % 500 == 0:
-                        cache.stats()
-            except Exception as exc:
-                errors.append(repr(exc))
-
-        threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-        assert errors == []
-        assert cache.stats()["entries"] <= 200
-
 class TestBoundedLRUDict:
     def test_evicts_oldest_entry(self):
         cache = batch_executor.BoundedLRUDict(max_entries=2)
@@ -185,22 +132,43 @@ class TestMultiEngineExecutor:
             finally:
                 executor.shutdown(wait=False)
 
-class TestUnifiedBatchExecutor:
-    def test_get_executor_fallback_surface(self):
+class TestFallbackExecutor:
+    def test_get_batch_executor_returns_the_multi_engine_surface(self):
         from types import SimpleNamespace
 
-        executor = batch_executor.UnifiedBatchExecutor(max_workers=1)
+        import superfreetts_addon.batch_executor as batch_executor_module
+        batch_executor_module._fallback_executor = None
+        executor = batch_executor.get_batch_executor()
         try:
-            assert executor.get_executor() is executor.executor
-            assert executor.get_executor("PiperTTS") is executor.executor
+            assert isinstance(executor, batch_executor.MultiEngineExecutor)
+            pool = executor.get_executor("PiperTTS")
+            assert pool._max_workers >= 1
+            # Invariant: the fallback never raises the EdgeTTS worker cap.
+            assert executor.get_executor("EdgeTTS")._max_workers == 3
             voice = SimpleNamespace(
                 voice_id=SimpleNamespace(service="PiperTTS"),
             )
             assert executor.detect_service({"chosen_voice": voice}) == "PiperTTS"
-            future = executor.get_executor().submit(lambda: 42)
+            future = pool.submit(lambda: 42)
             assert future.result(timeout=2) == 42
         finally:
             executor.shutdown()
+            batch_executor_module._fallback_executor = None
+
+    def test_get_batch_executor_honours_max_workers_safety_net(self):
+        """The fallback must be able to run with a single worker per engine."""
+        import superfreetts_addon.batch_executor as batch_executor_module
+        batch_executor_module._fallback_executor = None
+        executor = batch_executor.get_batch_executor(max_workers=1)
+        try:
+            assert executor.executors["Piper"]._max_workers == 1
+            assert executor.executors["Kokoro"]._max_workers == 1
+            assert executor.default_executor._max_workers == 1
+            # Invariant: the safety net never raises the EdgeTTS cap.
+            assert executor.get_executor("EdgeTTS")._max_workers == 1
+        finally:
+            executor.shutdown()
+            batch_executor_module._fallback_executor = None
 
 class TestBoundedThreadPoolExecutor:
     def test_concurrency_limit(self):

@@ -194,12 +194,12 @@ def generate_single(piper_exe, data, global_threads=1):
             if process.poll() is None:
                 try:
                     process.kill()
-                except Exception:
-                    pass
+                except Exception as e:
+                    log(f"Piper: kill() failed while reaping a timed-out process: {e}")
             try:
                 process.wait(timeout=1)
-            except Exception:
-                pass
+            except Exception as e:
+                log(f"Piper: wait() failed while reaping a timed-out process: {e}")
         
         if process.returncode != 0:
             err_msg = stderr.decode('utf-8', errors='replace')

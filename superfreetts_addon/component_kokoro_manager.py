@@ -109,8 +109,8 @@ class KokoroInstallManager(QDialog):
             try:
                 import subprocess
                 subprocess.Popen(['xdg-open', log_dir])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Kokoro: could not open the log folder with xdg-open: {e}')
 
     def log(self, message):
         self.log_area.append(message)
@@ -333,8 +333,8 @@ class KokoroInstallManager(QDialog):
         try:
             if hasattr(mw, 'hyper_tts'):
                 debug_mode = mw.hyper_tts.get_preferences().error_handling.debug_mode
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'Kokoro: could not read the debug_mode preference: {e}', exc_info=True)
 
         def on_progress(data):
             percent = data['percent']

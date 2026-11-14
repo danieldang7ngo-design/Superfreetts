@@ -1,6 +1,7 @@
 import time
 import gtts
 import io
+import requests
 from typing import List
 
 from .. import voice
@@ -103,7 +104,11 @@ class GoogleTranslate(service.ServiceBase):
             tts.write_to_fp(buffer)
 
             return buffer.getbuffer()
-        except gtts.gTTSError as e:
+        # gTTS performs the HTTP request itself, so network failures surface as
+        # requests exceptions (not gTTSError); decoding a bad payload raises
+        # ValueError/OSError.  All of them mean "no audio for this text", which
+        # the pipeline reports as a normal RequestError instead of a crash.
+        except (gtts.gTTSError, requests.exceptions.RequestException, ValueError, OSError) as e:
             logger.warning(f'exception while retrieving sound for {source_text}: {e}')
             # this error will be handled, and not reported as unusual
             raise errors.RequestError(source_text, voice, str(e))

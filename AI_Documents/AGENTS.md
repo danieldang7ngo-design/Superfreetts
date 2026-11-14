@@ -76,10 +76,9 @@ Otherwise AGENTS.md covers 90% of tasks.
 3. Done — `ServiceManager` auto-discovers it, no manual registration.
 
 **Change EdgeTTS worker count locally (never in committed source):**
-```
-python set_edge_workers_20.py
-```
-Creates gitignored `_local_override.py`. Don't edit `batch_constants.py` directly.
+create `superfreetts_addon/_local_override.py` containing `EDGETTS_MAX_WORKERS = <n>`.
+The file is gitignored and dropped by `build_share.py` (a warning is logged at import),
+so the shipped cap stays 3. Don't edit `batch_constants.py` directly.
 
 **Tests:**
 ```

@@ -1,4 +1,6 @@
 import os
+from string import Template
+
 import aqt
 import aqt.qt
 
@@ -239,25 +241,10 @@ def get_active_theme() -> str:
 def get_dynamic_stylesheet() -> str:
     """Returns the unified stylesheet for the active theme."""
     dark = is_night_mode()
-    if _active_theme == "ollama":
-        base = _build_ollama_stylesheet(dark)
-    elif _active_theme == "apple":
-        base = _build_apple_stylesheet(dark)
-    elif _active_theme == "nintendo":
-        base = _build_nintendo_stylesheet(dark)
-    elif _active_theme == "binance":
-        base = _build_binance_stylesheet(dark)
-    elif _active_theme == "clay":
-        base = _build_clay_stylesheet(dark)
-    elif _active_theme == "claude":
-        base = _build_claude_stylesheet(dark)
-    else:
-        base = _build_vibrant_stylesheet(dark)
-    return base + _build_services_extra_css(_active_theme, dark)
-
+    return _build_theme_stylesheet(_active_theme, dark) + _build_services_extra_css(_active_theme, dark)
 
 # ── Services tab theme palette ───────────────────────────────────────────────
-# Colors mirror the per-theme tokens defined in the builders below so the
+# Colors mirror the per-theme palettes below so the
 # Services tab (section headers, setup action, separators, status badges) stays
 # consistent with the active theme in both light and dark mode.
 _SERVICES_TOKENS = {
@@ -474,2129 +461,619 @@ def _build_services_extra_css(theme: str, dark: bool) -> str:
     '''
 
 
-def _build_vibrant_stylesheet(dark: bool) -> str:
-    """Returns a unified stylesheet adhering to Vibrant Blocks (No Borders, Full Gradient)."""
 
-    # Base configuration: Light Mode Tokens (Pastel Vibrant)
-    bg_window = "#EEF2FF"           # Indigo 50 (Soft solid, no gradient)
-    bg_card = "#FFFFFF"             # Crisp White block
-    sidebar_bg = "#FFFFFF"          # Bright sidebar differentiating from window
-    
-    text_primary = "#0F172A"        # Slate 900
-    text_secondary = "#475569"      # Slate 600
-    
-    tab_bg_unselected = "rgba(255, 255, 255, 120)"
-    tab_bg_selected = "#6366F1"     # Indigo 500 (Soft Neon)
-    tab_text_unselected = "#334155" # Slate 700
-    tab_text_selected = "#FFFFFF"   # White
-    
-    toc_hover_bg = "#E2E8F0"        # Slate 200
-    
-    input_bg = "#F8FAFC"            # Slate 50
-    input_focus = "#FFFFFF"         # Crisp white for focus bg
-    
-    btn_bg_secondary = "rgba(255, 255, 255, 180)"
-    btn_text_sec = "#0F172A"
-    btn_hover_sec = "rgba(255, 255, 255, 255)"
-    
-    btn_bg_primary = "#4F46E5"      # Indigo 600 (Solid Vibrant)
-    btn_text_pri = "#FFFFFF"
-    btn_hover_pri = "#4338CA"       # Indigo 700 (Solid Vibrant)
-    
-    # Service Cards Vibrant Blocks
-    svc_enabled_bg = "#D1FAE5"      # Emerald 100 (Bright Pastel Green)
-    svc_enabled_text = "#064E3B"    # Emerald 900
-    
-    svc_disabled_bg = "#FFE4E6"     # Rose 100
-    svc_disabled_text = "#881337"   # Rose 900
+# ── Theme engine ─────────────────────────────────────────────────────────────
+# Every theme is a palette (colours, per mode) plus a metrics table (radii,
+# padding, font weights).  One shared QSS skeleton renders all of them, so a
+# rule only has to be written once and can never drift between themes.
+#
+#   vibrant  indigo accents on tinted cards - the default look
+#   ollama   monochrome, hairline cards, pill-shaped inputs
+#   nintendo hard red accent, small radii, chunky weights
+#   apple    Apple HIG greys, Action Blue CTA, generous 18px radii
+#   binance  dark trading-terminal surfaces with the yellow accent
+#   clay     warm paper canvas with a pink brand accent
+#   claude   cream canvas + coral CTAs (Anthropic design system)
+#
+# Colours are keyed by role, not by widget: ``card`` feeds the card, group box
+# and combo popup; ``primary`` feeds the selected tab, TOC and primary CTA.
 
-    # Pastel Vibrant Blocks
-    pastel_emerald_bg = "#D1FAE5"    # Emerald 100
-    pastel_emerald_fg = "#064E3B"    # Emerald 900
-    pastel_blue_bg = "#DBEAFE"       # Blue 100
-    pastel_blue_fg = "#1E3A8A"       # Blue 900
-    pastel_rose_bg = "#FCE7F3"       # Pink 100
-    pastel_rose_fg = "#831843"       # Pink 900
-    pastel_amber_bg = "#FEF3C7"      # Amber 100
-    pastel_amber_fg = "#78350F"      # Amber 900
-    pastel_purple_bg = "#EDE9FE"     # Violet 100
-    pastel_purple_fg = "#4C1D95"     # Violet 900
+_THEME_METRICS: dict[str, dict[str, str]] = {
+    "vibrant": dict(
+        radius_card="16px", radius_sidebar="16px", radius_group="16px", radius_service="16px",
+        radius_pane="16px", radius_tab="14px", radius_chip="12px", radius_toc="14px",
+        radius_toggle="12px", radius_input="10px", radius_scroll="16px", radius_scroll_inner="16px",
+        radius_button="12px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 14px", pad_button="10px 18px", w_group_title="800", w_tab="bold",
+        w_tab_selected="800", w_chip="800", w_toc="600", w_toc_active="800",
+        w_toggle="bold", w_button="bold", w_primary="800",
+    ),
+    "ollama": dict(
+        radius_card="12px", radius_sidebar="12px", radius_group="12px", radius_service="12px",
+        radius_pane="12px", radius_tab="9999px", radius_chip="9999px", radius_toc="9999px",
+        radius_toggle="9999px", radius_input="9999px", radius_scroll="12px", radius_scroll_inner="12px",
+        radius_button="9999px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="600", w_tab="500",
+        w_tab_selected="600", w_chip="600", w_toc="500", w_toc_active="600",
+        w_toggle="500", w_button="500", w_primary="600",
+    ),
+    "nintendo": dict(
+        radius_card="10px", radius_sidebar="6px", radius_group="10px", radius_service="6px",
+        radius_pane="6px", radius_tab="4px", radius_chip="9999px", radius_toc="4px",
+        radius_toggle="6px", radius_input="6px", radius_scroll="10px", radius_scroll_inner="10px",
+        radius_button="6px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 18px", tab_margin="6px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="700", w_tab="700",
+        w_tab_selected="800", w_chip="700", w_toc="600", w_toc_active="800",
+        w_toggle="600", w_button="600", w_primary="800",
+    ),
+    "apple": dict(
+        radius_card="18px", radius_sidebar="18px", radius_group="18px", radius_service="14px",
+        radius_pane="18px", radius_tab="11px", radius_chip="9999px", radius_toc="11px",
+        radius_toggle="9999px", radius_input="11px", radius_scroll="18px", radius_scroll_inner="18px",
+        radius_button="9999px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="600", w_tab="500",
+        w_tab_selected="600", w_chip="600", w_toc="500", w_toc_active="600",
+        w_toggle="500", w_button="500", w_primary="600",
+    ),
+    "binance": dict(
+        radius_card="10px", radius_sidebar="10px", radius_group="10px", radius_service="8px",
+        radius_pane="10px", radius_tab="9999px", radius_chip="9999px", radius_toc="9999px",
+        radius_toggle="9999px", radius_input="8px", radius_scroll="10px", radius_scroll_inner="10px",
+        radius_button="9999px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="600", w_tab="500",
+        w_tab_selected="700", w_chip="600", w_toc="500", w_toc_active="700",
+        w_toggle="500", w_button="500", w_primary="700",
+    ),
+    "clay": dict(
+        radius_card="18px", radius_sidebar="18px", radius_group="18px", radius_service="12px",
+        radius_pane="18px", radius_tab="9999px", radius_chip="9999px", radius_toc="9999px",
+        radius_toggle="9999px", radius_input="12px", radius_scroll="18px", radius_scroll_inner="18px",
+        radius_button="9999px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="700", w_tab="500",
+        w_tab_selected="700", w_chip="600", w_toc="500", w_toc_active="700",
+        w_toggle="500", w_button="500", w_primary="700",
+    ),
+    "claude": dict(
+        radius_card="14px", radius_sidebar="14px", radius_group="14px", radius_service="10px",
+        radius_pane="14px", radius_tab="9999px", radius_chip="9999px", radius_toc="9999px",
+        radius_toggle="9999px", radius_input="10px", radius_scroll="14px", radius_scroll_inner="14px",
+        radius_button="9999px", card_margin="6px", group_margin="24px", group_padding="18px",
+        group_title_left="14px", group_title_padding="4px 10px", pad_tab="12px 20px", tab_margin="8px",
+        pad_chip="6px 16px", pad_toc="14px 16px", pad_toggle="10px 18px", toggle_margin="6px",
+        pad_input="10px 16px", pad_button="10px 20px", w_group_title="600", w_tab="500",
+        w_tab_selected="700", w_chip="600", w_toc="500", w_toc_active="700",
+        w_toggle="500", w_button="500", w_primary="700",
+    ),
+}
 
+_THEME_TOKENS: dict[str, dict[bool, dict[str, str]]] = {
+    "vibrant": {
+        False: dict(
+            canvas="#EEF2FF", canvas_soft="#F8FAFC", card="#FFFFFF", card_alt="#FFFFFF",
+            group_bg="#FFFFFF", ink="#0F172A", mute="#475569", toc_text="#475569",
+            tab_hover_bg="rgba(255, 255, 255, 255)", toc_hover_bg="#E2E8F0", tab_bg_unselected="rgba(255, 255, 255, 120)", tab_text_unselected="#334155",
+            primary="#6366F1", tab_text_selected="#FFFFFF", input_bg="#F8FAFC", input_focus="#FFFFFF",
+            selection_bg="#6366F1", on_primary="", btn_bg_secondary="rgba(255, 255, 255, 180)", btn_text_sec="#0F172A",
+            btn_hover_sec="rgba(255, 255, 255, 255)", btn_bg_primary="#4F46E5", btn_text_pri="#FFFFFF", btn_hover_pri="#4338CA",
+            svc_enabled_bg="#D1FAE5", svc_enabled_text="#064E3B", svc_disabled_bg="#FFE4E6", svc_disabled_text="#881337",
+            pastel_bg="#D1FAE5", pastel_fg="#064E3B", b_card="border: none;", b_sidebar="",
+            b_group="border: none;", b_service="border: none;", b_pane="border: 1px solid transparent;", b_chip="border: none;",
+            b_toggle="border: none;", b_input="border: none;", b_focus="", b_combo="border: none;",
+            b_button="border: none;", b_primary="", b_primary_hover="", sel_color="",
+            hairline="#000000",
+        ),
+        True: dict(
+            canvas="#0B1120", canvas_soft="#0B1120", card="#1E293B", card_alt="#0F172A",
+            group_bg="#1E293B", ink="#F8FAFC", mute="#94A3B8", toc_text="#94A3B8",
+            tab_hover_bg="rgba(51, 65, 85, 255)", toc_hover_bg="#1E293B", tab_bg_unselected="rgba(15, 23, 42, 150)", tab_text_unselected="#E2E8F0",
+            primary="#00E1D9", tab_text_selected="#0F172A", input_bg="#0B1120", input_focus="#1E293B",
+            selection_bg="#00E1D9", on_primary="", btn_bg_secondary="rgba(30, 41, 59, 200)", btn_text_sec="#F8FAFC",
+            btn_hover_sec="rgba(51, 65, 85, 255)", btn_bg_primary="#8B5CF6", btn_text_pri="#FFFFFF", btn_hover_pri="#7C3AED",
+            svc_enabled_bg="#064E3B", svc_enabled_text="#D1FAE5", svc_disabled_bg="#4C0519", svc_disabled_text="#FFE4E6",
+            pastel_bg="#064E3B", pastel_fg="#6EE7B7", b_card="border: none;", b_sidebar="",
+            b_group="border: none;", b_service="border: none;", b_pane="border: 1px solid transparent;", b_chip="border: none;",
+            b_toggle="border: none;", b_input="border: none;", b_focus="", b_combo="border: none;",
+            b_button="border: none;", b_primary="", b_primary_hover="", sel_color="",
+            hairline="#000000",
+        ),
+    },
+    "ollama": {
+        False: dict(
+            canvas="#ffffff", canvas_soft="#ffffff", card="#ffffff", card_alt="#fafafa",
+            group_bg="#ffffff", ink="#000000", mute="#737373", toc_text="#525252",
+            tab_hover_bg="#fafafa", toc_hover_bg="#fafafa", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#525252",
+            primary="#000000", tab_text_selected="#ffffff", input_bg="#fafafa", input_focus="#ffffff",
+            selection_bg="#000000", on_primary="#ffffff", btn_bg_secondary="#ffffff", btn_text_sec="#000000",
+            btn_hover_sec="#fafafa", btn_bg_primary="#000000", btn_text_pri="#ffffff", btn_hover_pri="#090909",
+            svc_enabled_bg="#ffffff", svc_enabled_text="#000000", svc_disabled_bg="#fafafa", svc_disabled_text="#a3a3a3",
+            pastel_bg="#fafafa", pastel_fg="#000000", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid #d4d4d4;", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid #d4d4d4;", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #090909;", sel_color="selection-color: #ffffff;",
+            hairline="#e5e5e5",
+        ),
+        True: dict(
+            canvas="#0a0a0a", canvas_soft="#0a0a0a", card="#171717", card_alt="#171717",
+            group_bg="#171717", ink="#ffffff", mute="#a3a3a3", toc_text="#d4d4d4",
+            tab_hover_bg="#171717", toc_hover_bg="#171717", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#a3a3a3",
+            primary="#ffffff", tab_text_selected="#000000", input_bg="#171717", input_focus="#0a0a0a",
+            selection_bg="#ffffff", on_primary="#000000", btn_bg_secondary="#171717", btn_text_sec="#ffffff",
+            btn_hover_sec="#1f1f1f", btn_bg_primary="#ffffff", btn_text_pri="#000000", btn_hover_pri="#e5e5e5",
+            svc_enabled_bg="#171717", svc_enabled_text="#ffffff", svc_disabled_bg="#0a0a0a", svc_disabled_text="#737373",
+            pastel_bg="#171717", pastel_fg="#ffffff", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid #404040;", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid #404040;", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #e5e5e5;", sel_color="selection-color: #000000;",
+            hairline="#2a2a2a",
+        ),
+    },
+    "nintendo": {
+        False: dict(
+            canvas="#7a8aba", canvas_soft="#9fbee7", card="#ffffff", card_alt="#dedede",
+            group_bg="#ffffff", ink="#21242e", mute="#60619c", toc_text="#3d4f97",
+            tab_hover_bg="#9fbee7", toc_hover_bg="#9fbee7", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#ffffffe0",
+            primary="#e60012", tab_text_selected="#ffffff", input_bg="#ffffff", input_focus="#ffffff",
+            selection_bg="#e60012", on_primary="#ffffff", btn_bg_secondary="#21242e", btn_text_sec="#ffffff",
+            btn_hover_sec="#3d4f97", btn_bg_primary="#ecab37", btn_text_pri="#21242e", btn_hover_pri="#e48600",
+            svc_enabled_bg="#e7edf7", svc_enabled_text="#21242e", svc_disabled_bg="#dedede", svc_disabled_text="#60619c",
+            pastel_bg="#9fbee7", pastel_fg="#21242e", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid #ecab37;", b_primary_hover="border: 1px solid #e48600;", sel_color="selection-color: #ffffff;",
+            hairline="#5a5f8c",
+        ),
+        True: dict(
+            canvas="#20242f", canvas_soft="#2a3247", card="#2a3247", card_alt="#333c54",
+            group_bg="#2a3247", ink="#f2f4fa", mute="#9aa3c4", toc_text="#b8c4f0",
+            tab_hover_bg="#333c54", toc_hover_bg="#333c54", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#cfd6ff",
+            primary="#e60012", tab_text_selected="#ffffff", input_bg="#262b3b", input_focus="#2a3247",
+            selection_bg="#e60012", on_primary="#ffffff", btn_bg_secondary="#21242e", btn_text_sec="#ffffff",
+            btn_hover_sec="#3d4f97", btn_bg_primary="#ecab37", btn_text_pri="#21242e", btn_hover_pri="#e48600",
+            svc_enabled_bg="#333c54", svc_enabled_text="#ffffff", svc_disabled_bg="#21242e", svc_disabled_text="#9aa3c4",
+            pastel_bg="#333c54", pastel_fg="#ffffff", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid #ecab37;", b_primary_hover="border: 1px solid #e48600;", sel_color="selection-color: #ffffff;",
+            hairline="#4a5380",
+        ),
+    },
+    "apple": {
+        False: dict(
+            canvas="#f5f5f7", canvas_soft="#ffffff", card="#ffffff", card_alt="#ffffff",
+            group_bg="#fafafc", ink="#1d1d1f", mute="#7a7a7a", toc_text="#333333",
+            tab_hover_bg="#f5f5f7", toc_hover_bg="#f5f5f7", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#333333",
+            primary="#0066cc", tab_text_selected="#ffffff", input_bg="#ffffff", input_focus="#ffffff",
+            selection_bg="#0066cc", on_primary="#ffffff", btn_bg_secondary="#ffffff", btn_text_sec="#1d1d1f",
+            btn_hover_sec="#f5f5f7", btn_bg_primary="#0066cc", btn_text_pri="#ffffff", btn_hover_pri="#0071e3",
+            svc_enabled_bg="#f5f5f7", svc_enabled_text="#1d1d1f", svc_disabled_bg="#fafafc", svc_disabled_text="#7a7a7a",
+            pastel_bg="#f5f5f7", pastel_fg="#1d1d1f", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid #d2d2d7;", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid #d2d2d7;", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #0071e3;", sel_color="selection-color: #ffffff;",
+            hairline="#e0e0e0",
+        ),
+        True: dict(
+            canvas="#1d1d1f", canvas_soft="#000000", card="#1d1d1f", card_alt="#000000",
+            group_bg="#1d1d1f", ink="#ffffff", mute="#7a7a7a", toc_text="#e0e0e0",
+            tab_hover_bg="#2a2a2c", toc_hover_bg="#2a2a2c", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#a1a1a6",
+            primary="#2997ff", tab_text_selected="#000000", input_bg="#1d1d1f", input_focus="#1d1d1f",
+            selection_bg="#2997ff", on_primary="#000000", btn_bg_secondary="#1d1d1f", btn_text_sec="#ffffff",
+            btn_hover_sec="#333333", btn_bg_primary="#2997ff", btn_text_pri="#000000", btn_hover_pri="#2997ff",
+            svc_enabled_bg="#2a2a2c", svc_enabled_text="#ffffff", svc_disabled_bg="#1d1d1f", svc_disabled_text="#7a7a7a",
+            pastel_bg="#2a2a2c", pastel_fg="#ffffff", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid #48484a;", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid #48484a;", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid {primary};", sel_color="selection-color: #000000;",
+            hairline="#333333",
+        ),
+    },
+    "binance": {
+        False: dict(
+            canvas="#ffffff", canvas_soft="#ffffff", card="#ffffff", card_alt="#fafafa",
+            group_bg="#ffffff", ink="#181a20", mute="#707a8a", toc_text="#707a8a",
+            tab_hover_bg="#f5f5f5", toc_hover_bg="#f5f5f5", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#707a8a",
+            primary="#fcd535", tab_text_selected="#181a20", input_bg="#fafafa", input_focus="#ffffff",
+            selection_bg="#fcd535", on_primary="#181a20", btn_bg_secondary="#fafafa", btn_text_sec="#181a20",
+            btn_hover_sec="#f0f0f0", btn_bg_primary="#fcd535", btn_text_pri="#181a20", btn_hover_pri="#f0b90b",
+            svc_enabled_bg="#fafafa", svc_enabled_text="#181a20", svc_disabled_bg="#f5f5f5", svc_disabled_text="#707a8a",
+            pastel_bg="#fafafa", pastel_fg="#181a20", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #f0b90b;", sel_color="selection-color: #181a20;",
+            hairline="#eaecef",
+        ),
+        True: dict(
+            canvas="#0b0e11", canvas_soft="#0b0e11", card="#1e2329", card_alt="#2b3139",
+            group_bg="#1e2329", ink="#eaecef", mute="#707a8a", toc_text="#707a8a",
+            tab_hover_bg="#1e2329", toc_hover_bg="#1e2329", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#848e9c",
+            primary="#fcd535", tab_text_selected="#181a20", input_bg="#181a20", input_focus="#1e2329",
+            selection_bg="#fcd535", on_primary="#181a20", btn_bg_secondary="#2b3139", btn_text_sec="#eaecef",
+            btn_hover_sec="#3b424b", btn_bg_primary="#fcd535", btn_text_pri="#181a20", btn_hover_pri="#f0b90b",
+            svc_enabled_bg="#1e2329", svc_enabled_text="#eaecef", svc_disabled_bg="#15171c", svc_disabled_text="#707a8a",
+            pastel_bg="#1e2329", pastel_fg="#eaecef", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #f0b90b;", sel_color="selection-color: #181a20;",
+            hairline="#2b3139",
+        ),
+    },
+    "clay": {
+        False: dict(
+            canvas="#fffaf0", canvas_soft="#faf5e8", card="#f5f0e0", card_alt="#ebe6d6",
+            group_bg="#f5f0e0", ink="#0a0a0a", mute="#6a6a6a", toc_text="#6a6a6a",
+            tab_hover_bg="#faf5e8", toc_hover_bg="#faf5e8", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#6a6a6a",
+            primary="#ff4d8b", tab_text_selected="#ffffff", input_bg="#ffffff", input_focus="#ffffff",
+            selection_bg="#ff4d8b", on_primary="#ffffff", btn_bg_secondary="#ffffff", btn_text_sec="#0a0a0a",
+            btn_hover_sec="#faf5e8", btn_bg_primary="#0a0a0a", btn_text_pri="#ffffff", btn_hover_pri="#1f1f1f",
+            svc_enabled_bg="#faf5e8", svc_enabled_text="#0a0a0a", svc_disabled_bg="#f5f0e0", svc_disabled_text="#9a9a9a",
+            pastel_bg="#f5f0e0", pastel_fg="#0a0a0a", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {ink};", b_primary_hover="border: 1px solid #1f1f1f;", sel_color="selection-color: #ffffff;",
+            hairline="#e5e5e5",
+        ),
+        True: dict(
+            canvas="#0a1a1a", canvas_soft="#142222", card="#1a2a2a", card_alt="#223333",
+            group_bg="#1a2a2a", ink="#f5f0e0", mute="#9a9a9a", toc_text="#9a9a9a",
+            tab_hover_bg="#1a2a2a", toc_hover_bg="#1a2a2a", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#a0b0a0",
+            primary="#ff4d8b", tab_text_selected="#ffffff", input_bg="#1a2a2a", input_focus="#223333",
+            selection_bg="#ff4d8b", on_primary="#ffffff", btn_bg_secondary="#1a2a2a", btn_text_sec="#f5f0e0",
+            btn_hover_sec="#223333", btn_bg_primary="#ff4d8b", btn_text_pri="#ffffff", btn_hover_pri="#e84175",
+            svc_enabled_bg="#223333", svc_enabled_text="#f5f0e0", svc_disabled_bg="#142222", svc_disabled_text="#7a7a7a",
+            pastel_bg="#223333", pastel_fg="#f5f0e0", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #e84175;", sel_color="selection-color: #ffffff;",
+            hairline="#2a3a3a",
+        ),
+    },
+    "claude": {
+        False: dict(
+            canvas="#faf9f5", canvas_soft="#f5f0e8", card="#efe9de", card_alt="#e8e0d2",
+            group_bg="#efe9de", ink="#141413", mute="#6c6a64", toc_text="#6c6a64",
+            tab_hover_bg="#f5f0e8", toc_hover_bg="#f5f0e8", tab_bg_unselected="rgba(0, 0, 0, 0)", tab_text_unselected="#6c6a64",
+            primary="#cc785c", tab_text_selected="#ffffff", input_bg="#ffffff", input_focus="#ffffff",
+            selection_bg="#cc785c", on_primary="#ffffff", btn_bg_secondary="#ffffff", btn_text_sec="#141413",
+            btn_hover_sec="#f5f0e8", btn_bg_primary="#cc785c", btn_text_pri="#ffffff", btn_hover_pri="#a9583e",
+            svc_enabled_bg="#f5f0e8", svc_enabled_text="#141413", svc_disabled_bg="#efe9de", svc_disabled_text="#8e8b82",
+            pastel_bg="#efe9de", pastel_fg="#141413", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid {primary};", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #a9583e;", sel_color="selection-color: #ffffff;",
+            hairline="#e6dfd8",
+        ),
+        True: dict(
+            canvas="#181715", canvas_soft="#1f1e1b", card="#252320", card_alt="#2b2926",
+            group_bg="#252320", ink="#faf9f5", mute="#9a978f", toc_text="#9a978f",
+            tab_hover_bg="#252320", toc_hover_bg="#252320", tab_bg_unselected="rgba(255, 255, 255, 0)", tab_text_unselected="#a5a199",
+            primary="#cc785c", tab_text_selected="#ffffff", input_bg="#252320", input_focus="#2b2926",
+            selection_bg="#cc785c", on_primary="#141413", btn_bg_secondary="#252320", btn_text_sec="#faf9f5",
+            btn_hover_sec="#2b2926", btn_bg_primary="#cc785c", btn_text_pri="#141413", btn_hover_pri="#d98a6f",
+            svc_enabled_bg="#2b2926", svc_enabled_text="#faf9f5", svc_disabled_bg="#1f1e1b", svc_disabled_text="#7a776f",
+            pastel_bg="#2b2926", pastel_fg="#faf9f5", b_card="border: 1px solid {hairline};", b_sidebar="border: 1px solid {hairline};",
+            b_group="border: 1px solid {hairline};", b_service="border: 1px solid {hairline};", b_pane="border: 1px solid {hairline};", b_chip="border: 1px solid {hairline};",
+            b_toggle="border: 1px solid {hairline};", b_input="border: 1px solid {hairline};", b_focus="border: 1px solid #d98a6f;", b_combo="border: 1px solid {hairline};",
+            b_button="border: 1px solid {hairline};", b_primary="border: 1px solid {primary};", b_primary_hover="border: 1px solid #d98a6f;", sel_color="selection-color: #141413;",
+            hairline="#33302c",
+        ),
+    },
+}
 
-    if dark:
-        # Override with Night Mode Tokens (Deep Space Vibrant)
-        bg_window = "#0B1120"           # Slate 950 (Very dark, solid)
-        bg_card = "#1E293B"             # Slate 800 (Distinct lighter block)
-        sidebar_bg = "#0F172A"          # Slate 900 (Subtle sidebar elevation)
-        
-        text_primary = "#F8FAFC"        # Slate 50
-        text_secondary = "#94A3B8"      # Slate 400
-        
-        tab_bg_unselected = "rgba(15, 23, 42, 150)" # Slate 900 translucent
-        tab_bg_selected = "#00E1D9"     # Cyan (Cyberpunk Neon)
-        tab_text_unselected = "#E2E8F0" # Slate 200
-        tab_text_selected = "#0F172A"   # Slate 900
-        
-        toc_hover_bg = "#1E293B"        # Slate 800
-        
-        input_bg = "#0B1120"            # Slate 950
-        input_focus = "#1E293B"         # Slate 800
-        
-        btn_bg_secondary = "rgba(30, 41, 59, 200)" # Slate 800
-        btn_text_sec = "#F8FAFC"
-        btn_hover_sec = "rgba(51, 65, 85, 255)" # Slate 700
-        
-        btn_bg_primary = "#8B5CF6"      # Violet 500 (Solid Vibrant)
-        btn_text_pri = "#FFFFFF"
-        btn_hover_pri = "#7C3AED"       # Violet 600 (Solid Vibrant)
-        
-        # High contrast vibrant blocks
-        svc_enabled_bg = "#064E3B"      # Emerald 900
-        svc_enabled_text = "#D1FAE5"    # Emerald 100
-        
-        svc_disabled_bg = "#4C0519"     # Rose 900
-        svc_disabled_text = "#FFE4E6"   # Rose 100
-        
-        # Pastel Vibrant Blocks (Dark Variants: neon pastel effect)
-        pastel_emerald_bg = "#064E3B"    # Emerald 900
-        pastel_emerald_fg = "#6EE7B7"    # Emerald 300
-        pastel_blue_bg = "#1E3A8A"       # Blue 900
-        pastel_blue_fg = "#93C5FD"       # Blue 300
-        pastel_rose_bg = "#831843"       # Pink 900
-        pastel_rose_fg = "#F9A8D4"       # Pink 300
-        pastel_amber_bg = "#78350F"      # Amber 900
-        pastel_amber_fg = "#FCD34D"      # Amber 300
-        pastel_purple_bg = "#4C1D95"     # Violet 900
-        pastel_purple_fg = "#C4B5FD"     # Violet 300
+_VIBRANT_PASTELS: dict[bool, dict[str, tuple[str, str]]] = {
+    False: {
+        "Emerald": ("#D1FAE5", "#064E3B"),
+        "Blue": ("#DBEAFE", "#1E3A8A"),
+        "Rose": ("#FCE7F3", "#831843"),
+        "Amber": ("#FEF3C7", "#78350F"),
+        "Purple": ("#EDE9FE", "#4C1D95"),
+    },
+    True: {
+        "Emerald": ("#064E3B", "#6EE7B7"),
+        "Blue": ("#1E3A8A", "#93C5FD"),
+        "Rose": ("#831843", "#F9A8D4"),
+        "Amber": ("#78350F", "#FCD34D"),
+        "Purple": ("#4C1D95", "#C4B5FD"),
+    },
+}
 
+_THEME_TEMPLATE = Template(r"""
+        QDialog {
+            background: $canvas;
+        }
 
-    return f'''
-        QDialog {{
-            background: {bg_window};
-        }}
-        
-        QLabel {{
-            color: {text_primary};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {text_secondary};
+        QLabel {
+            color: $ink;
+        }
+        QLabel[cssClass="helperText"] {
+            color: $mute;
             font-size: 11px;
-        }}
-        
-        /* General Blocks / Cards */
-        QFrame[cssClass="vibrantCard"] {{
-            background: {bg_card};
-            border: none;
-            border-radius: 16px;
-            margin-top: 6px;
-        }}
-        
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {sidebar_bg};
-            border-radius: 16px;
-        }}
-        
-        /* GroupBox (used heavily in batch ui) - making it look like a vibrant card */
-        QGroupBox {{
-            background: {bg_card};
-            border: none;
-            border-radius: 16px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
+        }
+
+        QFrame[cssClass="vibrantCard"] {
+            background: $card;
+            $b_card
+            border-radius: $radius_card;
+            margin-top: $card_margin;
+        }
+
+        QWidget[cssClass="sidebarPanel"] {
+            background: $card_alt;
+            $b_sidebar
+            border-radius: $radius_sidebar;
+        }
+
+        QGroupBox {
+            background: $group_bg;
+            $b_group
+            border-radius: $radius_group;
+            margin-top: $group_margin;
+            padding: $group_padding;
+        }
+        QGroupBox::title {
             subcontrol-origin: margin;
             subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {text_primary};
-            font-weight: 800;
-        }}
-        
-        /* Service Cards used in Configuration */
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 16px;
-            border: none;
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-        
-        /* Checkboxes & RadioButtons */
-        QCheckBox, QRadioButton {{
-            color: {text_primary};
+            left: $group_title_left;
+            padding: $group_title_padding;
+            color: $ink;
+            font-weight: $w_group_title;
+        }
+
+        QFrame[cssClass="serviceCard"] {
+            border-radius: $radius_service;
+            $b_service
+        }
+        QFrame[cssClass="serviceCard"][cardState="enabled"] {
+            background: $svc_enabled_bg;
+        }
+        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {
+            color: $svc_enabled_text;
+        }
+        QFrame[cssClass="serviceCard"][cardState="disabled"] {
+            background: $svc_disabled_bg;
+        }
+        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {
+            color: $svc_disabled_text;
+        }
+
+        QCheckBox, QRadioButton {
+            color: $ink;
             spacing: 8px;
             background: transparent;
-        }}
-        
-        /* QTabWidget */
-        QTabWidget::pane {{
-            border: 1px solid transparent;
-            background: {input_bg};
-            border-radius: 16px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 14px;
-            font-size: 13px;
-            font-weight: bold;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 800;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {btn_hover_sec};
-        }}
-        
-        /* Pastel Vibrant Blocks Buttons */
-        QPushButton[cssClass="btnPastelEmerald"] {{
-            padding: 6px 16px;
-            border-radius: 12px;
-            border: none;
-            background: {pastel_emerald_bg};
-            color: {pastel_emerald_fg};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover {{
-            background: {pastel_emerald_fg};
-            color: {pastel_emerald_bg};
-        }}
-        
-        QPushButton[cssClass="btnPastelBlue"] {{
-            padding: 6px 16px;
-            border-radius: 12px;
-            border: none;
-            background: {pastel_blue_bg};
-            color: {pastel_blue_fg};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="btnPastelBlue"]:hover {{
-            background: {pastel_blue_fg};
-            color: {pastel_blue_bg};
-        }}
-        
-        QPushButton[cssClass="btnPastelRose"] {{
-            padding: 6px 16px;
-            border-radius: 12px;
-            border: none;
-            background: {pastel_rose_bg};
-            color: {pastel_rose_fg};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="btnPastelRose"]:hover {{
-            background: {pastel_rose_fg};
-            color: {pastel_rose_bg};
-        }}
-        
-        QPushButton[cssClass="btnPastelAmber"] {{
-            padding: 6px 16px;
-            border-radius: 12px;
-            border: none;
-            background: {pastel_amber_bg};
-            color: {pastel_amber_fg};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="btnPastelAmber"]:hover {{
-            background: {pastel_amber_fg};
-            color: {pastel_amber_bg};
-        }}
-        
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 12px;
-            border: none;
-            background: {pastel_purple_bg};
-            color: {pastel_purple_fg};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {pastel_purple_fg};
-            color: {pastel_purple_bg};
-        }}
+        }
 
-        
-        /* Sidebar/TOC List mimicking Tabs */
-        /* See component_configuration for active TOC buttons */
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left; 
-            padding: 14px 16px; 
-            border: none; 
-            font-weight: 600; 
+        QTabWidget::pane {
+            $b_pane
+            background: $canvas_soft;
+            border-radius: $radius_pane;
+        }
+        QTabBar::tab {
+            background: $tab_bg_unselected;
+            color: $tab_text_unselected;
+            padding: $pad_tab;
+            margin-right: $tab_margin;
+            border-radius: $radius_tab;
             font-size: 13px;
-            border-radius: 14px; 
-            color: {text_secondary}; 
-            background: transparent; 
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important; 
-            color: {text_primary}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left; 
-            padding: 14px 16px; 
-            border: none; 
-            font-weight: 800; 
+            font-weight: $w_tab;
+        }
+        QTabBar::tab:selected {
+            background: $primary;
+            color: $tab_text_selected;
             font-size: 13px;
-            border-radius: 14px; 
-            color: {tab_text_selected}; 
-            background: {tab_bg_selected}; 
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important; 
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
+            font-weight: $w_tab_selected;
+        }
+        QTabBar::tab:hover:!selected {
+            background: $tab_hover_bg;
+        }
+
+$pastel_block
+
+        QPushButton[cssClass="tocButtonInactive"] {
             text-align: left;
-            padding: 10px 18px;
-            border-radius: 12px;
-            background: {btn_bg_secondary};
+            padding: $pad_toc;
             border: none;
-            color: {btn_text_sec};
-            font-weight: bold;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-        /* Inputs */
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 14px;
-            border: none;
-            border-radius: 10px;
-            background: {input_bg};
-            color: {text_primary};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {bg_card};
-            border: none;
-            color: {text_primary};
-            selection-background-color: {tab_bg_selected};
-        }}
-        
-        /* ScrollArea */
-        QScrollArea {{
+            font-weight: $w_toc;
+            font-size: 13px;
+            border-radius: $radius_toc;
+            color: $toc_text;
             background: transparent;
+        }
+        QPushButton[cssClass="tocButtonInactive"]:hover {
+            background: $toc_hover_bg!important;
+            color: $ink!important;
+        }
+        QPushButton[cssClass="tocButtonActive"] {
+            text-align: left;
+            padding: $pad_toc;
             border: none;
-            border-radius: 16px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 16px;
-        }}
+            font-weight: $w_toc_active;
+            font-size: 13px;
+            border-radius: $radius_toc;
+            color: $tab_text_selected;
+            background: $primary;
+        }
+        QPushButton[cssClass="tocButtonActive"]:hover {
+            background: $primary!important;
+            color: $tab_text_selected!important;
+        }
+        QToolButton[cssClass="collapsibleToggle"] {
+            text-align: left;
+            padding: $pad_toggle;
+            border-radius: $radius_toggle;
+            background: $btn_bg_secondary;
+            $b_toggle
+            color: $btn_text_sec;
+            font-weight: $w_toggle;
+            margin-top: $toggle_margin;
+        }
+        QToolButton[cssClass="collapsibleToggle"]:hover {
+            background: $btn_hover_sec;
+        }
 
-        /* Buttons (General Fallbacks - Secondary) */
-        QPushButton {{
-            padding: 10px 18px;
-            border-radius: 12px;
-            background: {btn_bg_secondary};
+        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+            padding: $pad_input;
+            $b_input
+            border-radius: $radius_input;
+            background: $input_bg;
+            color: $ink;
+        }
+        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+            background: $input_focus;
+            $b_focus
+        }
+        QComboBox QAbstractItemView {
+            background: $card;
+            $b_combo
+            color: $ink;
+            selection-background-color: $selection_bg;
+            $sel_color
+        }
+
+        QScrollArea {
+            background: transparent;
             border: none;
-            color: {btn_text_sec};
-            font-weight: bold;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        /* Primary Button Class */
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-        }}
-    '''
+            border-radius: $radius_scroll;
+        }
+        QScrollArea > QWidget > QWidget {
+            background: transparent;
+            border-radius: $radius_scroll_inner;
+        }
+
+        QPushButton {
+            padding: $pad_button;
+            border-radius: $radius_button;
+            background: $btn_bg_secondary;
+            $b_button
+            color: $btn_text_sec;
+            font-weight: $w_button;
+        }
+        QPushButton:hover {
+            background: $btn_hover_sec;
+        }
+        QPushButton[cssClass="primaryButton"] {
+            background: $btn_bg_primary;
+            color: $btn_text_pri;
+            $b_primary
+            font-weight: $w_primary;
+        }
+        QPushButton[cssClass="primaryButton"]:hover {
+            background: $btn_hover_pri;
+            $b_primary_hover
+        }
+    """)
+
+# Flat "chip" buttons: the six non-vibrant themes render every pastel class as
+# the same neutral chip.  Vibrant keeps five distinct pastel colours and is
+# rendered by _build_vibrant_pastel_block() instead.
+_PASTEL_CHIP_TEMPLATE = Template(r"""        QPushButton[cssClass="btnPastelEmerald"],
+        QPushButton[cssClass="btnPastelBlue"],
+        QPushButton[cssClass="btnPastelRose"],
+        QPushButton[cssClass="btnPastelAmber"],
+        QPushButton[cssClass="btnPastelPurple"] {
+            padding: $pad_chip;
+            border-radius: $radius_chip;
+            $b_chip
+            background: $pastel_bg;
+            color: $pastel_fg;
+            font-weight: $w_chip;
+        }
+        QPushButton[cssClass="btnPastelEmerald"]:hover,
+        QPushButton[cssClass="btnPastelBlue"]:hover,
+        QPushButton[cssClass="btnPastelRose"]:hover,
+        QPushButton[cssClass="btnPastelAmber"]:hover,
+        QPushButton[cssClass="btnPastelPurple"]:hover {
+            background: $btn_hover_sec;
+        }""")
+
+_VIBRANT_PASTEL_TEMPLATE = Template(r"""        QPushButton[cssClass="btnPastel$name"] {
+            padding: $pad_chip;
+            border-radius: $radius_chip;
+            $b_chip
+            background: $bg;
+            color: $fg;
+            font-weight: $w_chip;
+        }
+        QPushButton[cssClass="btnPastel$name"]:hover {
+            background: $fg;
+            color: $bg;
+        }""")
+
+
+def _theme_tokens(theme: str, dark: bool) -> dict[str, str]:
+    """Merge one theme's palette with its metrics and resolve token references.
+
+    Colour values may reference another token (``border: 1px solid {hairline}``)
+    so a theme states its hairline colour once instead of on every rule.
+    """
+    table = dict(_THEME_TOKENS[theme][bool(dark)])
+    table.update(_THEME_METRICS[theme])
+    for key, value in table.items():
+        if "{" in value:
+            table[key] = value.format(**table)
+    return table
+
+
+def _build_vibrant_pastel_block(dark: bool, tokens: dict[str, str]) -> str:
+    """Vibrant's five pastel button classes invert their colours on hover."""
+    blocks = []
+    for name, (bg, fg) in _VIBRANT_PASTELS[bool(dark)].items():
+        blocks.append(
+            _VIBRANT_PASTEL_TEMPLATE.substitute(dict(tokens, name=name, bg=bg, fg=fg))
+        )
+    return "\n".join(blocks)
+
+
+def _build_theme_stylesheet(theme: str, dark: bool) -> str:
+    """Render the shared QSS skeleton for ``theme`` in light or dark mode."""
+    tokens = _theme_tokens(theme, dark)
+    if theme == "vibrant":
+        tokens["pastel_block"] = _build_vibrant_pastel_block(dark, tokens)
+    else:
+        tokens["pastel_block"] = _PASTEL_CHIP_TEMPLATE.substitute(tokens)
+    return _THEME_TEMPLATE.substitute(tokens)
+
+
+def _build_vibrant_stylesheet(dark: bool) -> str:
+    """Vibrant: indigo accents on tinted cards - the add-on's default look."""
+    return _build_theme_stylesheet("vibrant", dark)
 
 
 def _build_ollama_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Ollama design system.
-
-    Paper-white flat canvas, pill geometry (9999px) for interactive elements,
-    12px cards, no gradients, no drop shadows. Black-on-white in light mode;
-    inverted to near-black (#171717) in dark mode.
-    """
-    # ── Light Mode Tokens (paper-white) ──
-    canvas = "#ffffff"
-    surface_soft = "#fafafa"
-    surface_card = "#ffffff"
-
-    ink = "#000000"            # primary / headings / links
-    charcoal = "#525252"       # list / secondary copy
-    body = "#737373"           # default prose
-    hairline = "#e5e5e5"       # 1px borders
-
-    on_primary = "#ffffff"
-
-    # Tab / nav accents (monochrome — the only "selected" cue is ink fill)
-    tab_bg_unselected = "rgba(0, 0, 0, 0)"
-    tab_bg_selected = "#000000"
-    tab_text_unselected = "#525252"
-    tab_text_selected = "#ffffff"
-    toc_hover_bg = "#fafafa"
-
-    input_bg = "#fafafa"
-    input_focus = "#ffffff"
-    selection_bg = "#000000"
-
-    btn_bg_secondary = "#ffffff"
-    btn_text_sec = "#000000"
-    btn_hover_sec = "#fafafa"
-    btn_border_sec = "#d4d4d4"
-
-    btn_bg_primary = "#000000"
-    btn_text_pri = "#ffffff"
-    btn_hover_pri = "#090909"
-
-    # Service cards: hairline border, flat white (enabled) vs muted (disabled)
-    svc_enabled_bg = "#ffffff"
-    svc_enabled_text = "#000000"
-    svc_disabled_bg = "#fafafa"
-    svc_disabled_text = "#a3a3a3"
-
-    # Pastel classes collapsed to flat neutral "chip" treatments
-    pastel_bg = "#fafafa"
-    pastel_fg = "#000000"
-
-    if dark:
-        canvas = "#0a0a0a"
-        surface_soft = "#171717"
-        surface_card = "#171717"
-
-        ink = "#ffffff"
-        charcoal = "#d4d4d4"
-        body = "#a3a3a3"
-        hairline = "#2a2a2a"
-
-        on_primary = "#000000"
-
-        tab_bg_unselected = "rgba(255, 255, 255, 0)"
-        tab_bg_selected = "#ffffff"
-        tab_text_unselected = "#a3a3a3"
-        tab_text_selected = "#000000"
-        toc_hover_bg = "#171717"
-
-        input_bg = "#171717"
-        input_focus = "#0a0a0a"
-        selection_bg = "#ffffff"
-
-        btn_bg_secondary = "#171717"
-        btn_text_sec = "#ffffff"
-        btn_hover_sec = "#1f1f1f"
-        btn_border_sec = "#404040"
-
-        btn_bg_primary = "#ffffff"
-        btn_text_pri = "#000000"
-        btn_hover_pri = "#e5e5e5"
-
-        svc_enabled_bg = "#171717"
-        svc_enabled_text = "#ffffff"
-        svc_disabled_bg = "#0a0a0a"
-        svc_disabled_text = "#737373"
-
-        pastel_bg = "#171717"
-        pastel_fg = "#ffffff"
-
-    return f'''
-        QDialog {{
-            background: {canvas};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {body};
-            font-size: 11px;
-        }}
-
-        /* Cards: 12px rounded, 1px hairline border, no shadow */
-        QFrame[cssClass="vibrantCard"] {{
-            background: {surface_card};
-            border: 1px solid {hairline};
-            border-radius: 12px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {surface_soft};
-            border: 1px solid {hairline};
-            border-radius: 12px;
-        }}
-
-        QGroupBox {{
-            background: {surface_card};
-            border: 1px solid {hairline};
-            border-radius: 12px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 600;
-        }}
-
-        /* Service cards */
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 12px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        /* Checkboxes & RadioButtons */
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        /* Tabs */
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas};
-            border-radius: 12px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 9999px;
-            font-size: 13px;
-            font-weight: 500;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 600;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        /* Pastel Vibrant Blocks buttons → flat neutral chips */
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Sidebar/TOC list */
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {charcoal};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Inputs: pill geometry */
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 9999px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {ink};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {surface_card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: {on_primary};
-        }}
-
-        /* ScrollArea */
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 12px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 12px;
-        }}
-
-        /* Buttons (general fallbacks) */
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        /* Primary Button Class — black pill */
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
+    """Ollama: monochrome, hairline-bordered cards with pill inputs."""
+    return _build_theme_stylesheet("ollama", dark)
 
 
 def _build_nintendo_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Nintendo.com (2001) design system.
-
-    A Y2K 'console chrome' aesthetic: periwinkle metallic canvas, beveled
-    panels, carbon-navy ink, and a warm Nintendo accent set (red #e60012,
-    signal orange #f68d1f, amber #ecab37, nav-gold #e48600). Panels use small
-    (2-10px) radii — buttons lean slightly rounded, cards subtle. Contrast
-    light and dark variants.
-    """
-    # ── Light Mode Tokens ──
-    primary = "#e60012"        # Nintendo Red
-    on_primary = "#ffffff"
-
-    canvas = "#7a8aba"          # Periwinkle metallic
-    canvas_soft = "#9fbee7"     # Pale Sky
-    card = "#ffffff"            # content surface
-    card_alt = "#dedede"        # Platinum
-    hairline = "#5a5f8c"
-
-    ink = "#21242e"             # Carbon Navy
-    ink_soft = "#3d4f97"
-    mute = "#60619c"
-
-    tab_bg_unselected = "rgba(0, 0, 0, 0)"
-    tab_bg_selected = "#e60012"
-    tab_text_unselected = "#ffffffe0" if not dark else "#cfd6ff"
-    tab_text_selected = "#ffffff"
-    toc_hover_bg = "#9fbee7"
-
-    input_bg = "#ffffff"
-    input_focus = "#ffffff"
-    selection_bg = "#e60012"
-
-    btn_bg_secondary = "#21242e"
-    btn_text_sec = "#ffffff"
-    btn_hover_sec = "#3d4f97"
-    btn_border_sec = "#5a5f8c"
-
-    btn_bg_primary = "#ecab37"
-    btn_text_pri = "#21242e"
-    btn_hover_pri = "#e48600"
-
-    svc_enabled_bg = "#e7edf7"
-    svc_enabled_text = "#21242e"
-    svc_disabled_bg = "#dedede"
-    svc_disabled_text = "#60619c"
-
-    pastel_bg = "#9fbee7"
-    pastel_fg = "#21242e"
-
-    if dark:
-        canvas = "#20242f"          # darker than carbon, night console
-        canvas_soft = "#2a3247"
-        card = "#2a3247"
-        card_alt = "#333c54"
-        hairline = "#4a5380"
-
-        ink = "#f2f4fa"
-        ink_soft = "#b8c4f0"
-        mute = "#9aa3c4"
-
-        tab_bg_unselected = "rgba(255, 255, 255, 0)"
-        tab_bg_selected = "#e60012"
-        tab_text_unselected = "#cfd6ff"
-        tab_text_selected = "#ffffff"
-        toc_hover_bg = "#333c54"
-
-        input_bg = "#262b3b"
-        input_focus = "#2a3247"
-        selection_bg = "#e60012"
-
-        btn_bg_secondary = "#21242e"
-        btn_text_sec = "#ffffff"
-        btn_hover_sec = "#3d4f97"
-        btn_border_sec = "#4a5380"
-
-        btn_bg_primary = "#ecab37"
-        btn_text_pri = "#21242e"
-        btn_hover_pri = "#e48600"
-
-        svc_enabled_bg = "#333c54"
-        svc_enabled_text = "#ffffff"
-        svc_disabled_bg = "#21242e"
-        svc_disabled_text = "#9aa3c4"
-
-        pastel_bg = "#333c54"
-        pastel_fg = "#ffffff"
-
-    return f'''
-        QDialog {{
-            background: {canvas};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {mute};
-            font-size: 11px;
-        }}
-
-        /* Cards: beveled panel, small radius */
-        QFrame[cssClass="vibrantCard"] {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 10px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {card_alt};
-            border: 1px solid {hairline};
-            border-radius: 6px;
-        }}
-
-        QGroupBox {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 10px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 700;
-        }}
-
-        /* Service cards */
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 6px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        /* Checkboxes & RadioButtons */
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        /* Tabs */
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas_soft};
-            border-radius: 6px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 18px;
-            margin-right: 6px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 700;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 800;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        /* Pastel classes → flat neutral chips */
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 700;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Sidebar/TOC list */
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            border-radius: 4px;
-            color: {ink_soft};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 800;
-            font-size: 13px;
-            border-radius: 4px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 6px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 600;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Inputs */
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 6px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {primary};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: {on_primary};
-        }}
-
-        /* ScrollArea */
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 10px;
-        }}
-
-        /* Buttons (general fallbacks) */
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 6px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 600;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        /* Primary Button Class — amber/gold pill */
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 800;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
+    """Nintendo: hard red accent, small radii, chunky weights."""
+    return _build_theme_stylesheet("nintendo", dark)
 
 
 def _build_apple_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Apple design system.
-
-    Clean, photography-first aesthetic with an SF Pro feel. Canvas is near-white
-    (#ffffff / #f5f5f7), ink is near-black (#1d1d1f), and a single Action Blue
-    (#0066cc) drives all interactive states. Cards use soft 11-18px radii and a
-    hairline border. Dark mode inverts to black canvas with #2997ff primary.
-    No decorative gradients, no shadows on chrome.
-    """
-    # ── Light Mode Tokens ──
-    canvas = "#ffffff"
-    canvas_parchment = "#f5f5f7"
-    surface_pearl = "#fafafc"
-    surface_card = "#ffffff"
-
-    ink = "#1d1d1f"
-    ink_muted_48 = "#7a7a7a"
-    charcoal = "#333333"
-    hairline = "#e0e0e0"
-
-    primary = "#0066cc"        # Action Blue
-    on_primary = "#ffffff"
-
-    tab_bg_unselected = "rgba(0, 0, 0, 0)"
-    tab_bg_selected = "#0066cc"
-    tab_text_unselected = "#333333"
-    tab_text_selected = "#ffffff"
-    toc_hover_bg = "#f5f5f7"
-
-    input_bg = "#ffffff"
-    input_focus = "#ffffff"
-    selection_bg = "#0066cc"
-
-    btn_bg_secondary = "#ffffff"
-    btn_text_sec = "#1d1d1f"
-    btn_hover_sec = "#f5f5f7"
-    btn_border_sec = "#d2d2d7"
-
-    btn_bg_primary = "#0066cc"
-    btn_text_pri = "#ffffff"
-    btn_hover_pri = "#0071e3"
-
-    svc_enabled_bg = "#f5f5f7"
-    svc_enabled_text = "#1d1d1f"
-    svc_disabled_bg = "#fafafc"
-    svc_disabled_text = "#7a7a7a"
-
-    pastel_bg = "#f5f5f7"
-    pastel_fg = "#1d1d1f"
-
-    if dark:
-        canvas = "#000000"
-        canvas_parchment = "#1d1d1f"
-        surface_pearl = "#1d1d1f"
-        surface_card = "#1d1d1f"
-
-        ink = "#ffffff"
-        ink_muted_48 = "#7a7a7a"
-        charcoal = "#e0e0e0"
-        hairline = "#333333"
-
-        primary = "#2997ff"        # Action Blue (on dark)
-        on_primary = "#000000"
-
-        tab_bg_unselected = "rgba(255, 255, 255, 0)"
-        tab_bg_selected = "#2997ff"
-        tab_text_unselected = "#a1a1a6"
-        tab_text_selected = "#000000"
-        toc_hover_bg = "#2a2a2c"
-
-        input_bg = "#1d1d1f"
-        input_focus = "#1d1d1f"
-        selection_bg = "#2997ff"
-
-        btn_bg_secondary = "#1d1d1f"
-        btn_text_sec = "#ffffff"
-        btn_hover_sec = "#333333"
-        btn_border_sec = "#48484a"
-
-        btn_bg_primary = "#2997ff"
-        btn_text_pri = "#000000"
-        btn_hover_pri = "#2997ff"
-
-        svc_enabled_bg = "#2a2a2c"
-        svc_enabled_text = "#ffffff"
-        svc_disabled_bg = "#1d1d1f"
-        svc_disabled_text = "#7a7a7a"
-
-        pastel_bg = "#2a2a2c"
-        pastel_fg = "#ffffff"
-
-    return f'''
-        QDialog {{
-            background: {canvas_parchment};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {ink_muted_48};
-            font-size: 11px;
-        }}
-
-        /* Cards: 18px rounded, hairline border */
-        QFrame[cssClass="vibrantCard"] {{
-            background: {surface_card};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {canvas};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-        }}
-
-        QGroupBox {{
-            background: {surface_pearl};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 600;
-        }}
-
-        /* Service cards */
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 14px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        /* Checkboxes & RadioButtons */
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        /* Tabs */
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas};
-            border-radius: 18px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 11px;
-            font-size: 13px;
-            font-weight: 500;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 600;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        /* Pastel classes → flat neutral chips */
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Sidebar/TOC list — pill-ish */
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 11px;
-            color: {charcoal};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            border-radius: 11px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        /* Inputs */
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 11px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {primary};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {surface_card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: {on_primary};
-        }}
-
-        /* ScrollArea */
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 18px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 18px;
-        }}
-
-        /* Buttons (general fallbacks) */
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        /* Primary Button Class — Action Blue pill */
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
+    """Apple: Apple HIG greys, Action Blue CTA, generous 18px radii."""
+    return _build_theme_stylesheet("apple", dark)
 
 
 def _build_binance_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Binance design system.
-
-    A confident financial-platform look: deep near-black canvas, Binance
-    Yellow (#fcd535) driving every primary CTA, and gray-blue hairlines.
-    Defaults to dark; light mode uses the same yellow CTAs on white.
-    """
-    # â”€â”€ Tokens (dark-first by default) â”€â”€
-    primary = "#fcd535"        # Binance Yellow
-    on_primary = "#181a20"
-
-    ink = "#eaecef"
-    mute = "#707a8a"
-    hairline = "#2b3139"
-
-    canvas = "#0b0e11"
-    card = "#1e2329"
-    card_alt = "#2b3139"
-    selection_bg = "#fcd535"
-
-    tab_bg_unselected = "rgba(255, 255, 255, 0)"
-    tab_bg_selected = "#fcd535"
-    tab_text_unselected = "#848e9c"
-    tab_text_selected = "#181a20"
-    toc_hover_bg = "#1e2329"
-
-    input_bg = "#181a20"
-    input_focus = "#1e2329"
-
-    btn_bg_secondary = "#2b3139"
-    btn_text_sec = "#eaecef"
-    btn_hover_sec = "#3b424b"
-    btn_border_sec = "#2b3139"
-
-    btn_bg_primary = "#fcd535"
-    btn_text_pri = "#181a20"
-    btn_hover_pri = "#f0b90b"
-
-    svc_enabled_bg = "#1e2329"
-    svc_enabled_text = "#eaecef"
-    svc_disabled_bg = "#15171c"
-    svc_disabled_text = "#707a8a"
-
-    pastel_bg = "#1e2329"
-    pastel_fg = "#eaecef"
-
-    if not dark:
-        canvas = "#ffffff"
-        card = "#ffffff"
-        card_alt = "#fafafa"
-        ink = "#181a20"
-        mute = "#707a8a"
-        hairline = "#eaecef"
-
-        tab_bg_unselected = "rgba(0, 0, 0, 0)"
-        tab_bg_selected = "#fcd535"
-        tab_text_unselected = "#707a8a"
-        tab_text_selected = "#181a20"
-        toc_hover_bg = "#f5f5f5"
-
-        input_bg = "#fafafa"
-        input_focus = "#ffffff"
-
-        btn_bg_secondary = "#fafafa"
-        btn_text_sec = "#181a20"
-        btn_hover_sec = "#f0f0f0"
-        btn_border_sec = "#eaecef"
-
-        btn_bg_primary = "#fcd535"
-        btn_text_pri = "#181a20"
-        btn_hover_pri = "#f0b90b"
-
-        svc_enabled_bg = "#fafafa"
-        svc_enabled_text = "#181a20"
-        svc_disabled_bg = "#f5f5f5"
-        svc_disabled_text = "#707a8a"
-
-        pastel_bg = "#fafafa"
-        pastel_fg = "#181a20"
-
-    return f'''
-        QDialog {{
-            background: {canvas};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {mute};
-            font-size: 11px;
-        }}
-
-        QFrame[cssClass="vibrantCard"] {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 10px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {card_alt};
-            border: 1px solid {hairline};
-            border-radius: 10px;
-        }}
-
-        QGroupBox {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 10px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 600;
-        }}
-
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 8px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas};
-            border-radius: 10px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 9999px;
-            font-size: 13px;
-            font-weight: 500;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 700;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {mute};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 700;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 8px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {primary};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: {on_primary};
-        }}
-
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 10px;
-        }}
-
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 700;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
+    """Binance: dark trading-terminal surfaces with the yellow accent."""
+    return _build_theme_stylesheet("binance", dark)
 
 
 def _build_clay_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Clay.com design system.
-
-    A vibrant 'claymation' look on a warm cream canvas (#fffaf0), dark-navy
-    primary CTAs, and saturated single-color accents (pink #ff4d8b, teal,
-    lavender). Soft rounded surfaces, playful yet clean.
-    """
-    # â”€â”€ Light Mode Tokens â”€â”€
-    canvas = "#fffaf0"
-    canvas_soft = "#faf5e8"
-    card = "#f5f0e0"
-    card_alt = "#ebe6d6"
-    hairline = "#e5e5e5"
-
-    ink = "#0a0a0a"
-    mute = "#6a6a6a"
-
-
-    brand_pink = "#ff4d8b"
-
-    tab_bg_unselected = "rgba(0, 0, 0, 0)"
-    tab_bg_selected = "#ff4d8b"
-    tab_text_unselected = "#6a6a6a"
-    tab_text_selected = "#ffffff"
-    toc_hover_bg = "#faf5e8"
-
-    input_bg = "#ffffff"
-    input_focus = "#ffffff"
-    selection_bg = "#ff4d8b"
-
-    btn_bg_secondary = "#ffffff"
-    btn_text_sec = "#0a0a0a"
-    btn_hover_sec = "#faf5e8"
-    btn_border_sec = "#e5e5e5"
-
-    btn_bg_primary = "#0a0a0a"
-    btn_text_pri = "#ffffff"
-    btn_hover_pri = "#1f1f1f"
-
-    svc_enabled_bg = "#faf5e8"
-    svc_enabled_text = "#0a0a0a"
-    svc_disabled_bg = "#f5f0e0"
-    svc_disabled_text = "#9a9a9a"
-
-    pastel_bg = "#f5f0e0"
-    pastel_fg = "#0a0a0a"
-
-    if dark:
-        canvas = "#0a1a1a"
-        canvas_soft = "#142222"
-        card = "#1a2a2a"
-        card_alt = "#223333"
-        hairline = "#2a3a3a"
-
-        ink = "#f5f0e0"
-        mute = "#9a9a9a"
-
-
-        tab_bg_unselected = "rgba(255, 255, 255, 0)"
-        tab_bg_selected = "#ff4d8b"
-        tab_text_unselected = "#a0b0a0"
-        tab_text_selected = "#ffffff"
-        toc_hover_bg = "#1a2a2a"
-
-        input_bg = "#1a2a2a"
-        input_focus = "#223333"
-        selection_bg = "#ff4d8b"
-
-        btn_bg_secondary = "#1a2a2a"
-        btn_text_sec = "#f5f0e0"
-        btn_hover_sec = "#223333"
-        btn_border_sec = "#2a3a3a"
-
-        btn_bg_primary = "#ff4d8b"
-        btn_text_pri = "#ffffff"
-        btn_hover_pri = "#e84175"
-
-        svc_enabled_bg = "#223333"
-        svc_enabled_text = "#f5f0e0"
-        svc_disabled_bg = "#142222"
-        svc_disabled_text = "#7a7a7a"
-
-        pastel_bg = "#223333"
-        pastel_fg = "#f5f0e0"
-
-    return f'''
-        QDialog {{
-            background: {canvas};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {mute};
-            font-size: 11px;
-        }}
-
-        QFrame[cssClass="vibrantCard"] {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {card_alt};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-        }}
-
-        QGroupBox {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 18px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 700;
-        }}
-
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 12px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas_soft};
-            border-radius: 18px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 9999px;
-            font-size: 13px;
-            font-weight: 500;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 700;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {mute};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 700;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 12px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {brand_pink};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: #ffffff;
-        }}
-
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 18px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 18px;
-        }}
-
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 700;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
+    """Clay: warm paper canvas with a pink brand accent."""
+    return _build_theme_stylesheet("clay", dark)
 
 
 def _build_claude_stylesheet(dark: bool) -> str:
-    """Returns a stylesheet adhering to the Anthropic Claude design system.
-
-    A warm-canvas editorial look: cream canvas (#faf9f5), warm coral CTAs
-    (#cc785c), and dark-navy product surfaces. Serif-friendly, humanist,
-    deliberately warm compared to the usual cool AI blue/slate.
-    """
-    # â”€â”€ Light Mode Tokens â”€â”€
-    canvas = "#faf9f5"
-    canvas_soft = "#f5f0e8"
-    card = "#efe9de"
-    card_alt = "#e8e0d2"
-    hairline = "#e6dfd8"
-
-    ink = "#141413"
-    mute = "#6c6a64"
-
-    primary = "#cc785c"        # warm coral
-    on_primary = "#ffffff"
-
-
-    tab_bg_unselected = "rgba(0, 0, 0, 0)"
-    tab_bg_selected = "#cc785c"
-    tab_text_unselected = "#6c6a64"
-    tab_text_selected = "#ffffff"
-    toc_hover_bg = "#f5f0e8"
-
-    input_bg = "#ffffff"
-    input_focus = "#ffffff"
-    selection_bg = "#cc785c"
-
-    btn_bg_secondary = "#ffffff"
-    btn_text_sec = "#141413"
-    btn_hover_sec = "#f5f0e8"
-    btn_border_sec = "#e6dfd8"
-
-    btn_bg_primary = "#cc785c"
-    btn_text_pri = "#ffffff"
-    btn_hover_pri = "#a9583e"
-
-    svc_enabled_bg = "#f5f0e8"
-    svc_enabled_text = "#141413"
-    svc_disabled_bg = "#efe9de"
-    svc_disabled_text = "#8e8b82"
-
-    pastel_bg = "#efe9de"
-    pastel_fg = "#141413"
-
-    if dark:
-        canvas = "#181715"
-        canvas_soft = "#1f1e1b"
-        card = "#252320"
-        card_alt = "#2b2926"
-        hairline = "#33302c"
-
-        ink = "#faf9f5"
-        mute = "#9a978f"
-
-        primary = "#d98a6f"
-        on_primary = "#141413"
-
-        tab_bg_unselected = "rgba(255, 255, 255, 0)"
-        tab_bg_selected = "#cc785c"
-        tab_text_unselected = "#a5a199"
-        tab_text_selected = "#ffffff"
-        toc_hover_bg = "#252320"
-
-        input_bg = "#252320"
-        input_focus = "#2b2926"
-        selection_bg = "#cc785c"
-
-        btn_bg_secondary = "#252320"
-        btn_text_sec = "#faf9f5"
-        btn_hover_sec = "#2b2926"
-        btn_border_sec = "#33302c"
-
-        btn_bg_primary = "#cc785c"
-        btn_text_pri = "#141413"
-        btn_hover_pri = "#d98a6f"
-
-        svc_enabled_bg = "#2b2926"
-        svc_enabled_text = "#faf9f5"
-        svc_disabled_bg = "#1f1e1b"
-        svc_disabled_text = "#7a776f"
-
-        pastel_bg = "#2b2926"
-        pastel_fg = "#faf9f5"
-
-    return f'''
-        QDialog {{
-            background: {canvas};
-        }}
-
-        QLabel {{
-            color: {ink};
-        }}
-        QLabel[cssClass="helperText"] {{
-            color: {mute};
-            font-size: 11px;
-        }}
-
-        QFrame[cssClass="vibrantCard"] {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 14px;
-            margin-top: 6px;
-        }}
-
-        QWidget[cssClass="sidebarPanel"] {{
-            background: {card_alt};
-            border: 1px solid {hairline};
-            border-radius: 14px;
-        }}
-
-        QGroupBox {{
-            background: {card};
-            border: 1px solid {hairline};
-            border-radius: 14px;
-            margin-top: 24px;
-            padding: 18px;
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: 14px;
-            padding: 4px 10px;
-            color: {ink};
-            font-weight: 600;
-        }}
-
-        QFrame[cssClass="serviceCard"] {{
-            border-radius: 10px;
-            border: 1px solid {hairline};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] {{
-            background: {svc_enabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="enabled"] QLabel {{
-            color: {svc_enabled_text};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] {{
-            background: {svc_disabled_bg};
-        }}
-        QFrame[cssClass="serviceCard"][cardState="disabled"] QLabel {{
-            color: {svc_disabled_text};
-        }}
-
-        QCheckBox, QRadioButton {{
-            color: {ink};
-            spacing: 8px;
-            background: transparent;
-        }}
-
-        QTabWidget::pane {{
-            border: 1px solid {hairline};
-            background: {canvas_soft};
-            border-radius: 14px;
-        }}
-        QTabBar::tab {{
-            background: {tab_bg_unselected};
-            color: {tab_text_unselected};
-            padding: 12px 20px;
-            margin-right: 8px;
-            border-radius: 9999px;
-            font-size: 13px;
-            font-weight: 500;
-        }}
-        QTabBar::tab:selected {{
-            background: {tab_bg_selected};
-            color: {tab_text_selected};
-            font-size: 13px;
-            font-weight: 700;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {toc_hover_bg};
-        }}
-
-        QPushButton[cssClass="btnPastelEmerald"],
-        QPushButton[cssClass="btnPastelBlue"],
-        QPushButton[cssClass="btnPastelRose"],
-        QPushButton[cssClass="btnPastelAmber"],
-        QPushButton[cssClass="btnPastelPurple"] {{
-            padding: 6px 16px;
-            border-radius: 9999px;
-            border: 1px solid {hairline};
-            background: {pastel_bg};
-            color: {pastel_fg};
-            font-weight: 600;
-        }}
-        QPushButton[cssClass="btnPastelEmerald"]:hover,
-        QPushButton[cssClass="btnPastelBlue"]:hover,
-        QPushButton[cssClass="btnPastelRose"]:hover,
-        QPushButton[cssClass="btnPastelAmber"]:hover,
-        QPushButton[cssClass="btnPastelPurple"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QPushButton[cssClass="tocButtonInactive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {mute};
-            background: transparent;
-        }}
-        QPushButton[cssClass="tocButtonInactive"]:hover {{
-            background: {toc_hover_bg}!important;
-            color: {ink}!important;
-        }}
-        QPushButton[cssClass="tocButtonActive"] {{
-            text-align: left;
-            padding: 14px 16px;
-            border: none;
-            font-weight: 700;
-            font-size: 13px;
-            border-radius: 9999px;
-            color: {tab_text_selected};
-            background: {tab_bg_selected};
-        }}
-        QPushButton[cssClass="tocButtonActive"]:hover {{
-            background: {tab_bg_selected}!important;
-            color: {tab_text_selected}!important;
-        }}
-        QToolButton[cssClass="collapsibleToggle"] {{
-            text-align: left;
-            padding: 10px 18px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-            margin-top: 6px;
-        }}
-        QToolButton[cssClass="collapsibleToggle"]:hover {{
-            background: {btn_hover_sec};
-        }}
-
-        QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
-            padding: 10px 16px;
-            border: 1px solid {hairline};
-            border-radius: 10px;
-            background: {input_bg};
-            color: {ink};
-        }}
-        QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
-            background: {input_focus};
-            border: 1px solid {primary};
-        }}
-        QComboBox QAbstractItemView {{
-            background: {card};
-            border: 1px solid {hairline};
-            color: {ink};
-            selection-background-color: {selection_bg};
-            selection-color: {on_primary};
-        }}
-
-        QScrollArea {{
-            background: transparent;
-            border: none;
-            border-radius: 14px;
-        }}
-        QScrollArea > QWidget > QWidget {{
-            background: transparent;
-            border-radius: 14px;
-        }}
-
-        QPushButton {{
-            padding: 10px 20px;
-            border-radius: 9999px;
-            background: {btn_bg_secondary};
-            border: 1px solid {btn_border_sec};
-            color: {btn_text_sec};
-            font-weight: 500;
-        }}
-        QPushButton:hover {{
-            background: {btn_hover_sec};
-        }}
-        QPushButton[cssClass="primaryButton"] {{
-            background: {btn_bg_primary};
-            color: {btn_text_pri};
-            border: 1px solid {btn_bg_primary};
-            font-weight: 700;
-        }}
-        QPushButton[cssClass="primaryButton"]:hover {{
-            background: {btn_hover_pri};
-            border: 1px solid {btn_hover_pri};
-        }}
-    '''
-
+    """Claude: warm cream canvas and coral CTAs from the Anthropic design system."""
+    return _build_theme_stylesheet("claude", dark)

@@ -322,8 +322,10 @@ class TurboDownloader:
             os.rename(temp_merged, self.dest)
         finally:
             if os.path.exists(temp_merged):
-                try: os.remove(temp_merged)
-                except Exception: pass
+                try:
+                    os.remove(temp_merged)
+                except Exception as e:
+                    logger.debug(f'Downloader: could not remove temp merge file {temp_merged}: {e}')
         self._cleanup_parts()
 
     def _cleanup_parts(self):

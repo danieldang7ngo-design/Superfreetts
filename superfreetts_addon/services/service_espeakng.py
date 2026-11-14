@@ -27,8 +27,8 @@ def _find_espeak_ng_engine():
         bundled = os.path.join(piper_dir, 'espeak-ng')
         if os.path.exists(bundled) and os.access(bundled, os.X_OK):
             return bundled, os.path.join(piper_dir, 'espeak-ng-data')
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f'ESpeakNG: bundled engine lookup failed, falling back to PATH: {e}', exc_info=True)
     return 'espeak-ng', None
 
 

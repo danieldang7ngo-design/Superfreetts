@@ -1,5 +1,6 @@
 import os
 import importlib
+import inspect
 import typing
 
 import functools
@@ -16,6 +17,9 @@ logger = logging_utils.get_child_logger(__name__)
 
 # don't publish more than X events for a batch uuid
 COUNT_BY_BATCH_UUID = {}
+
+# Marker for "this attribute cannot be read without an instance".
+_NOT_AVAILABLE = object()
 
 # Sentry reporting removed in Lite version
 
@@ -34,6 +38,14 @@ class ServiceManager():
         self._expensive_services_loaded = False  # Track if expensive services (Piper, Kokoro, MMS) are loaded
         self._configuration_model = None  # Store configuration for applying when services instantiate
         self._services_discovered = False  # Track if discover/import/cache has been performed
+        # Service modules whose import failed, mapped to the number of failed
+        # attempts. A transient import error (file lock, half-written engine
+        # directory, an engine DLL still unloading) must not hide a service for
+        # the rest of the session, but a permanently broken file must not make
+        # init_services() retry forever either.
+        self._failed_service_modules = {}
+        self._imported_service_modules = set()
+        self._service_import_max_retries = 3
 
         
         # Voice list caching — single persistent+in-memory cache
@@ -124,58 +136,194 @@ class ServiceManager():
         This does NOT instantiate the services; that is handled by
         `instantiate_all_services()` or `instantiate_service_lazy()`.
 
-        It is safe to call this multiple times – work will only be done once.
+        Discovery is only marked complete once every module imported. If a
+        module fails, the classes from the modules that did import are cached
+        and the failed ones are retried on the next call, up to
+        `self._service_import_max_retries` attempts per module.
         """
         if self._services_discovered:
             logger.debug('init_services: services already discovered, skipping')
             return
-        
+
         logger.info('init_services: Starting service discovery and import...')
         try:
-            self.import_services()
+            imports_complete = self.import_services()
             self._cache_service_classes()
-            self._services_discovered = True
-            logger.info(f'init_services: Completed. Discovered {len(self._service_classes)} service classes: {list(self._service_classes.keys())}')
         except Exception as e:
+            # Do NOT mark discovery as complete here: the failure may be
+            # transient, and caching it as "done" would hide every service for
+            # the rest of the session. The next init_services() call retries.
             logger.error(f'init_services: CRITICAL Error during service discovery/import: {e}', exc_info=True)
-            # Ensure we can still potentially use partially discovered services
-            self._services_discovered = True 
             raise
 
+        if imports_complete:
+            self._services_discovered = True
+            logger.info(f'init_services: Completed. Discovered {len(self._service_classes)} service classes: {list(self._service_classes.keys())}')
+            return
+
+        pending = {
+            module_name: attempts
+            for module_name, attempts in self._failed_service_modules.items()
+            if attempts < self._service_import_max_retries
+        }
+        if pending:
+            logger.warning(
+                f'init_services: {len(pending)} service module(s) failed to import '
+                f'({sorted(pending)}); discovery stays incomplete so the next call retries '
+                f'(attempt {min(pending.values())}/{self._service_import_max_retries})'
+            )
+            return
+
+        # Every failure has used up its retry budget. Cache what we have and stop
+        # retrying so a permanently broken module cannot spin on every call.
+        self._services_discovered = True
+        logger.error(
+            f'init_services: giving up on {len(self._failed_service_modules)} service module(s) '
+            f'after {self._service_import_max_retries} attempts: {sorted(self._failed_service_modules)}'
+        )
+
     def import_services(self):
+        """Import every discovered ``service_*.py`` module.
+
+        Returns True when every module is imported. A module that raises is
+        remembered in ``self._failed_service_modules`` together with its failed
+        attempt count, so a later ``init_services()`` call retries just that
+        module instead of treating service discovery as finished.
+        """
         module_names = self.discover_services()
         logger.info(f'import_services: discovered {len(module_names)} service modules in {self.services_directory}')
+        all_imported = True
         for module_name in module_names:
+            if module_name in self._imported_service_modules and module_name not in self._failed_service_modules:
+                continue
+
+            attempts = self._failed_service_modules.get(module_name, 0)
+            if attempts >= self._service_import_max_retries:
+                logger.warning(
+                    f'import_services: not retrying {module_name} again '
+                    f'({attempts} failed attempts, limit {self._service_import_max_retries})'
+                )
+                all_imported = False
+                continue
+
             try:
                 full_module_path = f'{self.package_name}.{module_name}'
-                logger.debug(f'import_services: attempting to import {full_module_path}')
+                logger.debug(f'import_services: attempting to import {full_module_path} (attempt {attempts + 1})')
                 importlib.import_module(full_module_path)
                 logger.debug(f'import_services: successfully imported {module_name}')
+                self._imported_service_modules.add(module_name)
+                self._failed_service_modules.pop(module_name, None)
             except Exception as e:
-                logger.error(f'import_services: failed to import module {module_name} with package {self.package_name}: {e}', exc_info=True)
+                self._failed_service_modules[module_name] = attempts + 1
+                all_imported = False
+                logger.error(
+                    f'import_services: failed to import module {module_name} with package '
+                    f'{self.package_name} (attempt {attempts + 1}/{self._service_import_max_retries}): {e}',
+                    exc_info=True,
+                )
                 # Continue with other modules even if one fails
 
+        if self._failed_service_modules:
+            logger.warning(f'import_services: modules still failing: {sorted(self._failed_service_modules)}')
+        return all_imported
+
+    @staticmethod
+    def _class_level_attribute(subclass, attribute):
+        """Read *attribute* straight off the class when it is a plain value.
+
+        ``ServiceBase.name`` and ``ServiceBase.service_fee`` are properties, so
+        ``getattr(subclass, ...)`` returns the property object rather than a
+        value. Only a real value (no descriptor/routine) can be read without an
+        instance; anything else returns the ``_NOT_AVAILABLE`` marker so the
+        caller can fall back to a probe or a full instantiation.
+        """
+        for klass in subclass.__mro__:
+            if attribute not in klass.__dict__:
+                continue
+            value = klass.__dict__[attribute]
+            if isinstance(value, property) or inspect.isdatadescriptor(value) or inspect.isroutine(value):
+                return _NOT_AVAILABLE
+            return value
+        return _NOT_AVAILABLE
+
+    @staticmethod
+    def _probe_service_instance(subclass):
+        """Build an instance without running ``__init__``.
+
+        Engine services load models, spawn processes or scan the disk in
+        ``__init__``; ``__new__`` gives a bare object whose properties
+        (``name``/``service_fee``/``test_service()``) can be read for the price
+        of a normal method call. Returns None when the class cannot be built
+        this way (for example an abstract class).
+        """
+        try:
+            return subclass.__new__(subclass)
+        except Exception as e:
+            logger.debug(f'_probe_service_instance: cannot probe {subclass.__name__}: {e}')
+            return None
+
+    def _describe_service_class(self, subclass):
+        """Return ``(name, service_fee, is_test_service)`` for *subclass*.
+
+        Preference order, cheapest first:
+
+        1. plain class attribute (no instance at all);
+        2. a ``__new__`` probe, which covers the property implementations used
+           by every bundled service (``return "PiperTTS"``,
+           ``return constants.ServiceFee.free``);
+        3. ``subclass()``, only for services whose properties need state set up
+           in ``__init__`` - the previous behaviour, so nothing can regress.
+        """
+        name = self._class_level_attribute(subclass, 'name')
+        service_fee = self._class_level_attribute(subclass, 'service_fee')
+
+        subject = self._probe_service_instance(subclass)
+        if subject is not None:
+            try:
+                if name is _NOT_AVAILABLE:
+                    name = subject.name
+                if service_fee is _NOT_AVAILABLE:
+                    service_fee = subject.service_fee
+                return name, service_fee, bool(subject.test_service())
+            except Exception as e:
+                logger.debug(
+                    f'_describe_service_class: probe of {subclass.__name__} failed ({e}); '
+                    f'falling back to a full instantiation'
+                )
+
+        instance = subclass()
+        if name is _NOT_AVAILABLE:
+            name = instance.name
+        if service_fee is _NOT_AVAILABLE:
+            service_fee = instance.service_fee
+        return name, service_fee, bool(instance.test_service())
+
     def _cache_service_classes(self):
-        """Cache ServiceBase subclasses without instantiating them. Called during init_services()."""
+        """Cache ServiceBase subclasses without instantiating them when possible.
+
+        Called during init_services(). Expensive constructors are skipped by
+        reading ``name``/``service_fee`` at class level (see
+        ``_describe_service_class``), so discovery stays cheap.
+        """
         subclasses = service.ServiceBase.__subclasses__()
         logger.debug(f'_cache_service_classes: Found {len(subclasses)} ServiceBase subclasses')
-        
+
         for subclass in subclasses:
             try:
                 # Filter out test and paid services at discovery time
-                temp_instance = subclass()
+                name, service_fee, is_test_service = self._describe_service_class(subclass)
 
-                if temp_instance.test_service() and self.allow_test_services == False:
-                    logger.debug(f'skipping test service {temp_instance.name}')
+                if is_test_service and self.allow_test_services == False:
+                    logger.debug(f'skipping test service {name}')
                     continue
                 # Super Free TTS: Only cache free services
-                if temp_instance.service_fee == constants.ServiceFee.paid:
-                    logger.debug(f'skipping paid service {temp_instance.name}')
+                if service_fee == constants.ServiceFee.paid:
+                    logger.debug(f'skipping paid service {name}')
                     continue
 
                 # Cache the class for later lazy instantiation
-                logger.info(f'caching service class {temp_instance.name}')
-                self._service_classes[temp_instance.name] = subclass
+                logger.info(f'caching service class {name}')
+                self._service_classes[name] = subclass
             except AttributeError as ae:
                 logger.error(f'_cache_service_classes: AttributeError in {subclass.__name__}. Check for missing properties: {ae}')
                 continue

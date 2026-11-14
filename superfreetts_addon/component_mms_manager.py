@@ -7,7 +7,10 @@ from . import gui_utils
 from .downloader import TurboDownloader
 from .mms_engine_manager import MmsEngineManager
 from . import constants
+from . import logging_utils
 from .download_sources import MMS_BASE_URL
+
+logger = logging_utils.get_child_logger(__name__)
 
 # Featured languages to show at the top
 FEATURED_LANGS = ["vie", "eng", "kor", "jpn", "cmn", "swe", "yue", "fra", "deu", "spa"]
@@ -327,8 +330,8 @@ class MmsInstallManager(QDialog):
             try:
                 import subprocess
                 subprocess.Popen(['xdg-open', lexicon_path])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'MMS: could not open the lexicon file with xdg-open: {e}')
 
     def open_log_folder(self):
         from . import service_logger
@@ -340,8 +343,8 @@ class MmsInstallManager(QDialog):
             try:
                 import subprocess
                 subprocess.Popen(['xdg-open', log_dir])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'MMS: could not open the log folder with xdg-open: {e}')
 
     def load_languages(self):
         json_path = os.path.join(os.path.dirname(__file__), 'mms_languages.json')

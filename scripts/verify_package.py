@@ -3,6 +3,7 @@
 
 Checks:
   * required files are present and local state is absent
+  * every packaged .py matches the source tree byte-for-byte
   * version metadata is internally consistent
   * EdgeTTS cannot exceed the source worker cap
   * no psutil or compiled binaries were bundled
@@ -15,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -91,6 +93,130 @@ BINARY_MAGICS = (
 # model data leaked into the archive (117 MB once shipped this way).
 MAX_ARCHIVE_BYTES = 25 * 1024 * 1024
 
+# Payloads that must be byte-identical to the working tree.  A stale
+# SuperFreeTTS.ankiaddon is how a fixed source (the EdgeTTS
+# api.msedgeservices.com endpoint, for instance) once shipped as the old code:
+# the archive was zipped earlier and nothing compared it against the sources.
+# Translation files and the manifest drift just as silently, so they are
+# compared too instead of only checking that they exist.
+SOURCE_PARITY_TREES = ("superfreetts_addon", "external")
+SOURCE_PARITY_EXTRA_FILES = ("manifest.json",)
+SOURCE_PARITY_EXTRA_GLOBS = ("superfreetts_addon/locales/*.json",)
+
+# Mirrors build_share.py's exclusions: it never packages test helpers,
+# _local_override.py, or anything under a test/tests/__pycache__ directory.
+SOURCE_PARITY_SKIPPED_NAMES = {"_local_override.py"}
+SOURCE_PARITY_SKIPPED_PREFIXES = ("test_",)
+SOURCE_PARITY_SKIPPED_SUFFIXES = ("_test.py",)
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _is_parity_payload(name: str) -> bool:
+    """True for packaged files that must match the source tree byte-for-byte."""
+    if name.endswith(".py") and name.split("/", 1)[0] in SOURCE_PARITY_TREES:
+        return True
+    if name in SOURCE_PARITY_EXTRA_FILES:
+        return True
+    return any(Path(name).match(pattern) for pattern in SOURCE_PARITY_EXTRA_GLOBS)
+
+
+def _collect_source_files() -> dict[str, Path]:
+    """Every source file that has to appear in the package, by archive path."""
+    files: dict[str, Path] = {}
+    for tree in SOURCE_PARITY_TREES:
+        base = ROOT / tree
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*.py"):
+            if "__pycache__" in path.parts:
+                continue
+            files[path.relative_to(ROOT).as_posix()] = path
+    for pattern in SOURCE_PARITY_EXTRA_GLOBS:
+        for path in sorted(ROOT.glob(pattern)):
+            if path.is_file():
+                files[path.relative_to(ROOT).as_posix()] = path
+    for name in SOURCE_PARITY_EXTRA_FILES:
+        path = ROOT / name
+        if path.is_file():
+            files[name] = path
+    return files
+
+
+def _should_package_source(relative_path: str) -> bool:
+    name = Path(relative_path).name
+    if name in SOURCE_PARITY_SKIPPED_NAMES:
+        return False
+    if name.startswith(SOURCE_PARITY_SKIPPED_PREFIXES):
+        return False
+    if name.endswith(SOURCE_PARITY_SKIPPED_SUFFIXES):
+        return False
+    parts = Path(relative_path).parts[:-1]
+    if any(part in {"__pycache__", "test", "tests"} for part in parts):
+        return False
+    return True
+
+
+def verify_source_parity(zf: zipfile.ZipFile, names: set[str]) -> list[str]:
+    """Compare every packaged .py against the file on disk, byte-for-byte.
+
+    Two failure modes are reported:
+
+    * a packaged payload whose bytes differ from the source (stale archive), or
+      that has no source file at all (deleted module still shipped);
+    * a source file under ``superfreetts_addon/`` -- ``.py``, a locale, or
+      ``manifest.json`` -- that is missing from the package (build filtered it
+      after the fix landed).
+
+    Translations are compared as strictly as code: a locale that exists but is
+    older than ``superfreetts_addon/locales/*.json`` ships stale strings.
+    """
+    errors: list[str] = []
+
+    source_files = _collect_source_files()
+
+    packaged = sorted(name for name in names if _is_parity_payload(name))
+    packaged_set = set(packaged)
+
+    for name in packaged:
+        path = source_files.get(name)
+        if path is None:
+            errors.append(f"packaged python file has no source counterpart: {name}")
+            continue
+        try:
+            archived_bytes = zf.read(name)
+        except Exception as exc:
+            errors.append(f"could not read packaged python file {name}: {exc}")
+            continue
+        try:
+            source_bytes = path.read_bytes()
+        except OSError as exc:
+            errors.append(f"could not read source file {path}: {exc}")
+            continue
+        if _sha256(archived_bytes) != _sha256(source_bytes):
+            errors.append(f"packaged file differs from source: {name}")
+
+    for relative in sorted(source_files):
+        if relative == "manifest.json":
+            if relative not in packaged_set:
+                errors.append(f"source file missing from package: {relative}")
+            continue
+        if not relative.startswith("superfreetts_addon/"):
+            continue
+        if relative.endswith(".py"):
+            if not _should_package_source(relative):
+                continue
+            kind = "python file"
+        else:
+            kind = "locale file"
+        if relative not in packaged_set:
+            errors.append(f"source {kind} missing from package: {relative}")
+
+    return errors
+
+
 
 def _has_binary_magic(archive: zipfile.ZipFile, name: str) -> bool:
     try:
@@ -108,8 +234,12 @@ def _error(message: str) -> None:
 def _read_source_worker_cap() -> int:
     path = ROOT / "superfreetts_addon" / "batch_constants.py"
     text = path.read_text(encoding="utf-8")
+    # Accept both layouts of the cap:
+    #   _DEFAULT_EDGETTS_MAX_WORKERS: Final[int] = 3   (immutable literal)
+    #   EDGETTS_MAX_WORKERS: Final[int] = 3            (older single-name form)
+    #   EDGETTS_MAX_WORKERS: int = ...                 (alias, override friendly)
     match = re.search(
-        r"^EDGETTS_MAX_WORKERS\s*:\s*Final\[int\]\s*=\s*(\d+)",
+        r"^(?:_DEFAULT_)?EDGETTS_MAX_WORKERS\s*(?::\s*(?:Final\[int\]|int))?\s*=\s*(\d+)",
         text,
         flags=re.MULTILINE,
     )
@@ -118,7 +248,7 @@ def _read_source_worker_cap() -> int:
     return int(match.group(1))
 
 
-def verify_archive(archive: Path) -> list[str]:
+def verify_archive(archive: Path, check_source_parity: bool = True) -> list[str]:
     errors: list[str] = []
     if not archive.is_file():
         return [f"archive not found: {archive}"]
@@ -132,6 +262,9 @@ def verify_archive(archive: Path) -> list[str]:
 
     with zipfile.ZipFile(archive) as zf:
         names = {name.replace("\\", "/") for name in zf.namelist() if not name.endswith("/")}
+
+        if check_source_parity:
+            errors.extend(verify_source_parity(zf, names))
 
         for required in sorted(REQUIRED_FILES):
             if required not in names:
@@ -188,6 +321,11 @@ def verify_archive(archive: Path) -> list[str]:
                 "SupertonicTTS concurrency_workers must be pinned to 1, "
                 f"got {supertonic.get('concurrency_workers')!r}"
             )
+
+        if "manifest.json" not in names or "superfreetts_addon/version.py" not in names:
+            # Already reported as missing required files; reading them here
+            # would crash the gate with a KeyError instead of a clean message.
+            return errors
 
         manifest = json.loads(zf.read("manifest.json").decode("utf-8"))
         manifest_version = manifest.get("version")

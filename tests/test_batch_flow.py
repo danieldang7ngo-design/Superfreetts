@@ -213,11 +213,11 @@ class TestMultiEngineExecutorSingleton:
         assert b._shutdown is False
 
 
-class TestUnifiedExecutorSingleton:
+class TestFallbackExecutorSingleton:
 
     def teardown_method(self):
         import superfreetts_addon.batch_executor as batch_executor_module
-        batch_executor_module._executor = None
+        batch_executor_module._fallback_executor = None
 
     def test_shutdown_executor_is_recreated(self):
         a = get_batch_executor()

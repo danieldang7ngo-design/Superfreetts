@@ -2,7 +2,6 @@
 import os
 import multiprocessing
 import platform
-import subprocess
 import logging
 from typing import Any, Dict, Optional, Set, Tuple
 
@@ -419,63 +418,3 @@ def get_total_cpu_count():
         return multiprocessing.cpu_count()
     except Exception:
         return 4 # Safety fallback
-
-def is_amd_gpu_detected():
-    """
-    detects if an AMD GPU is present on Windows (for DirectML support).
-    This is a heuristic check.
-    """
-    if platform.system() != "Windows":
-        return False
-        
-    try:
-        # Use an argument list, not shell=True. The command is fixed, but
-        # avoiding the shell removes an entire class of injection risk.
-        result = subprocess.run(
-            ["wmic", "path", "win32_VideoController", "get", "name"],
-            capture_output=True,
-            text=True,
-            errors='replace',
-            timeout=10,
-        )
-        if "AMD" in result.stdout or "Radeon" in result.stdout:
-            return True
-    except FileNotFoundError:
-        logger.debug("wmic not available; falling back to PowerShell GPU check")
-        try:
-            result = subprocess.run(
-                [
-                    "powershell", "-NoProfile", "-Command",
-                    "Get-CimInstance Win32_VideoController | "
-                    "Select-Object -ExpandProperty Name",
-                ],
-                capture_output=True,
-                text=True,
-                errors='replace',
-                timeout=10,
-            )
-            if "AMD" in result.stdout or "Radeon" in result.stdout:
-                return True
-        except Exception as e:
-            logger.debug(f"Failed to check GPU via PowerShell: {e}")
-    except Exception as e:
-        logger.debug(f"Failed to check GPU: {e}")
-        
-    return False
-
-def get_best_onnx_provider():
-    """
-    Returns the best available provider for ONNX Runtime.
-    Prioritizes DirectML on Windows if AMD GPU is present, or CUDA if NVIDIA.
-    Defaults to CPU.
-    """
-    # Note: efficient detection requires importing onnxruntime, but we want this to be lightweight.
-    # We will rely on heuristics or defaults.
-    
-    # Check for AMD GPU on Windows -> DirectML
-    if platform.system() == "Windows" and is_amd_gpu_detected():
-        return "directml"
-        
-    # TODO: Add NVIDIA check if needed, but for now user specifically asked about AMD
-    
-    return "cpu"

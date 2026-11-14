@@ -173,8 +173,8 @@ class SupertonicTTS(service.ServiceBase):
                     profile_path = aqt.mw.pm.profileFolder()
                     if profile_path:
                         candidates.add(os.path.join(profile_path, 'superfreetts_data', 'supertonic_engine', 'venv', 'bin', 'python'))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Supertonic: aqt profile folder unavailable for venv lookup: {e}', exc_info=True)
             for venv_python in candidates:
                 if os.path.exists(venv_python):
                     return venv_python
@@ -198,8 +198,8 @@ class SupertonicTTS(service.ServiceBase):
             python_exe = EngineManager.get_python_exe()
             if os.path.exists(python_exe):
                 return python_exe
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'Supertonic: EngineManager.get_python_exe() failed: {e}', exc_info=True)
         if _platform.system() != "Windows":
             import shutil
             for name in ("python3", "python"):

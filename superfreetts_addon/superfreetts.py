@@ -115,6 +115,7 @@ class SuperFreeTTS():
             logger.info(f'[INIT] Multi-engine executor configured with CPU-validated settings: {engine_config}')
         except Exception as e:
             logger.warning(f'[INIT] Failed to initialize multi-engine executor, falling back to unified: {e}')
+            # Safety net: one worker per engine, never one thread per CPU.
             self.executor = batch_executor.get_batch_executor(max_workers=1)
             self.orchestrator.executor = self.executor
 
@@ -708,25 +709,11 @@ class SuperFreeTTS():
             logger.warning(f'[SHUTDOWN] Batch executor shutdown failed: {e}')
 
         try:
-            from .services import (
-                service_kokoro,
-                service_mms,
-                service_piper,
-                service_supertonic,
-            )
-            pools = [
-                getattr(service_piper, '_piper_pool', None),
-                getattr(service_kokoro, '_kokoro_pool', None),
-                getattr(service_mms, '_sherpa_pool', None),
-                getattr(service_supertonic, '_supertonic_pool', None),
-            ]
-            for pool in pools:
-                if pool is None:
-                    continue
-                try:
-                    pool.stop_all()
-                except Exception as e:
-                    logger.warning(f'[SHUTDOWN] Process pool stop failed: {e}')
+            # Stop every pool that registered itself, not just the four
+            # built-in services: a reloaded or custom engine pool would
+            # otherwise keep its runner processes alive after profile close.
+            from .services import process_pool
+            process_pool.stop_all_registered_pools()
         except Exception as e:
             logger.warning(f'[SHUTDOWN] Could not stop local engine pools: {e}')
 

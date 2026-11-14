@@ -171,8 +171,8 @@ def _normalize_audio_array(audio):
                     audio = audio.reshape(-1)
                 elif audio.shape[0] <= 8 and audio.shape[1] > audio.shape[0]:
                     audio = audio.T
-        except Exception:
-            pass
+        except Exception as e:
+            log(f"Supertonic: audio normalization failed, using the raw array: {e}")
     return audio
 
 

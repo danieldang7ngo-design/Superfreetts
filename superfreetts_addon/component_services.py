@@ -71,16 +71,16 @@ class ServicesPage(component_common.ConfigComponentBase):
             for key, option_type in service.configuration_options().items():
                 chunks.append(str(key))
                 chunks.append(str(self._get_service_option_label(service, key, option_type)))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'Could not read configuration options for {service.name}: {e}', exc_info=True)
 
         try:
             if hasattr(service, 'advanced_configuration_options'):
                 for key, option_type in service.advanced_configuration_options().items():
                     chunks.append(str(key))
                     chunks.append(str(self._get_service_option_label(service, key, option_type)))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'Could not read advanced configuration options for {service.name}: {e}', exc_info=True)
 
         return ' '.join(chunks).lower()
 

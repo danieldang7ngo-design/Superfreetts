@@ -1,5 +1,11 @@
 """
-Unified Batch Executor - Simplified threading, resource management, and caching.
+Batch executors - threading, resource monitoring and checkpointing.
+
+Live path: ``MultiEngineExecutor`` routes every task to one bounded thread
+pool per TTS engine (``get_multi_engine_executor``).  ``get_batch_executor``
+is the safety-net singleton used when the per-engine configuration cannot be
+built; it returns the same class with default worker counts, so callers see a
+single interface.  Audio caching is content-addressed in ``audio_file_store``.
 
 Replaces:
   - the old MemoryPool/SmartLRUCache helpers (only RSS monitoring remains
@@ -8,8 +14,7 @@ Replaces:
   - Complex threading in superfreetts.py
 
 Design:
-  - Single ThreadPoolExecutor for all batch tasks
-  - Unified cache system (no 3 separate caches)
+  - One bounded ThreadPoolExecutor per engine, sized by configuration
   - Simple resource monitoring (RAM tracking only)
   - Lightweight checkpoint system
   - Zero unnecessary locks
@@ -20,7 +25,7 @@ import gc
 import json
 import threading
 import concurrent.futures
-from typing import Dict, Optional, Any, List
+from typing import Dict, Optional, List
 from datetime import datetime
 from collections import OrderedDict
 
@@ -114,78 +119,6 @@ def _detect_service_from_task(task: Dict) -> str:
         logger.debug(f"[BATCH] Failed to detect service: {e}")
 
     return 'default'
-
-
-class UnifiedCache:
-    """Minimal LRU cache using OrderedDict. Supports size-based or entry-count eviction."""
-    
-    def __init__(self, max_size_mb: int = 100):
-        self.cache = OrderedDict()
-        self.max_entries = 1000
-        self.max_size_bytes = max_size_mb * 1024 * 1024
-        self.current_size = 0
-        self.hits = 0
-        self.misses = 0
-        self._lock = threading.RLock()
-    
-    @property
-    def _use_size(self) -> bool:
-        return self.max_size_bytes > 0
-    
-    def get(self, key: str) -> Optional[Any]:
-        with self._lock:
-            if key in self.cache:
-                self.cache.move_to_end(key)
-                self.hits += 1
-                val = self.cache[key]
-                # In size mode the stored value is (value, size_bytes).  Do
-                # not unwrap arbitrary tuples when size mode is disabled:
-                # callers legitimately cache tuple values too.
-                if self._use_size and isinstance(val, tuple) and len(val) == 2:
-                    return val[0]
-                return val
-            self.misses += 1
-            return None
-    
-    def put(self, key: str, value: Any, size_bytes: int = 0):
-        with self._lock:
-            if self._use_size:
-                if size_bytes == 0:
-                    size_bytes = len(value) if isinstance(value, (bytes, str)) else 1000
-
-                if key in self.cache:
-                    old_val = self.cache[key]
-                    if isinstance(old_val, tuple):
-                        self.current_size -= old_val[1]
-                    del self.cache[key]
-
-                self.cache[key] = (value, size_bytes)
-                self.current_size += size_bytes
-
-                while self.current_size > self.max_size_bytes and self.cache:
-                    oldest_key, (oldest_val, oldest_size) = self.cache.popitem(last=False)
-                    self.current_size -= oldest_size
-            else:
-                if key in self.cache:
-                    del self.cache[key]
-                self.cache[key] = value
-                while len(self.cache) > self.max_entries and self.cache:
-                    self.cache.popitem(last=False)
-    
-    def clear(self):
-        with self._lock:
-            self.cache.clear()
-            self.current_size = 0
-    
-    def stats(self) -> dict:
-        with self._lock:
-            total = max(self.hits + self.misses, 1)
-            return {
-                'entries': len(self.cache),
-                'hits': self.hits,
-                'misses': self.misses,
-                'hit_rate': f"{(self.hits / total * 100):.1f}%",
-            }
 
 
 class BoundedLRUDict:
@@ -534,65 +467,6 @@ class NullCheckpoint:
         pass
 
 
-class UnifiedBatchExecutor:
-    """
-    Single executor for all batch audio generation.
-    
-    Features:
-    - ThreadPoolExecutor core (4-8 workers)
-    - Unified cache (100MB default)
-    - Simple RAM monitoring + GC
-    - Lightweight checkpoint recovery
-    - Real-time progress callbacks
-    
-    Usage:
-        executor = UnifiedBatchExecutor(max_workers=4)
-        pool = executor.get_executor()
-        future = pool.submit(work_function, task)
-    """
-    
-    def __init__(self, max_workers: int = 1, max_ram_mb: int = 3000, cache_size_mb: int = 100):
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-        self.monitor = SimpleResourceMonitor(max_ram_mb)
-        self.cache = UnifiedCache(max_size_mb=cache_size_mb)
-        self.checkpoint = CheckpointManager()
-        self.max_workers = max_workers
-        self.items_processed = 0
-        self._shutdown = False
-    
-    def get_executor(self, service_name: Optional[str] = None) -> concurrent.futures.ThreadPoolExecutor:
-        """Return the underlying pool so callers can use either executor type.
-
-        ``service_name`` is accepted for interface parity with
-        ``MultiEngineExecutor.get_executor(service_name)``; the unified
-        fallback has only one pool and routes everything through it.
-        """
-        return self.executor
-
-    def detect_service(self, task: Dict) -> str:
-        """Interface parity with MultiEngineExecutor for fallback batches."""
-        return _detect_service_from_task(task)
-
-    def shutdown(self, wait: bool = True):
-        """Shutdown thread pool"""
-        self._shutdown = True
-        try:
-            self.executor.shutdown(wait=wait)
-        except Exception as e:
-            logger.warning(f"[BATCH] Executor shutdown error: {e}")
-    
-    def reset(self):
-        """Clear all caches and reset state"""
-        self.cache.clear()
-        self.items_processed = 0
-        gc.collect()
-        logger.info("[BATCH] Executor reset")
-
-
-# Global singleton
-_executor: Optional[UnifiedBatchExecutor] = None
-
-
 class MultiEngineExecutor:
     """
     Advanced executor supporting different worker counts per TTS engine.
@@ -615,14 +489,28 @@ class MultiEngineExecutor:
         future = pool.submit(work_function, task)
     """
     
-    def __init__(self, engine_config: Dict[str, int] = None, cache_size_mb: int = 100):
+    def __init__(self, engine_config: Dict[str, int] = None, max_workers: Optional[int] = None):
         """
         Args:
-            engine_config: Dict mapping engine name → worker count
-            cache_size_mb: Unified cache size in MB
+            engine_config: Dict mapping engine name to worker count
+            max_workers: uniform worker count for every engine.  The fallback
+                executor uses ``max_workers=1`` so a broken per-engine config
+                degrades to one worker instead of spawning a thread per CPU.
+                ``engine_config`` wins when both are given.
         """
         from . import system_utils
         cpu_default = max(1, system_utils.get_cpu_threads())
+        if engine_config is None and max_workers is not None:
+            workers = max(1, int(max_workers))
+            engine_config = {
+                'Piper': workers,
+                'Kokoro': workers,
+                # Never let the safety net raise the immutable EdgeTTS cap.
+                'EdgeTTS': min(workers, batch_constants.EDGETTS_MAX_WORKERS),
+                'MMS': workers,
+                'Supertonic': workers,
+                'default': workers,
+            }
         self.engine_config = engine_config or {
             'Piper': cpu_default,
             'Kokoro': cpu_default,
@@ -651,7 +539,6 @@ class MultiEngineExecutor:
         )
         
         self.monitor = SimpleResourceMonitor()
-        self.cache = UnifiedCache(max_size_mb=cache_size_mb)
         self.checkpoint = CheckpointManager()
         self._shutdown = False
         self._state_lock = threading.RLock()
@@ -705,19 +592,33 @@ class MultiEngineExecutor:
         return _detect_service_from_task(task)
 
     def reset(self):
-        """Reset all caches"""
-        self.cache.clear()
+        """Run one collection cycle after a batch finishes."""
         gc.collect()
         logger.info("[BATCH] MultiEngine executor reset")
 
 
-def get_batch_executor(max_workers: int = 1) -> UnifiedBatchExecutor:
-    """Get or create global batch executor"""
-    global _executor
-    if _executor is None or getattr(_executor, '_shutdown', False):
-        _executor = UnifiedBatchExecutor(max_workers=max_workers)
-    return _executor
+# Safety net used when the per-engine configuration cannot be built.
+_fallback_executor: Optional[MultiEngineExecutor] = None
+_fallback_executor_lock = threading.RLock()
 
+
+def get_batch_executor(max_workers: Optional[int] = None) -> MultiEngineExecutor:
+    """Return the fallback executor for batches without a usable engine config.
+
+    Same class as the main path, built from the default worker counts, so
+    callers keep one interface (``get_executor`` / ``detect_service`` /
+    ``monitor`` / ``checkpoint``).  A fresh instance replaces one that was
+    already shut down because Anki reuses add-on modules across profiles.
+
+    ``max_workers`` overrides the worker count of every engine.  ``SuperFreeTTS``
+    passes ``1``: this is a safety net for a broken per-engine configuration, so
+    it must not fall back to one worker per CPU.
+    """
+    global _fallback_executor
+    with _fallback_executor_lock:
+        if _fallback_executor is None or getattr(_fallback_executor, '_shutdown', False):
+            _fallback_executor = MultiEngineExecutor(max_workers=max_workers)
+        return _fallback_executor
 
 
 # Multi-engine executor singleton

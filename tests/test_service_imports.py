@@ -15,7 +15,6 @@ _RUNNER_MODULES = (
     "sherpa_runner_v2",
     "supertonic_runner",
     "runner_base",
-    "test_runner",
 )
 
 

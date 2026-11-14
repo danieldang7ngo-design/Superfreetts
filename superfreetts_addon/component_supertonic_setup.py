@@ -166,12 +166,12 @@ class SupertonicSetupDialog(QDialog):
         except subprocess.TimeoutExpired:
             try:
                 process.kill()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Supertonic setup: kill() failed after timeout: {e}')
             try:
                 process.wait(timeout=5)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Supertonic setup: wait() failed after timeout: {e}')
             raise RuntimeError(f"Command timed out after {timeout}s: {' '.join(cmd)}")
 
         if check and process.returncode != 0:
@@ -257,8 +257,8 @@ class SupertonicSetupDialog(QDialog):
             st_cfg = svc_cfg.get("SupertonicTTS", {})
             st_cfg.pop("engine_path", None)
             mw.addonManager.writeConfig(constants.CONFIG_ADDON_NAME, addon_cfg)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f'Supertonic setup: could not clear the saved engine_path: {e}', exc_info=True)
 
     def uninstall_complete(self):
         self.progress_bar.setValue(100)

@@ -1,19 +1,11 @@
 """
 Resource monitoring for batch processing - current process RSS with
 platform-specific fallbacks.  Worker pools and caches live in
-``batch_executor.py``; the old MemoryPool/SmartLRUCache/ResourceManager
-classes were unused and have been removed.
+``batch_executor.py``; the old MemoryPool/SmartLRUCache/ResourceManager and
+the unused ResourceMonitor class have been removed.
 """
 import os
 import platform
-import threading
-
-# Try to import psutil for memory monitoring, fallback if not available
-try:
-    import psutil
-    HAS_PSUTIL = True
-except Exception:
-    HAS_PSUTIL = False
 
 from . import logging_utils
 logger = logging_utils.get_child_logger(__name__)
@@ -200,76 +192,3 @@ def _get_process_ram_usage_without_psutil() -> int:
 
     _LAST_PROCESS_RAM_SOURCE = "unavailable"
     return 0
-
-
-class ResourceMonitor:
-    """Monitor and manage system resources during batch processing"""
-    
-    def __init__(self, max_ram_mb: int = 3000, max_cores: int = 8):
-        self.max_ram_mb = max_ram_mb
-        self.max_cores = max_cores
-        self.process = psutil.Process(os.getpid()) if HAS_PSUTIL else None
-        self.lock = threading.Lock()
-        self.initial_ram_mb = self._get_ram_usage()
-        self._last_gc_ram_mb = self.initial_ram_mb
-        self._last_gc_completed = 0
-        
-    def _get_ram_usage(self) -> int:
-        """Get current process RAM usage in MB"""
-        if not HAS_PSUTIL:
-            return _get_process_ram_usage_without_psutil()
-        
-        try:
-            return int(self.process.memory_info().rss / 1024 / 1024)
-        except Exception as e:
-            logger.warning(f"Failed to get RAM usage: {e}")
-            return 0
-    
-    def get_available_workers(self) -> int:
-        """Calculate safe number of workers based on resource limits"""
-        with self.lock:
-            current_ram = self._get_ram_usage()
-            ram_usage_percent = (current_ram / self.max_ram_mb) * 100
-            
-            # If already using >70% RAM, reduce workers
-            if ram_usage_percent > 70:
-                safe_workers = max(2, self.max_cores // 2)
-                logger.info(f"[RESOURCE] RAM usage {current_ram}MB/{self.max_ram_mb}MB ({ram_usage_percent:.1f}%), reducing workers to {safe_workers}")
-                return safe_workers
-            
-            return self.max_cores
-    
-    def should_trigger_gc(self, completed_count: int) -> bool:
-        """Intelligently decide if GC should run.
-
-        The baseline is current RSS at the last collection, not the initial
-        or peak RSS.  Otherwise one allocation spike causes a collection on
-        every subsequent call.
-        """
-        current_ram = self._get_ram_usage()
-        if current_ram < self._last_gc_ram_mb:
-            self._last_gc_ram_mb = current_ram
-        ram_growth = current_ram - self._last_gc_ram_mb
-        
-        # Trigger GC if:
-        # 1. RAM grew by >500MB since the last collection, OR
-        # 2. Processing every 50 items since the last collection
-        interval_elapsed = (
-            completed_count > 0
-            and completed_count - self._last_gc_completed >= 50
-        )
-        if ram_growth > 500 or interval_elapsed:
-            logger.debug(f"[RESOURCE] GC triggered: RAM growth={ram_growth}MB, completed={completed_count}")
-            return True
-        
-        return False
-
-    def mark_gc(self, completed_count: int = 0) -> None:
-        """Record that a garbage collection just finished."""
-        self._last_gc_ram_mb = self._get_ram_usage()
-        self._last_gc_completed = completed_count
-    
-    def report_status(self) -> str:
-        """Get human-readable resource status"""
-        current_ram = self._get_ram_usage()
-        return f"RAM: {current_ram}MB/{self.max_ram_mb}MB (Cores: {self.max_cores})"

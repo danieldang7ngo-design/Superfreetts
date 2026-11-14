@@ -263,14 +263,6 @@ class BatchOrchestrator:
         results = self._apply_batch_deduplication(tasks, dedup_map, audio_cache, batch_status)
         audio_cache.clear()
         self.text_processing_cache.clear()
-        # The legacy UnifiedCache was write-only in the live path.  Ensure no
-        # stale tuples survive the batch if another caller populated it.
-        executor_cache = getattr(self.executor, 'cache', None)
-        if executor_cache is not None:
-            try:
-                executor_cache.clear()
-            except Exception as e:
-                logger.debug(f'[BATCH] Could not clear executor cache: {e}')
 
         self._set_batch_status_with_ui_refresh(
             batch_status,

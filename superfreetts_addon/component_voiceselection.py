@@ -115,51 +115,48 @@ class VoiceSelection(component_common.ConfigComponentBase):
         # don't report changes back to parent dialog as we adjust widgets
         self.enable_model_change_callback = False
         logger.info(f'load_model, model: {model}')
-        # self.voice_selection_model = model
 
         if model.selection_mode == constants.VoiceSelectionMode.single:
-            logger.info(f'options: {model.voice.options}')
             # single voice
             self.radio_button_single.setChecked(True)
-            # here we need to select the correct voice, based on what the user has saved in their preset (single voice)
-            # we have access to the voice_id, but we need to locate the proper voice
-            voice_id = model.voice.voice_id
-            try:
-                voice = self.hypertts.service_manager.locate_voice(voice_id)
-            except Exception as e:
-                logger.warning(f'Voice not found for preset, falling back to first voice: {e}')
-                self.reset_filters()
-                if len(self.voice_list) > 0:
-                    self.voices_combobox.setCurrentIndex(0)
-                self.enable_model_change_callback = True
+            # Keep the reported selection model identical to the model that was
+            # just loaded.  It used to be left at whatever the previous preset
+            # had (line commented out), so the widgets, the options we apply and
+            # the model handed to ComponentBatch could disagree.
+            self.voice_selection_model = model
+            # Capture the saved options before any redraw: voice_selected()
+            # rewrites model.voice from the (still default) widgets.
+            saved_options = dict(getattr(model.voice, 'options', None) or {})
+            if not self._has_usable_voice_id(model.voice):
+                # Half-written presets (voice_id: {}, voice_key: '',
+                # service: '') used to leave batch_model.voice_selection
+                # pointing at a voice that can never be resolved.  That surfaced
+                # as "No Voice has been set" and VoiceIdNotFound(voice_key='').
+                # Repair it and report the fix to ComponentBatch so the
+                # corrected preset is the one that gets saved (Issue #4).
+                self._apply_first_voice_fallback(
+                    'preset voice is missing or malformed', notify_parent=True
+                )
+                return
+
+            voice = self._locate_model_voice(model)
+            if voice is None:
+                # The voice id is well formed but cannot be resolved right now:
+                # a Piper voice while its service is temporarily disabled, or an
+                # engine that is still downloading.  Show the first available
+                # voice so the dialog stays usable, but keep the saved selection
+                # untouched -- merely opening the preset must never replace the
+                # user's voice.  Picking another voice in the combobox calls
+                # voice_selected() with the callback enabled, which updates the
+                # model normally.
+                self._show_first_voice_without_model_change()
                 return
 
             # Auto-set filters to match the loaded voice so UI reflects preset context
-            try:
-                # Set service filter
-                service_idx = self.services_combobox.findText(voice.service)
-                if service_idx >= 0:
-                    self.services_combobox.setCurrentIndex(service_idx)
-                # Set gender filter
-                gender_idx = self.genders_combobox.findText(voice.gender.name)
-                if gender_idx >= 0:
-                    self.genders_combobox.setCurrentIndex(gender_idx)
-                # Set language filter (use first language of the voice)
-                if hasattr(voice, 'languages') and len(voice.languages) > 0:
-                    lang_name = voice.languages[0].lang_name
-                    lang_idx = self.languages_combobox.findText(lang_name)
-                    if lang_idx >= 0:
-                        self.languages_combobox.setCurrentIndex(lang_idx)
-                # Set locale filter (use first audio_language)
-                if hasattr(voice, 'audio_languages') and len(voice.audio_languages) > 0:
-                    audio_lang_name = voice.audio_languages[0].audio_lang_name
-                    locale_idx = self.audio_languages_combobox.findText(audio_lang_name)
-                    if locale_idx >= 0:
-                        self.audio_languages_combobox.setCurrentIndex(locale_idx)
-            except Exception as e:
-                logger.warning(f'Could not auto-set filters from voice: {e}')
+            self._apply_voice_filters(voice)
 
             # Now select the voice from the (now filtered) list
+            voice_id = voice.voice_id
             voice_index = -1
             for i, v in enumerate(self.filtered_voice_list):
                 if v.voice_id == voice_id:
@@ -172,27 +169,19 @@ class VoiceSelection(component_common.ConfigComponentBase):
                     voice_index = self.voice_list.index(voice)
                 except ValueError:
                     voice_index = 0
+            previous_index = self.voices_combobox.currentIndex()
             self.voices_combobox.setCurrentIndex(voice_index)
-            # self.voice_options_layout
-            #self.voice_options_widgets[widget_name]
-            logger.info(f'options: {model.voice.options}')
-            for key, value in model.voice.options.items():
-                widget_name = f'voice_option_{key}'
-                logger.info(f'setting value of {key} to {value}')
-                voice_option_widget = self.voice_options_widgets[widget_name]
-                setCurrentTextFn = getattr(voice_option_widget, 'setCurrentText', None)
-                if callable(setCurrentTextFn):
-                    # qcombobox detected
-                    voice_option_widget.setCurrentText(value)
-                else:
-                    # check if it's a QLineEdit (has setText method)
-                    setTextFn = getattr(voice_option_widget, 'setText', None)
-                    if callable(setTextFn):
-                        # QLineEdit detected
-                        voice_option_widget.setText(value)
-                    else:
-                        # slider
-                        self.voice_options_widgets[widget_name].setValue(value)
+            if voice_index == previous_index:
+                # setCurrentIndex() does nothing when the index is unchanged, so
+                # currentIndexChanged never fires.  Redraw the option widgets by
+                # hand, otherwise a preset that points at the already selected
+                # voice keeps the previous voice's widgets.
+                self.voice_selected(voice_index)
+            self._apply_voice_options(voice, saved_options)
+            # No notify_model_update() here: the callback flag is still off, so
+            # it would be a no-op.  Only a repaired preset has to talk back to
+            # the parent (see _apply_first_voice_fallback), otherwise merely
+            # opening a preset would mark the batch model as changed.
         elif model.selection_mode == constants.VoiceSelectionMode.random:
             self.radio_button_random.setChecked(True)
             self.voice_selection_model = model
@@ -207,6 +196,182 @@ class VoiceSelection(component_common.ConfigComponentBase):
             self.redraw_selected_voices()
 
         self.enable_model_change_callback = True
+
+    @staticmethod
+    def _has_usable_voice_id(voice):
+        """True when ``voice.voice_id`` could be resolved at some point.
+
+        Mirrors ``ConfigStore._has_usable_voice_id()``: an empty ``voice_id``,
+        ``voice_key`` or ``service`` can never resolve and has to be repaired,
+        while a well-formed id that merely fails to resolve *right now*
+        (disabled service, engine still downloading) must be preserved.
+        """
+        if voice is None:
+            return False
+        voice_id = getattr(voice, 'voice_id', None)
+        if voice_id is None:
+            return False
+        voice_key = getattr(voice_id, 'voice_key', None)
+        if voice_key is None or voice_key == '' or voice_key == {}:
+            return False
+        if isinstance(voice_key, str) and voice_key.strip() == '':
+            return False
+        return getattr(voice_id, 'service', None) not in (None, '')
+
+    def _is_holding_saved_voice(self):
+        """True while load_model() only mirrors a saved voice on the widgets."""
+        return getattr(self, '_hold_saved_voice', False)
+
+    def _show_first_voice_without_model_change(self):
+        """Display the first voice while leaving ``voice_selection_model`` as saved.
+
+        Used when the preset's voice id is well formed but cannot be resolved
+        right now.  The model keeps the user's original voice (no
+        ``set_voice()``, no ``notify_model_update()``), so opening a preset and
+        pressing OK cannot silently replace a Piper voice whose service was
+        temporarily disabled.
+        """
+        logger.warning(
+            'Voice not found for preset; showing the first available voice '
+            'but keeping the saved selection'
+        )
+        self.reset_filters()
+        voices = getattr(self, 'filtered_voice_list', None) or []
+        if not voices:
+            try:
+                self.filter_and_draw_voices(is_initial=True)
+            except Exception as e:
+                logger.warning(f'could not rebuild the voice list: {e}')
+            voices = getattr(self, 'filtered_voice_list', None) or []
+
+        if voices:
+            self._hold_saved_voice = True
+            try:
+                previous_index = self.voices_combobox.currentIndex()
+                self.voices_combobox.setCurrentIndex(0)
+                if previous_index == 0:
+                    # Unchanged index: no signal, so refresh the widgets by hand.
+                    self.voice_selected(0)
+            finally:
+                self._hold_saved_voice = False
+
+        self.enable_model_change_callback = True
+
+    def _locate_model_voice(self, model):
+        """Resolve the voice stored in ``model``; None when it cannot be found."""
+        if model is None or getattr(model, 'voice', None) is None:
+            logger.warning('preset has no voice set')
+            return None
+        try:
+            return self.hypertts.service_manager.locate_voice(model.voice.voice_id)
+        except Exception as e:
+            logger.warning(f'Voice not found for preset, keeping the saved selection: {e}')
+            return None
+
+    def _apply_first_voice_fallback(self, reason, notify_parent=True):
+        """Select the first available voice and report it to the parent.
+
+        A broken preset must not leave the batch model with voice=None or an
+        empty voice id: the next note render would fail with NoVoiceSet or
+        VoiceIdNotFound(voice_key='').  Rebuild a valid selection, then notify
+        the parent so ComponentBatch stores it.
+        """
+        logger.warning(f'{reason}; falling back to the first available voice')
+        self.reset_filters()
+        voices = getattr(self, 'filtered_voice_list', None) or []
+        if not voices:
+            try:
+                self.filter_and_draw_voices(is_initial=True)
+            except Exception as e:
+                logger.warning(f'could not rebuild the voice list: {e}')
+            voices = getattr(self, 'filtered_voice_list', None) or []
+
+        previous_index = self.voices_combobox.currentIndex() if voices else -1
+        if voices:
+            self.voices_combobox.setCurrentIndex(0)
+            if previous_index == 0:
+                # Unchanged index: no signal, so drive the redraw ourselves.
+                self.voice_selected(0)
+
+        self.enable_model_change_callback = True
+        if notify_parent:
+            self.notify_model_update()
+
+    def _apply_voice_filters(self, voice):
+        """Point the filter comboboxes at the loaded voice's attributes."""
+        try:
+            # Set service filter
+            service_idx = self.services_combobox.findText(voice.service)
+            if service_idx >= 0:
+                self.services_combobox.setCurrentIndex(service_idx)
+            # Set gender filter
+            gender_idx = self.genders_combobox.findText(voice.gender.name)
+            if gender_idx >= 0:
+                self.genders_combobox.setCurrentIndex(gender_idx)
+            # Set language filter (use first language of the voice)
+            if hasattr(voice, 'languages') and len(voice.languages) > 0:
+                lang_name = voice.languages[0].lang_name
+                lang_idx = self.languages_combobox.findText(lang_name)
+                if lang_idx >= 0:
+                    self.languages_combobox.setCurrentIndex(lang_idx)
+            # Set locale filter (use first audio_language)
+            if hasattr(voice, 'audio_languages') and len(voice.audio_languages) > 0:
+                audio_lang_name = voice.audio_languages[0].audio_lang_name
+                locale_idx = self.audio_languages_combobox.findText(audio_lang_name)
+                if locale_idx >= 0:
+                    self.audio_languages_combobox.setCurrentIndex(locale_idx)
+        except Exception as e:
+            logger.warning(f'Could not auto-set filters from voice: {e}')
+
+    def _apply_voice_options(self, voice, options):
+        """Apply saved options to the widgets and mirror them into the model.
+
+        The old code wrote straight into ``self.voice_options_widgets[key]`` and
+        assumed the widget signals updated ``current_voice_options``.  A widget
+        that ignores the value (list option, stale value) or does not emit a
+        change leaves the model with defaults, which is how a preset lost its
+        settings after being reloaded.
+        """
+        options = options or {}
+        widgets = getattr(self, 'voice_options_widgets', None) or {}
+        current_options = getattr(self, 'current_voice_options', None)
+        if current_options is None:
+            current_options = {}
+            self.current_voice_options = current_options
+
+        for key, value in options.items():
+            widget_name = f'voice_option_{key}'
+            logger.info(f'setting value of {key} to {value}')
+            voice_option_widget = widgets.get(widget_name)
+            if voice_option_widget is None:
+                logger.warning(f'voice option widget not found: {widget_name}')
+                continue
+            setCurrentTextFn = getattr(voice_option_widget, 'setCurrentText', None)
+            if callable(setCurrentTextFn):
+                # qcombobox detected
+                voice_option_widget.setCurrentText(value)
+            else:
+                # check if it's a QLineEdit (has setText method)
+                setTextFn = getattr(voice_option_widget, 'setText', None)
+                if callable(setTextFn):
+                    # QLineEdit detected
+                    voice_option_widget.setText(value)
+                else:
+                    # slider
+                    voice_option_widget.setValue(value)
+            # The widget may have ignored the value or may not emit a change
+            # signal; the saved value stays authoritative either way.
+            current_options[key] = value
+
+        if self.voice_selection_model is None:
+            return
+        if self.voice_selection_model.selection_mode != constants.VoiceSelectionMode.single:
+            return
+        self.voice_selection_model.set_voice(
+            config_models.VoiceWithOptions(
+                voice.voice_id, copy.copy(current_options)
+            )
+        )
 
     def sample_text_selected(self, text):
         logger.debug(f'sample_text_selected: {text}')
@@ -487,7 +652,8 @@ class VoiceSelection(component_common.ConfigComponentBase):
         if len(self.filtered_voice_list) == 0:
             # if we are in the single voice mode, clear current voice
             if self.voice_selection_model.selection_mode == constants.VoiceSelectionMode.single:
-                self.voice_selection_model.set_voice(None)
+                if not self._is_holding_saved_voice():
+                    self.voice_selection_model.set_voice(None)
                 self.notify_model_update()
             return
 
@@ -566,7 +732,10 @@ class VoiceSelection(component_common.ConfigComponentBase):
 
         # ── Piper JP/KR Clarification ──
         if voice.service == 'Piper':
-            is_jp_kr = any(l.lang_code in ['ja', 'jpn', 'ko', 'kor'] for l in voice.languages)
+            is_jp_kr = any(
+                getattr(l, 'lang_code', getattr(l, 'name', '')) in ['ja', 'jpn', 'ko', 'kor']
+                for l in voice.languages
+            )
             if is_jp_kr:
                 self.piper_warning_label.setText("Note: Official Piper releases currently have limited/no support for Japanese/Korean. These voices may be experimental or unavailable.")
                 self.piper_warning_label.setVisible(True)
@@ -577,7 +746,8 @@ class VoiceSelection(component_common.ConfigComponentBase):
 
         # if we are in the single voice mode, set the mode on the voice selection model
         if self.voice_selection_model.selection_mode == constants.VoiceSelectionMode.single:
-            self.voice_selection_model.set_voice(config_models.VoiceWithOptions(voice.voice_id, self.current_voice_options))
+            if not self._is_holding_saved_voice():
+                self.voice_selection_model.set_voice(config_models.VoiceWithOptions(voice.voice_id, self.current_voice_options))
             self.notify_model_update()
 
     def filter_and_draw_voices(self, _=None, is_initial=False):
@@ -747,9 +917,21 @@ class VoiceSelection(component_common.ConfigComponentBase):
             column_index = 0
             # need to convert the voice with options entry to a string to show the user
             voice_id = voice_entry.voice_id
-            assert isinstance(voice_id, voice_module.TtsVoiceId_v3), f"Expected voice_id to be TtsVoiceId_v3, got {type(voice_id).__name__}"
+            if not isinstance(voice_id, voice_module.TtsVoiceId_v3):
+                logger.warning(f'skipping voice entry with invalid voice_id: {voice_id!r}')
+                continue
             # need to locate the voice for this voice_id
-            voice = self.hypertts.service_manager.locate_voice(voice_id)
+            try:
+                voice = self.hypertts.service_manager.locate_voice(voice_id)
+            except errors.VoiceIdNotFound as e:
+                # A preset can still list a voice that this install cannot
+                # resolve (disabled service, removed model).  Skip that row
+                # instead of letting redraw() crash the whole dialog.
+                logger.warning(f'skipping unavailable voice in selection: {e}')
+                continue
+            except Exception as e:
+                logger.warning(f'could not locate voice {voice_id!r}, skipping row: {e}')
+                continue
             # generate the string representation
             voice_with_options_str = voice_module.generate_voice_with_options_str(voice, voice_entry.options, lang)
             self.voice_list_grid_layout.addWidget(aqt.qt.QLabel(voice_with_options_str), row, column_index, 1, 1)

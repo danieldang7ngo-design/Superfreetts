@@ -620,8 +620,8 @@ class BatchPreview(component_common.ComponentBase):
                         self.batch_status.note_status_map[note_id].status = constants.BatchNoteStatus.Done
                 try:
                     self.batch_status.notify_progress()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f'[BATCH] notify_progress failed while resuming: {e}', exc_info=True)
         except Exception as e:
             logger.warning(f'[BATCH] Preview checkpoint init failed, continuing without resume: {e}')
             self.batch_checkpoint = None
@@ -760,8 +760,8 @@ class BatchPreview(component_common.ComponentBase):
                 sb = self.table_view.verticalScrollBar()
                 if sb is not None and sb.maximum() <= 0 and self.batch_preview_table_model.has_more_pages():
                     self.batch_preview_table_model.load_next_page()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'[BATCH] load_next_page failed during repaint: {e}', exc_info=True)
 
     def batch_change(self, note_id: int, row: int, total_count: int, completed_count: int, start_time: timedelta, current_time: timedelta) -> None:
         """

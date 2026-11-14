@@ -245,8 +245,8 @@ class PiperManagerDialog(QDialog):
             try:
                 import subprocess
                 subprocess.Popen(['xdg-open', log_dir])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'Piper: could not open the log folder with xdg-open: {e}')
 
     def load_voices(self):
         self.worker = PiperDownloadWorker(lang=self.lang)

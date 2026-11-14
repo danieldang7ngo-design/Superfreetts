@@ -2,6 +2,8 @@
 Unit tests for config models.
 """
 
+import datetime
+
 import pytest
 import sys
 import os
@@ -442,3 +444,105 @@ class TestConfigSerializationAndMigration:
             for expected, got in zip(voice_ids, loaded.voice_selection.voice_list):
                 assert got.voice_id == expected
 
+
+# --------------------------------------------------------------------------- #
+# validation, serialisation and install-age helpers
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.unit
+def test_batch_source_validate_rejects_missing_source_field():
+    source = config_models.BatchSource(constants.BatchMode.simple)
+
+    with pytest.raises(errors.SourceFieldNotSet):
+        source.validate()
+
+    assert str(config_models.BatchSource(constants.BatchMode.simple, "Front")) == "Front"
+
+
+@pytest.mark.unit
+def test_batch_source_validate_rejects_missing_template():
+    source = config_models.BatchSource(constants.BatchMode.template)
+
+    with pytest.raises(errors.SourceTemplateNotSet):
+        source.validate()
+
+    template = config_models.BatchSource(constants.BatchMode.template, source_template="{{Front}}")
+    template.validate()
+    assert str(template) == "template"
+    assert str(config_models.BatchSource(constants.BatchMode.advanced_template)) == "template"
+
+
+@pytest.mark.unit
+def test_dataclass_to_dict_walks_enums_dicts_and_lists():
+    class Sample:
+        pass
+
+    payload = config_models._dataclass_to_dict(
+        {
+            "mode": constants.BatchMode.simple,
+            "nested": [constants.VoiceSelectionMode.random, {"deep": constants.BatchMode.template}],
+            "plain": 3,
+        }
+    )
+
+    assert payload == {
+        "mode": "simple",
+        "nested": ["random", {"deep": "template"}],
+        "plain": 3,
+    }
+    assert config_models._dataclass_to_dict(constants.BatchMode.template) == "template"
+    assert config_models._dataclass_to_dict(Sample).__class__ is type
+
+
+@pytest.mark.unit
+def test_configuration_round_trips_through_serialize():
+    configuration = config_models.Configuration()
+    configuration.service_enabled = {"EdgeTTS": True}
+    configuration.trial_registration_step = config_models.TrialRegistrationStep.finished
+
+    payload = config_models.serialize_configuration(configuration)
+
+    assert payload["service_enabled"] == {"EdgeTTS": True}
+    assert payload["trial_registration_step"] == "finished"
+
+    restored = config_models.deserialize_configuration(dict(payload))
+
+    assert restored.trial_registration_step == config_models.TrialRegistrationStep.finished
+    assert restored.service_enabled == {"EdgeTTS": True}
+
+
+@pytest.mark.unit
+def test_configuration_reports_install_age_and_stats_window():
+    configuration = config_models.Configuration()
+    configuration.install_time = 0
+
+    assert configuration.days_since_install() > 0
+    # A long-installed profile is outside the stats window.
+    assert configuration.enable_stats() is False
+
+    configuration.install_time = datetime.datetime.now().timestamp()
+    assert configuration.days_since_install() == 0
+    assert configuration.enable_stats() is True
+
+
+@pytest.mark.unit
+def test_realtime_config_serializes_both_sides():
+    realtime = config_models.RealtimeConfig()
+
+    assert realtime.serialize() == {"front": None, "back": None}
+
+    side = config_models.RealtimeConfigSide()
+    side.side_enabled = True
+    realtime.front = side
+    realtime.back = side
+
+    payload = realtime.serialize()
+
+    assert payload["front"]["side_enabled"] is True
+    assert payload["front"]["source"] is None
+    assert payload["back"]["side_enabled"] is True
+
+    # validate() only walks configured sides; an empty side is skipped.
+    empty = config_models.RealtimeConfig()
+    empty.validate()

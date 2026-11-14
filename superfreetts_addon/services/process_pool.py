@@ -19,6 +19,7 @@ This module bounds both halves of the problem:
 Deadlines live in ``batch_constants`` so they are tunable in one place.
 """
 
+import atexit
 import logging
 import os
 import queue
@@ -26,10 +27,65 @@ import signal
 import subprocess
 import threading
 import time
+import weakref
 
 from .. import batch_constants
 
 logger = logging.getLogger(__name__)
+
+# Bounded wait for stopping processes.  ``terminate_process`` gives a runner
+# 2 s to exit gracefully and 1 s more after the kill, so stopping four pools
+# with two runners each sequentially blocked Anki's UI thread (``shutdown()``
+# walks the registry, and it runs on the UI thread during profile close) for
+# ~24 s.  Termination now runs one daemon thread per process and the caller
+# waits at most this long in total; anything still running finishes in the
+# background instead of freezing the UI.
+SHUTDOWN_JOIN_TIMEOUT_SECONDS = 2.5
+
+
+def _call_quietly(label, func, *args):
+    """Call ``func(*args)`` from a worker thread, logging instead of raising."""
+    try:
+        func(*args)
+    except Exception as e:
+        logger.warning("%s failed: %s", label, e)
+
+
+def terminate_processes_parallel(processes, terminate=None, timeout=None):
+    """Terminate ``processes`` concurrently, waiting at most ``timeout`` total.
+
+    ``terminate`` defaults to :func:`terminate_process`; pools pass their
+    ``safe_terminate`` so a monkeypatched/overridden version keeps working.
+    Every process gets its own daemon thread, so a wedged runner cannot hold
+    the remaining ones (or the caller) hostage.
+    """
+    pending = [proc for proc in processes if proc is not None]
+    if not pending:
+        return
+    if timeout is None:
+        timeout = SHUTDOWN_JOIN_TIMEOUT_SECONDS
+    terminate = terminate or terminate_process
+    threads = []
+    for index, proc in enumerate(pending):
+        thread = threading.Thread(
+            target=_call_quietly,
+            args=("terminate process %r" % (proc,), terminate, proc),
+            name="pool-stop-%d" % index,
+            daemon=True,
+        )
+        thread.start()
+        threads.append(thread)
+    deadline = time.monotonic() + max(0.0, float(timeout))
+    for thread in threads:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            logger.warning(
+                "pool shutdown: %d process(es) still stopping after %.1fs; "
+                "leaving them to the daemon threads",
+                len(pending), timeout,
+            )
+            return
+        thread.join(remaining)
 
 
 class EngineBusyError(RuntimeError):
@@ -147,6 +203,10 @@ def terminate_process(proc):
     if proc is None:
         return
     try:
+        # Initialise before the branch: when the process already exited,
+        # ``proc.poll() is None`` is False, both assignments below are skipped
+        # and the old code raised UnboundLocalError on ``group_signalled``.
+        group_signalled = False
         if proc.poll() is None:
             if os.name == 'nt':
                 group_signalled = _terminate_process_tree_windows(proc)
@@ -158,7 +218,10 @@ def terminate_process(proc):
                         try:
                             proc.wait(timeout=1.0)
                         except Exception:
-                            pass
+                            logger.debug(
+                                "terminate_process: pid %s still alive after forced taskkill",
+                                getattr(proc, "pid", "?"), exc_info=True,
+                            )
                 else:
                     try:
                         proc.terminate()
@@ -168,11 +231,17 @@ def terminate_process(proc):
                             try:
                                 proc.kill()
                             except Exception:
-                                pass
+                                logger.debug(
+                                    "terminate_process: kill failed for pid %s",
+                                    getattr(proc, "pid", "?"), exc_info=True,
+                                )
                         try:
                             proc.wait(timeout=1.0)
                         except Exception:
-                            pass
+                            logger.debug(
+                                "terminate_process: pid %s survived the kill wait",
+                                getattr(proc, "pid", "?"), exc_info=True,
+                            )
             else:
                 group_signalled = _signal_process_group(proc, signal.SIGTERM)
             if not group_signalled and os.name != 'nt':
@@ -186,22 +255,28 @@ def terminate_process(proc):
                     try:
                         proc.wait(timeout=1.0)
                     except Exception:
-                        pass
+                        logger.debug(
+                            "terminate_process: pid %s survived the SIGKILL wait",
+                            getattr(proc, "pid", "?"), exc_info=True,
+                        )
     except Exception:
-        pass
+        logger.debug("terminate_process: unexpected error while stopping %r", proc, exc_info=True)
     finally:
         try:
             proc.is_healthy = False
         except Exception:
-            pass
-        for pipe in (getattr(proc, "stdin", None),
-                     getattr(proc, "stdout", None),
-                     getattr(proc, "stderr", None)):
+            logger.debug("terminate_process: could not mark %r unhealthy", proc, exc_info=True)
+        for name, pipe in (("stdin", getattr(proc, "stdin", None)),
+                           ("stdout", getattr(proc, "stdout", None)),
+                           ("stderr", getattr(proc, "stderr", None))):
             if pipe is not None:
                 try:
                     pipe.close()
                 except Exception:
-                    pass
+                    logger.debug(
+                        "terminate_process: closing the %s pipe of %r failed",
+                        name, proc, exc_info=True,
+                    )
 
 
 def start_stdout_reader(proc, engine="engine"):
@@ -236,14 +311,16 @@ def start_stdout_reader(proc, engine="engine"):
                     break
                 line_queue.put(bytes(line))
         except Exception:
-            pass
+            logger.debug("stdout reader for engine=%s stopped", engine, exc_info=True)
         finally:
             # EOF marker: read_response turns this into b"" (broken pipe) and
             # never waits for a response on an already-closed stream.
             try:
                 proc.ipc_stdout_eof = True
             except Exception:
-                pass
+                logger.debug(
+                    "stdout reader: could not flag EOF for engine=%s", engine, exc_info=True,
+                )
             line_queue.put(None)
 
     thread = threading.Thread(
@@ -268,7 +345,7 @@ def request_timeout(proc, chunk=False):
     try:
         proc.ipc_requests = getattr(proc, "ipc_requests", 0) + 1
     except Exception:
-        pass
+        logger.debug("request_timeout: could not bump the request counter", exc_info=True)
     if first_request:
         return float(batch_constants.IPC_COLD_START_TIMEOUT_SECONDS)
     if chunk:
@@ -307,6 +384,79 @@ def read_response(proc, engine="engine", chunk=False, timeout=None):
     return line
 
 
+# ---------------------------------------------------------------------------
+# Pool registry
+#
+# Service modules create their pools at import time, and a reloaded service
+# creates a new one.  Shutdown used to know only the four built-in pools, so
+# every later pool leaked its runner processes.  Pools register themselves and
+# shutdown stops the whole registry; atexit is the last-resort path for the
+# case where profile_will_close never fires (crash, forced quit).
+# ---------------------------------------------------------------------------
+
+_registered_pools = weakref.WeakSet()
+_registry_lock = threading.Lock()
+_atexit_registered = False
+
+
+def ensure_atexit_registration():
+    """Register the atexit hook exactly once (idempotent)."""
+    global _atexit_registered
+    with _registry_lock:
+        if _atexit_registered:
+            return
+        atexit.register(stop_all_registered_pools)
+        _atexit_registered = True
+
+
+def register_pool(pool):
+    """Track ``pool`` so shutdown stops it even if it is created later."""
+    with _registry_lock:
+        _registered_pools.add(pool)
+    ensure_atexit_registration()
+
+
+def get_registered_pools():
+    """Snapshot of the live pools (weak references, so GC'd pools vanish)."""
+    with _registry_lock:
+        return list(_registered_pools)
+
+
+def stop_all_registered_pools():
+    """Stop every live pool concurrently.  Safe to call repeatedly and atexit.
+
+    ``shutdown()`` calls this on Anki's UI thread during profile close.  Pools
+    used to be stopped one after another, and each pool waited on its runners
+    in sequence, so four pools x two runners could freeze the UI for ~24 s.
+    Every pool now runs on its own daemon thread and the caller waits at most
+    ``SHUTDOWN_JOIN_TIMEOUT_SECONDS`` in total.
+    """
+    pools = get_registered_pools()
+    if not pools:
+        return
+    threads = []
+    for index, pool in enumerate(pools):
+        thread = threading.Thread(
+            target=_call_quietly,
+            args=("stop process pool %s" % (getattr(pool, 'name', '?'),), pool.stop_all),
+            name="pool-registry-stop-%d" % index,
+            daemon=True,
+        )
+        thread.start()
+        threads.append(thread)
+    deadline = time.monotonic() + SHUTDOWN_JOIN_TIMEOUT_SECONDS
+    for thread in threads:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            logger.warning(
+                "pool shutdown: %d pool(s) still stopping after %.1fs; "
+                "leaving them to the daemon threads",
+                len(pools), SHUTDOWN_JOIN_TIMEOUT_SECONDS,
+            )
+            return
+        thread.join(remaining)
+
+
 class SherpaProcessPool:
     """Pool of long-lived runner processes shared by the local engines."""
 
@@ -324,6 +474,7 @@ class SherpaProcessPool:
         # The timer is armed lazily by release_process(): an empty pool needs
         # no periodic wake-up.  Four service imports used to create/destroy
         # 960 daemon threads per hour just to inspect empty lists.
+        register_pool(self)
 
     def _start_cleanup_timer(self):
         if self._cleanup_timer:
@@ -348,7 +499,7 @@ class SherpaProcessPool:
                     )
                     # Offload termination to avoid blocking the lock
                     threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
-                    self._total_spawned -= 1
+                    self._total_spawned = max(0, self._total_spawned - 1)
                 else:
                     alive_pool.append((proc, exe, script, last_time))
             self._pool = alive_pool
@@ -391,6 +542,7 @@ class SherpaProcessPool:
         # to arm the cleanup timer again.
         self._cleanup_enabled = True
 
+        stale_processes = []
         with self._lock:
             logger.info(f"SherpaPool[{self.name}]: get_process (debug_enabled={debug_enabled})")
             # 1. Try to find an idle process for THIS script with SAME debug setting
@@ -405,8 +557,11 @@ class SherpaProcessPool:
                         return p
                     else:
                         logger.info(f"SherpaPool[{self.name}]: Terminating idle process {os.path.basename(script)} due to debug mismatch ({current_debug} != {debug_enabled})")
-                        self.safe_terminate(proc)
+                        # Defer termination until the lock is released: waiting
+                        # on a wedged runner inside the lock blocks every other
+                        # worker of this pool.
                         self._pool.pop(i)
+                        stale_processes.append(proc)
                         self._total_spawned = max(0, self._total_spawned - 1)
                         break  # Start fresh
 
@@ -416,8 +571,13 @@ class SherpaProcessPool:
                 # Kill oldest (first in list)
                 p, e, s, _ = self._pool.pop(0)
                 logger.info(f"SherpaPool[{self.name}]: Capacity reached. Terminating oldest idle {os.path.basename(s)} for new {os.path.basename(script_path)}")
-                self.safe_terminate(p)
+                stale_processes.append(p)
                 self._total_spawned = max(0, self._total_spawned - 1)
+
+        # Terminate after the pool lock is released; safe_terminate() may wait
+        # seconds for the runner (and taskkill) to finish.
+        for stale in stale_processes:
+            self.safe_terminate(stale)
 
         # 3. Start new process
         try:
@@ -437,20 +597,35 @@ class SherpaProcessPool:
             self._semaphore.release()
             return
 
+        surplus = None
         with self._lock:
             self._active.discard(proc)
             is_healthy = getattr(proc, 'is_healthy', True)
             if proc.poll() is None and is_healthy:
-                self._pool.append((proc, executable_path, script_path, time.time()))
-                if self._cleanup_enabled and (
-                    self._cleanup_timer is None or not self._cleanup_timer.is_alive()
-                ):
-                    self._start_cleanup_timer()
+                if len(self._active) + len(self._pool) < self._max_processes:
+                    self._pool.append((proc, executable_path, script_path, time.time()))
+                    if self._cleanup_enabled and (
+                        self._cleanup_timer is None or not self._cleanup_timer.is_alive()
+                    ):
+                        self._start_cleanup_timer()
+                else:
+                    # The cap shrank (update_max_processes) while this runner
+                    # was checked out.  Park it and the pool would exceed
+                    # max_processes until the 180 s idle timer fired.
+                    logger.info(
+                        "SherpaPool[%s]: stopping returned process instead of parking "
+                        "it (max_processes=%s)", self.name, self._max_processes,
+                    )
+                    self._total_spawned = max(0, self._total_spawned - 1)
+                    surplus = proc
             else:
                 self._total_spawned = max(0, self._total_spawned - 1)
                 if not is_healthy:
                     threading.Thread(target=self.safe_terminate, args=(proc,), daemon=True).start()
         self._semaphore.release()
+        if surplus is not None:
+            # Outside the lock: terminating a wedged runner may wait seconds.
+            self.safe_terminate(surplus)
 
     def stop_all(self):
         # Include both idle and checked-out processes.  Previously only the
@@ -465,26 +640,63 @@ class SherpaProcessPool:
                 proc for proc, _exe, _script, _last in self._pool
                 if proc not in self._active
             )
+            # Mark unhealthy and detach them while holding the lock so a
+            # concurrent release_process() cannot put them back into _pool.
+            for proc in processes:
+                try:
+                    proc.is_healthy = False
+                except Exception:
+                    logger.debug(
+                        "stop_all[%s]: could not mark %r unhealthy", self.name, proc, exc_info=True,
+                    )
             self._active.clear()
             self._pool = []
             self._total_spawned = 0
-            for proc in processes:
-                self.safe_terminate(proc)
+
+        # Terminate outside the lock and all at once: safe_terminate() blocks
+        # for seconds per process and stop_all() runs on Anki's UI thread.
+        terminate_processes_parallel(processes, self.safe_terminate)
         # Cancel the idle-cleanup timer so it does not keep the pool alive after stop
         if self._cleanup_timer:
             try:
                 self._cleanup_timer.cancel()
             except Exception:
-                pass
+                logger.debug(
+                    "stop_all[%s]: cleanup timer cancel failed", self.name, exc_info=True,
+                )
         self._cleanup_timer = None
 
     def update_max_processes(self, new_max):
+        stale_processes = []
         with self._lock:
             if new_max == self._max_processes:
                 return
             logger.info(f"SherpaPool[{self.name}]: Updating max_processes from {self._max_processes} to {new_max}")
             self._max_processes = new_max
             self._semaphore.set_max(new_max)
+            # Shrinking the pool used to leave surplus idle runners alive until
+            # the 180 s idle timer reaped them; each one holds its model memory.
+            # The surplus is measured against every live process, not just the
+            # idle ones: a checked-out runner still counts towards the cap.  A
+            # checked-out runner cannot be reaped here, so only the idle
+            # processes are dropped (oldest first) and release_process() stops
+            # the rest when they come back.
+            total_processes = len(self._active) + len(self._pool)
+            idle_excess = min(len(self._pool), max(0, total_processes - new_max))
+            if idle_excess > 0:
+                for _ in range(idle_excess):
+                    proc, _exe, _script, _last = self._pool.pop(0)
+                    stale_processes.append(proc)
+                    self._total_spawned = max(0, self._total_spawned - 1)
+        if stale_processes:
+            logger.info(
+                "SherpaPool[%s]: terminating %s idle process(es) after max_processes shrink",
+                self.name, len(stale_processes),
+            )
+            # Terminate concurrently: update_max_processes() is called from the
+            # settings dialog on Anki's UI thread, and each safe_terminate()
+            # may block for seconds on a wedged runner.
+            terminate_processes_parallel(stale_processes, self.safe_terminate)
 
     def _start_new(self, executable_path, script_path, debug_enabled=False):
         cwd = os.path.dirname(executable_path)
@@ -568,7 +780,10 @@ class SherpaProcessPool:
                 try:
                     stderr_sink.close()
                 except Exception:
-                    pass
+                    logger.debug(
+                        "SherpaPool[%s]: closing the stderr sink after a failed spawn failed",
+                        self.name, exc_info=True,
+                    )
             raise
         proc.is_healthy = True
         setattr(proc, "owns_process_group", os.name != 'nt')
@@ -585,10 +800,16 @@ class SherpaProcessPool:
                         # Not a debug-only channel: surface stderr at INFO so we always have a record
                         logger.info(f"{self.name} stderr: {decoded.rstrip()}")
                     except Exception:
-                        pass
+                        logger.debug(
+                            "%s stderr: dropping an undecodable line", self.name, exc_info=True,
+                        )
             finally:
-                try: p.stderr.close()
-                except Exception: pass
+                try:
+                    p.stderr.close()
+                except Exception:
+                    logger.debug(
+                        "%s stderr: closing the drain pipe failed", self.name, exc_info=True,
+                    )
 
         if not debug_enabled:
             threading.Thread(target=_drain_stderr, args=(proc, debug_enabled), daemon=True).start()
@@ -598,6 +819,9 @@ class SherpaProcessPool:
             try:
                 stderr_sink.close()
             except Exception:
-                pass
+                logger.debug(
+                    "SherpaPool[%s]: closing the inherited log sink in the parent failed",
+                    self.name, exc_info=True,
+                )
 
         return proc

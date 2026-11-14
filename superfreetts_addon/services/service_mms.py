@@ -280,8 +280,10 @@ class MmsTTS(service.ServiceBase):
                         raise errors.RequestError(source_text, voice, str(e))
         finally:
             if os.path.exists(temp_path):
-                try: os.remove(temp_path)
-                except Exception: pass
+                try:
+                    os.remove(temp_path)
+                except Exception as e:
+                    logger.debug(f'MmsTTS: could not remove temp file {temp_path}: {e}')
 
     def get_tts_audio_batch(self, source_texts: typing.List[str], voice: voice.TtsVoice_v3, options: dict) -> typing.List[typing.Optional[bytes]]:
         if not source_texts:

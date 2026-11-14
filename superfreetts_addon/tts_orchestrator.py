@@ -362,8 +362,8 @@ class TTSOrchestrator:
             self.executor = new_executor
             try:
                 self.stts.executor = new_executor
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f'[RAM] Could not mirror the new executor on stts: {e}', exc_info=True)
             self._deferred_engine_config = None
             logger.info(
                 f'[RAM] Pre-batch concurrency updated: '
@@ -405,8 +405,8 @@ class TTSOrchestrator:
                 self.executor = new_executor
                 try:
                     self.stts.executor = new_executor
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f'[RAM] Could not mirror the deferred executor on stts: {e}', exc_info=True)
             self._deferred_engine_config = None
             logger.info(
                 f'[RAM] Deferred concurrency updated: '
@@ -545,6 +545,7 @@ class TTSOrchestrator:
             logger.info(f'[RECONFIG] Batch executor updated with new settings: {engine_config}')
         except Exception as e:
             logger.warning(f'[RECONFIG] Failed to update batch executor: {e}')
+            # Safety net, same contract as SuperFreeTTS.__init__: one worker.
             self.executor = batch_executor.get_batch_executor(max_workers=1)
         if services_enabled:
             self.anki_utils.broadcast_services_configured()

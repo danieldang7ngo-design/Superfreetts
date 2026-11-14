@@ -6,6 +6,12 @@ count, so using it as the budget allowed 8 workers x 8 threads = 64 compute
 threads on an 8-thread laptop.
 """
 
+import importlib
+import logging
+import pathlib
+import re
+import sys
+import types
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -159,3 +165,77 @@ def test_local_thread_counts_reads_service_configuration():
     assert counts['Piper'] == 2
     assert counts['MMS'] == 1
     assert counts['Supertonic'] == 1
+
+
+# =============================================================================
+# EdgeTTS worker cap invariant (audit 5.5 / 5.7)
+# =============================================================================
+# The cap ships as the literal 3. A developer may raise it for one machine via
+# superfreetts_addon/_local_override.py, which is gitignored and excluded from
+# the build; the override is loud (warning log) so it cannot ship by accident.
+
+
+@pytest.mark.unit
+def test_edgetts_worker_cap_is_three():
+    """The shipped cap is 3 (no override file present on this machine)."""
+    if getattr(batch_constants, '_local_override', None) is not None:
+        pytest.skip('_local_override.py is active on this machine')
+
+    assert batch_constants.EDGETTS_MAX_WORKERS == 3
+
+
+@pytest.mark.unit
+def test_edgetts_worker_cap_source_literal_is_three():
+    """The committed literal is 3; packaging scripts parse this exact line."""
+    source = pathlib.Path(batch_constants.__file__).read_text(encoding='utf-8')
+
+    match = re.search(
+        r'^(?:_DEFAULT_)?EDGETTS_MAX_WORKERS\s*(?::\s*(?:Final\[int\]|int))?\s*=\s*(\d+)',
+        source,
+        re.MULTILINE,
+    )
+    assert match is not None, 'EDGETTS_MAX_WORKERS literal line is missing'
+    assert match.group(1) == '3'
+
+
+@pytest.mark.unit
+def test_local_override_raises_the_cap_and_warns(monkeypatch, caplog):
+    """A _local_override module overrides the cap at import time, loudly."""
+    fake_override = types.ModuleType('superfreetts_addon._local_override')
+    fake_override.EDGETTS_MAX_WORKERS = 7
+    monkeypatch.setitem(sys.modules, 'superfreetts_addon._local_override', fake_override)
+
+    try:
+        with caplog.at_level(logging.WARNING):
+            importlib.reload(batch_constants)
+
+        assert batch_constants.EDGETTS_MAX_WORKERS == 7
+        assert any('LOCAL OVERRIDE ACTIVE' in record.getMessage() for record in caplog.records)
+    finally:
+        # Restore the shipped module for the rest of the session.
+        monkeypatch.delitem(sys.modules, 'superfreetts_addon._local_override', raising=False)
+        monkeypatch.undo()
+        importlib.reload(batch_constants)
+
+    real_override = batch_constants._local_override
+    expected = int(getattr(real_override, 'EDGETTS_MAX_WORKERS', 3)) if real_override is not None else 3
+    assert batch_constants.EDGETTS_MAX_WORKERS == expected
+
+
+@pytest.mark.unit
+def test_local_override_ignores_invalid_values(monkeypatch, caplog):
+    """A garbage override must not break the import of every batch module."""
+    fake_override = types.ModuleType('superfreetts_addon._local_override')
+    fake_override.EDGETTS_MAX_WORKERS = 'many'
+    monkeypatch.setitem(sys.modules, 'superfreetts_addon._local_override', fake_override)
+
+    try:
+        with caplog.at_level(logging.WARNING):
+            importlib.reload(batch_constants)
+
+        assert batch_constants.EDGETTS_MAX_WORKERS == 3
+        assert any('Ignoring invalid' in record.getMessage() for record in caplog.records)
+    finally:
+        monkeypatch.delitem(sys.modules, 'superfreetts_addon._local_override', raising=False)
+        monkeypatch.undo()
+        importlib.reload(batch_constants)

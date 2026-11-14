@@ -147,7 +147,7 @@ directly.
 |-------|-------|
 | Batch | `component_batch.py`, `component_batch_preview.py` |
 | Settings | `component_settings.py`, `component_services.py`, `component_preferences.py` |
-| Engine setup | `component_piper_setup.py`, `component_piper_manager.py`, `component_kokoro_manager.py`, `component_mms_manager.py`, `component_onnx_manager.py`, `component_supertonic_setup.py`, `component_supertonic_voice_manager.py` |
+| Engine setup | `component_piper_setup.py`, `component_piper_manager.py`, `component_kokoro_manager.py`, `component_mms_manager.py`, `component_supertonic_setup.py`, `component_supertonic_voice_manager.py` |
 | Voice/realtime | `component_voiceselection.py`, `component_realtime.py`, `component_realtime_source.py`, `component_realtime_side.py` |
 | Mapping | `component_presetmappingrules.py`, `component_mappingrule.py`, `component_choosepreset.py` |
 | Note fields | `component_source.py`, `component_target.py`, `component_text_processing.py`, `component_label_preview.py` |

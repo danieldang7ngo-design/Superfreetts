@@ -429,49 +429,155 @@ class ConfigStore:
         realtime_side.text_processing = text_processing
         return realtime_side
 
+    @staticmethod
+    def _has_usable_voice_id(voice_data):
+        """Cheap structural check for a serialized voice entry.
+
+        Catches the broken presets seen in the field: ``voice: None``,
+        ``voice_id: {}``, and ``voice_key: '', service: ''``.  Those cannot be
+        resolved later (VoiceIdNotFound(voice_key='')) and used to reach the
+        batch model untouched.
+        """
+        if not isinstance(voice_data, dict):
+            return False
+        voice_id_config = voice_data.get('voice_id')
+        if not isinstance(voice_id_config, dict):
+            return False
+        voice_key = voice_id_config.get('voice_key')
+        if voice_key is None or voice_key == '' or voice_key == {}:
+            return False
+        if isinstance(voice_key, str) and voice_key.strip() == '':
+            return False
+        service = voice_id_config.get('service')
+        if not isinstance(service, str) or service.strip() == '':
+            return False
+        return True
+
+    def _first_available_voice_id(self):
+        """Voice id of the first voice this install can list, or None."""
+        try:
+            voice_list = self.service_manager.full_voice_list() or []
+        except Exception as e:
+            logger.warning(f'could not list voices while repairing preset: {e}')
+            return None
+        if not voice_list:
+            return None
+        return voice_list[0].voice_id
+
+    def _repair_single_voice_selection(self, single):
+        """Replace an unresolvable single voice with the first available one."""
+        voice_id = self._first_available_voice_id()
+        if voice_id is None:
+            # No service is usable at all.  Leaving the voice empty makes
+            # validate() raise NoVoiceSet (a clear message) instead of an
+            # unresolvable TtsVoiceId_v3(voice_key='', service='').
+            logger.warning(
+                'no voices available while repairing preset; voice selection left empty'
+            )
+            return single
+        single.set_voice(config_models.VoiceWithOptions(voice_id, {}))
+        logger.info(f'repaired preset voice selection with first available voice: {voice_id}')
+        return single
+
+    def _deserialize_single_voice_selection(self, voice_selection_config):
+        """Rebuild a single-voice selection without resolving it.
+
+        Only structurally broken data is repaired here.  A well-formed voice id
+        is kept verbatim even when ``locate_voice()`` would fail right now: this
+        runs on the realtime render path (and for every preset load), and
+        resolving the voice would call ``full_voice_list()`` /
+        ``instantiate_all_services`` on the UI thread.  It also used to rewrite
+        a user's saved voice to the first available one whenever a service was
+        temporarily disabled.  The selection dialog checks resolvability in
+        ``VoiceSelection.load_model()`` and repairs it there, in the UI.
+        """
+        single = config_models.VoiceSelectionSingle()
+        voice_data = voice_selection_config.get('voice')
+        if not self._has_usable_voice_id(voice_data):
+            logger.warning(
+                f'preset voice selection is incomplete ({voice_data!r}); '
+                'falling back to the first available voice'
+            )
+            return self._repair_single_voice_selection(single)
+
+        try:
+            voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(
+                f'preset voice id cannot be deserialized ({e}); '
+                'falling back to the first available voice'
+            )
+            return self._repair_single_voice_selection(single)
+
+        options = voice_data.get('options') or {}
+        single.set_voice(config_models.VoiceWithOptions(voice_id, options))
+        return single
+
+    def _repair_empty_voice_list(self, selection, mode_name):
+        """A preset whose every voice is unresolvable must not stay empty.
+
+        An empty list makes validate() raise NoVoiceSet when the preset is
+        rendered from another tab; fall back to the first available voice.
+        """
+        if len(selection.voice_list) > 0:
+            return selection
+        voice_id = self._first_available_voice_id()
+        if voice_id is None:
+            logger.warning(
+                f'no usable {mode_name} voices and no voice available to fall back to'
+            )
+            return selection
+        logger.warning(
+            f'all {mode_name} voices were unavailable; '
+            'falling back to the first available voice'
+        )
+        if isinstance(selection, config_models.VoiceSelectionRandom):
+            selection.add_voice(config_models.VoiceWithOptionsRandom(voice_id, {}))
+        elif isinstance(selection, config_models.VoiceSelectionPriority):
+            selection.add_voice(config_models.VoiceWithOptionsPriority(voice_id, {}))
+        else:
+            selection.add_voice(config_models.VoiceWithOptionsSequence(voice_id, {}))
+        return selection
+
     def deserialize_voice_selection(self, voice_selection_config):
         mode = constants.VoiceSelectionMode[voice_selection_config['voice_selection_mode']]
 
         if mode == constants.VoiceSelectionMode.single:
-            single = config_models.VoiceSelectionSingle()
-            voice_id = voice_module.deserialize_voice_id_v3(voice_selection_config['voice']['voice_id'])
-            voice_options = voice_selection_config['voice']['options']
-            single.set_voice(config_models.VoiceWithOptions(voice_id, voice_options))
-            return single
+            return self._deserialize_single_voice_selection(voice_selection_config)
 
         elif mode == constants.VoiceSelectionMode.random:
             random_sel = config_models.VoiceSelectionRandom()
-            for voice_data in voice_selection_config['voice_list']:
+            for voice_data in voice_selection_config.get('voice_list') or []:
                 voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
                 try:
                     self.service_manager.locate_voice(voice_id)
                     random_sel.add_voice(config_models.VoiceWithOptionsRandom(
-                        voice_id, voice_data['options'], voice_data['weight']))
+                        voice_id, voice_data.get('options') or {}, voice_data.get('weight', 1)))
                 except errors.VoiceIdNotFound:
                     logger.warning(f'voice_id not found: {voice_id}, omitting from random selection')
-            return random_sel
+            return self._repair_empty_voice_list(random_sel, 'random')
 
         elif mode == constants.VoiceSelectionMode.priority:
             priority = config_models.VoiceSelectionPriority()
-            for voice_data in voice_selection_config['voice_list']:
+            for voice_data in voice_selection_config.get('voice_list') or []:
                 voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
                 try:
                     self.service_manager.locate_voice(voice_id)
-                    priority.add_voice(config_models.VoiceWithOptionsPriority(voice_id, voice_data['options']))
+                    priority.add_voice(config_models.VoiceWithOptionsPriority(voice_id, voice_data.get('options') or {}))
                 except errors.VoiceIdNotFound:
                     logger.warning(f'voice_id not found: {voice_id}, omitting from priority selection')
-            return priority
+            return self._repair_empty_voice_list(priority, 'priority')
 
         elif mode == constants.VoiceSelectionMode.sequence:
             sequence = config_models.VoiceSelectionSequence()
-            for voice_data in voice_selection_config['voice_list']:
+            for voice_data in voice_selection_config.get('voice_list') or []:
                 voice_id = voice_module.deserialize_voice_id_v3(voice_data['voice_id'])
                 try:
                     self.service_manager.locate_voice(voice_id)
-                    sequence.add_voice(config_models.VoiceWithOptionsSequence(voice_id, voice_data['options']))
+                    sequence.add_voice(config_models.VoiceWithOptionsSequence(voice_id, voice_data.get('options') or {}))
                 except errors.VoiceIdNotFound:
                     logger.warning(f'voice_id not found: {voice_id}, omitting from sequence selection')
-            return sequence
+            return self._repair_empty_voice_list(sequence, 'sequence')
 
     def deserialize_text_processing(self, text_processing_config) -> config_models.TextProcessing:
         tp = config_models.TextProcessing()

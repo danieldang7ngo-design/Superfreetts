@@ -40,10 +40,37 @@ MAX_WORKER_THREADS: Final[int] = 20
 
 # EdgeTTS concurrency cap (separate from CPU-bound engines).
 # Default 3 to avoid Microsoft rate-limiting for most users.
-# Power users: run set_edge_workers_20.py at the addon root to raise this locally.
-EDGETTS_MAX_WORKERS: Final[int] = 3
+#
+# This literal is an invariant of the shipped add-on: tests/test_thread_budget.py
+# asserts it is 3, and build_share.py / scripts/verify_package.py parse this exact
+# line when packaging. Never edit it for a local experiment.
+#
+# To raise the cap on one machine, create superfreetts_addon/_local_override.py
+# (gitignored and excluded from the shared build) containing:
+#
+#     EDGETTS_MAX_WORKERS = 20
+#
+# The value is applied at import time and logged as a warning, so a local
+# override can never slip into a build unnoticed.
+#
+# Two names on purpose: the ``Final`` literal is the immutable committed cap
+# (packaging scripts and tests parse this line), while EDGETTS_MAX_WORKERS is a
+# plain alias so an override can rebind it without reassigning a Final.
+_DEFAULT_EDGETTS_MAX_WORKERS: Final[int] = 3
+EDGETTS_MAX_WORKERS: int = _DEFAULT_EDGETTS_MAX_WORKERS
 if _local_override is not None:
-    EDGETTS_MAX_WORKERS = int(getattr(_local_override, "EDGETTS_MAX_WORKERS", EDGETTS_MAX_WORKERS))
+    try:
+        _local_edge_workers = int(getattr(_local_override, "EDGETTS_MAX_WORKERS", EDGETTS_MAX_WORKERS))
+    except (TypeError, ValueError) as e:
+        logger.warning(f"[EDGETTS] Ignoring invalid _local_override.EDGETTS_MAX_WORKERS: {e}")
+        _local_edge_workers = EDGETTS_MAX_WORKERS
+    if _local_edge_workers != EDGETTS_MAX_WORKERS:
+        logger.warning(
+            f"[EDGETTS] LOCAL OVERRIDE ACTIVE: worker cap {_local_edge_workers} replaces the committed "
+            f"cap {EDGETTS_MAX_WORKERS}. Remove superfreetts_addon/_local_override.py before packaging."
+        )
+        # Runtime rebinding only: the annotated literal above is what ships.
+        globals()["EDGETTS_MAX_WORKERS"] = _local_edge_workers
 
 # Default number of worker threads (4 = auto-detect CPU cores)
 DEFAULT_BATCH_CONCURRENCY: Final[int] = 4

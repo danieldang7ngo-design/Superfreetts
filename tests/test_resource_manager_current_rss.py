@@ -65,18 +65,3 @@ def test_get_process_ram_falls_back_to_peak_only_on_failure(monkeypatch):
     assert resource_manager._get_process_ram_usage_without_psutil() == 200
     assert resource_manager.get_process_ram_source() == "peak_fallback"
 
-
-@pytest.mark.unit
-def test_resource_monitor_gc_baseline_resets(monkeypatch):
-    monitor = resource_manager.ResourceMonitor()
-    monitor._last_gc_ram_mb = 100
-    monitor._last_gc_completed = 0
-
-    with patch.object(monitor, "_get_ram_usage", return_value=700):
-        assert monitor.should_trigger_gc(1) is True
-
-    with patch.object(monitor, "_get_ram_usage", return_value=700):
-        monitor.mark_gc(1)
-
-    with patch.object(monitor, "_get_ram_usage", return_value=700):
-        assert monitor.should_trigger_gc(2) is False
