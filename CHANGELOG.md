@@ -15,7 +15,7 @@
 
 ### Tiếng Việt
 
-- EdgeTTS: khôi phục tổng hợp giọng bằng endpoint `api.msedgeservices.com`; host `wss://speech.platform.bing.com` đã ngừng trả về HTTP 403. Gói 26.10.3 không chứa bản sửa này.
+- EdgeTTS: khôi phục tổng hợp giọng bằng endpoint `api.msedgeservices.com`; host `wss://speech.platform.bing.com` đã bị Microsoft khai tử và trả về HTTP 403. Gói 26.10.3 không chứa bản sửa này.
 - Preset (#4): `voice_id` rỗng được tự phục hồi thay vì ghi đè preset đã lưu; giữ giọng đã chọn khi dịch vụ tạm tắt; đồng bộ lại `voice_selection_model`; giọng Piper lưu đúng `lang_code` (sửa lỗi "No Voice has been set").
 - Vòng đời tiến trình: `terminate_processes_parallel()` dừng tiến trình con ngoài lock; `shutdown()` và `update_max_processes()` xong dưới 0,5 giây cho cả 4 pool; pool đăng ký trong `WeakSet` kèm hook `atexit`; `group_signalled` được reset đúng.
 - Watchdog tiến trình mồ côi: `services/runner_base.py` đọc `os.getppid()` và tự thoát trong 10 giây khi Anki biến mất.
