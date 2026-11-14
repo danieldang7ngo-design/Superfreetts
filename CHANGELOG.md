@@ -1,5 +1,29 @@
 # Changelog
 
+## 26.10.4 - 2026-11-14
+
+### English
+
+- EdgeTTS: synthesis restored by switching to `api.msedgeservices.com`; the retired `wss://speech.platform.bing.com` host returned HTTP 403. The 26.10.3 package predates this fix.
+- Preset voices (#4): empty `voice_id` values are repaired instead of overwriting the saved preset; the chosen voice is kept when its service is temporarily disabled; `voice_selection_model` is resynced; Piper voices now store the correct `lang_code` (fixes "No Voice has been set").
+- Process lifecycle: `terminate_processes_parallel()` stops pool children outside the lock; `shutdown()` and `update_max_processes()` finish in under 0.5 s for all four pools; pools register in a `WeakSet` with an `atexit` hook; `group_signalled` is reset correctly.
+- Orphan watchdog: `services/runner_base.py` polls `os.getppid()` and exits within 10 s when Anki disappears.
+- Error handling: all 43 bare `except: pass` blocks removed (Bandit B110 = 0); `ServiceManager` retries a failed service import up to 3 times and no longer instantiates classes during discovery.
+- Dead code removed: `component_onnx_manager.py`, `services/test_runner.py`, `UnifiedCache`, `UnifiedBatchExecutor`, `ResourceMonitor`; `gui_utils.py` reduced from 2,602 to 1,079 lines with the seven light/dark themes unchanged.
+- Tests/CI: 493 -> 909 passing (1 skipped), branch coverage 50.33 % (CI floor 45 %); `scripts/i18n_audit.py` gains `--strict-locales` and `--min-coverage`.
+- EdgeTTS worker cap remains 3.
+
+### Tiếng Việt
+
+- EdgeTTS: khôi phục tổng hợp giọng bằng endpoint `api.msedgeservices.com`; host `wss://speech.platform.bing.com` đã ngừng trả về HTTP 403. Gói 26.10.3 không chứa bản sửa này.
+- Preset (#4): `voice_id` rỗng được tự phục hồi thay vì ghi đè preset đã lưu; giữ giọng đã chọn khi dịch vụ tạm tắt; đồng bộ lại `voice_selection_model`; giọng Piper lưu đúng `lang_code` (sửa lỗi "No Voice has been set").
+- Vòng đời tiến trình: `terminate_processes_parallel()` dừng tiến trình con ngoài lock; `shutdown()` và `update_max_processes()` xong dưới 0,5 giây cho cả 4 pool; pool đăng ký trong `WeakSet` kèm hook `atexit`; `group_signalled` được reset đúng.
+- Watchdog tiến trình mồ côi: `services/runner_base.py` đọc `os.getppid()` và tự thoát trong 10 giây khi Anki biến mất.
+- Xử lý lỗi: xoá toàn bộ 43 chỗ `except: pass` (Bandit B110 = 0); `ServiceManager` thử lại import dịch vụ tối đa 3 lần và không khởi tạo lớp khi quét dịch vụ.
+- Xoá mã chết: `component_onnx_manager.py`, `services/test_runner.py`, `UnifiedCache`, `UnifiedBatchExecutor`, `ResourceMonitor`; `gui_utils.py` từ 2.602 còn 1.079 dòng, giữ nguyên 7 giao diện sáng/tối.
+- Test/CI: 493 -> 909 pass (1 skip), độ phủ nhánh 50,33 % (CI floor 45 %); `scripts/i18n_audit.py` thêm `--strict-locales` và `--min-coverage`.
+- Cap EdgeTTS vẫn là 3.
+
 ## 26.10.3 - 2026-10-24
 
 ### English

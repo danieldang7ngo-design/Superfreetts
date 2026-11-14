@@ -12,6 +12,69 @@ class ReleaseNoteEntry:
 
 RELEASE_NOTES: List[ReleaseNoteEntry] = [
     ReleaseNoteEntry(
+        version="26.10.4",
+        title={
+            "en": "EdgeTTS is back, and presets keep their voice",
+            "vi": "EdgeTTS hoạt động trở lại, preset giữ đúng giọng",
+            "ko": "EdgeTTS가 다시 작동하고 프리셋이 음성을 유지합니다",
+            "ja": "EdgeTTS が復活し、プリセットの声が保持されます",
+            "zh-CN": "EdgeTTS 恢复可用，预设会保留所选声音",
+            "zh-TW": "EdgeTTS 恢復可用，預設會保留所選聲音",
+            "sv": "EdgeTTS fungerar igen och förvalen behåller sin röst",
+        },
+        bullets={
+            "en": [
+                "EdgeTTS speaks again: Microsoft retired the old WebSocket host, so 26.10.4 connects to api.msedgeservices.com (fixes the HTTP 403 error).",
+                "Preset voices are saved again: an empty voice_id repairs itself, the chosen voice survives a service being switched off temporarily, and Piper voices report the correct language code (fixes \"No Voice has been set\").",
+                "Closing Anki now stops local engines at once: all four process pools shut down in under 0.5 s, and a watchdog ends an orphaned child process after 10 s.",
+                "Fewer silent failures: 43 bare `except: pass` blocks were removed, and a service that fails to import is retried up to 3 times.",
+                "Cleaner and better tested: dead modules removed, gui_utils.py cut from 2,602 to 1,079 lines with all seven themes unchanged, and the suite grew from 493 to 909 passing tests.",
+            ],
+            "vi": [
+                "EdgeTTS nói lại được: Microsoft đã ngừng host WebSocket cũ, nên 26.10.4 kết nối tới api.msedgeservices.com (sửa lỗi HTTP 403).",
+                "Preset lưu được giọng trở lại: voice_id rỗng tự phục hồi, giọng đã chọn không mất khi dịch vụ tạm tắt, giọng Piper báo đúng mã ngôn ngữ (sửa lỗi \"No Voice has been set\").",
+                "Tắt Anki là engine cục bộ dừng ngay: cả 4 process pool đóng trong dưới 0,5 giây, watchdog kết thúc tiến trình con mồ côi sau 10 giây.",
+                "Ít lỗi bị bỏ qua hơn: đã xoá 43 chỗ `except: pass`, module dịch vụ import lỗi được thử lại tối đa 3 lần.",
+                "Gọn và được kiểm thử tốt hơn: bỏ module chết, gui_utils.py từ 2.602 còn 1.079 dòng với cả 7 giao diện giữ nguyên, bộ test tăng từ 493 lên 909 test pass.",
+            ],
+            "ko": [
+                "EdgeTTS가 다시 작동합니다. Microsoft가 기존 WebSocket 호스트를 종료해 26.10.4는 api.msedgeservices.com에 연결합니다(HTTP 403 오류 수정).",
+                "프리셋 음성이 다시 저장됩니다. 빈 voice_id는 자동 복구되고, 서비스를 잠시 꺼도 선택한 음성이 유지되며, Piper 음성은 올바른 언어 코드를 표시합니다(\"No Voice has been set\" 수정).",
+                "Anki를 닫으면 로컬 엔진이 즉시 멈춥니다. 4개 프로세스 풀이 0.5초 이내에 종료되고, watchdog이 10초 후 고아 자식 프로세스를 끝냅니다.",
+                "조용한 실패가 줄었습니다. 43개의 `except: pass`를 제거했고, 서비스 import 실패 시 최대 3회 재시도합니다.",
+                "더 가볍고 테스트가 강해졌습니다. 죽은 모듈을 제거하고 gui_utils.py를 2,602줄에서 1,079줄로 줄였으며 7개 테마는 그대로이고, 테스트는 493개에서 909개 통과로 늘었습니다.",
+            ],
+            "ja": [
+                "EdgeTTS が再び話します。Microsoft が従来の WebSocket ホストを終了したため、26.10.4 は api.msedgeservices.com に接続します(HTTP 403 エラーを修正)。",
+                "プリセットの声が再び保存されます。空の voice_id は自動修復され、サービスを一時的に無効にしても選択した声が保持され、Piper の声は正しい言語コードを報告します(\"No Voice has been set\" を修正)。",
+                "Anki を閉じるとローカルエンジンが即座に停止します。4 つのプロセスプールが 0.5 秒以内に終了し、watchdog が 10 秒後に孤立した子プロセスを終了します。",
+                "サイレント失敗が減りました。43 か所の `except: pass` を削除し、サービスの import 失敗は最大 3 回再試行します。",
+                "より軽く、テストも強化されました。不要なモジュールを削除し、gui_utils.py を 2,602 行から 1,079 行に削減(7 テーマは不変)、テストは 493 件から 909 件合格に増えました。",
+            ],
+            "zh-CN": [
+                "EdgeTTS 恢复发声：Microsoft 已停用旧的 WebSocket 主机，26.10.4 改为连接 api.msedgeservices.com（修复 HTTP 403 错误）。",
+                "预设重新能保存声音：空的 voice_id 会自动修复，服务临时关闭时已选声音仍保留，Piper 声音报告正确的语言代码（修复“No Voice has been set”）。",
+                "关闭 Anki 时本地引擎立即停止：4 个进程池在 0.5 秒内关闭，看门狗在 10 秒后结束孤立的子进程。",
+                "更少静默失败：移除 43 处 `except: pass`，服务模块导入失败最多重试 3 次。",
+                "更精简、测试更充分：删除无用模块，gui_utils.py 从 2,602 行减到 1,079 行（7 套主题不变），测试从 493 个增加到 909 个通过。",
+            ],
+            "zh-TW": [
+                "EdgeTTS 恢復發聲：Microsoft 已停用舊的 WebSocket 主機，26.10.4 改為連線 api.msedgeservices.com（修正 HTTP 403 錯誤）。",
+                "預設集重新能儲存聲音：空的 voice_id 會自動修復，服務暫時關閉時已選聲音仍保留，Piper 聲音回報正確的語言代碼（修正「No Voice has been set」）。",
+                "關閉 Anki 時本機引擎立即停止：4 個進程池在 0.5 秒內關閉，看門狗在 10 秒後結束孤立的子進程。",
+                "更少無聲失敗：移除 43 處 `except: pass`，服務模組匯入失敗最多重試 3 次。",
+                "更精簡、測試更完整：刪除無用模組，gui_utils.py 從 2,602 行減到 1,079 行（7 套主題不變），測試從 493 個增加到 909 個通過。",
+            ],
+            "sv": [
+                "EdgeTTS talar igen: Microsoft har stängt den gamla WebSocket-värden, så 26.10.4 ansluter till api.msedgeservices.com (åtgärdar HTTP 403).",
+                "Förval sparar rösten igen: ett tomt voice_id repareras automatiskt, den valda rösten finns kvar när en tjänst tillfälligt stängs av, och Piper-röster rapporterar rätt språkkod (åtgärdar \"No Voice has been set\").",
+                "När Anki stängs stoppas lokala motorer direkt: alla fyra processpooler stängs på under 0,5 s och en watchdog avslutar en övergiven barnprocess efter 10 s.",
+                "Färre tysta fel: 43 ställen med `except: pass` togs bort och en tjänst som misslyckas med import försöker igen upp till 3 gånger.",
+                "Renare och bättre testat: döda moduler borttagna, gui_utils.py kortad från 2 602 till 1 079 rader med alla sju teman oförändrade, och sviten växte från 493 till 909 godkända tester.",
+            ],
+        },
+    ),
+    ReleaseNoteEntry(
         version="26.10.3",
         title={
             "en": "Safer updates, a much smaller download, clearer messages",

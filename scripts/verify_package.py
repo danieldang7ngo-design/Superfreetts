@@ -28,7 +28,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET_VERSION = "26.10.3"
+TARGET_VERSION = "26.10.4"
 
 REQUIRED_FILES = {
     "__init__.py",
