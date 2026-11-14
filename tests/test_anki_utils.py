@@ -69,12 +69,15 @@ def test_get_addon_dir_is_the_package_parent():
     # get_addon_dir() climbs one level above the module: the directory Anki
     # installs as the add-on folder (which contains superfreetts_addon/).
     addon_dir = anki_utils.AnkiUtils().get_addon_dir()
-    package_dir = os.path.dirname(os.path.abspath(anki_utils.__file__))
+    # get_addon_dir() resolves the module path with realpath() before climbing
+    # one level, so mirror that; abspath() diverges when the checkout (or an
+    # editable install) is reached through a symlink.
+    package_dir = os.path.dirname(os.path.realpath(anki_utils.__file__))
 
     # The contract is "one level above the package", not the name of the
     # directory the repository happens to be cloned into (CI uses
     # Superfreetts/, dev machines use superfreetts/).
-    assert os.path.normcase(os.path.abspath(addon_dir)) == os.path.normcase(
+    assert os.path.normcase(os.path.realpath(addon_dir)) == os.path.normcase(
         os.path.dirname(package_dir)
     )
     assert os.path.isdir(os.path.join(addon_dir, "superfreetts_addon"))

@@ -6,14 +6,34 @@ mark after a one-off allocation spike.  These tests pin the platform-specific
 current-RSS path and the peak-only fallback.
 """
 
+import importlib.util
+import os
 from unittest.mock import patch
 
 import pytest
 
 from superfreetts_addon import resource_manager
 
+# _linux_current_rss_mb needs os.sysconf() for the page size, and the peak-only
+# fallback needs the POSIX-only ``resource`` module.  Neither exists on Windows,
+# where this code path is unreachable anyway (platform.system() dispatch in
+# resource_manager._get_process_ram_usage_without_psutil).  Skip only the tests
+# that need those APIs; the parsing test below still runs everywhere.
+HAS_SYSCONF = hasattr(os, "sysconf")
+HAS_RESOURCE = importlib.util.find_spec("resource") is not None
+
+requires_sysconf = pytest.mark.skipif(
+    not HAS_SYSCONF,
+    reason="needs os.sysconf() for the page size; Windows has no such API",
+)
+requires_resource = pytest.mark.skipif(
+    not HAS_RESOURCE,
+    reason="needs the POSIX-only `resource` module for the peak-RSS fallback",
+)
+
 
 @pytest.mark.unit
+@requires_sysconf
 def test_linux_current_rss_reads_resident_pages(tmp_path, monkeypatch):
     statm = tmp_path / "statm"
     # 51200 resident pages * 4096 bytes = 200 MiB.
@@ -32,6 +52,7 @@ def test_linux_current_rss_rejects_bad_statm(tmp_path):
 
 
 @pytest.mark.unit
+@requires_resource
 def test_get_process_ram_prefers_linux_current_rss(monkeypatch):
     monkeypatch.setattr(resource_manager.platform, "system", lambda: "Linux")
     monkeypatch.setattr(
@@ -49,6 +70,7 @@ def test_get_process_ram_prefers_linux_current_rss(monkeypatch):
 
 
 @pytest.mark.unit
+@requires_resource
 def test_get_process_ram_falls_back_to_peak_only_on_failure(monkeypatch):
     monkeypatch.setattr(resource_manager.platform, "system", lambda: "Linux")
 

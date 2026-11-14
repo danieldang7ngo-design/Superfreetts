@@ -174,8 +174,9 @@ def test_build_engine_config_warns_when_ram_unknown(monkeypatch):
     monkeypatch.setattr(tts_orchestrator, "logger", logger)
     monkeypatch.setattr(system_utils, "get_cpu_threads", lambda: 8)
     monkeypatch.setattr(system_utils, "get_max_workers", lambda: 8)
-    # 8 + 2 + 8 + 8 = 26 threads: keep the CPU budget above it so the
-    # "no RAM cap" fallback really leaves every pool at its CPU default.
+    # 8 (Piper) + 2 (Kokoro cap) + 8 (MMS) + 8 (Supertonic) = 26 threads, so a
+    # 32-CPU budget sits above the sum and the "no RAM cap" fallback really
+    # leaves every pool at its CPU default.  Assert all four, not just Kokoro.
     monkeypatch.setattr(system_utils, "get_total_cpu_count", lambda: 32)
     monkeypatch.setattr(system_utils, "get_available_ram_mb", lambda: None)
     monkeypatch.setattr(system_utils, "get_ram_detection_source", lambda: "unknown")
@@ -186,6 +187,9 @@ def test_build_engine_config_warns_when_ram_unknown(monkeypatch):
         )
 
     assert config["Kokoro"] == tts_orchestrator.KOKORO_MAX_AUTO_WORKERS
+    assert config["Piper"] == 8
+    assert config["MMS"] == 8
+    assert config["Supertonic"] == 8
     warning_messages = [str(call.args[0]) for call in logger.warning.call_args_list]
     assert any(
         "local engine pools are NOT RAM-capped" in message

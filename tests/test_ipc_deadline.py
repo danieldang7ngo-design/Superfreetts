@@ -199,7 +199,12 @@ def test_reader_thread_marks_eof_after_process_exit():
         stderr=subprocess.DEVNULL,
     )
     start_stdout_reader(proc, "Test")
-    assert read_response(proc, "Test", timeout=5.0) == b"{}\n"
+    line = read_response(proc, "Test", timeout=5.0)
+    # print() writes os.linesep, so the child emits b"{}\r\n" on Windows and
+    # b"{}\n" on POSIX.  Accept exactly those two forms - the payload must be
+    # the JSON object and the trailing bytes may only be the platform newline.
+    assert line in (b"{}\n", b"{}\r\n"), f"unexpected payload: {line!r}"
+    assert json.loads(line) == {}
     # Second read must hit EOF (process exited), not the deadline.
     assert read_response(proc, "Test", timeout=5.0) == b""
     terminate_process(proc)

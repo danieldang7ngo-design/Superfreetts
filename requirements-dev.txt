@@ -6,3 +6,6 @@ ruff>=0.6
 bandit>=1.7
 beautifulsoup4>=4.12
 packaging>=23.0
+# Windows SAPI service imports win32com; Anki ships pywin32 on Windows,
+# so the dev/CI environment has to provide it too.
+pywin32>=308; sys_platform == "win32"

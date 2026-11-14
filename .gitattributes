@@ -1,0 +1,11 @@
+# tests/ is LF by convention (enforced by tests/test_line_endings.py).
+#
+# Git for Windows checks files out with core.autocrlf=true by default, which
+# turned every tests/*.py into CRLF on the windows-latest runner and broke that
+# gate.  Pin the working-tree format so the convention does not depend on each
+# developer's git config.
+#
+# Deliberately NOT declared here: superfreetts_addon/**, which is stored as
+# CRLF in the index.  A text/eol=crlf rule for it would renormalise 651 tracked
+# blobs on the next commit and rewrite every line of the add-on source.
+tests/** text eol=lf
