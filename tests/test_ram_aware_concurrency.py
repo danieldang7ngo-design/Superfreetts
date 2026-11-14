@@ -99,6 +99,7 @@ class TestBuildEngineConfigRamAware:
         orch = self._make_orchestrator()
         with patch.object(system_utils, 'get_cpu_threads', return_value=10), \
              patch.object(system_utils, 'get_max_workers', return_value=10), \
+             patch.object(system_utils, 'get_total_cpu_count', return_value=16), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=3000), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(
@@ -122,8 +123,11 @@ class TestBuildEngineConfigRamAware:
         Kokoro 2400MB, MMS 500MB, Supertonic 700MB) fit 5/2/4/3 workers,
         which totals 9900MB - not four independent 10000MB budgets."""
         orch = self._make_orchestrator()
+        # 5+2+4+3 = 14 threads must fit the budget, so the CPU count must not
+        # be the binding constraint on a 2-4 core CI runner.
         with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
              patch.object(system_utils, 'get_max_workers', return_value=16), \
+             patch.object(system_utils, 'get_total_cpu_count', return_value=16), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=20000), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(
@@ -171,6 +175,7 @@ class TestBuildEngineConfigRamAware:
         orch = tts_orchestrator.TTSOrchestrator(stts)
         with patch.object(system_utils, 'get_cpu_threads', return_value=8), \
              patch.object(system_utils, 'get_max_workers', return_value=8), \
+             patch.object(system_utils, 'get_total_cpu_count', return_value=8), \
              patch.object(system_utils, 'get_available_ram_mb', return_value=3000), \
              patch.object(orch, 'auto_scale_pool'):
             engine_config = orch.build_engine_config(service_config_map={})

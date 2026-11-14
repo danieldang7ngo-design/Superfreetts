@@ -36,11 +36,23 @@ jobs:
         run: bandit -r superfreetts_addon -ll
 
   test:
-    runs-on: ubuntu-latest
+    # Job names stay "test (3.x)": matrix.include keeps one job per version.
+    name: test (${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11", "3.13", "3.14"]
+        include:
+          # ubuntu-latest is 26.04, which has no Python 3.9 build in
+          # actions/python-versions (3.9.25 ships for 22.04/24.04 only).
+          - python-version: "3.9"
+            os: ubuntu-22.04
+          - python-version: "3.11"
+            os: ubuntu-latest
+          - python-version: "3.13"
+            os: ubuntu-latest
+          - python-version: "3.14"
+            os: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

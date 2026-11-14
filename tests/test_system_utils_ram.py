@@ -79,6 +79,7 @@ def test_build_engine_config_logs_real_ram_and_caps(monkeypatch):
     monkeypatch.setattr(tts_orchestrator, "logger", logger)
     monkeypatch.setattr(system_utils, "get_cpu_threads", lambda: 8)
     monkeypatch.setattr(system_utils, "get_max_workers", lambda: 16)
+    monkeypatch.setattr(system_utils, "get_total_cpu_count", lambda: 8)
     monkeypatch.setattr(system_utils, "get_available_ram_mb", lambda: 8580)
     monkeypatch.setattr(system_utils, "get_ram_detection_source", lambda: "linux_meminfo")
     with patch.object(orch, "auto_scale_pool"):
@@ -107,6 +108,7 @@ def test_build_engine_config_disabled_engines_do_not_consume_budget(monkeypatch)
     orch = tts_orchestrator.TTSOrchestrator(MagicMock())
     monkeypatch.setattr(system_utils, "get_cpu_threads", lambda: 8)
     monkeypatch.setattr(system_utils, "get_max_workers", lambda: 16)
+    monkeypatch.setattr(system_utils, "get_total_cpu_count", lambda: 8)
     monkeypatch.setattr(system_utils, "get_available_ram_mb", lambda: 3000)
     monkeypatch.setattr(system_utils, "get_ram_detection_source", lambda: "linux_meminfo")
     with patch.object(orch, "auto_scale_pool"):
@@ -172,6 +174,9 @@ def test_build_engine_config_warns_when_ram_unknown(monkeypatch):
     monkeypatch.setattr(tts_orchestrator, "logger", logger)
     monkeypatch.setattr(system_utils, "get_cpu_threads", lambda: 8)
     monkeypatch.setattr(system_utils, "get_max_workers", lambda: 8)
+    # 8 + 2 + 8 + 8 = 26 threads: keep the CPU budget above it so the
+    # "no RAM cap" fallback really leaves every pool at its CPU default.
+    monkeypatch.setattr(system_utils, "get_total_cpu_count", lambda: 32)
     monkeypatch.setattr(system_utils, "get_available_ram_mb", lambda: None)
     monkeypatch.setattr(system_utils, "get_ram_detection_source", lambda: "unknown")
     with patch.object(orch, "auto_scale_pool"):
