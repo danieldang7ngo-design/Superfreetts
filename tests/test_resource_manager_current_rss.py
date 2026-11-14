@@ -15,10 +15,12 @@ import pytest
 from superfreetts_addon import resource_manager
 
 # _linux_current_rss_mb needs os.sysconf() for the page size, and the peak-only
-# fallback needs the POSIX-only ``resource`` module.  Neither exists on Windows,
-# where this code path is unreachable anyway (platform.system() dispatch in
-# resource_manager._get_process_ram_usage_without_psutil).  Skip only the tests
-# that need those APIs; the parsing test below still runs everywhere.
+# fallback imports the POSIX-only ``resource`` module.  Neither API exists on
+# Windows.  The Linux sampler cannot run there (platform.system() dispatch in
+# resource_manager._get_process_ram_usage_without_psutil), but the fallback IS
+# still reached on Windows whenever the native sampler returns nothing, so its
+# ``import resource`` stays inside try/except and is not dead code.  Skip only
+# the tests that need those APIs; the parsing test below still runs everywhere.
 HAS_SYSCONF = hasattr(os, "sysconf")
 HAS_RESOURCE = importlib.util.find_spec("resource") is not None
 
